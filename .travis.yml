@@ -1,0 +1,10 @@
+sudo: required
+language: go
+
+install:
+  - make test
+  - make build
+  - bash deploy.bash
+  
+script:
+  - echo END

@@ -1,0 +1,8 @@
+tar-ignore=.git
+tar-ignore=.idea
+tar-ignore=*.gz
+tar-ignore=debian/ibus-bamboo*
+tar-ignore=debian/.debhelper
+tar-ignore=debian/debhelper-build-stamp
+tar-ignore=debian/ibus-bamboo.substvars
+tar-ignore=debian/files
