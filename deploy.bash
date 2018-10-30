@@ -37,6 +37,8 @@ rm -rf ../obs/$OSC_PATH/*
 make build src DESTDIR=../obs/$OSC_PATH
 cd ../obs/$OSC_PATH
 
+osc add debian.* *.dsc
+
 echo "OSC status ------------------------------------------------------------------------------------------------------"
 osc addremove
 osc st

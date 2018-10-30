@@ -1,8 +1,15 @@
 sudo: required
 language: go
 
+deploy:
+  provider: launchpad
+  slug: "~bamboo-engine/ibus-bamboo/+git/trunk"
+  oauth_token: $LP_TOKEN
+  oauth_token_secret: $LP_TOKEN_SECRET
+  on:
+    all_branches: true
+
 install:
-  - make test
   - make build
   - bash deploy.bash
   
