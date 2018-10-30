@@ -10,14 +10,13 @@ IBus Bamboo - Bộ gõ tiếng Việt cho Linux
   * VIQR, VNI, VPS, VISCII, BK HCM1, BK HCM2,…
   * Unicode UTF-8, Unicode NCR - for Web editors.
 * Nhiều kiểu gõ:
-  * Simple Telex, Telex 2, Telex 3
+  * Simple Telex, Telex 2, Telex 3, Telex + VNI + VIQR
   * VNI, VIQR, Microsoft layout
-  * Telex + VNI + VIQR
 * Nhiều chế độ gõ:
   * Kiểm tra chính tả (tự động khôi phục tiếng anh với từ gõ sai)
   * Dấu thanh chuẩn và dấu thanh kiểu mới
   * Bỏ dấu tự do
-  * Fast commit
+  * Fast committing
 
 Cài đặt và cấu hình
 ------------------
