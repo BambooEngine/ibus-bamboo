@@ -22,8 +22,8 @@ package main
 
 import (
 	"github.com/BambooEngine/bamboo-core"
+	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
-	"github.com/sarim/goibus/ibus"
 	"log"
 	"os/exec"
 	"runtime/debug"

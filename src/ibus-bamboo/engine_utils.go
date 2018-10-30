@@ -23,8 +23,8 @@ package main
 import (
 	"fmt"
 	"github.com/BambooEngine/bamboo-core"
+	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
-	"github.com/sarim/goibus/ibus"
 	"time"
 )
 

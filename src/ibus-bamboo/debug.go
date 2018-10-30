@@ -21,7 +21,7 @@
 package main
 
 import (
-	"github.com/sarim/goibus/ibus"
+	"github.com/BambooEngine/goibus/ibus"
 	"os"
 	"path/filepath"
 )
