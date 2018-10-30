@@ -30,6 +30,9 @@ rpm_src_tar=$(rpm_src_dir)/$(tar_file)
 tar_options_src=--transform "s/^\./$(pkg_name)-$(version)/" --exclude={"*.tar.gz",".git",".idea"} .
 
 build:
+	go get github.com/BambooEngine/bamboo-core
+	go get github.com/BambooEngine/goibus/ibus
+	go get github.com/godbus/dbus
 	go build -ldflags "-w -s" -o $(ibus_e_name) ./src/ibus-$(engine_name)
 
 
