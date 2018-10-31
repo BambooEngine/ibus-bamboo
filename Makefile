@@ -24,24 +24,19 @@ version=0.1.2
 engine_dir=/usr/share/$(pkg_name)
 ibus_dir=/usr/share/ibus
 
+GOPATH=$(shell pwd)/vendor:$(shell pwd)
+
 rpm_src_dir=~/rpmbuild/SOURCES
 tar_file=$(pkg_name)-$(version).tar.gz
 rpm_src_tar=$(rpm_src_dir)/$(tar_file)
 tar_options_src=--transform "s/^\./$(pkg_name)-$(version)/" --exclude={"*.tar.gz",".git",".idea"} .
 
 build:
-	go get -u github.com/BambooEngine/bamboo-core
-	go get -u github.com/BambooEngine/goibus/ibus
-	go get -u github.com/godbus/dbus
-	go build -ldflags "-w -s" -o $(ibus_e_name) ./src/ibus-$(engine_name)
-
-
-dict-gen:
-	cd src/dict-gen && dep ensure -update
-	GOPATH=$(CURDIR) go build -o dict_gen_linux dict-gen
-	./dict_gen_linux
-	rm -f dict_gen_linux
-
+	#go get github.com/BambooEngine/bamboo-core
+	#go get github.com/BambooEngine/goibus/ibus
+	#go get github.com/godbus/dbus
+	@GOPATH=$(GOPATH) go get ./src/ibus-$(engine_name)
+	@GOPATH=$(GOPATH) go build -ldflags "-w -s" -o $(ibus_e_name) ./src/ibus-$(engine_name)
 
 clean:
 	rm -f ibus-engine-* *_linux *_cover.html go_test_* go_build_* test *.gz test
