@@ -13,6 +13,7 @@
 
 .idea/
 pkg/
+vendor/*/.git
 *_linux
 *.tar.gz
 ibus-engine-*
