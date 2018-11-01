@@ -69,7 +69,7 @@ func FindMarkTargets(composition []*Transformation, rule Rule) []*Transformation
 }
 
 func FindMarkTarget(composition []*Transformation, rules []Rule) (*Transformation, Rule) {
-	for i := len(composition) - 1; i >= 0; i-- {
+	for i:=len(composition)-1;i>=0;i-- {
 		var trans = composition[i]
 		for _, rule := range rules {
 			if trans.Rule.Key == rule.EffectOn {

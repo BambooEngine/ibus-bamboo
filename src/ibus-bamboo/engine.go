@@ -132,7 +132,7 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 			return false, nil
 		}
 		e.preediter.ProcessChar(keyRune)
-		if e.config.Flags&bamboo.EfastCommitting != 0 && !e.preediter.IsSpellingCorrect(bamboo.NoMark|bamboo.NoTone) {
+		if e.config.Flags&bamboo.EfastCommitting != 0 && !e.preediter.IsSpellingSensible(bamboo.NoTone) {
 			e.ignorePreedit = true
 			e.commitPreedit(0)
 			e.preediter.Reset()

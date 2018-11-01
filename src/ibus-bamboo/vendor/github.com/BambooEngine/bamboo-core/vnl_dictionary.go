@@ -21,18 +21,18 @@ package bamboo
 import "strings"
 
 var vnl_firstConsonants = [3]string{
-	"b d g gh m n nh p ph r s t tr v z",
+	"b d đ g gh m n nh p ph r s t tr v z",
 	"c h k kh qu th",
 	"ch gi l ng ngh x",
 }
 
 var vnl_vowels = [6]string{
-	"i ue uy y",
-	"a e ie oa uye ye",
-	"o oo oe u uo",
-	"ua",
-	"",
-	"ai ao au ay eo eu ia ieu iu oai oao oay oeo oi uay ui uoi uou uu uya uyu yeu",
+	"e ê i ua ue uê uy y",
+	"a ie iê oa uye uyê ye yê",
+	"a â ă e o oo ô ơ oe u ư ua uâ uo uô ưo uơ ươ",
+	"oa oă",
+	"uo uơ",
+	"ai ao au âu ay ây eo eu êu ia ieu iêu iu oai oao oay oeo oi ôi ơi ua ưa uay uây ui ưi uoi uôi ươi uou ưou uơu ươu uu ưu uya uyu yeu yêu",
 }
 
 var vnl_lastConsonants = [3]string{
@@ -149,5 +149,13 @@ func LookupVnlDictionary(word string) bool {
 		return true
 	}
 	_, found := vnl_dictionary[word]
-	return found
+	if found {
+		return true
+	}
+	for w := range vnl_dictionary {
+		if strings.Contains(w, word) {
+			return true
+		}
+	}
+	return false
 }

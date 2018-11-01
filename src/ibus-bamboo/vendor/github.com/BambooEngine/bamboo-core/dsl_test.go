@@ -57,7 +57,7 @@ func TestParseTonelessRules(t *testing.T) {
 		t.Errorf("Test parsing Append Rule. Got %v, expected %v", rules, Rule{
 			Key:        '{',
 			EffectType: Appending,
-			EffectOn:   'Ư',
+			EffectOn:     'Ư',
 		})
 	}
 	rules = ParseTonelessRules('w', "UOA_ƯƠĂ")
@@ -120,7 +120,7 @@ func TestAppendRule(t *testing.T) {
 			t.Errorf("Test parsing append mark Rule. Got %v, expected %v", appendRules, Rule{
 				Key:        '[',
 				EffectType: Appending,
-				EffectOn:   'ơ',
+				EffectOn:     'ơ',
 			})
 		}
 	}
@@ -134,7 +134,7 @@ func TestAppendRule(t *testing.T) {
 			t.Errorf("Test parsing append mark Rule. Got %v, expected %v", appendRules, Rule{
 				Key:        '{',
 				EffectType: Appending,
-				EffectOn:   'Ơ',
+				EffectOn:     'Ơ',
 			})
 		}
 	}

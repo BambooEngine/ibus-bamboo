@@ -29,7 +29,7 @@ import (
 const (
 	DebugComponentName = ComponentName + "Debug"
 	DebugEngineName    = EngineName + "-debug"
-	IconFile           = "viet-on.ico"
+	IconFile           = "viet-on.png"
 )
 
 func makeDebugComponent() *ibus.Component {

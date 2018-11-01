@@ -160,7 +160,7 @@ func getAppendingRule(key rune, value string) (Rule, bool) {
 				rule.AppendedRules = append(rule.AppendedRules, Rule{
 					Key:        key,
 					EffectType: Appending,
-					EffectOn:   chr,
+					EffectOn:     chr,
 				})
 			}
 		}

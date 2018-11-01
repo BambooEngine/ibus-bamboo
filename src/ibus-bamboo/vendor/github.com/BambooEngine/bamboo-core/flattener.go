@@ -101,3 +101,4 @@ func (f *BambooFlattener) GetCanvas(composition []*Transformation, mode Mode) []
 	}
 	return canvas
 }
+

@@ -211,6 +211,20 @@ func isSpellingCorrect(composition []*Transformation, mode Mode) bool {
 	return false
 }
 
+func isSpellingSensible(composition []*Transformation, mode Mode) bool {
+	if len(composition) <= 1 {
+		return true
+	}
+	if mode&NoTone != 0 {
+		str := Flatten(composition, NoTone|LowerCase)
+		if len([]rune(str)) <= 1 {
+			return true
+		}
+		return LookupVnlDictionary(str)
+	}
+	return false
+}
+
 func haveDoubledKeystroke(composition []*Transformation, key rune) bool {
 	if len(composition) < 2 {
 		return false

@@ -68,6 +68,7 @@ type IEngine interface {
 	ProcessString(string)
 	GetProcessedString(Mode) string
 	IsSpellingCorrect(Mode) bool
+	IsSpellingSensible(Mode) bool
 	Reset()
 	RemoveLastChar()
 }
@@ -193,6 +194,10 @@ func (e *BambooEngine) createCompositionForRule(rule Rule, isUpperKey bool) []*T
 
 func (e *BambooEngine) IsSpellingCorrect(mode Mode) bool {
 	return isSpellingCorrect(e.composition, mode)
+}
+
+func (e *BambooEngine) IsSpellingSensible(mode Mode) bool {
+	return isSpellingSensible(e.composition, mode)
 }
 
 func (e *BambooEngine) createCompositionForKey(chr rune) []*Transformation {

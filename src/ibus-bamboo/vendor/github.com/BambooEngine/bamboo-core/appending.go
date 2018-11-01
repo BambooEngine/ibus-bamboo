@@ -41,7 +41,7 @@ func FindAppendingRule(rules []Rule, key rune) Rule {
 }
 
 func FindLastAppendingTrans(composition []*Transformation) *Transformation {
-	for i := len(composition) - 1; i >= 0; i-- {
+	for i:=len(composition)-1;i>=0;i-- {
 		var trans = composition[i]
 		if trans.Rule.EffectType == Appending {
 			return trans
