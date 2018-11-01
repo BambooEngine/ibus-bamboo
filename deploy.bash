@@ -36,7 +36,7 @@ echo "Build new OSC source -----------------------------------------------------
 rm -rf ../obs/$OSC_PATH/*
 make build src DESTDIR=../obs/$OSC_PATH
 cd ../obs/$OSC_PATH
-ll
+
 echo "Add all the files to your working directory ---------------------------------------------------------------------"
 osc add *.spec *.changes *.tar.gz
 

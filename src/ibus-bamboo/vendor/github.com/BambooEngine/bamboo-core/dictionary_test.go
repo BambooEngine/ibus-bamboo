@@ -1,6 +1,5 @@
 /*
  * Bamboo - A Vietnamese Input method editor
- * Copyright (C) 2018 Nguyen Cong Hoang <hoangnc.jp@gmail.com>
  * Copyright (C) 2018 Luong Thanh Lam <ltlam93@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -14,10 +13,18 @@
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  *
  */
 
-package main
+package bamboo
 
-const Version = "v0.1.5"
+import (
+	"testing"
+)
+
+func TestCheckSpellingWithPositions(t *testing.T) {
+}
+
+func TestCheckSpellingWithParts(t *testing.T) {
+}

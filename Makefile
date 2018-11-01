@@ -19,7 +19,7 @@
 engine_name=bamboo
 ibus_e_name=ibus-engine-$(engine_name)
 pkg_name=ibus-$(engine_name)
-version=0.1.2
+version=0.1.5
 
 engine_dir=/usr/share/$(pkg_name)
 ibus_dir=/usr/share/ibus
@@ -32,11 +32,7 @@ rpm_src_tar=$(rpm_src_dir)/$(tar_file)
 tar_options_src=--transform "s/^\./$(pkg_name)-$(version)/" --exclude={"*.tar.gz",".git",".idea"} .
 
 build:
-	#go get github.com/BambooEngine/bamboo-core
-	#go get github.com/BambooEngine/goibus/ibus
-	#go get github.com/godbus/dbus
-	@GOPATH=$(GOPATH) go get ./src/ibus-$(engine_name)
-	@GOPATH=$(GOPATH) go build -ldflags "-w -s" -o $(ibus_e_name) ./src/ibus-$(engine_name)
+	GOPATH=$(CURDIR) go build -ldflags "-w -s" -o $(ibus_e_name) ./src/ibus-$(engine_name)
 
 clean:
 	rm -f ibus-engine-* *_linux *_cover.html go_test_* go_build_* test *.gz test
