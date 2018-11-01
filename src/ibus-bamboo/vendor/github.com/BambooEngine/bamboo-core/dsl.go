@@ -44,7 +44,7 @@ const (
 )
 
 // type alias
-type Mark = Tone
+type Mark uint8
 
 const (
 	MARK_NONE  Mark = iota << 0
@@ -67,7 +67,7 @@ const (
 
 type Rule struct {
 	Key           rune
-	Effect        Mark // (Tone, Mark)
+	Effect        uint8 // (Tone, Mark)
 	EffectType    EffectType
 	EffectOn      rune
 	AppendedRules []Rule
@@ -108,7 +108,7 @@ func ParseRules(key rune, line string) []Rule {
 		var rule Rule
 		rule.Key = key
 		rule.EffectType = ToneTransformation
-		rule.Effect = tone
+		rule.Effect = uint8(tone)
 		rules = append(rules, rule)
 	} else {
 		rules = ParseTonelessRules(key, line)
@@ -132,7 +132,7 @@ func ParseTonelessRules(key rune, line string) []Rule {
 			rule.Key = key
 			rule.EffectType = MarkTransformation
 			rule.EffectOn = effectiveOn
-			rule.Effect = effect
+			rule.Effect = uint8(effect)
 
 			rules = append(rules, rule)
 		}

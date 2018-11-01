@@ -1,0 +1,3 @@
+shlibs:Depends=libc6 (>= 2.3.2)
+misc:Depends=
+misc:Pre-Depends=

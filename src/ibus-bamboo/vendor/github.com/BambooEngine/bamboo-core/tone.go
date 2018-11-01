@@ -27,7 +27,7 @@ func FindToneFromChar(chr rune) Tone {
 	return Tone(pos % 6)
 }
 
-func AddToneToChar(chr rune, tone Tone) rune {
+func AddToneToChar(chr rune, tone uint8) rune {
 	pos := FindVowelPosition(chr)
 	if pos > -1 {
 		current_tone := pos % 6

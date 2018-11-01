@@ -80,7 +80,7 @@ func FindMissingRuleForUo(composition []*Transformation, isSuperKey bool) (Rule,
 		rule = Rule{
 			Key:        rune(0),
 			EffectType: MarkTransformation,
-			Effect:     MARK_HORN,
+			Effect:     uint8(MARK_HORN),
 			EffectOn:   target,
 		}
 		return rule, true

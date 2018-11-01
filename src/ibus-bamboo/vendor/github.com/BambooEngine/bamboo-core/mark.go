@@ -44,17 +44,17 @@ func RemoveMarkFromChar(chr rune) rune {
 	return chr
 }
 
-func AddMarkToChar(chr rune, mark Mark) rune {
+func AddMarkToChar(chr rune, mark uint8) rune {
 	var result rune
 	tone := FindToneFromChar(chr)
-	chr = AddToneToChar(chr, TONE_NONE)
+	chr = AddToneToChar(chr, 0)
 	if str, found := MARKS_MAP[chr]; found {
 		marks := []rune(str)
 		if marks[mark] != '_' {
 			result = marks[mark]
 		}
 	}
-	result = AddToneToChar(result, tone)
+	result = AddToneToChar(result, uint8(tone))
 	return result
 }
 
