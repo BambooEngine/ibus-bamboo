@@ -24,6 +24,8 @@ version=0.1.5
 engine_dir=/usr/share/$(pkg_name)
 ibus_dir=/usr/share/ibus
 
+GOPATH=$(shell pwd)/vendor:$(shell pwd)
+
 rpm_src_dir=~/rpmbuild/SOURCES
 tar_file=$(pkg_name)-$(version).tar.gz
 rpm_src_tar=$(rpm_src_dir)/$(tar_file)
@@ -31,7 +33,6 @@ tar_options_src=--transform "s/^\./$(pkg_name)-$(version)/" --exclude={"*.tar.gz
 
 build:
 	GOPATH=$(CURDIR) go build -ldflags "-w -s" -o $(ibus_e_name) ./src/ibus-$(engine_name)
-
 
 clean:
 	rm -f ibus-engine-* *_linux *_cover.html go_test_* go_build_* test *.gz test

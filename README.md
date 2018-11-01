@@ -1,5 +1,6 @@
 IBus Bamboo - Bộ gõ tiếng Việt cho Linux
 ===================================
+[![Build Status](https://travis-ci.com/BambooEngine/ibus-bamboo.svg?branch=master)](https://travis-ci.com/BambooEngine/ibus-bamboo)
 [![GitHub release](https://img.shields.io/github/release/BambooEngine/ibus-bamboo.svg)](https://github.com/BambooEngine/ibus-bamboo/releases/latest)
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://opensource.org/licenses/GPL-3.0)
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/BambooEngine/ibus-bamboo)
@@ -16,7 +17,6 @@ IBus Bamboo - Bộ gõ tiếng Việt cho Linux
   * Kiểm tra chính tả (tự động khôi phục tiếng anh với từ gõ sai)
   * Dấu thanh chuẩn và dấu thanh kiểu mới
   * Bỏ dấu tự do
-  * Fast committing
 
 Cài đặt và cấu hình
 ------------------
