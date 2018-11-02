@@ -58,6 +58,6 @@ https://github.com/BambooEngine/ibus-bamboo/issues
 
 Giấy phép
 -------
-ibus-bamboo là phần mềm tự do nguồn mở.
+ibus-bamboo là bộ gõ được fork từ dự án [ibus-teni](https://github.com/teni-ime/ibus-teni) của tác giả Nguyễn Công Hoàng. Xem tệp AUTHORS để biết thêm chi tiết.
 
 Toàn bộ mã nguồn của ibus-bamboo và bamboo-core đều được phát hành dưới các quy định ghi trong Giấy phép Công cộng GNU (GNU General Public License v3.0).
