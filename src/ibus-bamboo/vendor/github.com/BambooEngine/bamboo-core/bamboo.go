@@ -162,7 +162,7 @@ func (e *BambooEngine) findTargetForKey(chr rune) (*Transformation, Rule) {
 			return FindMarkTarget(e.composition, applicableRules)
 		} else if applicableRule.EffectType == ToneTransformation {
 			if e.flags&EfreeToneMarking != 0 {
-				if hasValidTone(e.composition, applicableRule.Effect) {
+				if hasValidTone(e.composition, Tone(applicableRule.Effect)) {
 					target = FindToneTarget(e.composition, e.flags&EstdToneStyle != 0)
 				}
 			} else if lastAppending != nil && isVowel(lastAppending.Rule.EffectOn) {
