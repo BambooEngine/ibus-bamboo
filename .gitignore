@@ -13,6 +13,7 @@
 
 .idea/
 pkg/
+test-data/
 vendor/*/.git
 *_linux
 *.tar.gz

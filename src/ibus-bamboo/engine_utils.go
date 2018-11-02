@@ -119,7 +119,7 @@ func (e *IBusBambooEngine) getRawKeyLen() int {
 }
 
 func (e *IBusBambooEngine) updatePreedit() {
-	var processedStr = e.getProcessedString()
+	var processedStr = e.getPreeditString()
 	var preeditLen = uint32(len([]rune(processedStr)))
 	if preeditLen > 0 {
 		var ibusText = ibus.NewText(processedStr)
@@ -132,7 +132,20 @@ func (e *IBusBambooEngine) updatePreedit() {
 	}
 }
 
-func (e *IBusBambooEngine) getProcessedString() string {
+func (e *IBusBambooEngine) shouldFallbackToEnglish() bool {
+	if e.config.Flags&bamboo.EspellCheckEnabled == 0 {
+		return false
+	}
+	if e.preediter.IsSpellingCorrect(bamboo.NoTone) {
+		return false
+	}
+	if e.preediter.IsSpellingSensible(bamboo.NoTone) {
+		return false
+	}
+	return true
+}
+
+func (e *IBusBambooEngine) getCommitString() string {
 	var processedStr string
 	if e.config.Flags&bamboo.EspellCheckEnabled != 0 && !e.preediter.IsSpellingCorrect(bamboo.NoTone) {
 		processedStr = e.preediter.GetProcessedString(bamboo.EnglishMode)
@@ -143,10 +156,20 @@ func (e *IBusBambooEngine) getProcessedString() string {
 	return processedStr
 }
 
+func (e *IBusBambooEngine) getPreeditString() string {
+	var processedStr string
+	if e.shouldFallbackToEnglish() {
+		processedStr = e.preediter.GetProcessedString(bamboo.EnglishMode)
+		return processedStr
+	}
+	processedStr = e.preediter.GetProcessedString(bamboo.VietnameseMode)
+	return processedStr
+}
+
 func (e *IBusBambooEngine) commitPreedit(lastKey uint32) bool {
 	var keyAppended = false
 	var commitStr string
-	commitStr += e.getProcessedString()
+	commitStr += e.getCommitString()
 	e.preediter.Reset()
 
 	//Convert num-pad key to normal number

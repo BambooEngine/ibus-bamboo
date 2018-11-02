@@ -69,7 +69,7 @@ func FindMarkTargets(composition []*Transformation, rule Rule) []*Transformation
 }
 
 func FindMarkTarget(composition []*Transformation, rules []Rule) (*Transformation, Rule) {
-	for i:=len(composition)-1;i>=0;i-- {
+	for i := len(composition) - 1; i >= 0; i-- {
 		var trans = composition[i]
 		for _, rule := range rules {
 			if trans.Rule.Key == rule.EffectOn {
@@ -86,7 +86,12 @@ func FindMarkTarget(composition []*Transformation, rules []Rule) (*Transformatio
 
 func isMarkTargetValid(composition []*Transformation, trans *Transformation) bool {
 	if !isFree(composition, trans.Target, MarkTransformation) {
-		return false
+		var targets = GetMarkTransformationsTargetTo(composition, trans.Target)
+		for _, target := range targets {
+			if target.Rule.Effect == trans.Rule.Effect {
+				return false
+			}
+		}
 	}
 	var soundMap = GetSoundMap(composition)
 	targetSound, found := soundMap[trans.Target]
