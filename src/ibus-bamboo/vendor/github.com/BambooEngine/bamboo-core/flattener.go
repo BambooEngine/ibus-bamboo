@@ -64,6 +64,7 @@ func (f *BambooFlattener) GetCanvas(composition []*Transformation, mode Mode) []
 		// MARK_NONE and equals 0.
 		if charWithEffect == canvas[index] {
 			canvas[index] = callback(canvas[index], TONE_NONE)
+			canvas = append(canvas, trans.Rule.Key)
 		} else {
 			canvas[index] = charWithEffect
 		}

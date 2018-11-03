@@ -185,7 +185,11 @@ func (e *IBusBambooEngine) commitPreedit(lastKey uint32) bool {
 	}
 
 	e.HidePreeditText()
-	e.CommitText(ibus.NewText(commitStr))
+
+	for _, chr := range []rune(commitStr) {
+		e.CommitText(ibus.NewText(string(chr)))
+	}
+	//e.CommitText(ibus.NewText(commitStr))
 
 	return keyAppended
 }

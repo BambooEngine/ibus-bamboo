@@ -154,6 +154,14 @@ func TestProcessCatrString(t *testing.T) {
 	}
 }
 
+func TestProcessToowiString(t *testing.T) {
+	ng := NewEngine("Telex", EstdFlags)
+	ng.ProcessString("toowi")
+	if ng.GetProcessedString(VietnameseMode) != "tơi" {
+		t.Errorf("Process [toowi], got [%s] expected [tơi]", ng.GetProcessedString(VietnameseMode))
+	}
+}
+
 func TestProcessAlooString(t *testing.T) {
 	ng := NewEngine("Telex", EstdFlags)
 	ng.ProcessString("aloo")
@@ -167,5 +175,25 @@ func TestSpellingCheckForGiw(t *testing.T) {
 	ng.ProcessString("giw")
 	if ng.IsSpellingCorrect(NoTone|NoMark) != true {
 		t.Errorf("TestSpellingCheckForGiw, got [%v] expected [%v]", ng.IsSpellingCorrect(NoTone|NoMark), true)
+	}
+}
+
+func TestDoubleBrackets(t *testing.T) {
+	ng := NewEngine("Telex 2", EstdFlags)
+	ng.ProcessString("[[")
+	if ng.GetProcessedString(EnglishMode) != "[" {
+		t.Errorf("TestDoubleBrackets, got [%v] expected [%v]", ng.GetProcessedString(EnglishMode), "[")
+	}
+}
+func TestDoubleBracketso(t *testing.T) {
+	ng := NewEngine("Telex 2", EstdFlags)
+	ng.ProcessString("tooss")
+	if ng.GetProcessedString(VietnameseMode) != "tôs" {
+		t.Errorf("TestDoubleBrackets, got [%v] expected [tôs]", ng.GetProcessedString(VietnameseMode))
+	}
+	ng.Reset()
+	ng.ProcessString("tosos")
+	if ng.GetProcessedString(VietnameseMode) != "tôs" {
+		t.Errorf("TestDoubleBrackets, got [%v] expected [tôs]", ng.GetProcessedString(VietnameseMode))
 	}
 }
