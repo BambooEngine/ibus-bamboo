@@ -19,7 +19,7 @@
 
 package bamboo
 
-type inputMethodDefinition = map[rune]string
+type inputMethodDefinition map[rune]string
 
 // todo: move to input_method.json
 var inputMethodDefinitions = map[string]inputMethodDefinition{

@@ -51,7 +51,6 @@ func FindVowelPosition(chr rune) int {
 	return -1
 }
 
-
 func FindMissingRuleForUo(composition []*Transformation, isSuperKey bool) (Rule, bool) {
 	var rule Rule
 	if len(composition) < 2 {
@@ -80,7 +79,7 @@ func FindMissingRuleForUo(composition []*Transformation, isSuperKey bool) (Rule,
 		rule = Rule{
 			Key:        rune(0),
 			EffectType: MarkTransformation,
-			Effect:     MARK_HORN,
+			Effect:     uint8(MARK_HORN),
 			EffectOn:   target,
 		}
 		return rule, true
@@ -112,7 +111,6 @@ func SplitStringToWords(str string) []string {
 	words = append(words, string(word))
 	return words
 }
-
 
 func ParseSoundsFromTonelessString(str string) []Sound {
 	var sounds []Sound

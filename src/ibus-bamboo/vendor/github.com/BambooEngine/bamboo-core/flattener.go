@@ -53,7 +53,7 @@ func (f *BambooFlattener) Flatten(composition []*Transformation, mode Mode) stri
 
 func (f *BambooFlattener) GetCanvas(composition []*Transformation, mode Mode) []rune {
 	var canvas []rune
-	apply_effect := func(callback func(rune, Mark) rune, trans *Transformation) {
+	apply_effect := func(callback func(rune, uint8) rune, trans *Transformation) {
 		if trans.Target == nil || len(canvas) <= int(trans.Target.Dest) {
 			return
 		}
@@ -63,7 +63,7 @@ func (f *BambooFlattener) GetCanvas(composition []*Transformation, mode Mode) []
 		// fast-and-loose here by replying on the fact that TONE_NONE equals
 		// MARK_NONE and equals 0.
 		if charWithEffect == canvas[index] {
-			canvas[index] = callback(canvas[index], TONE_NONE)
+			canvas[index] = callback(canvas[index], 0)
 			canvas = append(canvas, trans.Rule.Key)
 		} else {
 			canvas[index] = charWithEffect
@@ -102,4 +102,3 @@ func (f *BambooFlattener) GetCanvas(composition []*Transformation, mode Mode) []
 	}
 	return canvas
 }
-
