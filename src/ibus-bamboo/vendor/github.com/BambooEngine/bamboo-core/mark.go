@@ -85,11 +85,8 @@ func FindMarkTarget(composition []*Transformation, rules []Rule) (*Transformatio
 }
 
 func isMarkTargetValid(composition []*Transformation, trans *Transformation) bool {
-	var targets = GetMarkTransformationsTargetTo(composition, trans.Target)
-	if len(targets) > 0 {
-		if targets[len(targets)-1].Rule.Effect == trans.Rule.Effect {
-			return false
-		}
+	if !isFree(composition, trans.Target, MarkTransformation) {
+		return false
 	}
 	var soundMap = GetSoundMap(composition)
 	targetSound, found := soundMap[trans.Target]

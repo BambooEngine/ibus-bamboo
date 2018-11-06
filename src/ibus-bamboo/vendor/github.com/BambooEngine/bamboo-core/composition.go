@@ -224,3 +224,62 @@ func isSpellingSensible(composition []*Transformation, mode Mode) bool {
 	}
 	return false
 }
+
+func UndoesTransformations(composition []*Transformation, applicableRules []Rule) []*Transformation {
+	var result []*Transformation
+	result = append(result, composition...)
+	for i, trans := range result {
+		for _, applicableRule := range applicableRules {
+			var key = applicableRule.Key
+			switch applicableRule.EffectType {
+			case Appending:
+				if trans.Rule.EffectType != Appending {
+					continue
+				}
+				if key != trans.Rule.Key {
+					continue
+				}
+				// same rule will override key and effect_on
+				if trans.Rule.Effect == applicableRule.Effect {
+					trans.Rule.EffectOn = AddMarkToChar(trans.Rule.EffectOn, 0)
+					trans.Rule.Key = trans.Rule.EffectOn
+				}
+				// double typing an appending key undoes it
+				if i == len(result)-1 {
+					trans.IsDeleted = true
+				}
+				break
+			case ToneTransformation:
+				if trans.Rule.EffectType != ToneTransformation {
+					continue
+				}
+				trans.IsDeleted = true
+				if key == trans.Rule.Key && trans.Rule.Effect == applicableRule.Effect {
+					// double typing a tone key undoes it
+					// so the target will not change, the key will be appended
+				} else {
+					// make this tone overridable
+					trans.Target = nil
+				}
+				break
+			case MarkTransformation:
+				if trans.Rule.EffectType != MarkTransformation {
+					continue
+				}
+				if trans.Rule.EffectOn != applicableRule.EffectOn {
+					continue
+				}
+				if key == trans.Rule.Key {
+					// double typing a mark key
+					trans.IsDeleted = true
+				} else {
+					// make this mark overridable
+					trans.IsDeleted = true
+					trans.Target = nil
+				}
+				break
+			}
+		}
+	}
+	return result
+}

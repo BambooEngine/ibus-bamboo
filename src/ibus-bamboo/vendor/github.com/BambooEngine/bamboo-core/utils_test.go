@@ -69,14 +69,14 @@ func TestGetToneFromChar(t *testing.T) {
 }
 
 func TestAddToneToChar(t *testing.T) {
-	c_ạ := AddToneToChar('a', TONE_DOT)
+	c_ạ := AddToneToChar('a', uint8(TONE_DOT))
 	if c_ạ != 'ạ' {
 		t.Errorf("Test add a dot to char. Got %c, expected %c", c_ạ, 'ạ')
 	}
 }
 
 func TestAddMarkToChar(t *testing.T) {
-	c_ặ := AddMarkToChar('ạ', MARK_BREVE)
+	c_ặ := AddMarkToChar('ạ', uint8(MARK_BREVE))
 	if c_ặ != 'ặ' {
 		t.Errorf("Test add a breve to char. Got %c, expected %c", c_ặ, 'ặ')
 	}

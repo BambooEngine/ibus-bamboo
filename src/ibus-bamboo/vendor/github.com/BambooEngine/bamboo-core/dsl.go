@@ -73,6 +73,22 @@ type Rule struct {
 	AppendedRules []Rule
 }
 
+func (r *Rule) SetTone(tone Tone) {
+	r.Effect = uint8(tone)
+}
+
+func (r *Rule) SetMark(mark Mark) {
+	r.Effect = uint8(mark)
+}
+
+func (r *Rule) GetTone() Tone {
+	return Tone(r.Effect)
+}
+
+func (r *Rule) GetMark() Mark {
+	return Mark(r.Effect)
+}
+
 type InputMethod struct {
 	Name      string
 	Rules     []Rule

@@ -64,12 +64,15 @@ func (f *BambooFlattener) GetCanvas(composition []*Transformation, mode Mode) []
 		// MARK_NONE and equals 0.
 		if charWithEffect == canvas[index] {
 			canvas[index] = callback(canvas[index], 0)
-			canvas = append(canvas, trans.Rule.Key)
+			//canvas = append(canvas, trans.Rule.Key)
 		} else {
 			canvas[index] = charWithEffect
 		}
 	}
 	for _, trans := range composition {
+		if trans.IsDeleted {
+			continue
+		}
 		if mode&EnglishMode != 0 {
 			if trans.Rule.Key > 0 {
 				canvas = append(canvas, trans.Rule.Key)

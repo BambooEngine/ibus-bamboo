@@ -19,6 +19,8 @@
 
 package bamboo
 
+import "unicode"
+
 func FindAppendingRule(rules []Rule, key rune) Rule {
 	var result Rule
 	result.EffectType = Appending
@@ -64,4 +66,15 @@ func FindNextAppendingTransformation(composition []*Transformation, trans *Trans
 		}
 	}
 	return nextAppendingTrans, found
+}
+
+func createAppendingTrans(key rune) *Transformation {
+	return &Transformation{
+		IsUpperCase: unicode.IsUpper(key),
+		Rule: Rule{
+			Key: unicode.ToLower(key),
+			EffectOn: unicode.ToLower(key),
+			EffectType: Appending,
+		},
+	}
 }

@@ -58,6 +58,7 @@ type Transformation struct {
 	Rule        Rule
 	Target      *Transformation // For Tone/Mark transformation
 	IsUpperCase bool
+	IsDeleted bool
 	Dest        uint // For Appending, a pointer to the char in the flattened string made by this Trans
 }
 
@@ -148,13 +149,18 @@ func (e *BambooEngine) isCharFree(c rune, effectType EffectType) bool {
 	return true
 }
 
-func (e *BambooEngine) findTargetForKey(chr rune) (*Transformation, Rule) {
+func (e *BambooEngine) getApplicableRules(key rune) []Rule {
 	var applicableRules []Rule
 	for _, inputRule := range e.inputMethod.Rules {
-		if inputRule.Key == chr {
+		if inputRule.Key == key {
 			applicableRules = append(applicableRules, inputRule)
 		}
 	}
+	return applicableRules
+}
+
+func (e *BambooEngine) findTargetForKey(key rune) (*Transformation, Rule) {
+	var applicableRules = e.getApplicableRules(key)
 	var lastAppending = FindLastAppendingTrans(e.composition)
 	for _, applicableRule := range applicableRules {
 		var target *Transformation = nil
@@ -164,6 +170,9 @@ func (e *BambooEngine) findTargetForKey(chr rune) (*Transformation, Rule) {
 			if e.flags&EfreeToneMarking != 0 {
 				if hasValidTone(e.composition, Tone(applicableRule.Effect)) {
 					target = FindToneTarget(e.composition, e.flags&EstdToneStyle != 0)
+					if !isFree(e.composition, target, ToneTransformation) {
+						target = nil
+					}
 				}
 			} else if lastAppending != nil && isVowel(lastAppending.Rule.EffectOn) {
 				target = lastAppending
@@ -246,6 +255,19 @@ func (e *BambooEngine) refreshLastToneTarget() {
 }
 
 func (e *BambooEngine) ProcessChar(key rune) {
+	if len(e.composition) > 0 && e.isEffectiveKey(key) {
+		if target, _ := e.findTargetForKey(key); target == nil {
+			if key == e.composition[len(e.composition)-1].Rule.Key {
+				// Double typing an affect key undoes it.
+				e.composition = UndoesTransformations(e.composition, e.getApplicableRules(key))
+				e.composition = append(e.composition, createAppendingTrans(key))
+				return
+			} else {
+				// Or an effect key may override other effect keys
+				e.composition = UndoesTransformations(e.composition, e.getApplicableRules(key))
+			}
+		}
+	}
 	if e.flags&EautoCorrect != 0 && (e.isSuperKey(key) || (!e.isToneKey(key) && hasSuperWord(e.composition))) {
 		if missingRule, found := FindMissingRuleForUo(e.composition, e.isSuperKey(key)); found {
 			var targets = FindMarkTargets(e.composition, missingRule)

@@ -60,9 +60,13 @@ func FindMissingRuleForUo(composition []*Transformation, isSuperKey bool) (Rule,
 	var full = strings.ToLower(Flatten(composition, NoTone|LowerCase))
 
 	if !isSuperKey {
-		var reg = regexp.MustCompile(`(h|th|kh)uơ\p{L}*`)
+		var reg = regexp.MustCompile(`uơ\p{L}*`)
 		if reg.MatchString(full) {
 			target = 'u'
+		}
+		var regUho = regexp.MustCompile(`ưo\p{L}*`)
+		if regUho.MatchString(full) {
+			target = 'o'
 		}
 	} else {
 		var reg = regexp.MustCompile(`^(h|th|kh)uo$`)

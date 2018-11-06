@@ -119,12 +119,12 @@ func TestTelex3(t *testing.T) {
 	ng := NewEngine("Telex 3", EstdFlags)
 	ng.ProcessString("[")
 	if ng.GetProcessedString(VietnameseMode) != "ươ" {
-		t.Errorf("Process [[], got [%v] expected [ươ]", ng.IsSpellingCorrect(NoTone))
+		t.Errorf("Process Telex 3 [[], got [%v] expected [ươ]", ng.GetProcessedString(VietnameseMode))
 	}
 	ng.Reset()
 	ng.ProcessString("{")
 	if ng.GetProcessedString(VietnameseMode) != "ƯƠ" {
-		t.Errorf("Process [{], got [%s] expected [ƯƠ]", ng.GetProcessedString(EnglishMode))
+		t.Errorf("Process Telex 3 [{], got [%s] expected [ƯƠ]", ng.GetProcessedString(EnglishMode))
 	}
 }
 
@@ -189,11 +189,38 @@ func TestDoubleBracketso(t *testing.T) {
 	ng := NewEngine("Telex 2", EstdFlags)
 	ng.ProcessString("tooss")
 	if ng.GetProcessedString(VietnameseMode) != "tôs" {
-		t.Errorf("TestDoubleBrackets, got [%v] expected [tôs]", ng.GetProcessedString(VietnameseMode))
+		t.Errorf("TestDoubleBrackets tooss, got [%v] expected [tôs]", ng.GetProcessedString(VietnameseMode))
 	}
 	ng.Reset()
 	ng.ProcessString("tosos")
 	if ng.GetProcessedString(VietnameseMode) != "tôs" {
-		t.Errorf("TestDoubleBrackets, got [%v] expected [tôs]", ng.GetProcessedString(VietnameseMode))
+		t.Errorf("TestDoubleBrackets tosos, got [%v] expected [tôs]", ng.GetProcessedString(VietnameseMode))
+	}
+}
+
+func TestDoubleW(t *testing.T) {
+	ng := NewEngine("Telex 2", EstdFlags)
+	ng.ProcessString("ww")
+	if ng.GetProcessedString(EnglishMode) != "w" {
+		t.Errorf("TestDoubleW, got [%v] expected [w]", ng.GetProcessedString(EnglishMode))
+	}
+	if ng.GetProcessedString(VietnameseMode) != "w" {
+		t.Errorf("TestDoubleW, got [%v] expected [w]", ng.GetProcessedString(VietnameseMode))
+	}
+}
+
+func TestDoubleW2(t *testing.T) {
+	ng := NewEngine("Telex 2", EstdFlags)
+	ng.ProcessString("wiw")
+	if ng.GetProcessedString(EnglishMode) != "uiw" {
+		t.Errorf("TestDoubleW, got [%v] expected [uiw]", ng.GetProcessedString(EnglishMode))
+	}
+}
+
+func TestProcessDuwoi(t *testing.T) {
+	ng := NewEngine("Telex 2", EstdFlags)
+	ng.ProcessString("duwoi")
+	if ng.GetProcessedString(VietnameseMode) != "dươi" {
+		t.Errorf("TestProcessDuwoi, got [%v] expected [dươi]", ng.GetProcessedString(VietnameseMode))
 	}
 }
