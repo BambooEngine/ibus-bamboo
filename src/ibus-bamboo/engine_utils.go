@@ -102,10 +102,14 @@ var keyPressChan = make(chan uint32)
 
 func (e *IBusBambooEngine) startAutoCommit() {
 	for {
+		var timeout = e.config.AutoCommitAfter
+		if e.config.Flags&bamboo.EfastCommitting != 0 {
+			timeout = int64(timeout / 2)
+		}
 		select {
 		case <-keyPressChan:
 			break
-		case <-time.After(3 * time.Second):
+		case <-time.After(time.Duration(timeout) * time.Millisecond):
 			var rawKeyLen = e.getRawKeyLen()
 			if rawKeyLen > 0 {
 				e.commitPreedit(0)

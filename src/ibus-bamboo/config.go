@@ -34,16 +34,18 @@ const (
 )
 
 type Config struct {
-	InputMethod string
-	Charset     string
-	Flags       uint
+	InputMethod     string
+	Charset         string
+	Flags           uint
+	AutoCommitAfter int64
 }
 
 func LoadConfig(engineName string) *Config {
 	var c = Config{
-		InputMethod: "Telex 2",
-		Charset:     "Unicode",
-		Flags:       bamboo.EstdFlags,
+		InputMethod:     "Telex 2",
+		Charset:         "Unicode",
+		Flags:           bamboo.EstdFlags,
+		AutoCommitAfter: 6000,
 	}
 
 	u, err := user.Current()
