@@ -163,7 +163,7 @@ func TestProcessToowiString(t *testing.T) {
 }
 
 func TestProcessAlooString(t *testing.T) {
-	ng := NewEngine("Telex", EstdFlags)
+	ng := NewEngine("Telex", EstdFlags&^EspellCheckEnabled)
 	ng.ProcessString("aloo")
 	if ng.GetProcessedString(VietnameseMode) != "alô" {
 		t.Errorf("Process [aloo], got [%s] expected [%s]", ng.GetProcessedString(VietnameseMode), "alô")
@@ -222,5 +222,13 @@ func TestProcessDuwoi(t *testing.T) {
 	ng.ProcessString("duwoi")
 	if ng.GetProcessedString(VietnameseMode) != "dươi" {
 		t.Errorf("TestProcessDuwoi, got [%v] expected [dươi]", ng.GetProcessedString(VietnameseMode))
+	}
+}
+
+func TestProcessRefresh(t *testing.T) {
+	ng := NewEngine("Telex 2", EstdFlags)
+	ng.ProcessString("reffresh")
+	if ng.GetProcessedString(EnglishMode) != "refresh" {
+		t.Errorf("TestProcessDuwoi, got [%v] expected [refresh]", ng.GetProcessedString(VietnameseMode))
 	}
 }

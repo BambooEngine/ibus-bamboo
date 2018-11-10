@@ -20,6 +20,7 @@
 package bamboo
 
 import (
+	"log"
 	"strings"
 	"unicode"
 )
@@ -55,19 +56,11 @@ func (f *BambooFlattener) GetCanvas(composition []*Transformation, mode Mode) []
 	var canvas []rune
 	apply_effect := func(callback func(rune, uint8) rune, trans *Transformation) {
 		if trans.Target == nil || len(canvas) <= int(trans.Target.Dest) {
+			log.Println("There's something wrong with canvas")
 			return
 		}
 		index := trans.Target.Dest
-		charWithEffect := callback(canvas[index], trans.Rule.Effect)
-		// Double typing an affect key undoes it. Btw, we're playing
-		// fast-and-loose here by replying on the fact that TONE_NONE equals
-		// MARK_NONE and equals 0.
-		if charWithEffect == canvas[index] {
-			canvas[index] = callback(canvas[index], 0)
-			//canvas = append(canvas, trans.Rule.Key)
-		} else {
-			canvas[index] = charWithEffect
-		}
+		canvas[index] = callback(canvas[index], trans.Rule.Effect)
 	}
 	for _, trans := range composition {
 		if trans.IsDeleted {

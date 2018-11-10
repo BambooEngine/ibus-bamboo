@@ -125,14 +125,17 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 		(inKeyMap(e.preediter.GetInputMethod().Keys, rune(keyVal))) {
 		var keyRune = rune(keyVal)
 		if state&IBUS_LOCK_MASK != 0 {
-			keyRune = unicode.ToUpper(keyRune)
-			// please process special keys like []/{}
+			if upperSpecialKey, found := upperSpecialKeys[keyRune]; found {
+				keyRune = upperSpecialKey
+			} else {
+				keyRune = unicode.ToUpper(keyRune)
+			}
 		}
 		if e.ignorePreedit {
 			return false, nil
 		}
 		e.preediter.ProcessChar(keyRune)
-		if e.config.Flags&bamboo.EfastCommitting != 0 && !e.preediter.IsSpellingSensible(bamboo.NoTone) {
+		if e.config.Flags&bamboo.EfastCommitting != 0 && !e.preediter.IsLikelySpellingCorrect(bamboo.NoTone) {
 			e.ignorePreedit = true
 			e.commitPreedit(0)
 			e.preediter.Reset()

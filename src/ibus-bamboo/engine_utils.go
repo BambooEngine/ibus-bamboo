@@ -32,6 +32,11 @@ const (
 	DiffNumpadKeypad = IBUS_KP_0 - IBUS_0
 )
 
+var upperSpecialKeys = map[rune]rune {
+	'[': '{',
+	']': '}',
+}
+
 var (
 	printableKeyCode = map[uint32]bool{
 		0x0039: true,
@@ -143,7 +148,7 @@ func (e *IBusBambooEngine) shouldFallbackToEnglish() bool {
 	if e.preediter.IsSpellingCorrect(bamboo.NoTone) {
 		return false
 	}
-	if e.preediter.IsSpellingSensible(bamboo.NoTone) {
+	if e.preediter.IsLikelySpellingCorrect(bamboo.NoTone) {
 		return false
 	}
 	return true

@@ -211,7 +211,7 @@ func isSpellingCorrect(composition []*Transformation, mode Mode) bool {
 	return false
 }
 
-func isSpellingSensible(composition []*Transformation, mode Mode) bool {
+func isLikelySpellingCorrect(composition []*Transformation, mode Mode) bool {
 	if len(composition) <= 1 {
 		return true
 	}

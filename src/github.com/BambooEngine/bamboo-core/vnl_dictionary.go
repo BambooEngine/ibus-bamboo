@@ -32,7 +32,7 @@ var vnl_vowels = [6]string{
 	"a â ă e o oo ô ơ oe u ư ua uâ uo uô ưo uơ ươ",
 	"oa oă",
 	"uo uơ",
-	"ai ao au âu ay ây eo eu êu ia ieu iêu iu oai oao oay oeo oi ôi ơi ua ưa uay uây ui ưi uoi uôi ươi uou ưou uơu ươu uu ưu uya uyu yeu yêu",
+	"ai ao au âu ay ây eo eu êu ia ieu iêu iu oai oao oay oeo oi ôi ơi ua ưa uay uây ui ưi uoi uơi ưoi uôi ươi uou ưou uơu ươu uu ưu uya uyu yeu yêu",
 }
 
 var vnl_lastConsonants = [3]string{
@@ -51,7 +51,7 @@ var vnl_vowel_lastConsonant = [6][]uint{
 	{0, 2},
 	{0, 1, 2},
 	{1, 2},
-	{2},
+	{1, 2},
 	// ignore
 }
 
