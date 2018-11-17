@@ -23,24 +23,24 @@ Format: 1.0
 Source: ibus-bamboo
 Binary: ibus-bamboo
 Architecture: any
-Version: 0.1.7-0
+Version: 0.1.8-0
 Maintainer: Luong Thanh Lam <ltlam93@gmail.com>
 Homepage: https://github.com/BambooEngine/ibus-bamboo
-Build-Depends: debhelper, golang, git
+Build-Depends: debhelper, golang, libx11-dev
 Files:
- 0 0 ibus-bamboo-0.1.7.tar.gz
+ 0 0 ibus-bamboo-0.1.8.tar.gz
 
 -----BEGIN PGP SIGNATURE-----
 
-iQGzBAEBCgAdFiEEoozA1sTSISdMhVWO8M0iy4gZZiEFAlvmxe8ACgkQ8M0iy4gZ
-ZiF5dgv/Z/Jc1YPcUkEJOZqYilkqLBYXBggd1UEdq1npQmqfAIcBwBO2Sx618vsD
-c5M8ckqE3ZzxH2sNCfYiTyIqYS8oLT0QWFbEfxBm6EbqwjhFaP225t2g0V7jrm9e
-IFz/bRXR4y8CnUTVLrtWKhaoujCByhFZIh+m6DLUWWE/bKAYEsqHO8FwbbFqsWjb
-Kr6dpOEdVqkW4+zztIIt8smC1LLlYcLv9MmfKAXVNuKUiUrKveEpb/SBd2rUik3m
-VYlyKcsp8CB4a+3FcX04XwOoBCeOPrbnxLdB2O3uOwAqOa2nPmwHVsRFkpd+MRSU
-U2nvpuxb89NiWT0f4LaJm653JJQScZcbaucRtBu8wVBbZvfvOJfLb+LT0DFq3QJy
-YFfHR2SNmgjuaF/CmYcNZ3lBC+bGT8DTZ+XTC0ftVtwohCQlOlCwM37BNyVolRuY
-WnBwDGGMObHJm/3lKWH/Wh8lTllLeQzB1g6B4i1W+f0KhPcNjrblI28unfSbRKHA
-7rAnsuE5
-=vMwS
+iQGzBAEBCgAdFiEEoozA1sTSISdMhVWO8M0iy4gZZiEFAlvxDYQACgkQ8M0iy4gZ
+ZiFezAv/cwC4BdUUetBsA2wiAFjy2NalUwy6DeGpq54NuzfOAY/N6SDkwV+Kaoaw
+pzOW1KPANUlVBWjkZDVbWdoH/uz4B5RPNxOLX3gxdV1gVyL/SgRbQsnFxqzTuYpl
+80s0WVXW/f5E3y+iso2AyKS8jxLOlcXeRLZb4s3kw4fabKF0Ku1zRq5UrMHAttOx
+EUNfG0HLaF3dLrOtINVFmB/KPhmDI27nlZjEUmgqXuDUgFcUn7lHSNu2j2AWN6X+
+/LF8f93I6MX3drWfVZoQXnSi5he5cpgWcWQzSCWD7zgFzEnNbm9p2bKGPOlOBZru
+NHFOg1BvN8bNI0N/7apX02xoMgLX6KeKaP+C8oQco5J51tzhE16bYc9IAx/qPCqb
+VtYmU2XHTDdqw+N0EY4MXAH7Lc8eL78Lv3YfybaCqwdpluTawdgKINBv7zGpwwbg
+pSJbn2MBXYHa3ho8dxDStx1tCdndk7Hf7oczWSJF6qYlbDbM6tckFGXKPW5Gen51
+FfolSbUM
+=zrGI
 -----END PGP SIGNATURE-----

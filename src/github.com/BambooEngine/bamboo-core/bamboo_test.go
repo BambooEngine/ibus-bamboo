@@ -25,22 +25,22 @@ import (
 
 func TestProcessString(t *testing.T) {
 	ng := NewEngine("Telex", EstdFlags)
-	ng.ProcessString("aw")
+	ng.ProcessString("aw", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode) != "ă" {
 		t.Errorf("Process [aw], got [%s] expected [%s]", ng.GetProcessedString(VietnameseMode), "ă")
 	}
 	ng.Reset()
-	ng.ProcessString("uwow")
+	ng.ProcessString("uwow", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode) != "ươ" {
 		t.Errorf("Process [uwow], got [%s] expected [%s]", ng.GetProcessedString(VietnameseMode), "ươ")
 	}
 	ng.Reset()
-	ng.ProcessString("chuaarn")
+	ng.ProcessString("chuaarn", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode) != "chuẩn" {
 		t.Errorf("Process [chuaarn], got [%s] expected [%s]", ng.GetProcessedString(VietnameseMode), "chuẩn")
 	}
 	ng.Reset()
-	ng.ProcessString("giamaf")
+	ng.ProcessString("giamaf", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode) != "giầm" {
 		t.Errorf("Process [giamaf], got [%s] expected [%s]", ng.GetProcessedString(VietnameseMode), "giầm")
 	}
@@ -48,12 +48,12 @@ func TestProcessString(t *testing.T) {
 
 func TestProcessDDString(t *testing.T) {
 	ng := NewEngine("Telex", EstdFlags)
-	ng.ProcessString("dd")
+	ng.ProcessString("dd", VietnameseMode)
 	if ng.IsSpellingCorrect(NoTone) != true {
 		t.Errorf("IsSpellingCorrect [dd], got [%v] expected [true]", ng.IsSpellingCorrect(NoTone))
 	}
 	ng.Reset()
-	ng.ProcessString("ddafi")
+	ng.ProcessString("ddafi", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode) != "đài" {
 		t.Errorf("Process [ddafi], got [%s] expected [%s]", ng.GetProcessedString(VietnameseMode), "đài")
 	}
@@ -61,7 +61,7 @@ func TestProcessDDString(t *testing.T) {
 
 func TestProcessMuoiwqString(t *testing.T) {
 	ng := NewEngine("Telex", EstdFlags)
-	ng.ProcessString("Muoiwq")
+	ng.ProcessString("Muoiwq", VietnameseMode)
 	if ng.GetProcessedString(EnglishMode) != "Muoiwq" {
 		t.Errorf("Process [Muoiwq], got [%s] expected [Muoiwq]", ng.GetProcessedString(EnglishMode))
 	}
@@ -69,7 +69,7 @@ func TestProcessMuoiwqString(t *testing.T) {
 
 func TestProcessThuowString(t *testing.T) {
 	ng := NewEngine("Telex", EstdFlags)
-	ng.ProcessString("Thuow")
+	ng.ProcessString("Thuow", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode) != "Thuơ" {
 		t.Errorf("Process [Thuow], got [%s] expected [%s]", ng.GetProcessedString(VietnameseMode), "Thuơ")
 	}
@@ -81,7 +81,7 @@ func TestProcessThuowString(t *testing.T) {
 
 func TestProcessUpperString(t *testing.T) {
 	ng := NewEngine("Telex", EstdFlags)
-	ng.ProcessString("VIEETJ")
+	ng.ProcessString("VIEETJ", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode) != "VIỆT" {
 		t.Errorf("Process [VIEETJ], got [%s] expected [VIỆT]", ng.GetProcessedString(VietnameseMode))
 	}
@@ -93,12 +93,12 @@ func TestProcessUpperString(t *testing.T) {
 
 func TestSpellingCheck(t *testing.T) {
 	ng := NewEngine("Telex", EstdFlags)
-	ng.ProcessString("noww")
+	ng.ProcessString("noww", VietnameseMode)
 	if ng.GetProcessedString(EnglishMode) != "now" {
 		t.Errorf("Process [noww], got [%s] expected [now]", ng.GetProcessedString(EnglishMode))
 	}
 	ng.Reset()
-	ng.ProcessString("sawss")
+	ng.ProcessString("sawss", VietnameseMode)
 	if ng.GetProcessedString(EnglishMode) != "saws" {
 		t.Errorf("Process [sawss], got [%s] expected [saws]", ng.GetProcessedString(EnglishMode))
 	}
@@ -106,7 +106,7 @@ func TestSpellingCheck(t *testing.T) {
 
 func TestProcessDD(t *testing.T) {
 	ng := NewEngine("Telex", EstdFlags)
-	ng.ProcessString("dd")
+	ng.ProcessString("dd", VietnameseMode)
 	if ng.IsSpellingCorrect(NoTone) != true {
 		t.Errorf("Check spelling for [dd], got [%v] expected [true]", ng.IsSpellingCorrect(NoTone))
 	}
@@ -117,12 +117,12 @@ func TestProcessDD(t *testing.T) {
 
 func TestTelex3(t *testing.T) {
 	ng := NewEngine("Telex 3", EstdFlags)
-	ng.ProcessString("[")
+	ng.ProcessString("[", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode) != "ươ" {
 		t.Errorf("Process Telex 3 [[], got [%v] expected [ươ]", ng.GetProcessedString(VietnameseMode))
 	}
 	ng.Reset()
-	ng.ProcessString("{")
+	ng.ProcessString("{", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode) != "ƯƠ" {
 		t.Errorf("Process Telex 3 [{], got [%s] expected [ƯƠ]", ng.GetProcessedString(EnglishMode))
 	}
@@ -130,7 +130,7 @@ func TestTelex3(t *testing.T) {
 
 func TestProcessNguwowfiString(t *testing.T) {
 	ng := NewEngine("Telex 2", EstdFlags)
-	ng.ProcessString("wowfi")
+	ng.ProcessString("wowfi", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode) != "ười" {
 		t.Errorf("Process [wowfi], got [%s] expected [%s]", ng.GetProcessedString(VietnameseMode), "ười")
 	}
@@ -138,7 +138,7 @@ func TestProcessNguwowfiString(t *testing.T) {
 
 func TestRemoveLastChar(t *testing.T) {
 	ng := NewEngine("Telex", EstdFlags)
-	ng.ProcessString("hanhj")
+	ng.ProcessString("hanhj", VietnameseMode)
 	ng.RemoveLastChar()
 	if ng.GetProcessedString(VietnameseMode) != "hạn" {
 		t.Errorf("Process [hanhj], got [%s] expected [%s]", ng.GetProcessedString(VietnameseMode), "hạn")
@@ -148,7 +148,7 @@ func TestRemoveLastChar(t *testing.T) {
 
 func TestProcessCatrString(t *testing.T) {
 	ng := NewEngine("Telex", EstdFlags)
-	ng.ProcessString("catr")
+	ng.ProcessString("catr", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode) != "catr" {
 		t.Errorf("Process [nguwowfi], got [%s] expected [%s]", ng.GetProcessedString(VietnameseMode), "catr")
 	}
@@ -156,7 +156,7 @@ func TestProcessCatrString(t *testing.T) {
 
 func TestProcessToowiString(t *testing.T) {
 	ng := NewEngine("Telex", EstdFlags)
-	ng.ProcessString("toowi")
+	ng.ProcessString("toowi", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode) != "tơi" {
 		t.Errorf("Process [toowi], got [%s] expected [tơi]", ng.GetProcessedString(VietnameseMode))
 	}
@@ -164,7 +164,7 @@ func TestProcessToowiString(t *testing.T) {
 
 func TestProcessAlooString(t *testing.T) {
 	ng := NewEngine("Telex", EstdFlags&^EspellCheckEnabled)
-	ng.ProcessString("aloo")
+	ng.ProcessString("aloo", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode) != "alô" {
 		t.Errorf("Process [aloo], got [%s] expected [%s]", ng.GetProcessedString(VietnameseMode), "alô")
 	}
@@ -172,7 +172,7 @@ func TestProcessAlooString(t *testing.T) {
 
 func TestSpellingCheckForGiw(t *testing.T) {
 	ng := NewEngine("Telex 2", EstdFlags)
-	ng.ProcessString("giw")
+	ng.ProcessString("giw", VietnameseMode)
 	if ng.IsSpellingCorrect(NoTone|NoMark) != true {
 		t.Errorf("TestSpellingCheckForGiw, got [%v] expected [%v]", ng.IsSpellingCorrect(NoTone|NoMark), true)
 	}
@@ -180,19 +180,19 @@ func TestSpellingCheckForGiw(t *testing.T) {
 
 func TestDoubleBrackets(t *testing.T) {
 	ng := NewEngine("Telex 2", EstdFlags)
-	ng.ProcessString("[[")
+	ng.ProcessString("[[", VietnameseMode)
 	if ng.GetProcessedString(EnglishMode) != "[" {
 		t.Errorf("TestDoubleBrackets, got [%v] expected [%v]", ng.GetProcessedString(EnglishMode), "[")
 	}
 }
 func TestDoubleBracketso(t *testing.T) {
 	ng := NewEngine("Telex 2", EstdFlags)
-	ng.ProcessString("tooss")
+	ng.ProcessString("tooss", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode) != "tôs" {
 		t.Errorf("TestDoubleBrackets tooss, got [%v] expected [tôs]", ng.GetProcessedString(VietnameseMode))
 	}
 	ng.Reset()
-	ng.ProcessString("tosos")
+	ng.ProcessString("tosos", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode) != "tôs" {
 		t.Errorf("TestDoubleBrackets tosos, got [%v] expected [tôs]", ng.GetProcessedString(VietnameseMode))
 	}
@@ -200,7 +200,7 @@ func TestDoubleBracketso(t *testing.T) {
 
 func TestDoubleW(t *testing.T) {
 	ng := NewEngine("Telex 2", EstdFlags)
-	ng.ProcessString("ww")
+	ng.ProcessString("ww", VietnameseMode)
 	if ng.GetProcessedString(EnglishMode) != "w" {
 		t.Errorf("TestDoubleW, got [%v] expected [w]", ng.GetProcessedString(EnglishMode))
 	}
@@ -211,7 +211,7 @@ func TestDoubleW(t *testing.T) {
 
 func TestDoubleW2(t *testing.T) {
 	ng := NewEngine("Telex 2", EstdFlags)
-	ng.ProcessString("wiw")
+	ng.ProcessString("wiw", VietnameseMode)
 	if ng.GetProcessedString(EnglishMode) != "uiw" {
 		t.Errorf("TestDoubleW, got [%v] expected [uiw]", ng.GetProcessedString(EnglishMode))
 	}
@@ -219,7 +219,7 @@ func TestDoubleW2(t *testing.T) {
 
 func TestProcessDuwoi(t *testing.T) {
 	ng := NewEngine("Telex 2", EstdFlags)
-	ng.ProcessString("duwoi")
+	ng.ProcessString("duwoi", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode) != "dươi" {
 		t.Errorf("TestProcessDuwoi, got [%v] expected [dươi]", ng.GetProcessedString(VietnameseMode))
 	}
@@ -227,8 +227,26 @@ func TestProcessDuwoi(t *testing.T) {
 
 func TestProcessRefresh(t *testing.T) {
 	ng := NewEngine("Telex 2", EstdFlags)
-	ng.ProcessString("reffresh")
+	ng.ProcessString("reff", VietnameseMode)
+	ng.ProcessString("resh", EnglishMode)
 	if ng.GetProcessedString(EnglishMode) != "refresh" {
 		t.Errorf("TestProcessDuwoi, got [%v] expected [refresh]", ng.GetProcessedString(VietnameseMode))
+	}
+}
+func TestProcessRefresh2(t *testing.T) {
+	ng := NewEngine("Telex 2", EstdFlags)
+	ng.ProcessString("reff", VietnameseMode)
+	ng.RemoveLastChar()
+	ng.ProcessChar('f', VietnameseMode)
+	if ng.GetProcessedString(VietnameseMode) != "rè" {
+		t.Errorf("TestProcessDuwoi, got [%v] expected [rè]", ng.GetProcessedString(VietnameseMode))
+	}
+}
+
+func TestProcessDDSeq(t *testing.T) {
+	ng := NewEngine("Telex 2", EstdFlags)
+	ng.ProcessString("oddp", VietnameseMode)
+	if ng.GetProcessedString(VietnameseMode) != "ođp" {
+		t.Errorf("TestProcessDDSeq, got [%v] expected [ođp]", ng.GetProcessedString(VietnameseMode))
 	}
 }

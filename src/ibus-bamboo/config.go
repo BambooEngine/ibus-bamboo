@@ -45,7 +45,7 @@ func LoadConfig(engineName string) *Config {
 		InputMethod:     "Telex 2",
 		Charset:         "Unicode",
 		Flags:           bamboo.EstdFlags,
-		AutoCommitAfter: 6000,
+		AutoCommitAfter: 3000,
 	}
 
 	u, err := user.Current()

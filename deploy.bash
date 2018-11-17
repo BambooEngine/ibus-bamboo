@@ -4,7 +4,7 @@ if [[ $TRAVIS_TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
   echo "Release tag: $TRAVIS_TAG detected"
 else
   echo "Release tag not found ($TRAVIS_TAG), do not deploy"
-  exit 0
+  # exit 0
 fi
 
 echo "Check OSC ENV ---------------------------------------------------------------------------------------------------"

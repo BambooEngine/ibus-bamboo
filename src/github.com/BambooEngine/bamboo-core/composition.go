@@ -202,7 +202,8 @@ func isSpellingCorrect(composition []*Transformation, mode Mode) bool {
 	}
 	if mode&NoTone != 0 {
 		str := Flatten(composition, NoTone|LowerCase)
-		if len([]rune(str)) <= 1 {
+		var chars = []rune(str)
+		if len(chars) <= 1 {
 			return true
 		}
 		ok, _ := LookupDictionary(str)
@@ -279,6 +280,17 @@ func UndoesTransformations(composition []*Transformation, applicableRules []Rule
 				}
 				break
 			}
+		}
+	}
+	return result
+}
+
+func freeComposition(composition []*Transformation) []*Transformation {
+	var result []*Transformation
+	result = append(result, composition...)
+	for i, trans := range composition {
+		if trans.IsDeleted {
+			result = RemoveTransIdx(result, i)
 		}
 	}
 	return result

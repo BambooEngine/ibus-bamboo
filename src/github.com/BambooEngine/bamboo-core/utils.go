@@ -149,3 +149,10 @@ func ParseSoundsFromTonelessWord(word string) []Sound {
 	}
 	return sounds
 }
+
+func IsBreakableConsonant(word string) bool {
+	if word == "d" {
+		return false
+	}
+	return isFirstConsonant(word)
+}

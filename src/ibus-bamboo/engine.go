@@ -28,7 +28,6 @@ import (
 	"os/exec"
 	"runtime/debug"
 	"sync"
-	"unicode"
 )
 
 type IBusBambooEngine struct {
@@ -125,17 +124,13 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 		(inKeyMap(e.preediter.GetInputMethod().Keys, rune(keyVal))) {
 		var keyRune = rune(keyVal)
 		if state&IBUS_LOCK_MASK != 0 {
-			if upperSpecialKey, found := upperSpecialKeys[keyRune]; found {
-				keyRune = upperSpecialKey
-			} else {
-				keyRune = unicode.ToUpper(keyRune)
-			}
+			keyRune = toUpper(keyRune)
 		}
 		if e.ignorePreedit {
 			return false, nil
 		}
-		e.preediter.ProcessChar(keyRune)
-		if e.config.Flags&bamboo.EfastCommitting != 0 && !e.preediter.IsLikelySpellingCorrect(bamboo.NoTone) {
+		e.preediter.ProcessChar(keyRune, e.getMode())
+		if e.config.Flags&bamboo.EfastCommitEnabled != 0 && !e.preediter.IsLikelySpellingCorrect(bamboo.NoTone) {
 			e.ignorePreedit = true
 			e.commitPreedit(0)
 			e.preediter.Reset()
@@ -144,18 +139,10 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 		e.updatePreedit()
 		return true, nil
 	} else {
-		if rawKeyLen > 0 {
-			if e.commitPreedit(keyVal) {
-				//lastKey already appended to commit string
-				return true, nil
-			} else {
-				//forward lastKey
-				e.ForwardKeyEvent(keyVal, keyCode, state)
-				return true, nil
-			}
-		}
-		//pre-edit empty, just forward key
-		return false, nil
+		e.commitPreedit(keyVal)
+		//forward lastKey
+		e.ForwardKeyEvent(keyVal, keyCode, state)
+		return true, nil
 	}
 }
 
@@ -166,23 +153,30 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 	e.RegisterProperties(e.propList)
 	e.HidePreeditText()
 	e.preediter.Reset()
+	log.Print("FocusIn.")
 
 	return nil
 }
 
 func (e *IBusBambooEngine) FocusOut() *dbus.Error {
+	log.Print("FocusOut.")
 	return nil
 }
 
 func (e *IBusBambooEngine) Reset() *dbus.Error {
+	log.Print("Reset.")
 	return nil
 }
 
 func (e *IBusBambooEngine) Enable() *dbus.Error {
+	mouseCaptureInit()
+	log.Print("Enable.")
 	return nil
 }
 
 func (e *IBusBambooEngine) Disable() *dbus.Error {
+	mouseCaptureExit()
+	log.Print("Disable.")
 	return nil
 }
 
@@ -233,11 +227,11 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 			e.config.Flags &= ^bamboo.EspellCheckEnabled
 		}
 	}
-	if propName == PropKeyFastCommitting {
+	if propName == PropKeyFastCommit {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.Flags |= bamboo.EfastCommitting
+			e.config.Flags |= bamboo.EfastCommitEnabled
 		} else {
-			e.config.Flags &= ^bamboo.EfastCommitting
+			e.config.Flags &= ^bamboo.EfastCommitEnabled
 		}
 	}
 	if isValidCharset(getCharsetFromPropKey(propName)) && propState == ibus.PROP_STATE_CHECKED {

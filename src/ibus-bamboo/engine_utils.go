@@ -25,47 +25,12 @@ import (
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
+	"strings"
 	"time"
 )
 
-const (
-	DiffNumpadKeypad = IBUS_KP_0 - IBUS_0
-)
-
-var upperSpecialKeys = map[rune]rune {
-	'[': '{',
-	']': '}',
-}
-
-var (
-	printableKeyCode = map[uint32]bool{
-		0x0039: true,
-		0x0002: true,
-		0x0003: true,
-		0x0004: true,
-		0x0005: true,
-		0x0006: true,
-		0x0007: true,
-		0x0008: true,
-		0x0009: true,
-		0x000a: true,
-		0x000b: true,
-		0x000c: true,
-		0x000d: true,
-		0x007c: true,
-		0x001a: true,
-		0x001b: true,
-		0x0027: true,
-		0x0028: true,
-		0x002b: true,
-		0x0033: true,
-		0x0034: true,
-		0x0035: true,
-		0x0059: true,
-	}
-)
-
 func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath {
+	defer mouseCaptureExit()
 
 	objectPath := dbus.ObjectPath(fmt.Sprintf("/org/freedesktop/IBus/Engine/bamboo/%d", time.Now().UnixNano()))
 
@@ -82,15 +47,6 @@ func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath
 
 	go engine.startAutoCommit()
 
-	onMouseClick = func() {
-		engine.Lock()
-		defer engine.Unlock()
-		var rawKeyLen = engine.getRawKeyLen()
-		if rawKeyLen > 0 {
-			engine.HidePreeditText()
-			engine.preediter.Reset()
-		}
-	}
 	onMouseMove = func() {
 		engine.Lock()
 		defer engine.Unlock()
@@ -108,8 +64,8 @@ var keyPressChan = make(chan uint32)
 func (e *IBusBambooEngine) startAutoCommit() {
 	for {
 		var timeout = e.config.AutoCommitAfter
-		if e.config.Flags&bamboo.EfastCommitting != 0 {
-			timeout = int64(timeout / 2)
+		if e.config.Flags&bamboo.EfastCommitEnabled == 0 {
+			timeout = 10 * e.config.AutoCommitAfter
 		}
 		select {
 		case <-keyPressChan:
@@ -130,19 +86,29 @@ func (e *IBusBambooEngine) getRawKeyLen() int {
 func (e *IBusBambooEngine) updatePreedit() {
 	var processedStr = e.getPreeditString()
 	var preeditLen = uint32(len([]rune(processedStr)))
-	if preeditLen > 0 {
-		var ibusText = ibus.NewText(processedStr)
-		ibusText.AppendAttr(ibus.IBUS_ATTR_TYPE_UNDERLINE, ibus.IBUS_ATTR_UNDERLINE_SINGLE, 0, preeditLen)
+	var ibusText = ibus.NewText(processedStr)
+	ibusText.AppendAttr(ibus.IBUS_ATTR_TYPE_UNDERLINE, ibus.IBUS_ATTR_UNDERLINE_SINGLE, 0, preeditLen)
 
-		e.UpdatePreeditTextWithMode(ibusText, preeditLen, true, ibus.IBUS_ENGINE_PREEDIT_COMMIT)
-	} else {
+	e.UpdatePreeditTextWithMode(ibusText, preeditLen, true, ibus.IBUS_ENGINE_PREEDIT_COMMIT)
+	if preeditLen == 0 {
 		e.HidePreeditText()
 		e.preediter.Reset()
 	}
+	mouseCaptureUnlock()
 }
 
 func (e *IBusBambooEngine) shouldFallbackToEnglish() bool {
+	// if spell check is disable, return false
 	if e.config.Flags&bamboo.EspellCheckEnabled == 0 {
+		return false
+	}
+	var vnSeq = e.preediter.GetProcessedString(bamboo.VietnameseMode)
+	var vnRunes = []rune(vnSeq)
+	if len(vnRunes) == 0 {
+		return false
+	}
+	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation
+	if vnRunes[len(vnRunes)-1] == 'd' || strings.ContainsRune(vnSeq, 'đ') {
 		return false
 	}
 	if e.preediter.IsSpellingCorrect(bamboo.NoTone) {
@@ -154,9 +120,29 @@ func (e *IBusBambooEngine) shouldFallbackToEnglish() bool {
 	return true
 }
 
+func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
+	// if spell check is disable, return false
+	if e.config.Flags&bamboo.EspellCheckEnabled == 0 {
+		return false
+	}
+	var vnSeq = e.preediter.GetProcessedString(bamboo.VietnameseMode)
+	var vnRunes = []rune(vnSeq)
+	if len(vnRunes) == 0 {
+		return false
+	}
+	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation
+	if strings.ContainsRune(vnSeq, 'đ') {
+		return false
+	}
+	if e.preediter.IsSpellingCorrect(bamboo.NoTone) {
+		return false
+	}
+	return true
+}
+
 func (e *IBusBambooEngine) getCommitString() string {
 	var processedStr string
-	if e.config.Flags&bamboo.EspellCheckEnabled != 0 && !e.preediter.IsSpellingCorrect(bamboo.NoTone) {
+	if e.mustFallbackToEnglish() {
 		processedStr = e.preediter.GetProcessedString(bamboo.EnglishMode)
 		return processedStr
 	}
@@ -166,39 +152,28 @@ func (e *IBusBambooEngine) getCommitString() string {
 }
 
 func (e *IBusBambooEngine) getPreeditString() string {
-	var processedStr string
 	if e.shouldFallbackToEnglish() {
-		processedStr = e.preediter.GetProcessedString(bamboo.EnglishMode)
-		return processedStr
+		return e.preediter.GetProcessedString(bamboo.EnglishMode)
 	}
-	processedStr = e.preediter.GetProcessedString(bamboo.VietnameseMode)
-	return processedStr
+	return e.preediter.GetProcessedString(bamboo.VietnameseMode)
 }
 
-func (e *IBusBambooEngine) commitPreedit(lastKey uint32) bool {
-	var keyAppended = false
+func (e *IBusBambooEngine) getMode() bamboo.Mode {
+	if e.shouldFallbackToEnglish() {
+		return bamboo.EnglishMode
+	}
+	return bamboo.VietnameseMode
+}
+
+func (e *IBusBambooEngine) commitPreedit(lastKey uint32) {
 	var commitStr string
 	commitStr += e.getCommitString()
 	e.preediter.Reset()
-
-	//Convert num-pad key to normal number
-	if (lastKey >= IBUS_KP_0 && lastKey <= IBUS_KP_9) ||
-		(lastKey >= IBUS_KP_Multiply && lastKey <= IBUS_KP_Divide) {
-		lastKey = lastKey - DiffNumpadKeypad
-	}
-
-	if lastKey >= 0x20 && lastKey <= 0xFF {
-		//append printable keys
-		commitStr += string(lastKey)
-		keyAppended = true
-	}
-
-	e.HidePreeditText()
 
 	for _, chr := range []rune(commitStr) {
 		e.CommitText(ibus.NewText(string(chr)))
 	}
 	//e.CommitText(ibus.NewText(commitStr))
 
-	return keyAppended
+	e.HidePreeditText()
 }

@@ -23,7 +23,22 @@ package main
 import (
 	"github.com/BambooEngine/bamboo-core"
 	"strings"
+	"unicode"
 )
+
+func toUpper(keyRune rune) rune {
+	var upperSpecialKeys = map[rune]rune{
+		'[': '{',
+		']': '}',
+	}
+
+	if upperSpecialKey, found := upperSpecialKeys[keyRune]; found {
+		keyRune = upperSpecialKey
+	} else {
+		keyRune = unicode.ToUpper(keyRune)
+	}
+	return keyRune
+}
 
 func inKeyMap(keys []rune, key rune) bool {
 	for _, k := range keys {

@@ -30,10 +30,7 @@ sudo apt-get install ibus-bamboo
 ibus restart
 ```
 
-**Lệnh bên dưới cho phép đọc event chuột, không bắt buộc nhưng cần để ibus-bamboo hoạt động tốt**
-```sh
-sudo usermod -a -G input $USER
-```
+*Hướng dẫn cài đặt từ mã nguồn: [wiki](https://github.com/BambooEngine/ibus-bamboo/wiki/H%C6%B0%E1%BB%9Bng-d%E1%BA%ABn-build-t%E1%BB%AB-source)*
 
 ### Gỡ bỏ
 ```
@@ -45,10 +42,6 @@ Sử dụng
 -------------
 * Dùng phím tắt mặc định của IBus (thường là ⊞Win+Space) để chuyển đổi giữa các bộ gõ
 * ibus-bamboo dùng pre-edit để xử lý phím gõ, mặc định sẽ có gạch chân chữ khi đang gõ
-* **Khi pre-edit chưa kết thúc mà nhấn chuột vào chỗ khác thì có 3 khả năng xảy ra tùy chương trình**
-    * **Chữ đang gõ bị mất**
-    * **Chữ đang gõ được commit vào vị trí mới con trỏ**
-    * **Chữ đang gõ được commit vào vị trí cũ**
 * **Vì vậy đừng quên commit: khi gõ chỉ một chữ, hoặc chữ cuối câu, hoặc sửa chữ giữa câu: nhấn phím *Ctrl* để commit.**
 
 

@@ -50,8 +50,10 @@ const (
 	EmarcoEnabled
 	EautoNonVnRestore
 	EautoCorrect
-	EfastCommitting
-	EstdFlags = EfreeToneMarking | EstdToneStyle | EautoCorrect | EspellCheckEnabled
+	EfastCommitEnabled
+	EautoCommitEnabled
+	EddFreeStyle
+	EstdFlags = EfreeToneMarking | EstdToneStyle | EautoCorrect | EspellCheckEnabled | EddFreeStyle
 )
 
 type Transformation struct {
@@ -65,8 +67,8 @@ type Transformation struct {
 type IEngine interface {
 	SetFlag(uint)
 	GetInputMethod() InputMethod
-	ProcessChar(rune)
-	ProcessString(string)
+	ProcessChar(rune, Mode)
+	ProcessString(string, Mode)
 	GetProcessedString(Mode) string
 	IsSpellingCorrect(Mode) bool
 	IsLikelySpellingCorrect(Mode) bool
@@ -190,12 +192,9 @@ func (e *BambooEngine) createCompositionForRule(rule Rule, isUpperKey bool) []*T
 	var trans = new(Transformation)
 	trans.Rule = rule
 	trans.IsUpperCase = isUpperKey
-	if e.flags&EspellCheckEnabled!=0 && !isLikelySpellingCorrect(e.composition, NoTone|LowerCase) {
-	} else {
-		if target, applicableRule := e.findTargetForKey(rule.Key); target != nil {
-			trans.Rule = applicableRule
-			trans.Target = target
-		}
+	if target, applicableRule := e.findTargetForKey(rule.Key); target != nil {
+		trans.Rule = applicableRule
+		trans.Target = target
 	}
 	transformations = append(transformations, trans)
 	for _, appendedRule := range trans.Rule.AppendedRules {
@@ -257,10 +256,16 @@ func (e *BambooEngine) refreshLastToneTarget() {
 	}
 }
 
-func (e *BambooEngine) ProcessChar(key rune) {
+func (e *BambooEngine) ProcessChar(key rune, mode Mode) {
+	if mode&EnglishMode != 0 {
+		e.composition = append(e.composition, createAppendingTrans(key))
+		return
+	}
 	if len(e.composition) > 0 && e.isEffectiveKey(key) {
+		// garbage collection
+		e.composition = freeComposition(e.composition)
+
 		if target, _ := e.findTargetForKey(key); target == nil {
-			// TODO: need to refactor this
 			if key == e.composition[len(e.composition)-1].Rule.Key {
 				// Double typing an effect key undoes it and its effects.
 				e.composition = UndoesTransformations(e.composition, e.getApplicableRules(key))
@@ -272,6 +277,7 @@ func (e *BambooEngine) ProcessChar(key rune) {
 			}
 		}
 	}
+	// TODO: need to refactor
 	if e.flags&EautoCorrect != 0 && (e.isSuperKey(key) || (!e.isToneKey(key) && hasSuperWord(e.composition))) {
 		if missingRule, found := FindMissingRuleForUo(e.composition, e.isSuperKey(key)); found {
 			var targets = FindMarkTargets(e.composition, missingRule)
@@ -301,9 +307,9 @@ func (e *BambooEngine) ProcessChar(key rune) {
 	}
 }
 
-func (e *BambooEngine) ProcessString(str string) {
+func (e *BambooEngine) ProcessString(str string, mode Mode) {
 	for _, chr := range []rune(str) {
-		e.ProcessChar(chr)
+		e.ProcessChar(chr, mode)
 	}
 }
 

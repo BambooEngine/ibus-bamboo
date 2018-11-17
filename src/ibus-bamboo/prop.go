@@ -32,7 +32,7 @@ const (
 	PropKeyFreeToneMarking  = "tone_free_marking"
 	PropKeySpellingChecking = "spelling_checking"
 	PropKeyVnConvert        = "vn_convert"
-	PropKeyFastCommitting   = "fast_commit"
+	PropKeyFastCommit       = "fast_commit"
 )
 
 var runMode = ""
@@ -198,7 +198,7 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 	if c.Flags&bamboo.EspellCheckEnabled != 0 {
 		spellingChecked = ibus.PROP_STATE_CHECKED
 	}
-	if c.Flags&bamboo.EfastCommitting != 0 {
+	if c.Flags&bamboo.EfastCommitEnabled != 0 {
 		fastCommittingChecked = ibus.PROP_STATE_CHECKED
 	}
 
@@ -241,10 +241,10 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 		},
 		&ibus.Property{
 			Name:      "IBusProperty",
-			Key:       PropKeyFastCommitting,
+			Key:       PropKeyFastCommit,
 			Type:      ibus.PROP_TYPE_TOGGLE,
-			Label:     dbus.MakeVariant(ibus.NewText("Fast committing")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("Fast committing")),
+			Label:     dbus.MakeVariant(ibus.NewText("Fast commit")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Fast commit")),
 			Sensitive: true,
 			Visible:   true,
 			State:     fastCommittingChecked,
