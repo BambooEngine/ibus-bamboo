@@ -46,14 +46,9 @@ const (
 const (
 	EfreeToneMarking uint = 1 << iota
 	EstdToneStyle
-	EspellCheckEnabled
-	EmarcoEnabled
-	EautoNonVnRestore
-	EautoCorrect
-	EfastCommitEnabled
-	EautoCommitEnabled
+	EautoCorrectEnabled
 	EddFreeStyle
-	EstdFlags = EfreeToneMarking | EstdToneStyle | EautoCorrect | EspellCheckEnabled | EddFreeStyle
+	EstdFlags = EfreeToneMarking | EstdToneStyle | EautoCorrectEnabled | EddFreeStyle
 )
 
 type Transformation struct {
@@ -71,7 +66,7 @@ type IEngine interface {
 	ProcessString(string, Mode)
 	GetProcessedString(Mode) string
 	IsSpellingCorrect(Mode) bool
-	IsLikelySpellingCorrect(Mode) bool
+	IsSpellingLikelyCorrect(Mode) bool
 	Reset()
 	RemoveLastChar()
 }
@@ -163,15 +158,15 @@ func (e *BambooEngine) getApplicableRules(key rune) []Rule {
 
 func (e *BambooEngine) findTargetForKey(key rune) (*Transformation, Rule) {
 	var applicableRules = e.getApplicableRules(key)
-	var lastAppending = FindLastAppendingTrans(e.composition)
+	var lastAppending = findLastAppendingTrans(e.composition)
 	for _, applicableRule := range applicableRules {
 		var target *Transformation = nil
 		if applicableRule.EffectType == MarkTransformation {
-			return FindMarkTarget(e.composition, applicableRules)
+			return findMarkTarget(e.composition, applicableRules)
 		} else if applicableRule.EffectType == ToneTransformation {
 			if e.flags&EfreeToneMarking != 0 {
 				if hasValidTone(e.composition, Tone(applicableRule.Effect)) {
-					target = FindToneTarget(e.composition, e.flags&EstdToneStyle != 0)
+					target = findToneTarget(e.composition, e.flags&EstdToneStyle != 0)
 					if !isFree(e.composition, target, ToneTransformation) {
 						target = nil
 					}
@@ -207,8 +202,8 @@ func (e *BambooEngine) IsSpellingCorrect(mode Mode) bool {
 	return isSpellingCorrect(e.composition, mode)
 }
 
-func (e *BambooEngine) IsLikelySpellingCorrect(mode Mode) bool {
-	return isLikelySpellingCorrect(e.composition, mode)
+func (e *BambooEngine) IsSpellingLikelyCorrect(mode Mode) bool {
+	return isSpellingLikelyCorrect(e.composition, mode)
 }
 
 func (e *BambooEngine) createCompositionForKey(chr rune) []*Transformation {
@@ -218,7 +213,7 @@ func (e *BambooEngine) createCompositionForKey(chr rune) []*Transformation {
 	}
 	chr = unicode.ToLower(chr)
 	var transformations []*Transformation
-	transformations = e.createCompositionForRule(FindAppendingRule(e.inputMethod.Rules, chr), isUpperCase)
+	transformations = e.createCompositionForRule(findAppendingRule(e.inputMethod.Rules, chr), isUpperCase)
 	return transformations
 }
 
@@ -237,17 +232,17 @@ func (e *BambooEngine) GetProcessedString(mode Mode) string {
 /***** BEGIN SIDE-EFFECT METHODS ******/
 
 func (e *BambooEngine) refreshLastToneTarget() {
-	// Refresh the tone position of the rightmost vowels
-	var rightmostVowels = GetRightMostVowels(e.composition)
+	// Refresh the tone position of the rightmost vowelSeq
+	var rightmostVowels = getRightMostVowels(e.composition)
 	if len(rightmostVowels) <= 0 {
 		return
 	}
-	var rightmostVowelPos = FindTransPos(e.composition, rightmostVowels[0])
+	var rightmostVowelPos = findTransPos(e.composition, rightmostVowels[0])
 	for i := len(e.composition) - 1; i >= 0; i-- {
 		trans := e.composition[i]
 		if trans.Rule.EffectType == ToneTransformation {
-			var newTarget = FindToneTarget(e.composition, e.flags&EstdToneStyle != 0)
-			var tonePos = FindTransPos(e.composition, trans)
+			var newTarget = findToneTarget(e.composition, e.flags&EstdToneStyle != 0)
+			var tonePos = findTransPos(e.composition, trans)
 			if tonePos > rightmostVowelPos {
 				trans.Target = newTarget
 				break
@@ -268,19 +263,19 @@ func (e *BambooEngine) ProcessChar(key rune, mode Mode) {
 		if target, _ := e.findTargetForKey(key); target == nil {
 			if key == e.composition[len(e.composition)-1].Rule.Key {
 				// Double typing an effect key undoes it and its effects.
-				e.composition = UndoesTransformations(e.composition, e.getApplicableRules(key))
+				e.composition = undoesTransformations(e.composition, e.getApplicableRules(key))
 				e.composition = append(e.composition, createAppendingTrans(key))
 				return
 			} else {
 				// Or an effect key may override other effect keys
-				e.composition = UndoesTransformations(e.composition, e.getApplicableRules(key))
+				e.composition = undoesTransformations(e.composition, e.getApplicableRules(key))
 			}
 		}
 	}
 	// TODO: need to refactor
-	if e.flags&EautoCorrect != 0 && (e.isSuperKey(key) || (!e.isToneKey(key) && hasSuperWord(e.composition))) {
-		if missingRule, found := FindMissingRuleForUo(e.composition, e.isSuperKey(key)); found {
-			var targets = FindMarkTargets(e.composition, missingRule)
+	if e.flags&EautoCorrectEnabled != 0 && (e.isSuperKey(key) || (!e.isToneKey(key) && hasSuperWord(e.composition))) {
+		if missingRule, found := findMissingRuleForUo(e.composition, e.isSuperKey(key)); found {
+			var targets = findMarkTargets(e.composition, missingRule)
 			if len(targets) > 0 {
 				virtualTrans := &Transformation{
 					Rule:   missingRule,
@@ -318,10 +313,10 @@ func (e *BambooEngine) Reset() {
 }
 
 func (e *BambooEngine) RemoveLastChar() {
-	var lastAppending = FindLastAppendingTrans(e.composition)
-	var transformations = GetTransformationsTargetTo(e.composition, lastAppending)
+	var lastAppending = findLastAppendingTrans(e.composition)
+	var transformations = getTransformationsTargetTo(e.composition, lastAppending)
 	for _, trans := range append(transformations, lastAppending) {
-		e.composition = RemoveTrans(e.composition, trans)
+		e.composition = removeTrans(e.composition, trans)
 	}
 }
 

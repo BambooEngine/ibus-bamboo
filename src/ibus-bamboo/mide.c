@@ -1,5 +1,6 @@
 #include <X11/Xlib.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <pthread.h>
 #include "_cgo_export.h"
 #define CAPTURE_MOUSE_MOVE_DELTA        50
@@ -26,10 +27,12 @@ void* thread_mouse_capture(void* data)
         if (mcap_running == 0)
             return NULL;
         rt = XGrabPointer(dpy, w, 0, ButtonPressMask | PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None, CurrentTime);
-        pthread_mutex_trylock(&mutex_mcap); // set mutex to lock status, so this thread will wait until next unlock (by update preedit string)
-        if (rt != 0)
-            continue;
+        if (rt != 0) {
+            printf("xgrab pointer fail.\n");
+            //continue;
+        }
         XPeekEvent(dpy, &event);
+        pthread_mutex_trylock(&mutex_mcap); // set mutex to lock status, so this thread will wait until next unlock (by update preedit string)
         XUngrabPointer(dpy, CurrentTime);
         XSync(dpy, 1);
 

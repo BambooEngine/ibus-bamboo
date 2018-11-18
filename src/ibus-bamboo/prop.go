@@ -1,6 +1,5 @@
 /*
  * Bamboo - A Vietnamese Input method editor
- * Copyright (C) 2018 Nguyen Cong Hoang <hoangnc.jp@gmail.com>
  * Copyright (C) 2018 Luong Thanh Lam <ltlam93@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -195,10 +194,10 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 	if c.Flags&bamboo.EfreeToneMarking != 0 {
 		toneFreeMarkingChecked = ibus.PROP_STATE_CHECKED
 	}
-	if c.Flags&bamboo.EspellCheckEnabled != 0 {
+	if c.IBflags&IBspellCheckEnabled != 0 {
 		spellingChecked = ibus.PROP_STATE_CHECKED
 	}
-	if c.Flags&bamboo.EfastCommitEnabled != 0 {
+	if c.IBflags&IBfastCommitEnabled != 0 {
 		fastCommittingChecked = ibus.PROP_STATE_CHECKED
 	}
 

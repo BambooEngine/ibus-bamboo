@@ -1,6 +1,5 @@
 /*
  * Bamboo - A Vietnamese Input method editor
- * Copyright (C) 2018 Nguyen Cong Hoang <hoangnc.jp@gmail.com>
  * Copyright (C) 2018 Luong Thanh Lam <ltlam93@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,12 +20,11 @@
 package main
 
 import (
+	"fmt"
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
-	"log"
 	"os/exec"
-	"runtime/debug"
 	"sync"
 )
 
@@ -117,7 +115,7 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 		}
 		return false, nil
 	}
-	log.Printf("keyCode 0x%04x keyval 0x%04x | %c", keyCode, keyVal, rune(keyVal))
+	fmt.Printf("keyCode 0x%04x keyval 0x%04x | %c\n", keyCode, keyVal, rune(keyVal))
 
 	if (keyVal >= 'a' && keyVal <= 'z') ||
 		(keyVal >= 'A' && keyVal <= 'Z') ||
@@ -130,7 +128,7 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 			return false, nil
 		}
 		e.preediter.ProcessChar(keyRune, e.getMode())
-		if e.config.Flags&bamboo.EfastCommitEnabled != 0 && !e.preediter.IsLikelySpellingCorrect(bamboo.NoTone) {
+		if e.config.IBflags&IBfastCommitEnabled != 0 && !e.preediter.IsSpellingLikelyCorrect(bamboo.NoTone) {
 			e.ignorePreedit = true
 			e.commitPreedit(0)
 			e.preediter.Reset()
@@ -153,30 +151,28 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 	e.RegisterProperties(e.propList)
 	e.HidePreeditText()
 	e.preediter.Reset()
-	log.Print("FocusIn.")
+	fmt.Print("FocusIn.")
 
 	return nil
 }
 
 func (e *IBusBambooEngine) FocusOut() *dbus.Error {
-	log.Print("FocusOut.")
+	fmt.Print("FocusOut.")
 	return nil
 }
 
 func (e *IBusBambooEngine) Reset() *dbus.Error {
-	log.Print("Reset.")
+	fmt.Print("Reset.")
 	return nil
 }
 
 func (e *IBusBambooEngine) Enable() *dbus.Error {
-	mouseCaptureInit()
-	log.Print("Enable.")
+	fmt.Print("Enable.")
 	return nil
 }
 
 func (e *IBusBambooEngine) Disable() *dbus.Error {
-	mouseCaptureExit()
-	log.Print("Disable.")
+	fmt.Print("Disable.")
 	return nil
 }
 
@@ -195,8 +191,6 @@ func (e *IBusBambooEngine) SetContentType(purpose uint32, hints uint32) *dbus.Er
 
 //@method(in_signature="su")
 func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *dbus.Error {
-	debug.FreeOSMemory()
-
 	if propName == PropKeyAbout {
 		exec.Command("xdg-open", HomePage).Start()
 		return nil
@@ -222,16 +216,18 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	}
 	if propName == PropKeySpellingChecking {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.Flags |= bamboo.EspellCheckEnabled
+			e.config.IBflags |= IBspellCheckEnabled
+			e.config.IBflags |= IBautoNonVnRestore
 		} else {
-			e.config.Flags &= ^bamboo.EspellCheckEnabled
+			e.config.IBflags &= ^IBspellCheckEnabled
+			e.config.IBflags &= ^IBautoNonVnRestore
 		}
 	}
 	if propName == PropKeyFastCommit {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.Flags |= bamboo.EfastCommitEnabled
+			e.config.IBflags |= IBfastCommitEnabled
 		} else {
-			e.config.Flags &= ^bamboo.EfastCommitEnabled
+			e.config.IBflags &= ^IBfastCommitEnabled
 		}
 	}
 	if isValidCharset(getCharsetFromPropKey(propName)) && propState == ibus.PROP_STATE_CHECKED {

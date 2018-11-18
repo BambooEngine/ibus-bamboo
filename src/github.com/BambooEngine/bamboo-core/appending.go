@@ -21,7 +21,7 @@ package bamboo
 
 import "unicode"
 
-func FindAppendingRule(rules []Rule, key rune) Rule {
+func findAppendingRule(rules []Rule, key rune) Rule {
 	var result Rule
 	result.EffectType = Appending
 	result.Key = key
@@ -42,8 +42,8 @@ func FindAppendingRule(rules []Rule, key rune) Rule {
 	return result
 }
 
-func FindLastAppendingTrans(composition []*Transformation) *Transformation {
-	for i:=len(composition)-1;i>=0;i-- {
+func findLastAppendingTrans(composition []*Transformation) *Transformation {
+	for i := len(composition) - 1; i >= 0; i-- {
 		var trans = composition[i]
 		if trans.Rule.EffectType == Appending {
 			return trans
@@ -52,8 +52,8 @@ func FindLastAppendingTrans(composition []*Transformation) *Transformation {
 	return nil
 }
 
-func FindNextAppendingTransformation(composition []*Transformation, trans *Transformation) (*Transformation, bool) {
-	fromIndex := FindTransformationIndex(composition, trans)
+func findNextAppendingTransformation(composition []*Transformation, trans *Transformation) (*Transformation, bool) {
+	fromIndex := findTransformationIndex(composition, trans)
 	if fromIndex == -1 {
 		return nil, false
 	}
@@ -72,9 +72,18 @@ func createAppendingTrans(key rune) *Transformation {
 	return &Transformation{
 		IsUpperCase: unicode.IsUpper(key),
 		Rule: Rule{
-			Key: unicode.ToLower(key),
-			EffectOn: unicode.ToLower(key),
+			Key:        unicode.ToLower(key),
+			EffectOn:   unicode.ToLower(key),
 			EffectType: Appending,
 		},
 	}
+}
+func getAppendingComposition(composition []*Transformation) []*Transformation {
+	var appendingTransformations []*Transformation
+	for _, trans := range composition {
+		if trans.Rule.EffectType == Appending {
+			appendingTransformations = append(appendingTransformations, trans)
+		}
+	}
+	return appendingTransformations
 }

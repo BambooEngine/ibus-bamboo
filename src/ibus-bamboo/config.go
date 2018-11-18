@@ -1,6 +1,5 @@
 /*
  * Bamboo - A Vietnamese Input method editor
- * Copyright (C) 2018 Nguyen Cong Hoang <hoangnc.jp@gmail.com>
  * Copyright (C) 2018 Luong Thanh Lam <ltlam93@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -33,10 +32,22 @@ const (
 	configFile = "%s/.config/ibus/ibus-%s.config.json"
 )
 
+const (
+	IBfastCommitEnabled uint = 1 << iota
+	IBmarcoEnabled
+	IBautoCommitEnabled
+	IBautoCommitCseqEnabled
+	IBspellCheckEnabled
+	IBautoNonVnRestore
+	IBddFreeStyle
+	IBstdFlags = IBspellCheckEnabled | IBautoNonVnRestore | IBddFreeStyle | IBautoCommitEnabled
+)
+
 type Config struct {
 	InputMethod     string
 	Charset         string
 	Flags           uint
+	IBflags         uint
 	AutoCommitAfter int64
 }
 
@@ -45,6 +56,7 @@ func LoadConfig(engineName string) *Config {
 		InputMethod:     "Telex 2",
 		Charset:         "Unicode",
 		Flags:           bamboo.EstdFlags,
+		IBflags:         IBstdFlags,
 		AutoCommitAfter: 3000,
 	}
 

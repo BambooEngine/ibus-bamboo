@@ -3,7 +3,6 @@ Hash: SHA512
 
 #
 # Bamboo - A Vietnamese Input method editor
-# Copyright (C) 2018 Nguyen Cong Hoang <hoangnc.jp@gmail.com>
 # Copyright (C) 2018 Luong Thanh Lam <ltlam93@gmail.com>
 #
 # This program is free software: you can redistribute it and/or modify
@@ -32,15 +31,15 @@ Files:
 
 -----BEGIN PGP SIGNATURE-----
 
-iQGzBAEBCgAdFiEEoozA1sTSISdMhVWO8M0iy4gZZiEFAlvxDYQACgkQ8M0iy4gZ
-ZiFezAv/cwC4BdUUetBsA2wiAFjy2NalUwy6DeGpq54NuzfOAY/N6SDkwV+Kaoaw
-pzOW1KPANUlVBWjkZDVbWdoH/uz4B5RPNxOLX3gxdV1gVyL/SgRbQsnFxqzTuYpl
-80s0WVXW/f5E3y+iso2AyKS8jxLOlcXeRLZb4s3kw4fabKF0Ku1zRq5UrMHAttOx
-EUNfG0HLaF3dLrOtINVFmB/KPhmDI27nlZjEUmgqXuDUgFcUn7lHSNu2j2AWN6X+
-/LF8f93I6MX3drWfVZoQXnSi5he5cpgWcWQzSCWD7zgFzEnNbm9p2bKGPOlOBZru
-NHFOg1BvN8bNI0N/7apX02xoMgLX6KeKaP+C8oQco5J51tzhE16bYc9IAx/qPCqb
-VtYmU2XHTDdqw+N0EY4MXAH7Lc8eL78Lv3YfybaCqwdpluTawdgKINBv7zGpwwbg
-pSJbn2MBXYHa3ho8dxDStx1tCdndk7Hf7oczWSJF6qYlbDbM6tckFGXKPW5Gen51
-FfolSbUM
-=zrGI
+iQGzBAEBCgAdFiEEoozA1sTSISdMhVWO8M0iy4gZZiEFAlvzXsIACgkQ8M0iy4gZ
+ZiFtSAv/dFTOQiloN3A5qJ4WpW4/OxhzH6bF/HINAqRGNls9S6MJnU11/k1C0E5z
+Eny0gFX7V9rKLB1mECKtmqa8N+IBlYy1zpNUGhGqgqfDIHEwy1kU6lI5X2pIJwUg
+Kgt6PaTl7U0ag9C4LvW+EJIm/CkasJ0Ws/PLbJwnEpCvwHfDuQN7pY6kWsw+bC7Z
+/myELoz4TFkyFQ0ZLDUvpNr/XaDR6Z59dItmChEXh4RDrAHkfHNZe/hMy+c7O5ov
+Gaqm7dAdi53VETbmOBykEZzxNWuD+5UD2RTlBGHoFto+j9KqkExt47CgLbhPsSSI
+v5RyFHECqkkotVT83atFwEG5hmNL5mHTY8RODHkcpPVdROTC/ick8n4lB0FiRMSa
+mMChdLZ2ADlUdBpfquUvzjA49+QEUBKEVlwbTN/dbDXiJTFF5tMnPaB49QL5Jodp
+a8Vw/BjU6+v0ltEV0sHRRUtNmLuw7H3Mt5cLphQJQ2Quq3hAkQzOQgeUG14nG4KJ
+z9bMPMHm
+=qFHN
 -----END PGP SIGNATURE-----

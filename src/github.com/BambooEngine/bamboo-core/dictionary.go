@@ -23,13 +23,13 @@ import (
 	"strings"
 )
 
-var firstConsonants = [3]string{
+var firstConsonantSeq = [3]string{
 	"b d đ g gh m n nh p ph r s t tr v z",
 	"c h k kh qu th",
 	"ch gi l ng ngh x",
 }
 
-var vowels = [6]string{
+var vowelSeq = [6]string{
 	"ê i ua uê uy y",
 	"a iê oa uyê yê",
 	"â ă e o oo ô ơ oe u ư uâ uô ươ",
@@ -38,19 +38,19 @@ var vowels = [6]string{
 	"ai ao au âu ay ây eo êu ia iêu iu oai oao oay oeo oi ôi ơi ưa uây ui ưi uôi ươi ươu ưu uya uyu yêu",
 }
 
-var lastConsonants = [3]string{
+var lastConsonantSeq = [3]string{
 	"ch nh",
 	"c ng",
 	"m n p t",
 }
 
-var firstConsonant_vowel = [3][]uint{
+var cvMatrix = [3][]uint{
 	{0, 1, 2, 5},
 	{0, 1, 2, 3, 4, 5},
 	{0, 1, 2, 3, 5},
 }
 
-var vowel_lastConsonant = [6][]uint{
+var vcMatrix = [6][]uint{
 	{0, 2},
 	{0, 1, 2},
 	{1, 2},
@@ -59,8 +59,8 @@ var vowel_lastConsonant = [6][]uint{
 
 var dictionary map[string][]Sound
 
-func isValid(i1, i2, i3 int) bool {
-	if i1 > len(firstConsonant_vowel) || i2 >= len(vowel_lastConsonant) {
+func isValidCVC(i1, i2, i3 int) bool {
+	if i1 > len(cvMatrix) || i2 >= len(vcMatrix) {
 		return false
 	}
 	var isVowelValid = false
@@ -68,7 +68,7 @@ func isValid(i1, i2, i3 int) bool {
 	if i1 < 0 {
 		isVowelValid = true
 	} else {
-		for _, j := range firstConsonant_vowel[i1] {
+		for _, j := range cvMatrix[i1] {
 			if int(j) == i2 {
 				isVowelValid = true
 			}
@@ -77,55 +77,12 @@ func isValid(i1, i2, i3 int) bool {
 	if i3 < 0 {
 		return isVowelValid
 	}
-	for _, j := range vowel_lastConsonant[i2] {
+	for _, j := range vcMatrix[i2] {
 		if int(j) == i3 {
 			isLastConsonantsValid = true
 		}
 	}
 	return isVowelValid && isLastConsonantsValid
-}
-
-func isFirstConsonant(str string) bool {
-	for _, line := range firstConsonants {
-		for _, consonant := range strings.Split(line, " ") {
-			if str == consonant {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func isVowelSound(str string) bool {
-	for _, line := range vowels {
-		for _, vowel := range strings.Split(line, " ") {
-			if str == vowel {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-func isVowelString(str string) bool {
-	var isVowels = true
-	for _, chr := range []rune(str) {
-		if !isVowel(chr) {
-			isVowels = false
-		}
-	}
-	return isVowels
-}
-
-func isLastConsonant(str string) bool {
-	for _, line := range lastConsonants {
-		for _, consonant := range strings.Split(line, " ") {
-			if str == consonant {
-				return true
-			}
-		}
-	}
-	return false
 }
 
 func attachSound(str string, s Sound) []Sound {
@@ -138,15 +95,15 @@ func attachSound(str string, s Sound) []Sound {
 
 func init() {
 	dictionary = map[string][]Sound{}
-	for i1, firstConsonants := range firstConsonants {
+	for i1, firstConsonants := range firstConsonantSeq {
 		for _, c1 := range strings.Split(firstConsonants, " ") {
-			for i2, vowels := range vowels {
+			for i2, vowels := range vowelSeq {
 				for _, v := range strings.Split(vowels, " ") {
 					var sounds = attachSound(v, VowelSound)
 					dictionary[v] = sounds
-					for i3, lastConsonants := range lastConsonants {
+					for i3, lastConsonants := range lastConsonantSeq {
 						for _, c2 := range strings.Split(lastConsonants, " ") {
-							if isValid(i1, i2, i3) {
+							if isValidCVC(i1, i2, i3) {
 								word := c1 + v + c2
 								var sounds []Sound
 								sounds = append(sounds, attachSound(c1, FirstConsonantSound)...)
@@ -154,14 +111,14 @@ func init() {
 								sounds = append(sounds, attachSound(c2, LastConsonantSound)...)
 								dictionary[word] = sounds
 							}
-							if isValid(-1, i2, i3) {
+							if isValidCVC(-1, i2, i3) {
 								word := v + c2
 								var sounds []Sound
 								sounds = append(sounds, attachSound(v, VowelSound)...)
 								sounds = append(sounds, attachSound(c2, LastConsonantSound)...)
 								dictionary[word] = sounds
 							}
-							if isValid(i1, i2, -1) {
+							if isValidCVC(i1, i2, -1) {
 								word := c1 + v
 								var sounds []Sound
 								sounds = append(sounds, attachSound(c1, FirstConsonantSound)...)
