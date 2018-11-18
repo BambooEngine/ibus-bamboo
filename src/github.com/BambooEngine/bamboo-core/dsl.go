@@ -24,8 +24,6 @@ import (
 	"strings"
 )
 
-var vowelSeq = []rune("aàáảãạăằắẳẵặâầấẩẫậeèéẻẽẹêềếểễệiìíỉĩịoòóỏõọôồốổỗộơờớởỡợuùúủũụưừứửữựyỳýỷỹỵ")
-
 var tones = map[string]Tone{
 	"XoaDauThanh": TONE_NONE,
 	"DauSac":      TONE_ACUTE,

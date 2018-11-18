@@ -22,36 +22,9 @@ package bamboo
 import (
 	"regexp"
 	"strings"
-	"unicode"
 )
 
-func copyRunes(r []rune) []rune {
-	t := make([]rune, len(r))
-	copy(t, r)
-
-	return t
-}
-
-func isVowel(chr rune) bool {
-	isVowel := false
-	for _, v := range vowelSeq {
-		if v == chr {
-			isVowel = true
-		}
-	}
-	return isVowel
-}
-
-func FindVowelPosition(chr rune) int {
-	for pos, v := range vowelSeq {
-		if v == chr {
-			return pos
-		}
-	}
-	return -1
-}
-
-func FindMissingRuleForUo(composition []*Transformation, isSuperKey bool) (Rule, bool) {
+func findMissingRuleForUo(composition []*Transformation, isSuperKey bool) (Rule, bool) {
 	var rule Rule
 	if len(composition) < 2 {
 		return rule, false
@@ -73,7 +46,7 @@ func FindMissingRuleForUo(composition []*Transformation, isSuperKey bool) (Rule,
 		if reg.MatchString(full) {
 			return rule, false
 		}
-		var vowels = GetRightMostVowelWithMarks(composition)
+		var vowels = getRightMostVowelWithMarks(composition)
 		var str = Flatten(vowels, NoTone|LowerCase)
 		if strings.Contains(str, "uo") {
 			target = 'o'
@@ -91,7 +64,7 @@ func FindMissingRuleForUo(composition []*Transformation, isSuperKey bool) (Rule,
 	return rule, false
 }
 
-func FindIndexRune(chars []rune, r rune) int {
+func findIndexRune(chars []rune, r rune) int {
 	for i, c := range chars {
 		if c == r {
 			return i
@@ -116,43 +89,170 @@ func SplitStringToWords(str string) []string {
 	return words
 }
 
-func ParseSoundsFromTonelessString(str string) []Sound {
-	var sounds []Sound
-	for _, word := range SplitStringToWords(str) {
-		sounds = append(sounds, ParseSoundsFromTonelessWord(word)...)
-	}
-	return sounds
-}
-
-func ParseSoundsFromLastTonelessWord(word string) []Sound {
-	words := SplitStringToWords(word)
-	if len(words) > 1 {
-		return ParseSoundsFromTonelessWord(words[len(words)-1])
-	} else {
-		return ParseSoundsFromTonelessWord(word)
-	}
-}
-
-func ParseSoundsFromTonelessWord(word string) []Sound {
-	var sounds []Sound
-	if found, sounds := LookupDictionary(word); found {
-		return sounds
-	}
-	for _, c := range []rune(word) {
-		if isVowel(c) {
-			sounds = append(sounds, VowelSound)
-		} else if unicode.IsLetter(c) {
-			sounds = append(sounds, FirstConsonantSound)
-		} else {
-			sounds = append(sounds, NoSound)
+func filterComposition(composition []*Transformation, effectType EffectType) []*Transformation {
+	var result []*Transformation
+	for _, trans := range composition {
+		if trans.Rule.EffectType == effectType {
+			result = append(result, trans)
 		}
 	}
-	return sounds
+	return result
 }
 
-func IsBreakableConsonant(word string) bool {
-	if word == "d" {
+func separateComposition(composition []*Transformation) [][]*Transformation {
+	var result [][]*Transformation
+	var seq []*Transformation
+	var appendingTransformations = filterComposition(composition, Appending)
+	for i, trans := range appendingTransformations {
+		seq = append(seq, trans)
+		if i+1 < len(seq)-1 && isVowel(trans.Rule.EffectOn) && !isVowel(seq[i+1].Rule.EffectOn) {
+			result = append(result, seq)
+			seq = []*Transformation{}
+		}
+	}
+	if len(seq) > 0 {
+		result = append(result, seq)
+	}
+	return result
+}
+
+func belongToComposition(composition []*Transformation, trans *Transformation) bool {
+	for _, t := range composition {
+		if t == trans {
+			return true
+		}
+	}
+	return false
+}
+
+func isFree(composition []*Transformation, trans *Transformation, effectType EffectType) bool {
+	for _, t := range composition {
+		if t.Target == trans && t.Rule.EffectType == effectType {
+			return false
+		}
+	}
+	return true
+}
+
+func findTransPos(composition []*Transformation, trans *Transformation) int {
+	for i, t := range composition {
+		if t == trans {
+			return i
+		}
+	}
+	return -1
+}
+
+func findTransformationIndex(composition []*Transformation, trans *Transformation) int {
+	for i, t := range composition {
+		if t == trans {
+			return i
+		}
+	}
+	return -1
+}
+
+func hasSuperWord(composition []*Transformation) bool {
+	vowels := getRightMostVowels(composition)
+	if len(vowels) <= 0 {
 		return false
 	}
-	return isFirstConsonant(word)
+	str := Flatten(vowels, NoTone|LowerCase)
+	return strings.Contains(str, "uo")
 }
+func copyRunes(r []rune) []rune {
+	t := make([]rune, len(r))
+	copy(t, r)
+
+	return t
+}
+
+/***** BEGIN SIDE-EFFECT METHODS ******/
+
+func removeTrans(composition []*Transformation, trans *Transformation) []*Transformation {
+	var transIndex = findTransformationIndex(composition, trans)
+	var t = removeTransIdx(composition, transIndex)
+	return t
+}
+
+func removeTransIdx(composition []*Transformation, idx int) []*Transformation {
+	if len(composition) > 0 && idx < len(composition) {
+		if idx == len(composition)-1 {
+			return composition[:idx]
+		}
+		return append(composition[:idx], composition[idx+1:]...)
+	}
+	return composition
+}
+
+func undoesTransformations(composition []*Transformation, applicableRules []Rule) []*Transformation {
+	var result []*Transformation
+	result = append(result, composition...)
+	for i, trans := range result {
+		for _, applicableRule := range applicableRules {
+			var key = applicableRule.Key
+			switch applicableRule.EffectType {
+			case Appending:
+				if trans.Rule.EffectType != Appending {
+					continue
+				}
+				if key != trans.Rule.Key {
+					continue
+				}
+				// same rule will override key and effect_on
+				if trans.Rule.Effect == applicableRule.Effect {
+					trans.Rule.EffectOn = AddMarkToChar(trans.Rule.EffectOn, 0)
+					trans.Rule.Key = trans.Rule.EffectOn
+				}
+				// double typing an appending key undoes it
+				if i == len(result)-1 {
+					trans.IsDeleted = true
+				}
+				break
+			case ToneTransformation:
+				if trans.Rule.EffectType != ToneTransformation {
+					continue
+				}
+				trans.IsDeleted = true
+				if key == trans.Rule.Key && trans.Rule.Effect == applicableRule.Effect {
+					// double typing a tone key undoes it
+					// so the target will not change, the key will be appended
+				} else {
+					// make this tone overridable
+					trans.Target = nil
+				}
+				break
+			case MarkTransformation:
+				if trans.Rule.EffectType != MarkTransformation {
+					continue
+				}
+				if trans.Rule.EffectOn != applicableRule.EffectOn {
+					continue
+				}
+				if key == trans.Rule.Key {
+					// double typing a mark key
+					trans.IsDeleted = true
+				} else {
+					// make this mark overridable
+					trans.IsDeleted = true
+					trans.Target = nil
+				}
+				break
+			}
+		}
+	}
+	return result
+}
+
+func freeComposition(composition []*Transformation) []*Transformation {
+	var result []*Transformation
+	result = append(result, composition...)
+	for i, trans := range composition {
+		if trans.IsDeleted {
+			result = removeTransIdx(result, i)
+		}
+	}
+	return result
+}
+
+/***** END SIDE-EFFECT METHODS ******/

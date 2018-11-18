@@ -38,13 +38,6 @@ sudo apt remove ibus-bamboo
 ibus restart
 ```
 
-Sử dụng
--------------
-* Dùng phím tắt mặc định của IBus (thường là ⊞Win+Space) để chuyển đổi giữa các bộ gõ
-* ibus-bamboo dùng pre-edit để xử lý phím gõ, mặc định sẽ có gạch chân chữ khi đang gõ
-* **Vì vậy đừng quên commit: khi gõ chỉ một chữ, hoặc chữ cuối câu, hoặc sửa chữ giữa câu: nhấn phím *Ctrl* để commit.**
-
-
 Góp ý và báo lỗi
 --------------
 https://github.com/BambooEngine/ibus-bamboo/issues

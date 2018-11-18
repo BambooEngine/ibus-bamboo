@@ -19,7 +19,7 @@
 
 package bamboo
 
-var MARKS_MAP = map[rune]string{
+var marksMaps = map[rune]string{
 	'a': "aâă__",
 	'â': "aâă__",
 	'ă': "aâă__",
@@ -35,7 +35,7 @@ var MARKS_MAP = map[rune]string{
 }
 
 func RemoveMarkFromChar(chr rune) rune {
-	if str, found := MARKS_MAP[chr]; found {
+	if str, found := marksMaps[chr]; found {
 		marks := []rune(str)
 		if len(marks) > 0 {
 			return marks[0]
@@ -48,7 +48,7 @@ func AddMarkToChar(chr rune, mark uint8) rune {
 	var result rune
 	tone := FindToneFromChar(chr)
 	chr = AddToneToChar(chr, 0)
-	if str, found := MARKS_MAP[chr]; found {
+	if str, found := marksMaps[chr]; found {
 		marks := []rune(str)
 		if marks[mark] != '_' {
 			result = marks[mark]
@@ -58,7 +58,7 @@ func AddMarkToChar(chr rune, mark uint8) rune {
 	return result
 }
 
-func FindMarkTargets(composition []*Transformation, rule Rule) []*Transformation {
+func findMarkTargets(composition []*Transformation, rule Rule) []*Transformation {
 	var result []*Transformation
 	for _, trans := range composition {
 		if trans.Rule.Key == rule.EffectOn {
@@ -68,7 +68,7 @@ func FindMarkTargets(composition []*Transformation, rule Rule) []*Transformation
 	return result
 }
 
-func FindMarkTarget(composition []*Transformation, rules []Rule) (*Transformation, Rule) {
+func findMarkTarget(composition []*Transformation, rules []Rule) (*Transformation, Rule) {
 	for i := len(composition) - 1; i >= 0; i-- {
 		var trans = composition[i]
 		for _, rule := range rules {
@@ -96,13 +96,13 @@ func isMarkTargetValid(composition []*Transformation, trans *Transformation) boo
 	if isVowel(trans.Rule.EffectOn) && targetSound != VowelSound {
 		return false
 	}
-	if targetSound == VowelSound && !isSpellingCorrect(GetRightMostVowelWithMarks(append(composition, trans)), NoTone) {
+	if targetSound == VowelSound && !isSpellingCorrect(getRightMostVowelWithMarks(append(composition, trans)), NoTone) {
 		return false
 	}
 	return true
 }
 
-func GetMarkTransformationsTargetTo(composition []*Transformation, trans *Transformation) []*Transformation {
+func getMarkTransformationsTargetTo(composition []*Transformation, trans *Transformation) []*Transformation {
 	var result []*Transformation
 	for _, t := range composition {
 		if t.Target == trans && t.Rule.EffectType == MarkTransformation {
@@ -112,7 +112,7 @@ func GetMarkTransformationsTargetTo(composition []*Transformation, trans *Transf
 	return result
 }
 
-func GetTransformationsTargetTo(composition []*Transformation, trans *Transformation) []*Transformation {
+func getTransformationsTargetTo(composition []*Transformation, trans *Transformation) []*Transformation {
 	var result []*Transformation
 	for _, t := range composition {
 		if t.Target == trans {
@@ -122,34 +122,25 @@ func GetTransformationsTargetTo(composition []*Transformation, trans *Transforma
 	return result
 }
 
-func GetRightMostVowelWithMarks(composition []*Transformation) []*Transformation {
-	var vowels = GetRightMostVowels(composition)
-	return AddMarksToComposition(composition, vowels)
+func getRightMostVowelWithMarks(composition []*Transformation) []*Transformation {
+	var vowels = getRightMostVowels(composition)
+	return addMarksToComposition(composition, vowels)
 }
 
-func AddMarksToComposition(composition []*Transformation, appendingComps []*Transformation) []*Transformation {
+func addMarksToComposition(composition []*Transformation, appendingComps []*Transformation) []*Transformation {
 	var result []*Transformation
 	result = append(result, appendingComps...)
 	for _, t := range appendingComps {
-		result = append(result, GetMarkTransformationsTargetTo(composition, t)...)
+		result = append(result, getMarkTransformationsTargetTo(composition, t)...)
 	}
 	return result
 }
 
-func GetLastCombinationWithMarks(composition []*Transformation) []*Transformation {
-	return AddMarksToComposition(composition, GetLastCombination(composition))
+func getLastCombinationWithMarks(composition []*Transformation) []*Transformation {
+	return addMarksToComposition(composition, GetLastCombination(composition))
 }
 
-var vowelMap = map[string]rune{
-	"uo": 'o',
-	"ua": 'u',
-	"ou": 'o',
-	"oa": 'a',
-	"au": 'a',
-	"ao": 'a',
-}
-
-func FindMarkTargetIndex(chars []rune) int {
+func findMarkTargetIndex(chars []rune) int {
 	if len(chars) != 2 {
 		return 0
 	}

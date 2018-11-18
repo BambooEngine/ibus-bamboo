@@ -32,36 +32,36 @@ func AddToneToChar(chr rune, tone uint8) rune {
 	if pos > -1 {
 		current_tone := pos % 6
 		offset := int(tone) - current_tone
-		return vowelSeq[pos+offset]
+		return vowels[pos+offset]
 	} else {
 		return chr
 	}
 }
 
-func FindToneTarget(composition []*Transformation, stdStyle bool) *Transformation {
+func findToneTarget(composition []*Transformation, stdStyle bool) *Transformation {
 	if len(composition) == 0 {
 		return nil
 	}
 	var target *Transformation
-	var vowels = GetRightMostVowels(composition)
+	var vowels = getRightMostVowels(composition)
 	if len(vowels) == 1 {
 		target = vowels[0]
 	} else if len(vowels) == 2 && stdStyle {
-		var str = Flatten(GetRightMostVowelWithMarks(composition), NoTone|LowerCase)
+		var str = Flatten(getRightMostVowelWithMarks(composition), NoTone|LowerCase)
 		var chars = []rune(str)
-		if ohPos := FindIndexRune(chars, 'ơ'); ohPos > 0 {
+		if ohPos := findIndexRune(chars, 'ơ'); ohPos > 0 {
 			target = vowels[ohPos]
-		} else if ehPos := FindIndexRune(chars, 'ê'); ehPos > 0 {
+		} else if ehPos := findIndexRune(chars, 'ê'); ehPos > 0 {
 			target = vowels[ehPos]
 		} else {
-			if _, found := FindNextAppendingTransformation(composition, vowels[1]); found {
+			if _, found := findNextAppendingTransformation(composition, vowels[1]); found {
 				target = vowels[1]
 			} else {
 				target = vowels[0]
 			}
 		}
 	} else if len(vowels) == 2 {
-		var str = Flatten(GetRightMostVowels(composition), EnglishMode|LowerCase)
+		var str = Flatten(getRightMostVowels(composition), EnglishMode|LowerCase)
 		if str == "oa" || str == "oe" || str == "uy" {
 			target = vowels[1]
 		} else {
@@ -93,7 +93,7 @@ func hasValidTone(composition []*Transformation, tone Tone) bool {
 	return true
 }
 
-func GetLastToneTransformation(composition []*Transformation) *Transformation {
+func getLastToneTransformation(composition []*Transformation) *Transformation {
 	for i := len(composition) - 1; i >= 0; i-- {
 		var t = composition[i]
 		if t.Rule.EffectType == ToneTransformation && t.Target != nil {
@@ -104,7 +104,7 @@ func GetLastToneTransformation(composition []*Transformation) *Transformation {
 }
 
 func shouldRefreshLastToneTarget(transformations []*Transformation) bool {
-	var vowels = GetRightMostVowels(transformations)
+	var vowels = getRightMostVowels(transformations)
 	if len(vowels) <= 0 {
 		return false
 	}

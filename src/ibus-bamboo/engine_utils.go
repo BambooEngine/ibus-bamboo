@@ -1,6 +1,5 @@
 /*
  * Bamboo - A Vietnamese Input method editor
- * Copyright (C) 2018 Nguyen Cong Hoang <hoangnc.jp@gmail.com>
  * Copyright (C) 2018 Luong Thanh Lam <ltlam93@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -31,6 +30,7 @@ import (
 
 func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath {
 	defer mouseCaptureExit()
+	mouseCaptureInit()
 
 	objectPath := dbus.ObjectPath(fmt.Sprintf("/org/freedesktop/IBus/Engine/bamboo/%d", time.Now().UnixNano()))
 
@@ -64,7 +64,7 @@ var keyPressChan = make(chan uint32)
 func (e *IBusBambooEngine) startAutoCommit() {
 	for {
 		var timeout = e.config.AutoCommitAfter
-		if e.config.Flags&bamboo.EfastCommitEnabled == 0 {
+		if e.config.IBflags&IBfastCommitEnabled == 0 {
 			timeout = 10 * e.config.AutoCommitAfter
 		}
 		select {
@@ -72,7 +72,7 @@ func (e *IBusBambooEngine) startAutoCommit() {
 			break
 		case <-time.After(time.Duration(timeout) * time.Millisecond):
 			var rawKeyLen = e.getRawKeyLen()
-			if rawKeyLen > 0 {
+			if e.config.IBflags&IBautoCommitEnabled != 0 && rawKeyLen > 0 {
 				e.commitPreedit(0)
 			}
 		}
@@ -98,8 +98,7 @@ func (e *IBusBambooEngine) updatePreedit() {
 }
 
 func (e *IBusBambooEngine) shouldFallbackToEnglish() bool {
-	// if spell check is disable, return false
-	if e.config.Flags&bamboo.EspellCheckEnabled == 0 {
+	if e.config.IBflags&IBautoNonVnRestore == 0 {
 		return false
 	}
 	var vnSeq = e.preediter.GetProcessedString(bamboo.VietnameseMode)
@@ -108,21 +107,20 @@ func (e *IBusBambooEngine) shouldFallbackToEnglish() bool {
 		return false
 	}
 	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation
-	if vnRunes[len(vnRunes)-1] == 'd' || strings.ContainsRune(vnSeq, 'đ') {
+	if e.config.IBflags&IBddFreeStyle != 0 && (vnRunes[len(vnRunes)-1] == 'd' || strings.ContainsRune(vnSeq, 'đ')) {
 		return false
 	}
 	if e.preediter.IsSpellingCorrect(bamboo.NoTone) {
 		return false
 	}
-	if e.preediter.IsLikelySpellingCorrect(bamboo.NoTone) {
+	if e.preediter.IsSpellingLikelyCorrect(bamboo.NoTone) {
 		return false
 	}
 	return true
 }
 
 func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
-	// if spell check is disable, return false
-	if e.config.Flags&bamboo.EspellCheckEnabled == 0 {
+	if e.config.IBflags&IBautoNonVnRestore == 0 {
 		return false
 	}
 	var vnSeq = e.preediter.GetProcessedString(bamboo.VietnameseMode)
@@ -131,7 +129,7 @@ func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
 		return false
 	}
 	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation
-	if strings.ContainsRune(vnSeq, 'đ') {
+	if e.config.IBflags&IBddFreeStyle != 0 && strings.ContainsRune(vnSeq, 'đ') {
 		return false
 	}
 	if e.preediter.IsSpellingCorrect(bamboo.NoTone) {
