@@ -30,10 +30,4 @@ sudo apt-get install ibus-bamboo
 ibus restart
 ```
 
-*Hướng dẫn cài đặt từ mã nguồn: [wiki](https://github.com/BambooEngine/ibus-bamboo/wiki/H%C6%B0%E1%BB%9Bng-d%E1%BA%ABn-build-t%E1%BB%AB-source)*
-
-### Gỡ bỏ
-```
-sudo apt remove ibus-bamboo
-ibus restart
-```
+*Hướng dẫn cài đặt từ mã nguồn: [wiki](https://github.com/BambooEngine/ibus-bamboo/wiki/H%C6%B0%E1%BB%9Bng-d%E1%BA%ABn-c%C3%A0i-%C4%91%E1%BA%B7t-t%E1%BB%AB-m%C3%A3-ngu%E1%BB%93n)*
