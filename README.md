@@ -18,9 +18,6 @@ IBus Bamboo - Bộ gõ tiếng Việt cho Linux
   * Dấu thanh chuẩn và dấu thanh kiểu mới
   * Bỏ dấu tự do
 
-Cài đặt và cấu hình
-------------------
-
 ### Cài đặt (Ubuntu)
 
 ```sh
