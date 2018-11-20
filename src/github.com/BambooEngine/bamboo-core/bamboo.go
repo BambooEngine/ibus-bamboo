@@ -242,9 +242,11 @@ func (e *BambooEngine) refreshLastToneTarget() {
 		trans := e.composition[i]
 		if trans.Rule.EffectType == ToneTransformation {
 			var newTarget = findToneTarget(e.composition, e.flags&EstdToneStyle != 0)
-			var tonePos = findTransPos(e.composition, trans)
-			if tonePos > rightmostVowelPos {
+			var tonePos = findTransPos(e.composition, newTarget)
+			if tonePos >= rightmostVowelPos {
 				trans.Target = newTarget
+				e.composition = removeTrans(e.composition, trans)
+				e.composition = append(e.composition, trans)
 				break
 			}
 		}

@@ -1,8 +1,8 @@
 Package: ibus-bamboo
-Version: 0.1.8ubuntu1
+Version: 0.1.9ubuntu1
 Architecture: amd64
 Maintainer: Luong Thanh Lam <ltlam93@gmail.com>
-Installed-Size: 4381
+Installed-Size: 3732
 Depends: ibus
 Section: utils
 Priority: extra

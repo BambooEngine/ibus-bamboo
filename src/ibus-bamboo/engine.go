@@ -168,11 +168,13 @@ func (e *IBusBambooEngine) Reset() *dbus.Error {
 
 func (e *IBusBambooEngine) Enable() *dbus.Error {
 	fmt.Print("Enable.")
+	mouseCaptureInit()
 	return nil
 }
 
 func (e *IBusBambooEngine) Disable() *dbus.Error {
 	fmt.Print("Disable.")
+	mouseCaptureExit()
 	return nil
 }
 
@@ -228,6 +230,13 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 			e.config.IBflags |= IBfastCommitEnabled
 		} else {
 			e.config.IBflags &= ^IBfastCommitEnabled
+		}
+	}
+	if propName == PropKeyPreeditInvisibility {
+		if propState == ibus.PROP_STATE_CHECKED {
+			e.config.IBflags |= IBpreeditInvisibility
+		} else {
+			e.config.IBflags &= ^IBpreeditInvisibility
 		}
 	}
 	if isValidCharset(getCharsetFromPropKey(propName)) && propState == ibus.PROP_STATE_CHECKED {

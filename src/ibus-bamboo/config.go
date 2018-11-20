@@ -40,7 +40,8 @@ const (
 	IBspellCheckEnabled
 	IBautoNonVnRestore
 	IBddFreeStyle
-	IBstdFlags = IBspellCheckEnabled | IBautoNonVnRestore | IBddFreeStyle | IBautoCommitEnabled
+	IBpreeditInvisibility
+	IBstdFlags = IBspellCheckEnabled | IBautoNonVnRestore | IBddFreeStyle | IBautoCommitEnabled | IBpreeditInvisibility
 )
 
 type Config struct {

@@ -29,9 +29,6 @@ import (
 )
 
 func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath {
-	defer mouseCaptureExit()
-	mouseCaptureInit()
-
 	objectPath := dbus.ObjectPath(fmt.Sprintf("/org/freedesktop/IBus/Engine/bamboo/%d", time.Now().UnixNano()))
 
 	var config = LoadConfig(engineName)
@@ -87,7 +84,12 @@ func (e *IBusBambooEngine) updatePreedit() {
 	var processedStr = e.getPreeditString()
 	var preeditLen = uint32(len([]rune(processedStr)))
 	var ibusText = ibus.NewText(processedStr)
-	ibusText.AppendAttr(ibus.IBUS_ATTR_TYPE_UNDERLINE, ibus.IBUS_ATTR_UNDERLINE_SINGLE, 0, preeditLen)
+
+	if e.config.IBflags&IBpreeditInvisibility != 0 {
+		ibusText.AppendAttr(ibus.IBUS_ATTR_TYPE_NONE, ibus.IBUS_ATTR_UNDERLINE_SINGLE, 0, preeditLen)
+	} else {
+		ibusText.AppendAttr(ibus.IBUS_ATTR_TYPE_UNDERLINE, ibus.IBUS_ATTR_UNDERLINE_SINGLE, 0, preeditLen)
+	}
 
 	e.UpdatePreeditTextWithMode(ibusText, preeditLen, true, ibus.IBUS_ENGINE_PREEDIT_COMMIT)
 	if preeditLen == 0 {

@@ -26,12 +26,13 @@ import (
 )
 
 const (
-	PropKeyAbout            = "about"
-	PropKeyStdToneStyle     = "tone_std_style"
-	PropKeyFreeToneMarking  = "tone_free_marking"
-	PropKeySpellingChecking = "spelling_checking"
-	PropKeyVnConvert        = "vn_convert"
-	PropKeyFastCommit       = "fast_commit"
+	PropKeyAbout               = "about"
+	PropKeyStdToneStyle        = "tone_std_style"
+	PropKeyFreeToneMarking     = "tone_free_marking"
+	PropKeySpellingChecking    = "spelling_checking"
+	PropKeyPreeditInvisibility = "preedit_hiding"
+	PropKeyVnConvert           = "vn_convert"
+	PropKeyFastCommit          = "fast_commit"
 )
 
 var runMode = ""
@@ -184,6 +185,7 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 	toneStdChecked := ibus.PROP_STATE_UNCHECKED
 	toneFreeMarkingChecked := ibus.PROP_STATE_UNCHECKED
 	fastCommittingChecked := ibus.PROP_STATE_UNCHECKED
+	preeditInvisibilityChecked := ibus.PROP_STATE_UNCHECKED
 
 	// spelling
 	spellingChecked := ibus.PROP_STATE_UNCHECKED
@@ -199,6 +201,9 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 	}
 	if c.IBflags&IBfastCommitEnabled != 0 {
 		fastCommittingChecked = ibus.PROP_STATE_CHECKED
+	}
+	if c.IBflags&IBpreeditInvisibility != 0 {
+		preeditInvisibilityChecked = ibus.PROP_STATE_CHECKED
 	}
 
 	return ibus.NewPropList(
@@ -236,6 +241,18 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 			Visible:   true,
 			State:     toneStdChecked,
 			Symbol:    dbus.MakeVariant(ibus.NewText("M")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       PropKeyPreeditInvisibility,
+			Type:      ibus.PROP_TYPE_TOGGLE,
+			Label:     dbus.MakeVariant(ibus.NewText("Ẩn gạch chân")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Ẩn gạch chân")),
+			Sensitive: true,
+			Visible:   true,
+			State:     preeditInvisibilityChecked,
+			Symbol:    dbus.MakeVariant(ibus.NewText("P")),
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
 		&ibus.Property{
