@@ -66,8 +66,6 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 		return false, nil
 	}
 
-	keyPressChan <- keyVal
-
 	if state&IBUS_CONTROL_MASK != 0 ||
 		state&IBUS_MOD1_MASK != 0 ||
 		state&IBUS_IGNORED_MASK != 0 ||

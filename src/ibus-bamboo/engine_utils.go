@@ -56,7 +56,7 @@ func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath
 	return objectPath
 }
 
-var keyPressChan = make(chan uint32)
+var preeditUpdateChan = make(chan uint32)
 
 func (e *IBusBambooEngine) startAutoCommit() {
 	for {
@@ -65,7 +65,7 @@ func (e *IBusBambooEngine) startAutoCommit() {
 			timeout = 10 * e.config.AutoCommitAfter
 		}
 		select {
-		case <-keyPressChan:
+		case <-preeditUpdateChan:
 			break
 		case <-time.After(time.Duration(timeout) * time.Millisecond):
 			var rawKeyLen = e.getRawKeyLen()
@@ -97,6 +97,8 @@ func (e *IBusBambooEngine) updatePreedit() {
 		e.preediter.Reset()
 	}
 	mouseCaptureUnlock()
+
+	preeditUpdateChan <- 0
 }
 
 func (e *IBusBambooEngine) shouldFallbackToEnglish() bool {
