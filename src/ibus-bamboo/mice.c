@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <sys/time.h>
+#include <time.h>
 #include "_cgo_export.h"
 #define CAPTURE_MOUSE_MOVE_DELTA        50
 
