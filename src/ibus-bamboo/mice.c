@@ -5,6 +5,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include "_cgo_export.h"
+#define _POSIX_C_SOURCE 199309L
 #define CAPTURE_MOUSE_MOVE_DELTA        50
 
 static pthread_t th_mcap;
