@@ -21,7 +21,6 @@ package main
 /*
 #cgo CFLAGS: -std=c99
 #cgo LDFLAGS: -lX11
-#define _POSIX_C_SOURCE 199309L
 extern void mouse_capture_init();
 extern void mouse_capture_exit();
 extern void mouse_capture_unlock();
