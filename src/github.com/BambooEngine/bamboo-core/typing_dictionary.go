@@ -27,12 +27,12 @@ var typingFirstConsonantSeq = [3]string{
 }
 
 var typingVowelSeq = [6]string{
-	"e ue",
-	"ie uye ye",
-	"a ua uo ưo uơ",
-	"oa",
-	"uo",
-	"eu ieu ua uay uoi uơi ưoi uou ưou uơu uu yeu",
+	"e ê i ua ue uê uy y",
+	"a ie iê oa uye uyê ye yê",
+	"a â ă e o oo ô ơ oe u ư ua uâ uo uô ưo uơ ươ",
+	"oa oă",
+	"uo uơ",
+	"ai ao au âu ay ây eo eu êu ia ieu iêu iu oai oao oay oeo oi ôi ơi ua ưa uay uây ui ưi uoi uơi ưoi uôi ươi uou ưou uơu ươu uu ưu uya uyu yeu yêu",
 }
 
 var typingLastConsonantSeq = [3]string{

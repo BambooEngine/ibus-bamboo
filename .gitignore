@@ -14,7 +14,11 @@
 .idea/
 pkg/
 test-data/
-vendor/*/.git
+src/*/.git
+debian/files
+debian/debhelper-build-stamp
+debian/ibus-bamboo*
+debian/.debhelper
 *_linux
 *.tar.gz
 ibus-engine-*

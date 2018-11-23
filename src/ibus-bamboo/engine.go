@@ -87,11 +87,15 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 			e.preediter.RemoveLastChar()
 			e.updatePreedit()
 			return true, nil
+		} else {
+			return false, nil
 		}
 	}
 
 	if keyVal == IBUS_space || keyVal == IBUS_KP_Space {
 		e.ignorePreedit = false
+		e.commitPreedit(0)
+		return false, nil
 	}
 
 	if keyVal == IBUS_Return || keyVal == IBUS_KP_Enter {
@@ -140,6 +144,7 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 		e.ForwardKeyEvent(keyVal, keyCode, state)
 		return true, nil
 	}
+	return false, nil
 }
 
 func (e *IBusBambooEngine) FocusIn() *dbus.Error {

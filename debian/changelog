@@ -1,3 +1,10 @@
+ibus-bamboo (0.2.0ubuntu2) stable; urgency=medium
+
+  * Release 0.2.0
+    - Fix bugs
+
+ -- Luong Thanh Lam <ltlam93@gmail.com>  Wed, 23 Nov 2018 00:39:12 +0700
+
 ibus-bamboo (0.1.9ubuntu2) stable; urgency=medium
 
   * Release 0.1.9
