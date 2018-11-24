@@ -16,6 +16,7 @@ IBus Bamboo - Bộ gõ tiếng Việt cho Linux
   * Kiểm tra chính tả (tự động khôi phục tiếng anh với từ gõ sai)
   * Dấu thanh chuẩn và dấu thanh kiểu mới
   * Bỏ dấu tự do
+  * Gõ tắt (macro)
 
 ### Cài đặt (Ubuntu)
 

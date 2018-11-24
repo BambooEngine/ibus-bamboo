@@ -25,11 +25,16 @@ import (
 	"github.com/BambooEngine/bamboo-core"
 	"io/ioutil"
 	"log"
+	"os"
+	"os/exec"
 	"os/user"
+	"path/filepath"
 )
 
 const (
 	configFile = "%s/.config/ibus/ibus-%s.config.json"
+	mactabFile = "%s/.config/ibus/ibus-%s.macro.text"
+	sampleMactabFile = "data/macro.tpl.txt"
 )
 
 const (
@@ -88,4 +93,35 @@ func SaveConfig(c *Config, engineName string) {
 		log.Println(err)
 	}
 
+}
+
+func getEngineSubFile(fileName string) string {
+	if _, err := os.Stat(fileName); err == nil {
+		if absPath, err := filepath.Abs(fileName); err == nil {
+			return absPath
+		}
+	}
+
+	return filepath.Join(filepath.Dir(os.Args[0]), fileName)
+}
+
+func getMactabFile(engineName string) string {
+	u, err := user.Current()
+	if err != nil {
+		return fmt.Sprintf(mactabFile, "~", engineName)
+	}
+
+	return fmt.Sprintf(mactabFile, u.HomeDir, engineName)
+}
+
+func OpenMactabFile(engineName string) {
+	efPath := getMactabFile(engineName)
+	if _, err := os.Stat(efPath); os.IsNotExist(err) {
+		sampleFile := getEngineSubFile(sampleMactabFile)
+		sample, err := ioutil.ReadFile(sampleFile)
+		log.Println(err)
+		ioutil.WriteFile(efPath, sample, 0644)
+	}
+
+	exec.Command("xdg-open", efPath).Start()
 }

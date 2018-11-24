@@ -38,6 +38,7 @@ type IBusBambooEngine struct {
 	propList      *ibus.PropList
 	mode          bamboo.Mode
 	ignorePreedit bool
+	macroTable    *MacroTable
 }
 
 /**
@@ -121,6 +122,7 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 
 	if (keyVal >= 'a' && keyVal <= 'z') ||
 		(keyVal >= 'A' && keyVal <= 'Z') ||
+		(keyVal >= '0' && keyVal <= '9') ||
 		(inKeyMap(e.preediter.GetInputMethod().Keys, rune(keyVal))) {
 		var keyRune = rune(keyVal)
 		if state&IBUS_LOCK_MASK != 0 {
@@ -130,6 +132,11 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 			return false, nil
 		}
 		e.preediter.ProcessChar(keyRune, e.getMode())
+		if e.config.IBflags&IBmarcoEnabled!=0 && e.config.IBflags&IBfastCommitEnabled != 0 && e.macroTable.HasKey(e.preediter.GetProcessedString(bamboo.VietnameseMode)) {
+			e.commitMacroText()
+			e.preediter.Reset()
+			return true, nil
+		}
 		if e.config.IBflags&IBfastCommitEnabled != 0 && !e.preediter.IsSpellingLikelyCorrect(bamboo.NoTone) {
 			e.ignorePreedit = true
 			e.commitPreedit(0)
@@ -204,6 +211,9 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		exec.Command("xdg-open", VnConvertPage).Start()
 		return nil
 	}
+	if propName == PropKeyMacroTable {
+		OpenMactabFile(EngineName)
+	}
 
 	if propName == PropKeyStdToneStyle {
 		if propState == ibus.PROP_STATE_CHECKED {
@@ -233,6 +243,15 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 			e.config.IBflags |= IBfastCommitEnabled
 		} else {
 			e.config.IBflags &= ^IBfastCommitEnabled
+		}
+	}
+	if propName == PropKeyMacroEnabled {
+		if propState == ibus.PROP_STATE_CHECKED {
+			e.config.IBflags |= IBmarcoEnabled
+			e.macroTable.Enable()
+		} else {
+			e.config.IBflags &= ^IBmarcoEnabled
+			e.macroTable.Disable()
 		}
 	}
 	if propName == PropKeyPreeditInvisibility {

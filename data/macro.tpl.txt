@@ -1,0 +1,14 @@
+# DO NOT DELETE THIS LINE*** version=1 ***
+#
+# Đây là file chứa danh sách các từ gõ tắt của bộ gõ Bamboo.
+# Mỗi dòng trong danh sách này gồm 2 phần được ngăn cách bởi dấu ':'
+#   - Phần đầu là chữ tắt mà bạn muốn gõ nhanh
+#   - Phần sau là đoạn văn đầy đủ mà bạn muốn thay thế
+#
+# Bên dưới là một số từ gõ tắt được liệt kê sẵn, bỏ dấu # đầu dòng để có hiệu lực
+
+#vn:Việt Nam
+#sđt:Số điện thoại
+#nsut:Nghệ sĩ ưu tú
+#nxb:Nhà xuất bản
+#tttm:Trung tâm thương mại

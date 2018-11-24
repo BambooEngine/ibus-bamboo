@@ -39,9 +39,13 @@ func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath
 		engineName: engineName,
 		config:     config,
 		propList:   GetPropListByConfig(config),
+		macroTable: NewMacroTable(),
 	}
 	ibus.PublishEngine(conn, objectPath, engine)
 
+	if config.IBflags&IBmarcoEnabled!=0{
+		engine.macroTable.Enable()
+	}
 	go engine.startAutoCommit()
 
 	onMouseMove = func() {
@@ -110,6 +114,9 @@ func (e *IBusBambooEngine) shouldFallbackToEnglish() bool {
 	if len(vnRunes) == 0 {
 		return false
 	}
+	if e.config.IBflags&IBmarcoEnabled!=0 && e.macroTable.HasKey(vnSeq) {
+		return false
+	}
 	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation
 	if e.config.IBflags&IBddFreeStyle != 0 && (vnRunes[len(vnRunes)-1] == 'd' || strings.ContainsRune(vnSeq, 'đ')) {
 		return false
@@ -144,11 +151,14 @@ func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
 
 func (e *IBusBambooEngine) getCommitString() string {
 	var processedStr string
+	processedStr = e.preediter.GetProcessedString(bamboo.VietnameseMode)
+	if e.config.IBflags&IBmarcoEnabled!=0 && e.macroTable.HasKey(processedStr) {
+		return e.macroTable.GetText(processedStr) + " "
+	}
 	if e.mustFallbackToEnglish() {
 		processedStr = e.preediter.GetProcessedString(bamboo.EnglishMode)
 		return processedStr
 	}
-	processedStr = e.preediter.GetProcessedString(bamboo.VietnameseMode)
 	processedStr = bamboo.Encode(e.config.Charset, processedStr)
 	return processedStr
 }
@@ -170,6 +180,23 @@ func (e *IBusBambooEngine) getMode() bamboo.Mode {
 func (e *IBusBambooEngine) commitPreedit(lastKey uint32) {
 	var commitStr string
 	commitStr += e.getCommitString()
+	e.preediter.Reset()
+
+	for _, chr := range []rune(commitStr) {
+		e.CommitText(ibus.NewText(string(chr)))
+	}
+	//e.CommitText(ibus.NewText(commitStr))
+
+	e.HidePreeditText()
+}
+
+func (e *IBusBambooEngine) hasMacroKey(key string) bool {
+	return e.macroTable.GetText(key) != ""
+}
+func (e *IBusBambooEngine) commitMacroText() {
+	var commitStr string
+	var key = e.preediter.GetProcessedString(bamboo.VietnameseMode)
+	commitStr = e.macroTable.GetText(key) + " "
 	e.preediter.Reset()
 
 	for _, chr := range []rune(commitStr) {

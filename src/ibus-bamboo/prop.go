@@ -23,6 +23,7 @@ import (
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
+	"strings"
 )
 
 const (
@@ -33,6 +34,8 @@ const (
 	PropKeyPreeditInvisibility = "preedit_hiding"
 	PropKeyVnConvert           = "vn_convert"
 	PropKeyFastCommit          = "fast_commit"
+	PropKeyMacroEnabled        = "macro_enabled"
+	PropKeyMacroTable          = "macro_table"
 )
 
 var runMode = ""
@@ -43,7 +46,7 @@ func GetPropListByConfig(c *Config) *ibus.PropList {
 			Name:      "IBusProperty",
 			Key:       PropKeyAbout,
 			Type:      ibus.PROP_TYPE_NORMAL,
-			Label:     dbus.MakeVariant(ibus.NewText("IBus " + EngineName + " " + Version + runMode)),
+			Label:     dbus.MakeVariant(ibus.NewText("IBus " + strings.ToUpper(EngineName) + " " + Version + runMode)),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("Mở trang chủ")),
 			Sensitive: true,
 			Visible:   true,
@@ -88,23 +91,23 @@ func GetPropListByConfig(c *Config) *ibus.PropList {
 			Name:      "IBusProperty",
 			Key:       "-",
 			Type:      ibus.PROP_TYPE_MENU,
+			Label:     dbus.MakeVariant(ibus.NewText("Gõ tắt")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Gõ tắt")),
+			Sensitive: true,
+			Visible:   true,
+			Symbol:    dbus.MakeVariant(ibus.NewText("")),
+			SubProps:  dbus.MakeVariant(GetMacroPropListByConfig(c)),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       "-",
+			Type:      ibus.PROP_TYPE_MENU,
 			Label:     dbus.MakeVariant(ibus.NewText("Cấu hình khác")),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("Cấu hình")),
 			Sensitive: true,
 			Visible:   true,
 			Symbol:    dbus.MakeVariant(ibus.NewText("")),
 			SubProps:  dbus.MakeVariant(GetOptionsPropListByConfig(c)),
-		},
-		&ibus.Property{
-			Name:      "IBusProperty",
-			Key:       "-",
-			Type:      ibus.PROP_TYPE_SEPARATOR,
-			Label:     dbus.MakeVariant(ibus.NewText("")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("")),
-			Sensitive: true,
-			Visible:   true,
-			Symbol:    dbus.MakeVariant(ibus.NewText("")),
-			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
 	)
 }
@@ -178,6 +181,39 @@ func GetIMPropListByConfig(c *Config) *ibus.PropList {
 		imProperties = append(imProperties, imProp)
 	}
 	return ibus.NewPropList(imProperties...)
+}
+
+func GetMacroPropListByConfig(c *Config) *ibus.PropList {
+	macroChecked := ibus.PROP_STATE_UNCHECKED
+
+	if c.IBflags&IBmarcoEnabled != 0 {
+		macroChecked = ibus.PROP_STATE_CHECKED
+	}
+	return ibus.NewPropList(
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       PropKeyMacroEnabled,
+			Type:      ibus.PROP_TYPE_TOGGLE,
+			Label:     dbus.MakeVariant(ibus.NewText("Bật gõ tắt")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Bật gõ tắt")),
+			Sensitive: true,
+			Visible:   true,
+			State:     macroChecked,
+			Symbol:    dbus.MakeVariant(ibus.NewText("M")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       PropKeyMacroTable,
+			Type:      ibus.PROP_TYPE_NORMAL,
+			Label:     dbus.MakeVariant(ibus.NewText("Mở bảng gõ tắt")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Mở bảng gõ tắt")),
+			Sensitive: true,
+			Visible:   true,
+			Symbol:    dbus.MakeVariant(ibus.NewText("O")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+	)
 }
 
 func GetOptionsPropListByConfig(c *Config) *ibus.PropList {

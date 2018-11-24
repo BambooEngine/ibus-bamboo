@@ -23,17 +23,21 @@ import (
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
 	"log"
+	"os"
 )
 
 const (
 	ComponentName = "org.freedesktop.IBus.bamboo"
-	EngineName    = "Bamboo"
+	EngineName    = "bamboo"
 	HomePage      = "https://github.com/BambooEngine/ibus-bamboo"
 	VnConvertPage = "https://font.ssc.vn"
 )
 
 func main() {
 	if isIBusDaemonChild() {
+		if len(os.Args) == 3 && os.Args[1] == "cd" {
+			os.Chdir(os.Args[2])
+		}
 		bus := ibus.NewBus()
 		bus.RequestName(ComponentName, 0)
 
