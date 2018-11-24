@@ -110,3 +110,18 @@ func shouldRefreshLastToneTarget(transformations []*Transformation) bool {
 	}
 	return len(transformations) > 0 && transformations[len(transformations)-1].Rule.EffectType == Appending
 }
+
+func refreshLastToneTarget(transformations []*Transformation) []*Transformation {
+	var composition []*Transformation
+	composition = append(composition, transformations...)
+	var rightmostVowels = getRightMostVowels(composition)
+	var lastToneTrans = getLastToneTransformation(composition)
+	if len(rightmostVowels) == 0 || lastToneTrans == nil {
+		return composition
+	}
+	var newToneTarget = findToneTarget(composition, true)
+	if lastToneTrans.Target != newToneTarget {
+		lastToneTrans.Target = newToneTarget
+	}
+	return composition
+}

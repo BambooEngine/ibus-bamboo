@@ -132,11 +132,6 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 			return false, nil
 		}
 		e.preediter.ProcessChar(keyRune, e.getMode())
-		if e.config.IBflags&IBmarcoEnabled!=0 && e.config.IBflags&IBfastCommitEnabled != 0 && e.macroTable.HasKey(e.preediter.GetProcessedString(bamboo.VietnameseMode)) {
-			e.commitMacroText()
-			e.preediter.Reset()
-			return true, nil
-		}
 		if e.config.IBflags&IBfastCommitEnabled != 0 && !e.preediter.IsSpellingLikelyCorrect(bamboo.NoTone) {
 			e.ignorePreedit = true
 			e.commitPreedit(0)
@@ -215,6 +210,19 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		OpenMactabFile(EngineName)
 	}
 
+	turnSpellCheckByRules := func(on bool) {
+		if on {
+			e.config.IBflags |= IBspellCheckingByRules
+			e.config.IBflags &= ^IBspellCheckingByDicts
+			e.config.IBflags |= IBddFreeStyle
+		} else {
+			e.config.IBflags |= IBspellCheckingByDicts
+			e.config.IBflags &= ^IBspellCheckingByRules
+			e.config.IBflags &= ^IBddFreeStyle
+			e.config.IBflags &= ^IBfastCommitEnabled
+		}
+	}
+
 	if propName == PropKeyStdToneStyle {
 		if propState == ibus.PROP_STATE_CHECKED {
 			e.config.Flags |= bamboo.EstdToneStyle
@@ -238,9 +246,20 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 			e.config.IBflags &= ^IBautoNonVnRestore
 		}
 	}
+	if propName == PropKeySpellCheckingByRules {
+		if propState == ibus.PROP_STATE_CHECKED {
+			turnSpellCheckByRules(true)
+		}
+	}
+	if propName == PropKeySpellCheckingByDicts {
+		if propState == ibus.PROP_STATE_CHECKED {
+			turnSpellCheckByRules(false)
+		}
+	}
 	if propName == PropKeyFastCommit {
 		if propState == ibus.PROP_STATE_CHECKED {
 			e.config.IBflags |= IBfastCommitEnabled
+			turnSpellCheckByRules(true)
 		} else {
 			e.config.IBflags &= ^IBfastCommitEnabled
 		}
@@ -248,6 +267,7 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	if propName == PropKeyMacroEnabled {
 		if propState == ibus.PROP_STATE_CHECKED {
 			e.config.IBflags |= IBmarcoEnabled
+			e.config.IBflags &= ^IBfastCommitEnabled
 			e.macroTable.Enable()
 		} else {
 			e.config.IBflags &= ^IBmarcoEnabled

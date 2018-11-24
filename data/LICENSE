@@ -1,0 +1,49 @@
+/*
+ * Bamboo - A Vietnamese Input method editor
+ * Copyright (C) 2018 Luong Thanh Lam <ltlam93@gmail.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
+########################################################################################################################
+Bộ dữ liệu từ tiếng Việt này được trích xuất từ:
+- Dữ liệu từ điển tiếng Việt của Hồ Ngọc Đức (http://www.informatik.uni-leipzig.de/~duc/Dict/),
+  phát hành dưới giấy phép GPL.
+
+- Wiktionary tiếng Việt (https://vi.wiktionary.org/wiki/Trang_Chính) phát hành dưới giấy phép CC-BY-SA
+
+- Danh sách viết tắt trong tiếng Việt của Ngô Quốc Hưng (https://sites.google.com/site/ngo2uochung/research/dsviettat-tieng-viet),
+  đã được tác giả cho phép sử dụng.
+
+Bộ dữ liệu này là một phần của ibus-teni, được phát hành dưới giấy phép GPLv3.
+Để rõ các điều khoản và điều kiện khi sử dụng bộ dữ liệu này, xin hãy xem tại:
+https://www.gnu.org/licenses/gpl-3.0.en.html
+
+
+########################################################################################################################
+Free Vietnamese Dictionary Project's database license
+------------------------------------------------------------------------------------------------------------------------
+This is the English-Vietnamese dictionary database of the Free Vietnamese Dictionary Project.
+It contains more than 109.000 entries with definitions and illustrative examples.
+This database was compiled by Ho Ngoc Duc and other members of
+the Free Vietnamese Dictionary Project (http://www.informatik.uni-leipzig.de/~duc/Dict/)
+About 5.000 technical terms were imported from VACETS Dictionary Project (http://www.saigon.com/~diction/)
+Copyright (C) 1997-2003 The Free Vietnamese Dictionary Project
+Last updated 2004-07-01
+This program is free software; you can redistribute it and/or modify it under
+the terms of the GNU General Public License as published by the Free Software Foundation
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY
+See the GNU General Public License for more details.
+------------------------------------------------------------------------------------------------------------------------

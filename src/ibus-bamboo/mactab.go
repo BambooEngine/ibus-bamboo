@@ -105,10 +105,12 @@ func (e *MacroTable) WriteToFile(macroFileName string) error {
 func (e *MacroTable) GetText(key string) string {
 	return e.mTable[key]
 }
+
 //---------------------------------------------------------------
 func (e *MacroTable) HasKey(key string) bool {
 	return e.mTable[key] != ""
 }
+
 //---------------------------------------------------------------
 func (e *MacroTable) IncludeKey(key string) bool {
 	if e.mTable[key] != "" {

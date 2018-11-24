@@ -56,3 +56,7 @@ func isTypingLastConsonant(str string) bool {
 	}
 	return false
 }
+
+func getRightMostFirstConsonant(composition []*Transformation) []*Transformation {
+	return GetLastSoundGroup(composition, FirstConsonantSound)
+}

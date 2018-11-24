@@ -73,15 +73,23 @@ func (f *BambooFlattener) GetCanvas(composition []*Transformation, mode Mode) []
 			// ignore virtual key
 			continue
 		}
-		switch trans.Rule.EffectType {
-		case Appending:
+		if trans.Rule.EffectType == Appending {
 			trans.Dest = uint(len(canvas))
 			var effectOn = trans.Rule.EffectOn
 			if mode&NoMark != 0 && (effectOn < 'a' || effectOn > 'z') {
 				effectOn = RemoveMarkFromChar(effectOn)
 			}
 			canvas = append(canvas, effectOn)
-			break
+		}
+	}
+	if mode&EnglishMode != 0 {
+		return canvas
+	}
+	for _, trans := range composition {
+		if trans.IsDeleted {
+			continue
+		}
+		switch trans.Rule.EffectType {
 		case MarkTransformation:
 			if mode&NoMark != 0 {
 				break

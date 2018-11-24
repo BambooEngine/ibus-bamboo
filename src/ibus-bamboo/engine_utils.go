@@ -43,7 +43,7 @@ func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath
 	}
 	ibus.PublishEngine(conn, objectPath, engine)
 
-	if config.IBflags&IBmarcoEnabled!=0{
+	if config.IBflags&IBmarcoEnabled != 0 {
 		engine.macroTable.Enable()
 	}
 	go engine.startAutoCommit()
@@ -114,14 +114,14 @@ func (e *IBusBambooEngine) shouldFallbackToEnglish() bool {
 	if len(vnRunes) == 0 {
 		return false
 	}
-	if e.config.IBflags&IBmarcoEnabled!=0 && e.macroTable.HasKey(vnSeq) {
+	if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(vnSeq) {
 		return false
 	}
 	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation
 	if e.config.IBflags&IBddFreeStyle != 0 && (vnRunes[len(vnRunes)-1] == 'd' || strings.ContainsRune(vnSeq, 'đ')) {
 		return false
 	}
-	if e.preediter.IsSpellingCorrect(bamboo.NoTone) {
+	if e.isSpellingCorrect() {
 		return false
 	}
 	if e.preediter.IsSpellingLikelyCorrect(bamboo.NoTone) {
@@ -143,17 +143,25 @@ func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
 	if e.config.IBflags&IBddFreeStyle != 0 && strings.ContainsRune(vnSeq, 'đ') {
 		return false
 	}
-	if e.preediter.IsSpellingCorrect(bamboo.NoTone) {
+	if e.isSpellingCorrect() {
 		return false
 	}
 	return true
 }
 
+func (e *IBusBambooEngine) isSpellingCorrect() bool {
+	if e.config.IBflags&IBspellCheckingByRules != 0 {
+		return e.preediter.IsSpellingLikelyCorrect(bamboo.NoTone)
+	}
+	return wordtrie[e.preediter.GetProcessedString(bamboo.VietnameseMode|bamboo.LowerCase)]
+}
+
 func (e *IBusBambooEngine) getCommitString() string {
 	var processedStr string
 	processedStr = e.preediter.GetProcessedString(bamboo.VietnameseMode)
-	if e.config.IBflags&IBmarcoEnabled!=0 && e.macroTable.HasKey(processedStr) {
-		return e.macroTable.GetText(processedStr) + " "
+	if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
+		processedStr = e.macroTable.GetText(processedStr)
+		return bamboo.Encode(e.config.Charset, processedStr) + " "
 	}
 	if e.mustFallbackToEnglish() {
 		processedStr = e.preediter.GetProcessedString(bamboo.EnglishMode)

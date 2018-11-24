@@ -1,3 +1,11 @@
+ibus-bamboo (0.2.1ubuntu2) stable; urgency=medium
+
+  * Release 0.2.1
+    - Bổ sung tính năng Gõ tắt
+    - Cho phép kiểm tra chính tả bằng từ điển
+
+ -- Luong Thanh Lam <ltlam93@gmail.com>  Wed, 24 Nov 2018 00:49:12 +0700
+
 ibus-bamboo (0.2.0ubuntu2) stable; urgency=medium
 
   * Release 0.2.0

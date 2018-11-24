@@ -31,6 +31,8 @@ const (
 	EngineName    = "Bamboo"
 	HomePage      = "https://github.com/BambooEngine/ibus-bamboo"
 	VnConvertPage = "https://font.ssc.vn"
+
+	DictVietnameseCm = "data/vietnamese.cm.dict"
 )
 
 func main() {

@@ -32,8 +32,8 @@ import (
 )
 
 const (
-	configFile = "%s/.config/ibus/ibus-%s.config.json"
-	mactabFile = "%s/.config/ibus/ibus-%s.macro.text"
+	configFile       = "%s/.config/ibus/ibus-%s.config.json"
+	mactabFile       = "%s/.config/ibus/ibus-%s.macro.text"
 	sampleMactabFile = "data/macro.tpl.txt"
 )
 
@@ -46,7 +46,9 @@ const (
 	IBautoNonVnRestore
 	IBddFreeStyle
 	IBpreeditInvisibility
-	IBstdFlags = IBspellCheckEnabled | IBautoNonVnRestore | IBddFreeStyle | IBautoCommitEnabled | IBpreeditInvisibility
+	IBspellCheckingByRules
+	IBspellCheckingByDicts
+	IBstdFlags = IBspellCheckEnabled | IBautoNonVnRestore | IBddFreeStyle | IBautoCommitEnabled | IBpreeditInvisibility | IBspellCheckingByRules
 )
 
 type Config struct {

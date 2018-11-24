@@ -26,15 +26,17 @@ import (
 )
 
 const (
-	PropKeyAbout               = "about"
-	PropKeyStdToneStyle        = "tone_std_style"
-	PropKeyFreeToneMarking     = "tone_free_marking"
-	PropKeySpellingChecking    = "spelling_checking"
-	PropKeyPreeditInvisibility = "preedit_hiding"
-	PropKeyVnConvert           = "vn_convert"
-	PropKeyFastCommit          = "fast_commit"
-	PropKeyMacroEnabled        = "macro_enabled"
-	PropKeyMacroTable          = "macro_table"
+	PropKeyAbout                = "about"
+	PropKeyStdToneStyle         = "tone_std_style"
+	PropKeyFreeToneMarking      = "tone_free_marking"
+	PropKeySpellingChecking     = "spelling_checking"
+	PropKeySpellCheckingByRules = "spelling_checking_by_rules"
+	PropKeySpellCheckingByDicts = "spelling_checking_by_dicts"
+	PropKeyPreeditInvisibility  = "preedit_hiding"
+	PropKeyVnConvert            = "vn_convert"
+	PropKeyFastCommit           = "fast_commit"
+	PropKeyMacroEnabled         = "macro_enabled"
+	PropKeyMacroTable           = "macro_table"
 )
 
 var runMode = ""
@@ -96,6 +98,17 @@ func GetPropListByConfig(c *Config) *ibus.PropList {
 			Visible:   true,
 			Symbol:    dbus.MakeVariant(ibus.NewText("")),
 			SubProps:  dbus.MakeVariant(GetMacroPropListByConfig(c)),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       "-",
+			Type:      ibus.PROP_TYPE_MENU,
+			Label:     dbus.MakeVariant(ibus.NewText("Kiểm tra chính tả")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("")),
+			Sensitive: true,
+			Visible:   true,
+			Symbol:    dbus.MakeVariant(ibus.NewText("S")),
+			SubProps:  dbus.MakeVariant(GetSpellCheckingPropListByConfig(c)),
 		},
 		&ibus.Property{
 			Name:      "IBusProperty",
@@ -215,6 +228,72 @@ func GetMacroPropListByConfig(c *Config) *ibus.PropList {
 	)
 }
 
+func GetSpellCheckingPropListByConfig(c *Config) *ibus.PropList {
+	spellCheckByRules := ibus.PROP_STATE_UNCHECKED
+	spellCheckByDicts := ibus.PROP_STATE_UNCHECKED
+
+	// spelling
+	spellingChecked := ibus.PROP_STATE_UNCHECKED
+	if c.IBflags&IBspellCheckEnabled != 0 {
+		spellingChecked = ibus.PROP_STATE_CHECKED
+	}
+	if c.IBflags&IBspellCheckingByRules != 0 {
+		spellCheckByRules = ibus.PROP_STATE_CHECKED
+	}
+	if c.IBflags&IBspellCheckingByDicts != 0 {
+		spellCheckByDicts = ibus.PROP_STATE_CHECKED
+	}
+	return ibus.NewPropList(
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       PropKeySpellingChecking,
+			Type:      ibus.PROP_TYPE_TOGGLE,
+			Label:     dbus.MakeVariant(ibus.NewText("Bật kiểm tra chính tả")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("")),
+			Sensitive: true,
+			Visible:   true,
+			State:     spellingChecked,
+			Symbol:    dbus.MakeVariant(ibus.NewText("S")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       "-",
+			Type:      ibus.PROP_TYPE_SEPARATOR,
+			Label:     dbus.MakeVariant(ibus.NewText("")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("")),
+			Sensitive: true,
+			Visible:   true,
+			Symbol:    dbus.MakeVariant(ibus.NewText("")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       PropKeySpellCheckingByRules,
+			Type:      ibus.PROP_TYPE_RADIO,
+			Label:     dbus.MakeVariant(ibus.NewText("Sử dụng luật ghép vần")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Sử dụng luật ghép vần")),
+			Sensitive: true,
+			Visible:   true,
+			State:     spellCheckByRules,
+			Symbol:    dbus.MakeVariant(ibus.NewText("M")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       PropKeySpellCheckingByDicts,
+			Type:      ibus.PROP_TYPE_RADIO,
+			Label:     dbus.MakeVariant(ibus.NewText("Sử dụng từ điển")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Sử dụng từ điển")),
+			Sensitive: true,
+			Visible:   true,
+			State:     spellCheckByDicts,
+			Symbol:    dbus.MakeVariant(ibus.NewText("O")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+	)
+}
+
 func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 	// tone
 	toneStdChecked := ibus.PROP_STATE_UNCHECKED
@@ -222,17 +301,11 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 	fastCommittingChecked := ibus.PROP_STATE_UNCHECKED
 	preeditInvisibilityChecked := ibus.PROP_STATE_UNCHECKED
 
-	// spelling
-	spellingChecked := ibus.PROP_STATE_UNCHECKED
-
 	if c.Flags&bamboo.EstdToneStyle != 0 {
 		toneStdChecked = ibus.PROP_STATE_CHECKED
 	}
 	if c.Flags&bamboo.EfreeToneMarking != 0 {
 		toneFreeMarkingChecked = ibus.PROP_STATE_CHECKED
-	}
-	if c.IBflags&IBspellCheckEnabled != 0 {
-		spellingChecked = ibus.PROP_STATE_CHECKED
 	}
 	if c.IBflags&IBfastCommitEnabled != 0 {
 		fastCommittingChecked = ibus.PROP_STATE_CHECKED
@@ -242,18 +315,6 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 	}
 
 	return ibus.NewPropList(
-		&ibus.Property{
-			Name:      "IBusProperty",
-			Key:       PropKeySpellingChecking,
-			Type:      ibus.PROP_TYPE_TOGGLE,
-			Label:     dbus.MakeVariant(ibus.NewText("Kiểm tra chính tả")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("")),
-			Sensitive: true,
-			Visible:   true,
-			State:     spellingChecked,
-			Symbol:    dbus.MakeVariant(ibus.NewText("S")),
-			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
-		},
 		&ibus.Property{
 			Name:      "IBusProperty",
 			Key:       PropKeyFreeToneMarking,
