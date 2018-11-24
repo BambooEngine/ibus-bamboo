@@ -24,6 +24,7 @@ import (
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
+	"log"
 	"os/exec"
 	"sync"
 )
@@ -39,6 +40,7 @@ type IBusBambooEngine struct {
 	mode          bamboo.Mode
 	ignorePreedit bool
 	macroTable    *MacroTable
+	vnSeq         string
 }
 
 /**
@@ -84,6 +86,22 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 
 	if keyVal == IBUS_BackSpace {
 		e.ignorePreedit = false
+		if e.config.IBflags&IBautoNonVnRestore == 0 {
+			e.vnSeq = e.getVnSeq()
+			e.preediter.Reset()
+			var vnRunes = []rune(e.vnSeq)
+			if len(vnRunes) == 0 {
+				return false, nil
+			}
+			if len(vnRunes) >= 1 {
+				vnRunes = vnRunes[:len(vnRunes)-1]
+				e.vnSeq = string(vnRunes)
+			} else {
+				e.vnSeq = ""
+			}
+			e.updatePreedit()
+			return true, nil
+		}
 		if rawKeyLen > 0 {
 			e.preediter.RemoveLastChar()
 			e.updatePreedit()
@@ -130,6 +148,20 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 		}
 		if e.ignorePreedit {
 			return false, nil
+		}
+		if e.config.IBflags&IBautoNonVnRestore == 0 {
+			var vnSeqTmp = e.preediter.GetProcessedString(bamboo.VietnameseMode)
+			e.preediter.ProcessChar(keyRune, bamboo.VietnameseMode)
+			if !e.preediter.IsSpellingLikelyCorrect(bamboo.NoTone) &&
+				!inKeyMap(e.preediter.GetInputMethod().SuperKeys, keyRune) &&
+				!inKeyMap(e.preediter.GetInputMethod().ToneKeys, keyRune) {
+				e.vnSeq += vnSeqTmp
+				e.preediter.Reset()
+				e.preediter.ProcessChar(keyRune, bamboo.VietnameseMode)
+			}
+			log.Println(e.preediter.GetProcessedString(bamboo.VietnameseMode))
+			e.updatePreedit()
+			return true, nil
 		}
 		e.preediter.ProcessChar(keyRune, e.getMode())
 		if e.config.IBflags&IBfastCommitEnabled != 0 && !e.preediter.IsSpellingLikelyCorrect(bamboo.NoTone) {
@@ -210,7 +242,19 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		OpenMactabFile(EngineName)
 	}
 
+	turnSpellChecking := func(on bool) {
+		if on {
+			e.config.IBflags |= IBspellCheckEnabled
+			e.config.IBflags |= IBautoNonVnRestore
+		} else {
+			e.config.IBflags &= ^IBspellCheckEnabled
+			e.config.IBflags &= ^IBautoNonVnRestore
+			e.config.IBflags &= ^IBfastCommitEnabled
+		}
+	}
+
 	turnSpellCheckByRules := func(on bool) {
+		turnSpellChecking(true)
 		if on {
 			e.config.IBflags |= IBspellCheckingByRules
 			e.config.IBflags &= ^IBspellCheckingByDicts
@@ -239,11 +283,9 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	}
 	if propName == PropKeySpellingChecking {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBspellCheckEnabled
-			e.config.IBflags |= IBautoNonVnRestore
+			turnSpellChecking(true)
 		} else {
-			e.config.IBflags &= ^IBspellCheckEnabled
-			e.config.IBflags &= ^IBautoNonVnRestore
+			turnSpellChecking(false)
 		}
 	}
 	if propName == PropKeySpellCheckingByRules {
