@@ -28,7 +28,7 @@ import (
 
 const (
 	ComponentName = "org.freedesktop.IBus.bamboo"
-	EngineName    = "bamboo"
+	EngineName    = "Bamboo"
 	HomePage      = "https://github.com/BambooEngine/ibus-bamboo"
 	VnConvertPage = "https://font.ssc.vn"
 )

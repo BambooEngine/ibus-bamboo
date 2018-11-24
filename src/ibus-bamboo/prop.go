@@ -23,7 +23,6 @@ import (
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
-	"strings"
 )
 
 const (
@@ -46,7 +45,7 @@ func GetPropListByConfig(c *Config) *ibus.PropList {
 			Name:      "IBusProperty",
 			Key:       PropKeyAbout,
 			Type:      ibus.PROP_TYPE_NORMAL,
-			Label:     dbus.MakeVariant(ibus.NewText("IBus " + strings.ToUpper(EngineName) + " " + Version + runMode)),
+			Label:     dbus.MakeVariant(ibus.NewText("IBus " + EngineName + " " + Version + runMode)),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("Mở trang chủ")),
 			Sensitive: true,
 			Visible:   true,

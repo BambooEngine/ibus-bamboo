@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <sys/time.h>
+#include <time.h>
 #include "_cgo_export.h"
 #define CAPTURE_MOUSE_MOVE_DELTA        50
 
@@ -18,15 +19,16 @@ static void signalHandler(int signo) {
 /**
  * milliseconds over 1000 will be ignored
  */
-static void delay(time_t sec, long msec) {
-    struct timespec sleep;
+static void delay(int sec, long msec) {
+    long pause;
+    clock_t now,then;
 
-    sleep.tv_sec  = sec;
-    sleep.tv_nsec = (msec % 1000) * 1000 * 1000;
+    pause = msec*(CLOCKS_PER_SEC/1000);
+    now = then = clock();
+    while( (now-then) < pause )
+        now = clock();
 
-    if (nanosleep(&sleep, NULL) == -1) {
-        signalHandler(0);
-    }
+    signalHandler(0);
 }
 
 /**

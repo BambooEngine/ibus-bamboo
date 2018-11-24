@@ -8,7 +8,7 @@
 # Bên dưới là một số từ gõ tắt được liệt kê sẵn, bỏ dấu # đầu dòng để có hiệu lực
 
 #vn:Việt Nam
-#sđt:Số điện thoại
-#nsut:Nghệ sĩ ưu tú
-#nxb:Nhà xuất bản
-#tttm:Trung tâm thương mại
+#sđt:số điện thoại
+#nsut:nghệ sĩ ưu tú
+#nxb:nhà xuất bản
+#tttm:trung tâm thương mại
