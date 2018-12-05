@@ -34,6 +34,25 @@ var marksMaps = map[rune]string{
 	'đ': "d___đ",
 }
 
+func FindMarkPosition(chr rune) int {
+	if str, found := marksMaps[chr]; found {
+		for pos, v := range []rune(str) {
+			if v == chr {
+				return pos
+			}
+		}
+	}
+	return -1
+}
+
+func FindMarkFromChar(chr rune) (Mark, bool) {
+	var pos = FindMarkPosition(chr)
+	if pos >= 0 {
+		return Mark(pos), true
+	}
+	return 0, false
+}
+
 func RemoveMarkFromChar(chr rune) rune {
 	if str, found := marksMaps[chr]; found {
 		marks := []rune(str)
@@ -93,7 +112,8 @@ func isMarkTargetValid(composition []*Transformation, trans *Transformation) boo
 	if !found {
 		return false
 	}
-	if isVowel(trans.Rule.EffectOn) && targetSound != VowelSound {
+	// the target of trans is a vowel
+	if IsVowel(trans.Rule.EffectOn) && targetSound != VowelSound {
 		return false
 	}
 	if targetSound == VowelSound && !isSpellingCorrect(getRightMostVowelWithMarks(append(composition, trans)), NoTone) {
@@ -122,11 +142,6 @@ func getTransformationsTargetTo(composition []*Transformation, trans *Transforma
 	return result
 }
 
-func getRightMostVowelWithMarks(composition []*Transformation) []*Transformation {
-	var vowels = getRightMostVowels(composition)
-	return addMarksToComposition(composition, vowels)
-}
-
 func addMarksToComposition(composition []*Transformation, appendingComps []*Transformation) []*Transformation {
 	var result []*Transformation
 	result = append(result, appendingComps...)
@@ -134,24 +149,4 @@ func addMarksToComposition(composition []*Transformation, appendingComps []*Tran
 		result = append(result, getMarkTransformationsTargetTo(composition, t)...)
 	}
 	return result
-}
-
-func getLastCombinationWithMarks(composition []*Transformation) []*Transformation {
-	return addMarksToComposition(composition, GetLastCombination(composition))
-}
-
-func findMarkTargetIndex(chars []rune) int {
-	if len(chars) != 2 {
-		return 0
-	}
-	if chars[0] == chars[1] {
-		return 0
-	}
-	if key, found := vowelMap[string(chars)]; found {
-		if key == chars[0] {
-			return 0
-		}
-		return 1
-	}
-	return 0
 }

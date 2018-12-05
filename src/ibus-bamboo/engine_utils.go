@@ -24,6 +24,7 @@ import (
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
+	"log"
 	"strings"
 	"time"
 )
@@ -65,15 +66,12 @@ var preeditUpdateChan = make(chan uint32)
 func (e *IBusBambooEngine) startAutoCommit() {
 	for {
 		var timeout = e.config.AutoCommitAfter
-		if e.config.IBflags&IBfastCommitEnabled == 0 {
-			timeout = 10 * e.config.AutoCommitAfter
-		}
 		select {
 		case <-preeditUpdateChan:
 			break
 		case <-time.After(time.Duration(timeout) * time.Millisecond):
 			var rawKeyLen = e.getRawKeyLen()
-			if e.config.IBflags&IBautoCommitEnabled != 0 && rawKeyLen > 0 {
+			if e.config.IBflags&IBautoCommitWithDelay != 0 && rawKeyLen > 0 {
 				e.commitPreedit(0)
 			}
 		}
@@ -119,12 +117,11 @@ func (e *IBusBambooEngine) shouldFallbackToEnglish() bool {
 	}
 	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation
 	if e.config.IBflags&IBddFreeStyle != 0 && (vnRunes[len(vnRunes)-1] == 'd' || strings.ContainsRune(vnSeq, 'đ')) {
-		return false
+		if !bamboo.HasVowel(vnRunes) {
+			return false
+		}
 	}
-	if e.isSpellingCorrect() {
-		return false
-	}
-	if e.preediter.IsSpellingLikelyCorrect(bamboo.NoTone) {
+	if e.getSpellingMatchResult() != bamboo.FindResultNotMatch {
 		return false
 	}
 	return true
@@ -141,19 +138,29 @@ func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
 	}
 	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation
 	if e.config.IBflags&IBddFreeStyle != 0 && strings.ContainsRune(vnSeq, 'đ') {
-		return false
+		if !bamboo.HasVowel(vnRunes) {
+			return false
+		}
 	}
-	if e.isSpellingCorrect() {
+	if e.getSpellingMatchResult() == bamboo.FindResultMatchFull {
 		return false
 	}
 	return true
 }
 
 func (e *IBusBambooEngine) isSpellingCorrect() bool {
-	if e.config.IBflags&IBspellCheckingByRules != 0 {
-		return e.preediter.IsSpellingCorrect(bamboo.NoTone)
+	return e.getSpellingMatchResult() == bamboo.FindResultMatchFull
+}
+
+func (e *IBusBambooEngine) getSpellingMatchResult() uint8 {
+	if e.config.IBflags&IBspellCheckingWithRules != 0 {
+		res, _ := e.preediter.GetSpellingMatchResult(bamboo.NoTone)
+		log.Println("mat result", res, e.preediter.GetProcessedString(bamboo.VietnameseMode))
+		return res
 	}
-	return wordtrie[e.getProcessedString(bamboo.VietnameseMode|bamboo.LowerCase)]
+	var str = e.getProcessedString(bamboo.VietnameseMode | bamboo.LowerCase)
+	res, _ := bamboo.FindWord(rootWordTrie, []rune(str), false)
+	return res
 }
 
 func (e *IBusBambooEngine) getCommitString() string {
@@ -163,16 +170,15 @@ func (e *IBusBambooEngine) getCommitString() string {
 	} else {
 		processedStr = e.getProcessedString(bamboo.VietnameseMode)
 	}
-	if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
-		processedStr = e.macroTable.GetText(processedStr)
-		return bamboo.Encode(e.config.Charset, processedStr) + " "
-	}
 	if e.mustFallbackToEnglish() {
 		processedStr = e.getProcessedString(bamboo.EnglishMode)
 		return processedStr
 	}
-	processedStr = bamboo.Encode(e.config.Charset, processedStr)
 	return processedStr
+}
+
+func (e *IBusBambooEngine) encodeText(text string) string {
+	return bamboo.Encode(e.config.Charset, text)
 }
 
 func (e *IBusBambooEngine) getProcessedString(mode bamboo.Mode) string {
@@ -202,10 +208,13 @@ func (e *IBusBambooEngine) getMode() bamboo.Mode {
 func (e *IBusBambooEngine) commitPreedit(lastKey uint32) {
 	var commitStr string
 	commitStr += e.getCommitString()
-	e.preediter.Reset()
-	e.vnSeq = ""
 
-	for _, chr := range []rune(commitStr) {
+	e.commitText(e.encodeText(commitStr))
+}
+
+func (e *IBusBambooEngine) commitText(str string) {
+	e.preediter.Reset()
+	for _, chr := range []rune(str) {
 		e.CommitText(ibus.NewText(string(chr)))
 	}
 	//e.CommitText(ibus.NewText(commitStr))
@@ -214,22 +223,9 @@ func (e *IBusBambooEngine) commitPreedit(lastKey uint32) {
 }
 
 func (e *IBusBambooEngine) getVnSeq() string {
-	return e.vnSeq + e.preediter.GetProcessedString(bamboo.VietnameseMode)
+	return e.preediter.GetProcessedString(bamboo.VietnameseMode)
 }
 
 func (e *IBusBambooEngine) hasMacroKey(key string) bool {
 	return e.macroTable.GetText(key) != ""
-}
-func (e *IBusBambooEngine) commitMacroText() {
-	var commitStr string
-	var key = e.getProcessedString(bamboo.VietnameseMode)
-	commitStr = e.macroTable.GetText(key) + " "
-	e.preediter.Reset()
-
-	for _, chr := range []rune(commitStr) {
-		e.CommitText(ibus.NewText(string(chr)))
-	}
-	//e.CommitText(ibus.NewText(commitStr))
-
-	e.HidePreeditText()
 }

@@ -86,7 +86,7 @@ func (f *BambooFlattener) GetCanvas(composition []*Transformation, mode Mode) []
 		return canvas
 	}
 	for _, trans := range composition {
-		if trans.IsDeleted {
+		if trans.IsDeleted || trans.Target == nil {
 			continue
 		}
 		switch trans.Rule.EffectType {

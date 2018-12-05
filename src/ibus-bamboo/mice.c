@@ -39,7 +39,7 @@ static int grabPointer(Display *dpy, Window w, unsigned int mask) {
 
     /* retry until we actually get the pointer (with a suitable delay)
      * or we get an error we can't recover from. */
-    while (mcap_running == 1) {
+    while (mcap_running == 1 && dpy != NULL) {
         if (mcap_grabbing == 1) {
             XUngrabPointer(dpy, CurrentTime);
             XSync(dpy, 1);
@@ -49,7 +49,7 @@ static int grabPointer(Display *dpy, Window w, unsigned int mask) {
 
         switch (rc) {
             case GrabSuccess:
-                printf("succesfully grabbed mouse pointer\n");
+                printf("XGrabPointer: succesfully grabbed mouse pointer\n");
                 return 1;
 
             case AlreadyGrabbed:
@@ -137,7 +137,7 @@ void mouse_capture_init()
 
 void mouse_capture_exit()
 {
-    if (mcap_grabbing == 1) {
+    if (mcap_grabbing == 1 && dpy != NULL) {
         XUngrabPointer(dpy, CurrentTime);
         XFlush(dpy);
         mcap_grabbing = 0;

@@ -138,7 +138,7 @@ func ParseTonelessRules(key rune, line string) []Rule {
 		effectiveOns := []rune(parts[1])
 		results := []rune(parts[2])
 		for i, effectiveOn := range effectiveOns {
-			effect, found := parseMarkFromString(results[i])
+			effect, found := FindMarkFromChar(results[i])
 			if !found {
 				continue
 			}
@@ -181,17 +181,4 @@ func getAppendingRule(key rune, value string) (Rule, bool) {
 		return rule, true
 	}
 	return rule, false
-}
-
-func parseMarkFromString(chr rune) (Mark, bool) {
-	if strings.ContainsRune("ơư", chr) {
-		return MARK_HORN, true
-	} else if strings.ContainsRune("âêô", chr) {
-		return MARK_HAT, true
-	} else if 'ă' == chr {
-		return MARK_BREVE, true
-	} else if 'đ' == chr {
-		return MARK_DASH, true
-	}
-	return 0, false
 }

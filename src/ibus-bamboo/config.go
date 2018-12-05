@@ -38,17 +38,19 @@ const (
 )
 
 const (
-	IBfastCommitEnabled uint = 1 << iota
+	IBautoCommitWithSpellChecking uint = 1 << iota
 	IBmarcoEnabled
-	IBautoCommitEnabled
-	IBautoCommitCseqEnabled
-	IBspellCheckEnabled
+	IBautoCommitWithSthElse
+	IBautoCommitWithFC
+	IBspellChecking
 	IBautoNonVnRestore
 	IBddFreeStyle
 	IBpreeditInvisibility
-	IBspellCheckingByRules
-	IBspellCheckingByDicts
-	IBstdFlags = IBspellCheckEnabled | IBautoNonVnRestore | IBddFreeStyle | IBautoCommitEnabled | IBpreeditInvisibility | IBspellCheckingByRules
+	IBspellCheckingWithRules
+	IBspellCheckingWithDicts
+	IBautoCommitWithDelay
+	IBstdFlags = IBspellChecking | IBspellCheckingWithRules | IBautoNonVnRestore | IBddFreeStyle |
+		IBpreeditInvisibility | IBautoCommitWithDelay
 )
 
 type Config struct {

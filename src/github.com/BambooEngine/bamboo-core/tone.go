@@ -81,7 +81,7 @@ func hasValidTone(composition []*Transformation, tone Tone) bool {
 	if tone == TONE_ACUTE || tone == TONE_DOT {
 		return true
 	}
-	var lastConsonants = Flatten(GetLastSoundGroup(composition, LastConsonantSound), EnglishMode|LowerCase)
+	var lastConsonants = Flatten(getCompositionBySound(composition, LastConsonantSound), EnglishMode|LowerCase)
 
 	// These consonants can only go with ACUTE, DOT accents
 	var dotWithConsonants = []string{"c", "p", "t", "ch"}

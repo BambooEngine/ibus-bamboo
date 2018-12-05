@@ -26,17 +26,17 @@ import (
 )
 
 const (
-	PropKeyAbout                = "about"
-	PropKeyStdToneStyle         = "tone_std_style"
-	PropKeyFreeToneMarking      = "tone_free_marking"
-	PropKeySpellingChecking     = "spelling_checking"
-	PropKeySpellCheckingByRules = "spelling_checking_by_rules"
-	PropKeySpellCheckingByDicts = "spelling_checking_by_dicts"
-	PropKeyPreeditInvisibility  = "preedit_hiding"
-	PropKeyVnConvert            = "vn_convert"
-	PropKeyFastCommit           = "fast_commit"
-	PropKeyMacroEnabled         = "macro_enabled"
-	PropKeyMacroTable           = "macro_table"
+	PropKeyAbout                       = "about"
+	PropKeyStdToneStyle                = "tone_std_style"
+	PropKeyFreeToneMarking             = "tone_free_marking"
+	PropKeySpellingChecking            = "spelling_checking"
+	PropKeySpellCheckingByRules        = "spelling_checking_by_rules"
+	PropKeySpellCheckingByDicts        = "spelling_checking_by_dicts"
+	PropKeyPreeditInvisibility         = "preedit_hiding"
+	PropKeyVnConvert                   = "vn_convert"
+	PropKeyAutoCommitWithSpellChecking = "fast_commit"
+	PropKeyMacroEnabled                = "macro_enabled"
+	PropKeyMacroTable                  = "macro_table"
 )
 
 var runMode = ""
@@ -234,13 +234,13 @@ func GetSpellCheckingPropListByConfig(c *Config) *ibus.PropList {
 
 	// spelling
 	spellingChecked := ibus.PROP_STATE_UNCHECKED
-	if c.IBflags&IBspellCheckEnabled != 0 {
+	if c.IBflags&IBspellChecking != 0 {
 		spellingChecked = ibus.PROP_STATE_CHECKED
 	}
-	if c.IBflags&IBspellCheckingByRules != 0 {
+	if c.IBflags&IBspellCheckingWithRules != 0 {
 		spellCheckByRules = ibus.PROP_STATE_CHECKED
 	}
-	if c.IBflags&IBspellCheckingByDicts != 0 {
+	if c.IBflags&IBspellCheckingWithDicts != 0 {
 		spellCheckByDicts = ibus.PROP_STATE_CHECKED
 	}
 	return ibus.NewPropList(
@@ -307,7 +307,7 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 	if c.Flags&bamboo.EfreeToneMarking != 0 {
 		toneFreeMarkingChecked = ibus.PROP_STATE_CHECKED
 	}
-	if c.IBflags&IBfastCommitEnabled != 0 {
+	if c.IBflags&IBautoCommitWithSpellChecking != 0 {
 		fastCommittingChecked = ibus.PROP_STATE_CHECKED
 	}
 	if c.IBflags&IBpreeditInvisibility != 0 {
@@ -353,7 +353,7 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 		},
 		&ibus.Property{
 			Name:      "IBusProperty",
-			Key:       PropKeyFastCommit,
+			Key:       PropKeyAutoCommitWithSpellChecking,
 			Type:      ibus.PROP_TYPE_TOGGLE,
 			Label:     dbus.MakeVariant(ibus.NewText("Fast commit")),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("Fast commit")),

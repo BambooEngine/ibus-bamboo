@@ -21,6 +21,7 @@ package main
 
 import (
 	"bufio"
+	"github.com/BambooEngine/bamboo-core"
 	"log"
 	"os"
 	"path/filepath"
@@ -28,7 +29,7 @@ import (
 	"runtime/debug"
 )
 
-var wordtrie = map[string]bool{}
+var rootWordTrie = &bamboo.W{F: false}
 
 func fileExist(p string) bool {
 	sta, err := os.Stat(p)
@@ -60,7 +61,7 @@ func InitWordTrie(dataFiles ...string) error {
 			if len(line) == 0 {
 				continue
 			}
-			wordtrie[string(line)] = true
+			bamboo.AddTrie(rootWordTrie, []rune(string(line)), false, bamboo.GenerateDumpSoundFromTonelessWord(string(line)))
 		}
 		f.Close()
 	}

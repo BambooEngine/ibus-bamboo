@@ -24,7 +24,6 @@ import (
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
-	"log"
 	"os/exec"
 	"sync"
 )
@@ -40,7 +39,6 @@ type IBusBambooEngine struct {
 	mode          bamboo.Mode
 	ignorePreedit bool
 	macroTable    *MacroTable
-	vnSeq         string
 }
 
 /**
@@ -86,22 +84,6 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 
 	if keyVal == IBUS_BackSpace {
 		e.ignorePreedit = false
-		if e.config.IBflags&IBautoNonVnRestore == 0 {
-			e.vnSeq = e.getVnSeq()
-			e.preediter.Reset()
-			var vnRunes = []rune(e.vnSeq)
-			if len(vnRunes) == 0 {
-				return false, nil
-			}
-			if len(vnRunes) >= 1 {
-				vnRunes = vnRunes[:len(vnRunes)-1]
-				e.vnSeq = string(vnRunes)
-			} else {
-				e.vnSeq = ""
-			}
-			e.updatePreedit()
-			return true, nil
-		}
 		if rawKeyLen > 0 {
 			e.preediter.RemoveLastChar()
 			e.updatePreedit()
@@ -113,7 +95,13 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 
 	if keyVal == IBUS_space || keyVal == IBUS_KP_Space {
 		e.ignorePreedit = false
-		e.commitPreedit(0)
+		var processedStr = e.getCommitString()
+		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
+			processedStr = e.macroTable.GetText(processedStr)
+			e.commitText(e.encodeText(processedStr))
+		} else {
+			e.commitPreedit(0)
+		}
 		return false, nil
 	}
 
@@ -150,21 +138,12 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 			return false, nil
 		}
 		if e.config.IBflags&IBautoNonVnRestore == 0 {
-			var vnSeqTmp = e.preediter.GetProcessedString(bamboo.VietnameseMode)
 			e.preediter.ProcessChar(keyRune, bamboo.VietnameseMode)
-			if !e.preediter.IsSpellingLikelyCorrect(bamboo.NoTone) &&
-				!inKeyMap(e.preediter.GetInputMethod().SuperKeys, keyRune) &&
-				!inKeyMap(e.preediter.GetInputMethod().ToneKeys, keyRune) {
-				e.vnSeq += vnSeqTmp
-				e.preediter.Reset()
-				e.preediter.ProcessChar(keyRune, bamboo.VietnameseMode)
-			}
-			log.Println(e.preediter.GetProcessedString(bamboo.VietnameseMode))
 			e.updatePreedit()
 			return true, nil
 		}
 		e.preediter.ProcessChar(keyRune, e.getMode())
-		if e.config.IBflags&IBfastCommitEnabled != 0 && !e.preediter.IsSpellingLikelyCorrect(bamboo.NoTone) {
+		if e.config.IBflags&IBautoCommitWithSpellChecking != 0 && e.getSpellingMatchResult() == bamboo.FindResultNotMatch {
 			e.ignorePreedit = true
 			e.commitPreedit(0)
 			e.preediter.Reset()
@@ -244,26 +223,26 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 
 	turnSpellChecking := func(on bool) {
 		if on {
-			e.config.IBflags |= IBspellCheckEnabled
+			e.config.IBflags |= IBspellChecking
 			e.config.IBflags |= IBautoNonVnRestore
 		} else {
-			e.config.IBflags &= ^IBspellCheckEnabled
+			e.config.IBflags &= ^IBspellChecking
 			e.config.IBflags &= ^IBautoNonVnRestore
-			e.config.IBflags &= ^IBfastCommitEnabled
+			e.config.IBflags &= ^IBautoCommitWithSpellChecking
 		}
 	}
 
 	turnSpellCheckByRules := func(on bool) {
 		turnSpellChecking(true)
 		if on {
-			e.config.IBflags |= IBspellCheckingByRules
-			e.config.IBflags &= ^IBspellCheckingByDicts
+			e.config.IBflags |= IBspellCheckingWithRules
+			e.config.IBflags &= ^IBspellCheckingWithDicts
 			e.config.IBflags |= IBddFreeStyle
 		} else {
-			e.config.IBflags |= IBspellCheckingByDicts
-			e.config.IBflags &= ^IBspellCheckingByRules
+			e.config.IBflags |= IBspellCheckingWithDicts
+			e.config.IBflags &= ^IBspellCheckingWithRules
 			e.config.IBflags &= ^IBddFreeStyle
-			e.config.IBflags &= ^IBfastCommitEnabled
+			e.config.IBflags &= ^IBautoCommitWithSpellChecking
 		}
 	}
 
@@ -298,18 +277,18 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 			turnSpellCheckByRules(false)
 		}
 	}
-	if propName == PropKeyFastCommit {
+	if propName == PropKeyAutoCommitWithSpellChecking {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBfastCommitEnabled
+			e.config.IBflags |= IBautoCommitWithSpellChecking
 			turnSpellCheckByRules(true)
 		} else {
-			e.config.IBflags &= ^IBfastCommitEnabled
+			e.config.IBflags &= ^IBautoCommitWithSpellChecking
 		}
 	}
 	if propName == PropKeyMacroEnabled {
 		if propState == ibus.PROP_STATE_CHECKED {
 			e.config.IBflags |= IBmarcoEnabled
-			e.config.IBflags &= ^IBfastCommitEnabled
+			e.config.IBflags &= ^IBautoCommitWithSpellChecking
 			e.macroTable.Enable()
 		} else {
 			e.config.IBflags &= ^IBmarcoEnabled

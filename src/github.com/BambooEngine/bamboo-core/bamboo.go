@@ -66,7 +66,7 @@ type IEngine interface {
 	ProcessString(string, Mode)
 	GetProcessedString(Mode) string
 	IsSpellingCorrect(Mode) bool
-	IsSpellingLikelyCorrect(Mode) bool
+	GetSpellingMatchResult(Mode) (uint8, []Sound)
 	Reset()
 	RemoveLastChar()
 }
@@ -171,7 +171,7 @@ func (e *BambooEngine) findTargetForKey(key rune) (*Transformation, Rule) {
 						target = nil
 					}
 				}
-			} else if lastAppending != nil && isVowel(lastAppending.Rule.EffectOn) {
+			} else if lastAppending != nil && IsVowel(lastAppending.Rule.EffectOn) {
 				target = lastAppending
 			}
 		}
@@ -202,8 +202,8 @@ func (e *BambooEngine) IsSpellingCorrect(mode Mode) bool {
 	return isSpellingCorrect(e.composition, mode)
 }
 
-func (e *BambooEngine) IsSpellingLikelyCorrect(mode Mode) bool {
-	return isSpellingLikelyCorrect(e.composition, mode)
+func (e *BambooEngine) GetSpellingMatchResult(mode Mode) (uint8, []Sound) {
+	return getSpellingMatchResult(e.composition, mode)
 }
 
 func (e *BambooEngine) createCompositionForKey(chr rune) []*Transformation {
@@ -236,6 +236,17 @@ func (e *BambooEngine) ProcessChar(key rune, mode Mode) {
 		e.composition = append(e.composition, createAppendingTrans(key))
 		return
 	}
+	var previousComposition []*Transformation
+	if len(e.composition) > 0 {
+		var lastComb = GetLastCombination(e.composition)
+		if len(lastComb) > 0 {
+			var idx = findTransformationIndex(e.composition, lastComb[0])
+			if idx > 0 {
+				previousComposition = e.composition[:idx]
+				e.composition = lastComb
+			}
+		}
+	}
 	if len(e.composition) > 0 && e.isEffectiveKey(key) {
 		// garbage collection
 		e.composition = freeComposition(e.composition)
@@ -245,6 +256,10 @@ func (e *BambooEngine) ProcessChar(key rune, mode Mode) {
 				// Double typing an effect key undoes it and its effects.
 				e.composition = undoesTransformations(e.composition, e.getApplicableRules(key))
 				e.composition = append(e.composition, createAppendingTrans(key))
+
+				if previousComposition != nil {
+					e.composition = append(previousComposition, e.composition...)
+				}
 				return
 			} else {
 				// Or an effect key may override other effect keys
@@ -279,6 +294,10 @@ func (e *BambooEngine) ProcessChar(key rune, mode Mode) {
 	**/
 	if e.flags&EstdToneStyle != 0 && shouldRefreshLastToneTarget(e.composition) {
 		e.composition = refreshLastToneTarget(e.composition)
+	}
+
+	if previousComposition != nil {
+		e.composition = append(previousComposition, e.composition...)
 	}
 }
 
