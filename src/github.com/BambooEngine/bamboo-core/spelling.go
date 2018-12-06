@@ -2,6 +2,7 @@ package bamboo
 
 import (
 	"log"
+	"regexp"
 	"strings"
 	"unicode"
 )
@@ -42,23 +43,11 @@ var vcMatrix = [6][]uint{
 
 var spellingTrie = &W{F: false}
 
-func attachSound(str string, s Sound) []Sound {
-	var sounds []Sound
-	for _ = range []rune(str) {
-		sounds = append(sounds, s)
-	}
-	return sounds
-}
-
 func buildCV(consonants []string, vowels []string) []string {
 	var ret []string
 	for _, c := range consonants {
 		for _, v := range vowels {
 			ret = append(ret, c+v)
-			var sounds []Sound
-			sounds = append(sounds, attachSound(c, FirstConsonantSound)...)
-			sounds = append(sounds, attachSound(v, VowelSound)...)
-			AddTrie(spellingTrie, []rune(c+v), false, sounds)
 		}
 	}
 	return ret
@@ -69,9 +58,6 @@ func generateVowels() []string {
 	for _, vRow := range vowelSeq {
 		for _, v := range strings.Split(vRow, " ") {
 			ret = append(ret, v)
-			var sounds []Sound
-			sounds = append(sounds, attachSound(v, VowelSound)...)
-			AddTrie(spellingTrie, []rune(v), false, sounds)
 		}
 	}
 	return ret
@@ -82,10 +68,6 @@ func buildVC(vowels []string, consonants []string) []string {
 	for _, v := range vowels {
 		for _, c := range consonants {
 			ret = append(ret, v+c)
-			var sounds []Sound
-			sounds = append(sounds, attachSound(v, VowelSound)...)
-			sounds = append(sounds, attachSound(c, LastConsonantSound)...)
-			AddTrie(spellingTrie, []rune(v+c), false, sounds)
 		}
 	}
 	return ret
@@ -97,11 +79,6 @@ func buildCVC(cs1 []string, vs1 []string, cs2 []string) []string {
 		for _, v := range vs1 {
 			for _, c2 := range cs2 {
 				ret = append(ret, c1+v+c2)
-				var sounds []Sound
-				sounds = append(sounds, attachSound(c1, FirstConsonantSound)...)
-				sounds = append(sounds, attachSound(v, VowelSound)...)
-				sounds = append(sounds, attachSound(c2, LastConsonantSound)...)
-				AddTrie(spellingTrie, []rune(c1+v+c2), false, sounds)
 			}
 		}
 	}
@@ -109,12 +86,17 @@ func buildCVC(cs1 []string, vs1 []string, cs2 []string) []string {
 }
 
 func init() {
-	generateVowels()
-	generateCV()
-	generateVC()
-	generateCVC()
-	// fix gi+? vs g+i? confusion
-	buildCV([]string{"g"}, []string{"i"})
+	for _, word := range GenerateDictionary() {
+		AddTrie(spellingTrie, []rune(word), false)
+	}
+}
+
+func GenerateDictionary() []string {
+	var words = generateVowels()
+	words = append(words, generateCV()...)
+	words = append(words, generateVC()...)
+	words = append(words, generateCVC()...)
+	return words
 }
 
 func generateCV() []string {
@@ -167,7 +149,7 @@ func GetLastCombination(composition []*Transformation) []*Transformation {
 		if str == "" {
 			continue
 		}
-		if res, _ := FindWord(spellingTrie, []rune(str), false); res == FindResultNotMatch {
+		if FindWord(spellingTrie, []rune(str), false) == FindResultNotMatch {
 			if i == 0 {
 				return GetLastCombination(composition[1:])
 			}
@@ -181,13 +163,13 @@ func GetLastCombination(composition []*Transformation) []*Transformation {
 func getCombinationWithSound(composition []*Transformation) ([]*Transformation, []Sound) {
 	var lastComb = getAppendingComposition(composition)
 	if len(lastComb) <= 0 {
-		return lastComb, GenerateDumpSoundFromTonelessWord("")
+		return lastComb, nil
 	}
 	var str = Flatten(lastComb, VietnameseMode|NoTone|LowerCase)
-	if res, sounds := FindWord(spellingTrie, []rune(str), false); res != FindResultNotMatch {
-		return lastComb, sounds
+	if FindWord(spellingTrie, []rune(str), false) != FindResultNotMatch {
+		return lastComb, ParseSoundsFromWord(str)
 	}
-	return lastComb, GenerateDumpSoundFromTonelessWord(str)
+	return lastComb, ParseSoundsFromWord(str)
 }
 
 func getCompositionBySound(composition []*Transformation, sound Sound) []*Transformation {
@@ -205,29 +187,24 @@ func getCompositionBySound(composition []*Transformation, sound Sound) []*Transf
 	return ret
 }
 
-func getSpellingMatchResult(composition []*Transformation, mode Mode) (uint8, []Sound) {
+func getSpellingMatchResult(composition []*Transformation, mode Mode, deepSearch bool) uint8 {
 	if len(composition) <= 0 {
-		return FindResultMatchFull, []Sound{}
+		return FindResultMatchFull
 	}
 	if mode&NoTone != 0 {
 		str := Flatten(composition, NoTone|LowerCase)
 		var chars = []rune(str)
 		if len(chars) <= 1 {
-			return FindResultMatchFull, GenerateDumpSoundFromTonelessWord(str)
+			return FindResultMatchFull
 		}
-		return FindWord(spellingTrie, chars, false)
+		return FindWord(spellingTrie, chars, deepSearch)
 	}
-	return FindResultNotMatch, []Sound{}
+	return FindResultNotMatch
 }
 
 func isSpellingCorrect(composition []*Transformation, mode Mode) bool {
-	res, _ := getSpellingMatchResult(composition, mode)
+	res := getSpellingMatchResult(composition, mode, false)
 	return res == FindResultMatchFull
-}
-
-func isSpellingLikelyCorrect(composition []*Transformation, mode Mode) bool {
-	res, _ := getSpellingMatchResult(composition, mode)
-	return res == FindResultMatchPrefix
 }
 
 func GetSoundMap(composition []*Transformation) map[*Transformation]Sound {
@@ -243,14 +220,6 @@ func GetSoundMap(composition []*Transformation) map[*Transformation]Sound {
 	return soundMap
 }
 
-func ParseSoundsFromTonelessWord(word string) []Sound {
-	res, sounds := FindWord(spellingTrie, []rune(word), false)
-	if res == FindResultNotMatch {
-		return GenerateDumpSoundFromTonelessWord(word)
-	}
-	return sounds
-}
-
 func getRightMostVowels(composition []*Transformation) []*Transformation {
 	return getCompositionBySound(composition, VowelSound)
 }
@@ -260,13 +229,48 @@ func getRightMostVowelWithMarks(composition []*Transformation) []*Transformation
 	return addMarksToComposition(composition, vowels)
 }
 
-func GenerateDumpSoundFromTonelessWord(word string) []Sound {
+var regGI = regexp.MustCompile(`^(qu|gi)(\p{L}+)`)
+
+func ParseSoundsFromWord(word string) []Sound {
 	var sounds []Sound
+	var chars = []rune(word)
+	if len(chars) == 0 {
+		return nil
+	}
+	var suffix string
+	if regGI.MatchString(word) {
+		subs := regGI.FindStringSubmatch(word)
+		if len(subs) == 3 {
+			var seq = []rune(subs[2])
+			if IsVowel(seq[0]) {
+				sounds = append(sounds, FirstConsonantSound)
+				sounds = append(sounds, FirstConsonantSound)
+				suffix = subs[2]
+				sounds = append(sounds, ParseDumpSoundsFromWord(suffix)...)
+				return sounds
+			} else {
+				return ParseDumpSoundsFromWord(word)
+			}
+		}
+	} else {
+		sounds = ParseDumpSoundsFromWord(word)
+	}
+	return sounds
+}
+
+func ParseDumpSoundsFromWord(word string) []Sound {
+	var sounds []Sound
+	var hadVowel bool
 	for _, c := range []rune(word) {
 		if IsVowel(c) {
 			sounds = append(sounds, VowelSound)
+			hadVowel = true
 		} else if unicode.IsLetter(c) {
-			sounds = append(sounds, FirstConsonantSound)
+			if hadVowel {
+				sounds = append(sounds, LastConsonantSound)
+			} else {
+				sounds = append(sounds, FirstConsonantSound)
+			}
 		} else {
 			sounds = append(sounds, NoSound)
 		}

@@ -18,7 +18,7 @@
 engine_name=bamboo
 ibus_e_name=ibus-engine-$(engine_name)
 pkg_name=ibus-$(engine_name)
-version=0.2.1
+version=0.2.2
 
 engine_dir=/usr/share/$(pkg_name)
 ibus_dir=/usr/share/ibus
@@ -46,7 +46,7 @@ install: build
 	mkdir -p $(DESTDIR)/usr/lib/
 	mkdir -p $(DESTDIR)$(ibus_dir)/component/
 
-	cp -R -f viet-on.png data wm.bash $(DESTDIR)$(engine_dir)
+	cp -R -f viet-on.png data $(DESTDIR)$(engine_dir)
 	cp -f $(ibus_e_name) $(DESTDIR)/usr/lib/
 	cp -f $(engine_name).xml $(DESTDIR)$(ibus_dir)/component/
 

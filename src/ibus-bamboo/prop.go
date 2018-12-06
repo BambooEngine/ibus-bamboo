@@ -34,7 +34,11 @@ const (
 	PropKeySpellCheckingByDicts        = "spelling_checking_by_dicts"
 	PropKeyPreeditInvisibility         = "preedit_hiding"
 	PropKeyVnConvert                   = "vn_convert"
-	PropKeyAutoCommitWithSpellChecking = "fast_commit"
+	PropKeyAutoCommitWithVnNotMatch    = "AutoCommitWithSpellChecking"
+	PropKeyAutoCommitWithVnFullMatch   = "AutoCommitWithVnFullMatch"
+	PropKeyAutoCommitWithVnWordBreak   = "AutoCommitWithVnFC"
+	PropKeyAutoCommitWithMouseMovement = "AutoCommitWithMouseMovement"
+	PropKeyAutoCommitWithDelay         = "AutoCommitWithDelay"
 	PropKeyMacroEnabled                = "macro_enabled"
 	PropKeyMacroTable                  = "macro_table"
 )
@@ -270,10 +274,10 @@ func GetSpellCheckingPropListByConfig(c *Config) *ibus.PropList {
 		&ibus.Property{
 			Name:      "IBusProperty",
 			Key:       PropKeySpellCheckingByRules,
-			Type:      ibus.PROP_TYPE_RADIO,
+			Type:      ibus.PROP_TYPE_TOGGLE,
 			Label:     dbus.MakeVariant(ibus.NewText("Sử dụng luật ghép vần")),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("Sử dụng luật ghép vần")),
-			Sensitive: true,
+			Sensitive: false,
 			Visible:   true,
 			State:     spellCheckByRules,
 			Symbol:    dbus.MakeVariant(ibus.NewText("M")),
@@ -282,7 +286,7 @@ func GetSpellCheckingPropListByConfig(c *Config) *ibus.PropList {
 		&ibus.Property{
 			Name:      "IBusProperty",
 			Key:       PropKeySpellCheckingByDicts,
-			Type:      ibus.PROP_TYPE_RADIO,
+			Type:      ibus.PROP_TYPE_TOGGLE,
 			Label:     dbus.MakeVariant(ibus.NewText("Sử dụng từ điển")),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("Sử dụng từ điển")),
 			Sensitive: true,
@@ -298,7 +302,6 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 	// tone
 	toneStdChecked := ibus.PROP_STATE_UNCHECKED
 	toneFreeMarkingChecked := ibus.PROP_STATE_UNCHECKED
-	fastCommittingChecked := ibus.PROP_STATE_UNCHECKED
 	preeditInvisibilityChecked := ibus.PROP_STATE_UNCHECKED
 
 	if c.Flags&bamboo.EstdToneStyle != 0 {
@@ -306,9 +309,6 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 	}
 	if c.Flags&bamboo.EfreeToneMarking != 0 {
 		toneFreeMarkingChecked = ibus.PROP_STATE_CHECKED
-	}
-	if c.IBflags&IBautoCommitWithSpellChecking != 0 {
-		fastCommittingChecked = ibus.PROP_STATE_CHECKED
 	}
 	if c.IBflags&IBpreeditInvisibility != 0 {
 		preeditInvisibilityChecked = ibus.PROP_STATE_CHECKED
@@ -353,13 +353,99 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 		},
 		&ibus.Property{
 			Name:      "IBusProperty",
-			Key:       PropKeyAutoCommitWithSpellChecking,
-			Type:      ibus.PROP_TYPE_TOGGLE,
-			Label:     dbus.MakeVariant(ibus.NewText("Fast commit")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("Fast commit")),
+			Key:       "-",
+			Type:      ibus.PROP_TYPE_MENU,
+			Label:     dbus.MakeVariant(ibus.NewText("Tự động gửi phím")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Auto commit")),
 			Sensitive: true,
 			Visible:   true,
-			State:     fastCommittingChecked,
+			Symbol:    dbus.MakeVariant(ibus.NewText("")),
+			SubProps:  dbus.MakeVariant(GetAutoCommitPropListByConfig(c)),
+		},
+	)
+}
+
+func GetAutoCommitPropListByConfig(c *Config) *ibus.PropList {
+	mouseMovementChecked := ibus.PROP_STATE_UNCHECKED
+	vnFullMatchChecked := ibus.PROP_STATE_UNCHECKED
+	vnWordBreakChecked := ibus.PROP_STATE_UNCHECKED
+	vnNotMatchChecked := ibus.PROP_STATE_UNCHECKED
+	delayChecked := ibus.PROP_STATE_UNCHECKED
+
+	if c.IBflags&IBautoCommitWithMouseMovement != 0 {
+		mouseMovementChecked = ibus.PROP_STATE_CHECKED
+	}
+	if c.IBflags&IBautoCommitWithVnFullMatch != 0 {
+		vnFullMatchChecked = ibus.PROP_STATE_CHECKED
+	}
+	if c.IBflags&IBautoCommitWithVnNotMatch != 0 {
+		vnNotMatchChecked = ibus.PROP_STATE_CHECKED
+	}
+	if c.IBflags&IBautoCommitWithVnWordBreak != 0 {
+		vnWordBreakChecked = ibus.PROP_STATE_CHECKED
+	}
+	if c.IBflags&IBautoCommitWithDelay != 0 {
+		delayChecked = ibus.PROP_STATE_CHECKED
+	}
+
+	return ibus.NewPropList(
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       PropKeyAutoCommitWithVnNotMatch,
+			Type:      ibus.PROP_TYPE_TOGGLE,
+			Label:     dbus.MakeVariant(ibus.NewText("Sai chính tả")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Invalid words")),
+			Sensitive: true,
+			Visible:   true,
+			State:     vnNotMatchChecked,
+			Symbol:    dbus.MakeVariant(ibus.NewText("M")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       PropKeyAutoCommitWithVnFullMatch,
+			Type:      ibus.PROP_TYPE_TOGGLE,
+			Label:     dbus.MakeVariant(ibus.NewText("Hoàn thành một từ")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Finish a word")),
+			Sensitive: true,
+			Visible:   true,
+			State:     vnFullMatchChecked,
+			Symbol:    dbus.MakeVariant(ibus.NewText("M")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       PropKeyAutoCommitWithVnWordBreak,
+			Type:      ibus.PROP_TYPE_TOGGLE,
+			Label:     dbus.MakeVariant(ibus.NewText("Phụ âm đầu")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("vnfc")),
+			Sensitive: true,
+			Visible:   false,
+			State:     vnWordBreakChecked,
+			Symbol:    dbus.MakeVariant(ibus.NewText("P")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       PropKeyAutoCommitWithMouseMovement,
+			Type:      ibus.PROP_TYPE_TOGGLE,
+			Label:     dbus.MakeVariant(ibus.NewText("Click hoặc di chuyển chuột")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Click or move mouse")),
+			Sensitive: true,
+			Visible:   true,
+			State:     mouseMovementChecked,
+			Symbol:    dbus.MakeVariant(ibus.NewText("F")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       PropKeyAutoCommitWithDelay,
+			Type:      ibus.PROP_TYPE_TOGGLE,
+			Label:     dbus.MakeVariant(ibus.NewText("Sau 3 giây")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("After 3s of inactive")),
+			Sensitive: true,
+			Visible:   true,
+			State:     delayChecked,
 			Symbol:    dbus.MakeVariant(ibus.NewText("F")),
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},

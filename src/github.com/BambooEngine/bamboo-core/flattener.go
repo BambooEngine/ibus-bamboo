@@ -20,7 +20,6 @@
 package bamboo
 
 import (
-	"log"
 	"strings"
 	"unicode"
 )
@@ -56,7 +55,7 @@ func (f *BambooFlattener) GetCanvas(composition []*Transformation, mode Mode) []
 	var canvas []rune
 	apply_effect := func(callback func(rune, uint8) rune, trans *Transformation) {
 		if trans.Target == nil || len(canvas) <= int(trans.Target.Dest) {
-			log.Println("There's something wrong with canvas")
+			//log.Println("There's something wrong with canvas [nhoawfng]")
 			return
 		}
 		index := trans.Target.Dest
@@ -82,7 +81,7 @@ func (f *BambooFlattener) GetCanvas(composition []*Transformation, mode Mode) []
 			canvas = append(canvas, effectOn)
 		}
 	}
-	if mode&EnglishMode != 0 {
+	if mode&EnglishMode != 0 || len(canvas) == 0 {
 		return canvas
 	}
 	for _, trans := range composition {

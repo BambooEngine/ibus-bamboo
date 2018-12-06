@@ -24,7 +24,6 @@ import (
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
-	"log"
 	"strings"
 	"time"
 )
@@ -33,14 +32,16 @@ func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath
 	objectPath := dbus.ObjectPath(fmt.Sprintf("/org/freedesktop/IBus/Engine/bamboo/%d", time.Now().UnixNano()))
 
 	var config = LoadConfig(engineName)
+	var dictionary, _ = loadDictionary(DictVietnameseCm)
 
 	engine := &IBusBambooEngine{
 		Engine:     ibus.BaseEngine(conn, objectPath),
-		preediter:  bamboo.NewEngine(config.InputMethod, config.Flags),
+		preediter:  bamboo.NewEngine(config.InputMethod, config.Flags, dictionary),
 		engineName: engineName,
 		config:     config,
 		propList:   GetPropListByConfig(config),
 		macroTable: NewMacroTable(),
+		dictionary: dictionary,
 	}
 	ibus.PublishEngine(conn, objectPath, engine)
 
@@ -50,11 +51,11 @@ func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath
 	go engine.startAutoCommit()
 
 	onMouseMove = func() {
-		engine.Lock()
-		defer engine.Unlock()
-		var rawKeyLen = engine.getRawKeyLen()
-		if rawKeyLen > 0 {
-			engine.commitPreedit(0)
+		if engine.config.IBflags&IBautoCommitWithMouseMovement != 0 {
+			engine.ignorePreedit = false
+			if engine.getRawKeyLen() > 0 {
+				engine.commitPreedit(0)
+			}
 		}
 	}
 
@@ -121,7 +122,7 @@ func (e *IBusBambooEngine) shouldFallbackToEnglish() bool {
 			return false
 		}
 	}
-	if e.getSpellingMatchResult() != bamboo.FindResultNotMatch {
+	if e.getSpellingMatchResult(false) != bamboo.FindResultNotMatch {
 		return false
 	}
 	return true
@@ -142,25 +143,21 @@ func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
 			return false
 		}
 	}
-	if e.getSpellingMatchResult() == bamboo.FindResultMatchFull {
+	if e.config.IBflags&IBspellCheckingWithDicts != 0 {
+		return !e.dictionary[vnSeq]
+	}
+	if e.getSpellingMatchResult(false) == bamboo.FindResultMatchFull {
 		return false
 	}
 	return true
 }
 
 func (e *IBusBambooEngine) isSpellingCorrect() bool {
-	return e.getSpellingMatchResult() == bamboo.FindResultMatchFull
+	return e.getSpellingMatchResult(false) == bamboo.FindResultMatchFull
 }
 
-func (e *IBusBambooEngine) getSpellingMatchResult() uint8 {
-	if e.config.IBflags&IBspellCheckingWithRules != 0 {
-		res, _ := e.preediter.GetSpellingMatchResult(bamboo.NoTone)
-		log.Println("mat result", res, e.preediter.GetProcessedString(bamboo.VietnameseMode))
-		return res
-	}
-	var str = e.getProcessedString(bamboo.VietnameseMode | bamboo.LowerCase)
-	res, _ := bamboo.FindWord(rootWordTrie, []rune(str), false)
-	return res
+func (e *IBusBambooEngine) getSpellingMatchResult(deepSearch bool) uint8 {
+	return e.preediter.GetSpellingMatchResult(bamboo.NoTone, deepSearch)
 }
 
 func (e *IBusBambooEngine) getCommitString() string {

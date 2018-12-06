@@ -21,36 +21,28 @@ package main
 
 import (
 	"bufio"
-	"github.com/BambooEngine/bamboo-core"
-	"log"
 	"os"
 	"path/filepath"
 	"runtime"
 	"runtime/debug"
 )
 
-var rootWordTrie = &bamboo.W{F: false}
+//var rootWordTrie = &bamboo.W{F: false}
 
 func fileExist(p string) bool {
 	sta, err := os.Stat(p)
 	return err == nil && !sta.IsDir()
 }
 
-func init() {
-	err := InitWordTrie(DictVietnameseCm)
-	if err != nil {
-		log.Println(err)
-	}
-}
-
-func InitWordTrie(dataFiles ...string) error {
+func loadDictionary(dataFiles ...string) (map[string]bool, error) {
+	var dictionary = map[string]bool{}
 	for _, dataFile := range dataFiles {
 		if !fileExist(dataFile) && !filepath.IsAbs(dataFile) {
 			dataFile = filepath.Join(filepath.Dir(os.Args[0]), dataFile)
 		}
 		f, err := os.Open(dataFile)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		rd := bufio.NewReader(f)
 		for {
@@ -61,11 +53,12 @@ func InitWordTrie(dataFiles ...string) error {
 			if len(line) == 0 {
 				continue
 			}
-			bamboo.AddTrie(rootWordTrie, []rune(string(line)), false, bamboo.GenerateDumpSoundFromTonelessWord(string(line)))
+			dictionary[string(line)] = true
+			//bamboo.AddTrie(rootWordTrie, []rune(string(line)), false)
 		}
 		f.Close()
 	}
 	runtime.GC()
 	debug.FreeOSMemory()
-	return nil
+	return dictionary, nil
 }

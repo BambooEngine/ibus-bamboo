@@ -39,6 +39,7 @@ type IBusBambooEngine struct {
 	mode          bamboo.Mode
 	ignorePreedit bool
 	macroTable    *MacroTable
+	dictionary map[string]bool
 }
 
 /**
@@ -143,7 +144,10 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 			return true, nil
 		}
 		e.preediter.ProcessChar(keyRune, e.getMode())
-		if e.config.IBflags&IBautoCommitWithSpellChecking != 0 && e.getSpellingMatchResult() == bamboo.FindResultNotMatch {
+		if (e.config.IBflags&IBautoCommitWithVnNotMatch != 0 &&
+			e.getSpellingMatchResult(false) == bamboo.FindResultNotMatch) ||
+			(e.config.IBflags&IBautoCommitWithVnFullMatch != 0 && e.preediter.HasTone() &&
+				e.getSpellingMatchResult(true) == bamboo.FindResultMatchFull) {
 			e.ignorePreedit = true
 			e.commitPreedit(0)
 			e.preediter.Reset()
@@ -225,24 +229,14 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		if on {
 			e.config.IBflags |= IBspellChecking
 			e.config.IBflags |= IBautoNonVnRestore
+			if e.config.IBflags&IBspellCheckingWithDicts == 0 {
+				e.config.IBflags |= IBspellCheckingWithRules
+			}
 		} else {
 			e.config.IBflags &= ^IBspellChecking
 			e.config.IBflags &= ^IBautoNonVnRestore
-			e.config.IBflags &= ^IBautoCommitWithSpellChecking
-		}
-	}
-
-	turnSpellCheckByRules := func(on bool) {
-		turnSpellChecking(true)
-		if on {
-			e.config.IBflags |= IBspellCheckingWithRules
-			e.config.IBflags &= ^IBspellCheckingWithDicts
-			e.config.IBflags |= IBddFreeStyle
-		} else {
-			e.config.IBflags |= IBspellCheckingWithDicts
-			e.config.IBflags &= ^IBspellCheckingWithRules
-			e.config.IBflags &= ^IBddFreeStyle
-			e.config.IBflags &= ^IBautoCommitWithSpellChecking
+			e.config.IBflags &= ^IBautoCommitWithVnNotMatch
+			e.config.IBflags &= ^IBautoCommitWithVnFullMatch
 		}
 	}
 
@@ -269,26 +263,61 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	}
 	if propName == PropKeySpellCheckingByRules {
 		if propState == ibus.PROP_STATE_CHECKED {
-			turnSpellCheckByRules(true)
+			e.config.IBflags |= IBspellCheckingWithRules
+			turnSpellChecking(true)
+		} else {
+			e.config.IBflags &= ^IBspellCheckingWithRules
 		}
 	}
 	if propName == PropKeySpellCheckingByDicts {
 		if propState == ibus.PROP_STATE_CHECKED {
-			turnSpellCheckByRules(false)
+			e.config.IBflags |= IBspellCheckingWithDicts
+			turnSpellChecking(true)
+		} else {
+			e.config.IBflags &= ^IBspellCheckingWithDicts
 		}
 	}
-	if propName == PropKeyAutoCommitWithSpellChecking {
+	if propName == PropKeyAutoCommitWithVnNotMatch {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBautoCommitWithSpellChecking
-			turnSpellCheckByRules(true)
+			e.config.IBflags |= IBautoCommitWithVnNotMatch
 		} else {
-			e.config.IBflags &= ^IBautoCommitWithSpellChecking
+			e.config.IBflags &= ^IBautoCommitWithVnNotMatch
+		}
+	}
+	if propName == PropKeyAutoCommitWithVnFullMatch {
+		if propState == ibus.PROP_STATE_CHECKED {
+			e.config.IBflags |= IBautoCommitWithVnFullMatch
+		} else {
+			e.config.IBflags &= ^IBautoCommitWithVnFullMatch
+		}
+	}
+	if propName == PropKeyAutoCommitWithVnWordBreak {
+		if propState == ibus.PROP_STATE_CHECKED {
+			e.config.IBflags |= IBautoCommitWithVnWordBreak
+		} else {
+			e.config.IBflags &= ^IBautoCommitWithVnWordBreak
+		}
+	}
+	if propName == PropKeyAutoCommitWithMouseMovement {
+		if propState == ibus.PROP_STATE_CHECKED {
+			e.config.IBflags |= IBautoCommitWithMouseMovement
+		} else {
+			e.config.IBflags &= ^IBautoCommitWithMouseMovement
+		}
+	}
+	if propName == PropKeyAutoCommitWithDelay {
+		if propState == ibus.PROP_STATE_CHECKED {
+			e.config.IBflags |= IBautoCommitWithDelay
+		} else {
+			e.config.IBflags &= ^IBautoCommitWithDelay
 		}
 	}
 	if propName == PropKeyMacroEnabled {
 		if propState == ibus.PROP_STATE_CHECKED {
 			e.config.IBflags |= IBmarcoEnabled
-			e.config.IBflags &= ^IBautoCommitWithSpellChecking
+			e.config.IBflags &= ^IBautoCommitWithVnNotMatch
+			e.config.IBflags &= ^IBautoCommitWithVnFullMatch
+			e.config.IBflags &= ^IBautoCommitWithVnWordBreak
 			e.macroTable.Enable()
 		} else {
 			e.config.IBflags &= ^IBmarcoEnabled
@@ -310,7 +339,7 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	}
 	SaveConfig(e.config, e.engineName)
 	e.propList = GetPropListByConfig(e.config)
-	e.preediter = bamboo.NewEngine(e.config.InputMethod, e.config.Flags)
+	e.preediter = bamboo.NewEngine(e.config.InputMethod, e.config.Flags, e.dictionary)
 	e.RegisterProperties(e.propList)
 	return nil
 }

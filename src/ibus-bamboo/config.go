@@ -38,10 +38,10 @@ const (
 )
 
 const (
-	IBautoCommitWithSpellChecking uint = 1 << iota
+	IBautoCommitWithVnNotMatch uint = 1 << iota
 	IBmarcoEnabled
-	IBautoCommitWithSthElse
-	IBautoCommitWithFC
+	IBautoCommitWithVnFullMatch
+	IBautoCommitWithVnWordBreak
 	IBspellChecking
 	IBautoNonVnRestore
 	IBddFreeStyle
@@ -49,8 +49,9 @@ const (
 	IBspellCheckingWithRules
 	IBspellCheckingWithDicts
 	IBautoCommitWithDelay
+	IBautoCommitWithMouseMovement
 	IBstdFlags = IBspellChecking | IBspellCheckingWithRules | IBautoNonVnRestore | IBddFreeStyle |
-		IBpreeditInvisibility | IBautoCommitWithDelay
+		IBpreeditInvisibility | IBautoCommitWithMouseMovement
 )
 
 type Config struct {

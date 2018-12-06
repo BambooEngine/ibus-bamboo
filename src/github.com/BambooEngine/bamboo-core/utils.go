@@ -24,6 +24,10 @@ import (
 	"strings"
 )
 
+var regUho = regexp.MustCompile(`uơ\p{L}*`)
+var regUoh = regexp.MustCompile(`ưo\p{L}*`)
+var regUoSuffix = regexp.MustCompile(`^(h|th|kh)uo$`)
+
 func findMissingRuleForUo(composition []*Transformation, isSuperKey bool) (Rule, bool) {
 	var rule Rule
 	if len(composition) < 2 {
@@ -33,17 +37,14 @@ func findMissingRuleForUo(composition []*Transformation, isSuperKey bool) (Rule,
 	var full = strings.ToLower(Flatten(composition, NoTone|LowerCase))
 
 	if !isSuperKey {
-		var reg = regexp.MustCompile(`uơ\p{L}*`)
-		if reg.MatchString(full) {
+		if regUho.MatchString(full) {
 			target = 'u'
 		}
-		var regUho = regexp.MustCompile(`ưo\p{L}*`)
-		if regUho.MatchString(full) {
+		if regUoh.MatchString(full) {
 			target = 'o'
 		}
 	} else {
-		var reg = regexp.MustCompile(`^(h|th|kh)uo$`)
-		if reg.MatchString(full) {
+		if regUoSuffix.MatchString(full) {
 			return rule, false
 		}
 		var vowels = getRightMostVowelWithMarks(composition)
@@ -73,59 +74,6 @@ func findIndexRune(chars []rune, r rune) int {
 	return -1
 }
 
-func SplitStringToWords(str string) []string {
-	var words []string
-	var word []rune
-	var seq = []rune(str)
-	for i, r := range seq {
-		word = append(word, r)
-		// todo: need to check if r is a space
-		if i+1 < len(seq)-1 && IsVowel(r) && !IsVowel(seq[i+1]) {
-			words = append(words, string(word))
-			word = []rune{}
-		}
-	}
-	words = append(words, string(word))
-	return words
-}
-
-func filterComposition(composition []*Transformation, effectType EffectType) []*Transformation {
-	var result []*Transformation
-	for _, trans := range composition {
-		if trans.Rule.EffectType == effectType {
-			result = append(result, trans)
-		}
-	}
-	return result
-}
-
-// deprecated
-func separateComposition(composition []*Transformation) [][]*Transformation {
-	var result [][]*Transformation
-	var seq []*Transformation
-	var appendingTransformations = filterComposition(composition, Appending)
-	for i, trans := range appendingTransformations {
-		seq = append(seq, trans)
-		if i+1 < len(seq)-1 && IsVowel(trans.Rule.EffectOn) && !IsVowel(seq[i+1].Rule.EffectOn) {
-			result = append(result, seq)
-			seq = []*Transformation{}
-		}
-	}
-	if len(seq) > 0 {
-		result = append(result, seq)
-	}
-	return result
-}
-
-func belongToComposition(composition []*Transformation, trans *Transformation) bool {
-	for _, t := range composition {
-		if t == trans {
-			return true
-		}
-	}
-	return false
-}
-
 func isFree(composition []*Transformation, trans *Transformation, effectType EffectType) bool {
 	for _, t := range composition {
 		if t.Target == trans && t.Rule.EffectType == effectType {
@@ -133,15 +81,6 @@ func isFree(composition []*Transformation, trans *Transformation, effectType Eff
 		}
 	}
 	return true
-}
-
-func findTransPos(composition []*Transformation, trans *Transformation) int {
-	for i, t := range composition {
-		if t == trans {
-			return i
-		}
-	}
-	return -1
 }
 
 func findTransformationIndex(composition []*Transformation, trans *Transformation) int {
@@ -160,19 +99,6 @@ func hasSuperWord(composition []*Transformation) bool {
 	}
 	str := Flatten(vowels, NoTone|LowerCase)
 	return strings.Contains(str, "uo")
-}
-func copyRunes(r []rune) []rune {
-	t := make([]rune, len(r))
-	copy(t, r)
-
-	return t
-}
-
-func ExtractChar(chr rune) (rune, Mark, Tone) {
-	var tone = FindToneFromChar(chr)
-	var mark, _ = FindMarkFromChar(chr)
-	var base = AddMarkToChar(AddToneToChar(chr, 0), 0)
-	return base, mark, tone
 }
 
 /***** BEGIN SIDE-EFFECT METHODS ******/

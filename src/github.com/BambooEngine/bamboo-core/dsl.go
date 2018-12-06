@@ -130,11 +130,12 @@ func ParseRules(key rune, line string) []Rule {
 	return rules
 }
 
+var regDsl = regexp.MustCompile(`([a-zA-Z]+)_(\p{L}+)([_\p{L}]*)`)
+
 func ParseTonelessRules(key rune, line string) []Rule {
 	var rules []Rule
-	reg := regexp.MustCompile(`([a-zA-Z]+)_(\p{L}+)([_\p{L}]*)`)
-	if reg.MatchString(line) {
-		parts := reg.FindStringSubmatch(strings.ToLower(line))
+	if regDsl.MatchString(line) {
+		parts := regDsl.FindStringSubmatch(strings.ToLower(line))
 		effectiveOns := []rune(parts[1])
 		results := []rune(parts[2])
 		for i, effectiveOn := range effectiveOns {
@@ -160,11 +161,12 @@ func ParseTonelessRules(key rune, line string) []Rule {
 	return rules
 }
 
+var regDslAppending = regexp.MustCompile(`(_?)_(\p{L}+)`)
+
 func getAppendingRule(key rune, value string) (Rule, bool) {
 	var rule Rule
-	reg := regexp.MustCompile(`(_?)_(\p{L}+)`)
-	if reg.MatchString(value) {
-		parts := reg.FindStringSubmatch(value)
+	if regDslAppending.MatchString(value) {
+		parts := regDslAppending.FindStringSubmatch(value)
 		chars := []rune(parts[2])
 		rule.Key = key
 		rule.EffectType = Appending

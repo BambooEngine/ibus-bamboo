@@ -20,7 +20,6 @@
 package bamboo
 
 import (
-	"log"
 	"unicode"
 )
 
@@ -32,17 +31,11 @@ const (
 
 //Word trie
 type W struct {
-	F      bool        //Full word
-	N      map[rune]*W // Next characters
-	Sounds []Sound
+	F bool        //Full word
+	N map[rune]*W // Next characters
 }
 
-func AddTrie(trie *W, s []rune, down bool, sounds []Sound) {
-	if len(sounds) < len(s) {
-		log.Println("There is something wrong with AddTrie's params")
-		return
-	}
-
+func AddTrie(trie *W, s []rune, down bool) {
 	if trie.N == nil {
 		trie.N = map[rune]*W{}
 	}
@@ -52,14 +45,13 @@ func AddTrie(trie *W, s []rune, down bool, sounds []Sound) {
 	if trie.N[s0] == nil {
 		trie.N[s0] = &W{}
 	}
-	trie.N[s0].Sounds = sounds[:len(sounds)-len(s)+1]
 
 	if len(s) == 1 {
 		if !trie.N[s0].F {
 			trie.N[s0].F = !down
 		}
 	} else {
-		AddTrie(trie.N[s0], s[1:], down, sounds)
+		AddTrie(trie.N[s0], s[1:], down)
 	}
 
 	//add down 1 level char
@@ -68,37 +60,36 @@ func AddTrie(trie *W, s []rune, down bool, sounds []Sound) {
 			if trie.N[r] == nil {
 				trie.N[r] = &W{}
 			}
-			trie.N[r].Sounds = sounds[:len(sounds)-len(s)+1]
 
 			if len(s) == 1 {
 				trie.N[r].F = true
 			} else {
-				AddTrie(trie.N[r], s[1:], true, sounds)
+				AddTrie(trie.N[r], s[1:], true)
 			}
 		}
 	}
 }
 
-func FindWord(trie *W, s []rune, deepSearch bool) (uint8, []Sound) {
+func FindWord(trie *W, s []rune, deepSearch bool) uint8 {
 
 	if len(s) == 0 {
 		if trie.F {
 			if deepSearch && len(trie.N) > 0 {
-				return FindResultMatchPrefix, trie.Sounds
+				return FindResultMatchPrefix
 			}
-			return FindResultMatchFull, trie.Sounds
+			return FindResultMatchFull
 		}
-		return FindResultMatchPrefix, trie.Sounds
+		return FindResultMatchPrefix
 	}
 
 	c := unicode.ToLower(s[0])
 
 	if trie.N[c] != nil {
-		r, s := FindWord(trie.N[c], s[1:], deepSearch)
+		r := FindWord(trie.N[c], s[1:], deepSearch)
 		if r != FindResultNotMatch {
-			return r, s
+			return r
 		}
 	}
 
-	return FindResultNotMatch, []Sound{}
+	return FindResultNotMatch
 }
