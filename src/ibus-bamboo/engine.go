@@ -44,6 +44,7 @@ type IBusBambooEngine struct {
 	display             CDisplay
 	wmClasses           []string
 	lookupTableIsOpened bool
+	capSurrounding      bool
 }
 
 /**
@@ -86,6 +87,7 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 			return true, nil
 		}
 	}
+	fmt.Printf("keyCode 0x%04x keyval 0x%04x | %c\n", keyCode, keyVal, rune(keyVal))
 	if keyVal == IBUS_OpenLookupTable && e.lookupTableIsOpened == false {
 		e.lookupTableIsOpened = true
 		e.openLookupTable()
@@ -122,6 +124,7 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 
 func (e *IBusBambooEngine) FocusOut() *dbus.Error {
 	fmt.Print("FocusOut.")
+	e.wmClasses = []string{}
 	return nil
 }
 
@@ -147,6 +150,7 @@ func (e *IBusBambooEngine) Disable() *dbus.Error {
 }
 
 func (e *IBusBambooEngine) SetCapabilities(cap uint32) *dbus.Error {
+	e.capSurrounding = cap&IBUS_CAP_SURROUNDING_TEXT != 0
 	return nil
 }
 

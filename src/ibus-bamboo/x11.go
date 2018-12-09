@@ -172,7 +172,7 @@ func x11CloseDisplay(d *C.Display) {
 	C.XCloseDisplay(d)
 }
 
-func x11GetFocusWindowClass(display *C.Display) []string {
+func x11GetFocusWindowClasses(display *C.Display) []string {
 
 	if display != nil {
 
@@ -194,6 +194,14 @@ func x11GetFocusWindowClass(display *C.Display) []string {
 		}
 
 		return strings.Split(strClass, "\n")
+	}
+	return nil
+}
+
+func x11GetFocusWindowClass(display *C.Display) []string {
+	var wmClasses = x11GetFocusWindowClasses(display)
+	if len(wmClasses) >= 2 {
+		return []string{wmClasses[1]}
 	}
 	return nil
 }

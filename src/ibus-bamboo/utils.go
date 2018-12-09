@@ -57,14 +57,16 @@ func inWhiteList(list map[string]bool, classes []string) bool {
 	return false
 }
 
-func removeWhiteList(list map[string]bool, classes []string) map[string]bool {
+func removeFromWhiteList(list map[string]bool, classes []string) map[string]bool {
 	for _, cl := range classes {
-		list[cl] = false
+		if list[cl] {
+			list[cl] = false
+		}
 	}
 	return list
 }
 
-func addWhiteList(list map[string]bool, classes []string) map[string]bool {
+func addToWhiteList(list map[string]bool, classes []string) map[string]bool {
 	for _, cl := range classes {
 		list[cl] = true
 	}

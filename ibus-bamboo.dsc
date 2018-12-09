@@ -22,24 +22,24 @@ Format: 1.0
 Source: ibus-bamboo
 Binary: ibus-bamboo
 Architecture: any
-Version: 0.2.2-0
+Version: 0.2.3-0
 Maintainer: Luong Thanh Lam <ltlam93@gmail.com>
 Homepage: https://github.com/BambooEngine/ibus-bamboo
 Build-Depends: debhelper, golang, libx11-dev
 Files:
- 0 0 ibus-bamboo-0.2.2.tar.gz
+ 0 0 ibus-bamboo-0.2.3.tar.gz
 
 -----BEGIN PGP SIGNATURE-----
 
-iQGzBAEBCgAdFiEEoozA1sTSISdMhVWO8M0iy4gZZiEFAlwKkT8ACgkQ8M0iy4gZ
-ZiE1dQwAglFnnCraIk3Hg9L7NsHikzHA29f1mbSMQH+MR46rr7JwRgZ1IByKSK3t
-wmOSzocWvDTareEVzO9GOZpmpKHwtfE62TQidvKSeMtwPQCgrb6tg++lEeNv/m4t
-/Y1Us9x9L31NJyjgqwxDlsqJ7x/EH3UhfN8638rsk4Y8G0EVt1aHUsUZp/UhkQUW
-0lAlSKYYxCyyac/QQT4RtGFeI5h3dd9SBW0dy3U/4uSEu4hhAOxq+3jRaJBTpN7M
-0gKMUm3Ap/zBbX8GGHAn3PppLo5lf1XPEOZJ7Hnlxlw0KuKE1lWbCmpouuJsERDJ
-X4WFNpLoTTkrbyymKVfbZ9NOxnK7RT7HXiBOVVVjNmsjepvxhnYrylfDd2U+Nn/3
-jybIINpIV6UWLNIVmUTxpG8gODc5ufAFdBliJxds9y5irhdA2VqWtfqn5LxQWEp8
-eMi4sx5js/75SLEPs+64/1hohpmfCY9sDnRN7HRvsDKvgyg24lO/K0zLelCj7ph/
-zA85S0fQ
-=UeK4
+iQGzBAEBCgAdFiEEoozA1sTSISdMhVWO8M0iy4gZZiEFAlwNNXgACgkQ8M0iy4gZ
+ZiH2AQwAn+Qw4dBt4Zec9sTuH4GUe6zLR/L+/G08SrvFY5Zib4oCEJ0vvBfcR4tr
+8kz0UhFX8a81JMMFNUp4oMWuJVvX3RZdq+VtY6viNIYZ0TSk6+thhb/b5fWdmvC7
+YVJmfml0C00zK72979DUZp4sZdpbXgq77gAHNVxFMfi190dQyiMh7EgK3h/72iiD
+5mkoqkOLXzIaU+PAA8ksAuSFx+BotEPrr/RPxdFJ01Pz6hXSsDXVxM9Km6WwX0JE
+VpBIbb8qwL5omyXl9uKWxC/+R0LcSn7FSqEOj7RYk/uuuxOeI9qdvckKAuR+NZB4
+tsd3obxRIenUhe2XmKJ1kma57rE7XjxgPdd0C+3WVFFgLYD0xb8RgeoGrx5KEka6
+fRLoLs3ah2IJa4XKrMJxoIzU9mTZ98GSRIruWa3eNTocXq4X5KY+Uk9lIjMoeHKV
+xXPGJH7enoS2uKA60Ep93irt2h6MSBRd6C7GBwM6mTI1UvrRnxZYoTCFe4CAvtd7
+/hNxCOFs
+=zrOu
 -----END PGP SIGNATURE-----

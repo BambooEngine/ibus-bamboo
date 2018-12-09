@@ -46,6 +46,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		var processedStr = e.getCommitString()
 		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
 			processedStr = e.macroTable.GetText(processedStr)
+			e.preediter.Reset()
 			e.commitText(e.encodeText(processedStr))
 		} else {
 			e.commitPreedit(0)
@@ -103,9 +104,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		return true, nil
 	} else {
 		e.commitPreedit(keyVal)
-		//forward lastKey
-		e.ForwardKeyEvent(keyVal, keyCode, state)
-		return true, nil
+		return false, nil
 	}
 	return false, nil
 }
@@ -250,11 +249,11 @@ func (e *IBusBambooEngine) commitPreedit(lastKey uint32) {
 	var commitStr string
 	commitStr += e.getCommitString()
 
+	e.preediter.Reset()
 	e.commitText(e.encodeText(commitStr))
 }
 
 func (e *IBusBambooEngine) commitText(str string) {
-	e.preediter.Reset()
 	for _, chr := range []rune(str) {
 		e.CommitText(ibus.NewText(string(chr)))
 	}

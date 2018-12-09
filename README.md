@@ -15,8 +15,8 @@ IBus Bamboo - Bộ gõ tiếng Việt cho Linux
 * Nhiều chế độ gõ:
   * Kiểm tra chính tả (sử dụng từ điển/luật ghép vần)
   * Dấu thanh chuẩn và dấu thanh kiểu mới
-  * Bỏ dấu tự do
-  * Gõ tắt (macro)
+  * Bỏ dấu tự do, Gõ tắt (macro),...
+* Cho phép loại trừ ứng dụng không dùng bộ gõ, chuyển qua lại giữa các chế độ gõ: Preedit (default), Surrounding text, IBus forward key event, X11 fake backspace
 
 ### Cài đặt (Ubuntu)
 

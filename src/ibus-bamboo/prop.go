@@ -418,7 +418,7 @@ func GetAutoCommitPropListByConfig(c *Config) *ibus.PropList {
 			Key:       PropKeyAutoCommitWithVnWordBreak,
 			Type:      ibus.PROP_TYPE_TOGGLE,
 			Label:     dbus.MakeVariant(ibus.NewText("Phụ âm đầu")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("vnfc")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("first consonants")),
 			Sensitive: true,
 			Visible:   false,
 			State:     vnWordBreakChecked,

@@ -24,7 +24,6 @@ import (
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
-	"log"
 	"time"
 )
 
@@ -58,10 +57,8 @@ func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath
 		if engine.getRawKeyLen() == 0 {
 			return
 		}
-		log.Println("vao day k")
 		if engine.inBackspaceWhiteList(engine.wmClasses) {
-			log.Println("vao nhe")
-			engine.bsCommitPreedit(0)
+			engine.preediter.Reset()
 		} else {
 			engine.commitPreedit(0)
 		}
@@ -88,7 +85,7 @@ func (e *IBusBambooEngine) inLookupTableControlKeys(keyVal uint32) bool {
 
 func (e *IBusBambooEngine) openLookupTable() {
 
-	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (1/2/3/4) để lưu tùy chọn của bạn"), true)
+	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (0/1/2/3/4) để lưu tùy chọn của bạn"), true)
 
 	lt := ibus.NewLookupTable()
 	lt.AppendCandidate("Cấu hình mặc định")
@@ -112,10 +109,10 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 	fmt.Printf("keyCode 0x%04x keyval 0x%04x | %c\n", keyCode, keyVal, rune(keyVal))
 	e.HideAuxiliaryText()
 	var reset = func() {
-		e.config.X11BackspaceWhiteList = removeWhiteList(e.config.X11BackspaceWhiteList, wmClasses)
-		e.config.IBusBackspaceWhiteList = removeWhiteList(e.config.IBusBackspaceWhiteList, wmClasses)
-		e.config.SurroundingWhiteList = removeWhiteList(e.config.SurroundingWhiteList, wmClasses)
-		e.config.ExceptWhiteList = removeWhiteList(e.config.ExceptWhiteList, wmClasses)
+		e.config.X11BackspaceWhiteList = removeFromWhiteList(e.config.X11BackspaceWhiteList, wmClasses)
+		e.config.IBusBackspaceWhiteList = removeFromWhiteList(e.config.IBusBackspaceWhiteList, wmClasses)
+		e.config.SurroundingWhiteList = removeFromWhiteList(e.config.SurroundingWhiteList, wmClasses)
+		e.config.ExceptWhiteList = removeFromWhiteList(e.config.ExceptWhiteList, wmClasses)
 	}
 	switch keyVal {
 	case '0':
@@ -123,18 +120,18 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		break
 	case '1':
 		reset()
-		e.config.SurroundingWhiteList = addWhiteList(e.config.SurroundingWhiteList, wmClasses)
+		e.config.SurroundingWhiteList = addToWhiteList(e.config.SurroundingWhiteList, wmClasses)
 		break
 	case '2':
 		reset()
-		e.config.IBusBackspaceWhiteList = addWhiteList(e.config.IBusBackspaceWhiteList, wmClasses)
+		e.config.IBusBackspaceWhiteList = addToWhiteList(e.config.IBusBackspaceWhiteList, wmClasses)
 		break
 	case '3':
 		reset()
-		e.config.X11BackspaceWhiteList = addWhiteList(e.config.X11BackspaceWhiteList, wmClasses)
+		e.config.X11BackspaceWhiteList = addToWhiteList(e.config.X11BackspaceWhiteList, wmClasses)
 		break
 	case '4':
-		e.config.ExceptWhiteList = addWhiteList(e.config.ExceptWhiteList, wmClasses)
+		e.config.ExceptWhiteList = addToWhiteList(e.config.ExceptWhiteList, wmClasses)
 		break
 	case IBUS_OpenLookupTable:
 		return false, nil

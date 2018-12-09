@@ -21,7 +21,6 @@ package main
 
 import (
 	"github.com/BambooEngine/bamboo-core"
-	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
 	"log"
 )
@@ -30,10 +29,10 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 	var rawKeyLen = e.getRawKeyLen()
 	if keyVal == IBUS_BackSpace {
 		if rawKeyLen > 0 {
-			oldRunes := []rune(e.preediter.GetProcessedString(bamboo.VietnameseMode))
+			oldRunes := []rune(e.getPreeditString())
 			e.preediter.RemoveLastChar()
-			newRunes := []rune(e.preediter.GetProcessedString(bamboo.VietnameseMode))
-			e.bsUpdatePreedit(newRunes, oldRunes, state)
+			newRunes := []rune(e.getPreeditString())
+			e.updatePreviousText(newRunes, oldRunes, state)
 			return true, nil
 		}
 
@@ -43,32 +42,29 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 
 	if keyVal == IBUS_Return || keyVal == IBUS_KP_Enter {
 		if rawKeyLen > 0 {
-			e.bsCommitPreedit(keyVal)
-			if e.capSurrounding() {
-				return false, nil
-			}
-			e.ForwardKeyEvent(keyVal, keyCode, state)
-			return true, nil
-		} else {
-			return false, nil
+			e.preediter.Reset()
 		}
+		return false, nil
 	}
 
 	if keyVal == IBUS_Escape {
 		if rawKeyLen > 0 {
-			e.bsCommitPreedit(keyVal)
+			e.preediter.Reset()
 			return true, nil
 		}
+		return false, nil
 	}
+	var keyRune = rune(keyVal)
 
 	if keyVal == IBUS_space || keyVal == IBUS_KP_Space {
 		if rawKeyLen > 0 {
-			e.bsCommitPreedit(0)
-			if e.capSurrounding() {
-				return false, nil
+			if e.mustFallbackToEnglish() {
+				oldRunes := []rune(e.preediter.GetProcessedString(bamboo.VietnameseMode))
+				newRunes := []rune(e.preediter.GetProcessedString(bamboo.EnglishMode))
+				e.updatePreviousText(newRunes, oldRunes, state)
 			}
-			e.ForwardKeyEvent(keyVal, keyCode, state)
-			return true, nil
+			e.preediter.Reset()
+			return false, nil
 		}
 	}
 
@@ -76,7 +72,6 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 		(keyVal >= 'A' && keyVal <= 'Z') ||
 		(keyVal >= '0' && keyVal <= '9') ||
 		(inKeyMap(e.preediter.GetInputMethod().Keys, rune(keyVal))) {
-		var keyRune = rune(keyVal)
 		if state&IBUS_LOCK_MASK != 0 {
 			keyRune = toUpper(keyRune)
 		}
@@ -84,27 +79,18 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 			oldRunes := []rune(e.preediter.GetProcessedString(bamboo.VietnameseMode))
 			e.preediter.ProcessChar(keyRune, bamboo.VietnameseMode)
 			newRunes := []rune(e.preediter.GetProcessedString(bamboo.VietnameseMode))
-			e.bsUpdatePreedit(newRunes, oldRunes, state)
+			e.updatePreviousText(newRunes, oldRunes, state)
 			return true, nil
 		}
 		oldRunes := []rune(e.getPreeditString())
 		e.preediter.ProcessChar(keyRune, e.getMode())
 		newRunes := []rune(e.getPreeditString())
-		e.bsUpdatePreedit(newRunes, oldRunes, state)
+		e.updatePreviousText(newRunes, oldRunes, state)
 		return true, nil
 	} else {
 		if rawKeyLen > 0 {
-			if e.bsCommitPreedit(keyVal) {
-				//lastKey already appended to commit string
-				return true, nil
-			} else {
-				//forward lastKey
-				if e.capSurrounding() {
-					return false, nil
-				}
-				e.ForwardKeyEvent(keyVal, keyCode, state)
-				return true, nil
-			}
+			e.preediter.Reset()
+			return false, nil
 		}
 		//pre-edit empty, just forward key
 		return false, nil
@@ -112,11 +98,15 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 	return false, nil
 }
 
-func (e *IBusBambooEngine) capSurrounding() bool {
+func (e *IBusBambooEngine) inSurroundingList() bool {
 	return inWhiteList(e.config.SurroundingWhiteList, e.wmClasses)
 }
 
-func (e *IBusBambooEngine) bsUpdatePreedit(newRunes, oldRunes []rune, state uint32) {
+func (e *IBusBambooEngine) inIBusForwardList() bool {
+	return inWhiteList(e.config.IBusBackspaceWhiteList, e.wmClasses)
+}
+
+func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state uint32) {
 	mouseCaptureUnlock()
 	oldLen := len(oldRunes)
 	newLen := len(newRunes)
@@ -154,11 +144,6 @@ func (e *IBusBambooEngine) bsUpdatePreedit(newRunes, oldRunes []rune, state uint
 	e.SendText(newRunes[diffFrom:])
 }
 
-func (e *IBusBambooEngine) bsCommitPreedit(lastKey uint32) bool {
-	e.preediter.Reset()
-	return false
-}
-
 func (e *IBusBambooEngine) SendBackSpace(state uint32, n int) {
 	log.Printf("Sendding %d backSpace\n", n)
 	if n == 0 {
@@ -193,7 +178,8 @@ func (e *IBusBambooEngine) SendText(rs []rune) {
 	e.HidePreeditText()
 
 	x11Sync(e.display)
-	e.CommitText(ibus.NewText(string(rs)))
+	//e.CommitText(ibus.NewText(string(rs)))
+	e.commitText(string(rs))
 }
 
 func (e *IBusBambooEngine) inBackspaceWhiteList(wmClasses []string) bool {
