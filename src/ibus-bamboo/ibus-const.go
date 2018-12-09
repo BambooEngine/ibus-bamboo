@@ -61,17 +61,20 @@ const (
 // http://ibus.github.io/docs/ibus-1.5/ibus-ibuskeysyms-compat.htm
 
 const (
-	IBUS_BackSpace   = 0xff08
-	IBUS_Return      = 0xff0d
-	IBUS_Escape      = 0xff1b
-	IBUS_KP_Space    = 0xff80
-	IBUS_KP_Enter    = 0xff8d
-	IBUS_KP_Multiply = 0xffaa
-	IBUS_KP_Divide   = 0xffaf
-	IBUS_KP_0        = 0xffb0
-	IBUS_KP_9        = 0xffb9
-	IBUS_Shift_L     = 0xffe1
-	IBUS_Shift_R     = 0xffe2
-	IBUS_space       = 0x020
-	IBUS_0           = 0x030
+	IBUS_BackSpace       = 0xff08
+	IBUS_Return          = 0xff0d
+	IBUS_Escape          = 0xff1b
+	IBUS_KP_Space        = 0xff80
+	IBUS_KP_Enter        = 0xff8d
+	IBUS_KP_Multiply     = 0xffaa
+	IBUS_KP_Divide       = 0xffaf
+	IBUS_KP_0            = 0xffb0
+	IBUS_KP_9            = 0xffb9
+	IBUS_Shift_L         = 0xffe1
+	IBUS_Shift_R         = 0xffe2
+	IBUS_space           = 0x020
+	IBUS_0               = 0x030
+	IBUS_TILDE           = 0x007e
+	IBUS_GRAVE           = 0x0060
+	IBUS_OpenLookupTable = IBUS_TILDE
 )

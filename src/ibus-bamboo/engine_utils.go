@@ -24,7 +24,7 @@ import (
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
-	"strings"
+	"log"
 	"time"
 )
 
@@ -51,178 +51,97 @@ func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath
 	go engine.startAutoCommit()
 
 	onMouseMove = func() {
-		if engine.config.IBflags&IBautoCommitWithMouseMovement != 0 {
-			engine.ignorePreedit = false
-			if engine.getRawKeyLen() > 0 {
-				engine.commitPreedit(0)
-			}
+		if engine.config.IBflags&IBautoCommitWithMouseMovement == 0 {
+			return
+		}
+		engine.ignorePreedit = false
+		if engine.getRawKeyLen() == 0 {
+			return
+		}
+		log.Println("vao day k")
+		if engine.inBackspaceWhiteList(engine.wmClasses) {
+			log.Println("vao nhe")
+			engine.bsCommitPreedit(0)
+		} else {
+			engine.commitPreedit(0)
 		}
 	}
 
 	return objectPath
 }
 
-var preeditUpdateChan = make(chan uint32)
-
-func (e *IBusBambooEngine) startAutoCommit() {
-	for {
-		var timeout = e.config.AutoCommitAfter
-		select {
-		case <-preeditUpdateChan:
-			break
-		case <-time.After(time.Duration(timeout) * time.Millisecond):
-			var rawKeyLen = e.getRawKeyLen()
-			if e.config.IBflags&IBautoCommitWithDelay != 0 && rawKeyLen > 0 {
-				e.commitPreedit(0)
-			}
-		}
-	}
-}
-
 func (e *IBusBambooEngine) getRawKeyLen() int {
 	return len(e.getProcessedString(bamboo.EnglishMode))
 }
 
-func (e *IBusBambooEngine) updatePreedit() {
-	var processedStr = e.getPreeditString()
-	var preeditLen = uint32(len([]rune(processedStr)))
-	var ibusText = ibus.NewText(processedStr)
-
-	if e.config.IBflags&IBpreeditInvisibility != 0 {
-		ibusText.AppendAttr(ibus.IBUS_ATTR_TYPE_NONE, ibus.IBUS_ATTR_UNDERLINE_SINGLE, 0, preeditLen)
-	} else {
-		ibusText.AppendAttr(ibus.IBUS_ATTR_TYPE_UNDERLINE, ibus.IBUS_ATTR_UNDERLINE_SINGLE, 0, preeditLen)
-	}
-
-	e.UpdatePreeditTextWithMode(ibusText, preeditLen, true, ibus.IBUS_ENGINE_PREEDIT_COMMIT)
-	if preeditLen == 0 {
-		e.HidePreeditText()
-		e.preediter.Reset()
-	}
-	mouseCaptureUnlock()
-
-	preeditUpdateChan <- 0
+var lookupTableControlKeys = map[uint32]string{
+	'0': "Cấu hình mặc định",
+	'1': "Tắt gạch chân (Surrounding Text)",
+	'2': "Tắt gạch chân (IBus)",
+	'3': "Tắt gạch chân (X11)",
+	'4': "Thêm vào danh sách loại trừ",
 }
 
-func (e *IBusBambooEngine) shouldFallbackToEnglish() bool {
-	if e.config.IBflags&IBautoNonVnRestore == 0 {
-		return false
-	}
-	var vnSeq = e.getProcessedString(bamboo.VietnameseMode)
-	var vnRunes = []rune(vnSeq)
-	if len(vnRunes) == 0 {
-		return false
-	}
-	if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(vnSeq) {
-		return false
-	}
-	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation
-	if e.config.IBflags&IBddFreeStyle != 0 && (vnRunes[len(vnRunes)-1] == 'd' || strings.ContainsRune(vnSeq, 'đ')) {
-		if !bamboo.HasVowel(vnRunes) {
-			return false
-		}
-	}
-	if e.getSpellingMatchResult(false) != bamboo.FindResultNotMatch {
-		return false
-	}
-	return true
+func (e *IBusBambooEngine) inLookupTableControlKeys(keyVal uint32) bool {
+	return keyVal == IBUS_OpenLookupTable || lookupTableControlKeys[keyVal] != ""
 }
 
-func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
-	if e.config.IBflags&IBautoNonVnRestore == 0 {
-		return false
-	}
-	var vnSeq = e.getProcessedString(bamboo.VietnameseMode)
-	var vnRunes = []rune(vnSeq)
-	if len(vnRunes) == 0 {
-		return false
-	}
-	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation
-	if e.config.IBflags&IBddFreeStyle != 0 && strings.ContainsRune(vnSeq, 'đ') {
-		if !bamboo.HasVowel(vnRunes) {
-			return false
-		}
-	}
-	if e.config.IBflags&IBspellCheckingWithDicts != 0 {
-		return !e.dictionary[vnSeq]
-	}
-	if e.getSpellingMatchResult(false) == bamboo.FindResultMatchFull {
-		return false
-	}
-	return true
+func (e *IBusBambooEngine) openLookupTable() {
+
+	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (1/2/3/4) để lưu tùy chọn của bạn"), true)
+
+	lt := ibus.NewLookupTable()
+	lt.AppendCandidate("Cấu hình mặc định")
+	lt.AppendCandidate("Tắt gạch chân (Surrounding Text)")
+	lt.AppendCandidate("Tắt gạch chân (IBus)")
+	lt.AppendCandidate("Tắt gạch chân (X11)")
+	lt.AppendCandidate("Thêm vào danh sách loại trừ")
+
+	lt.AppendLabel("0:")
+	lt.AppendLabel("1:")
+	lt.AppendLabel("2:")
+	lt.AppendLabel("3:")
+	lt.AppendLabel("4:")
+
+	e.UpdateLookupTable(lt, true)
 }
 
-func (e *IBusBambooEngine) isSpellingCorrect() bool {
-	return e.getSpellingMatchResult(false) == bamboo.FindResultMatchFull
-}
-
-func (e *IBusBambooEngine) getSpellingMatchResult(deepSearch bool) uint8 {
-	return e.preediter.GetSpellingMatchResult(bamboo.NoTone, deepSearch)
-}
-
-func (e *IBusBambooEngine) getCommitString() string {
-	var processedStr string
-	if e.config.IBflags&IBautoNonVnRestore == 0 {
-		processedStr = e.getVnSeq()
-	} else {
-		processedStr = e.getProcessedString(bamboo.VietnameseMode)
+func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
+	var wmClasses = x11GetFocusWindowClass(e.display)
+	e.HideLookupTable()
+	fmt.Printf("keyCode 0x%04x keyval 0x%04x | %c\n", keyCode, keyVal, rune(keyVal))
+	e.HideAuxiliaryText()
+	var reset = func() {
+		e.config.X11BackspaceWhiteList = removeWhiteList(e.config.X11BackspaceWhiteList, wmClasses)
+		e.config.IBusBackspaceWhiteList = removeWhiteList(e.config.IBusBackspaceWhiteList, wmClasses)
+		e.config.SurroundingWhiteList = removeWhiteList(e.config.SurroundingWhiteList, wmClasses)
+		e.config.ExceptWhiteList = removeWhiteList(e.config.ExceptWhiteList, wmClasses)
 	}
-	if e.mustFallbackToEnglish() {
-		processedStr = e.getProcessedString(bamboo.EnglishMode)
-		return processedStr
+	switch keyVal {
+	case '0':
+		reset()
+		break
+	case '1':
+		reset()
+		e.config.SurroundingWhiteList = addWhiteList(e.config.SurroundingWhiteList, wmClasses)
+		break
+	case '2':
+		reset()
+		e.config.IBusBackspaceWhiteList = addWhiteList(e.config.IBusBackspaceWhiteList, wmClasses)
+		break
+	case '3':
+		reset()
+		e.config.X11BackspaceWhiteList = addWhiteList(e.config.X11BackspaceWhiteList, wmClasses)
+		break
+	case '4':
+		e.config.ExceptWhiteList = addWhiteList(e.config.ExceptWhiteList, wmClasses)
+		break
+	case IBUS_OpenLookupTable:
+		return false, nil
 	}
-	return processedStr
-}
 
-func (e *IBusBambooEngine) encodeText(text string) string {
-	return bamboo.Encode(e.config.Charset, text)
-}
-
-func (e *IBusBambooEngine) getProcessedString(mode bamboo.Mode) string {
-	if e.config.IBflags&IBautoNonVnRestore != 0 {
-		return e.preediter.GetProcessedString(mode)
-	}
-	return e.getVnSeq()
-}
-
-func (e *IBusBambooEngine) getPreeditString() string {
-	if e.config.IBflags&IBautoNonVnRestore == 0 {
-		return e.getVnSeq()
-	}
-	if e.shouldFallbackToEnglish() {
-		return e.getProcessedString(bamboo.EnglishMode)
-	}
-	return e.getProcessedString(bamboo.VietnameseMode)
-}
-
-func (e *IBusBambooEngine) getMode() bamboo.Mode {
-	if e.shouldFallbackToEnglish() {
-		return bamboo.EnglishMode
-	}
-	return bamboo.VietnameseMode
-}
-
-func (e *IBusBambooEngine) commitPreedit(lastKey uint32) {
-	var commitStr string
-	commitStr += e.getCommitString()
-
-	e.commitText(e.encodeText(commitStr))
-}
-
-func (e *IBusBambooEngine) commitText(str string) {
-	e.preediter.Reset()
-	for _, chr := range []rune(str) {
-		e.CommitText(ibus.NewText(string(chr)))
-	}
-	//e.CommitText(ibus.NewText(commitStr))
-
-	e.HidePreeditText()
-}
-
-func (e *IBusBambooEngine) getVnSeq() string {
-	return e.preediter.GetProcessedString(bamboo.VietnameseMode)
-}
-
-func (e *IBusBambooEngine) hasMacroKey(key string) bool {
-	return e.macroTable.GetText(key) != ""
+	SaveConfig(e.config, e.engineName)
+	e.propList = GetPropListByConfig(e.config)
+	e.RegisterProperties(e.propList)
+	return true, nil
 }

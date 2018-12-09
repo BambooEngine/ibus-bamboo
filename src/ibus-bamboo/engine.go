@@ -24,6 +24,7 @@ import (
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
+	"log"
 	"os/exec"
 	"sync"
 )
@@ -31,15 +32,18 @@ import (
 type IBusBambooEngine struct {
 	sync.Mutex
 	ibus.Engine
-	preediter     bamboo.IEngine
-	zeroLocation  bool
-	engineName    string
-	config        *Config
-	propList      *ibus.PropList
-	mode          bamboo.Mode
-	ignorePreedit bool
-	macroTable    *MacroTable
-	dictionary map[string]bool
+	preediter           bamboo.IEngine
+	zeroLocation        bool
+	engineName          string
+	config              *Config
+	propList            *ibus.PropList
+	mode                bamboo.Mode
+	ignorePreedit       bool
+	macroTable          *MacroTable
+	dictionary          map[string]bool
+	display             CDisplay
+	wmClasses           []string
+	lookupTableIsOpened bool
 }
 
 /**
@@ -62,7 +66,7 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 	defer e.Unlock()
 	var rawKeyLen = e.getRawKeyLen()
 
-	if e.zeroLocation ||
+	if e.zeroLocation || (!e.inLookupTableControlKeys(keyVal) && inWhiteList(e.config.ExceptWhiteList, e.wmClasses)) ||
 		state&IBUS_RELEASE_MASK != 0 || //Ignore key-up event
 		(state&IBUS_SHIFT_MASK == 0 && (keyVal == IBUS_Shift_L || keyVal == IBUS_Shift_R)) { //Ignore 1 shift key
 		return false, nil
@@ -82,91 +86,31 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 			return true, nil
 		}
 	}
-
-	if keyVal == IBUS_BackSpace {
-		e.ignorePreedit = false
-		if rawKeyLen > 0 {
-			e.preediter.RemoveLastChar()
-			e.updatePreedit()
-			return true, nil
-		} else {
-			return false, nil
-		}
-	}
-
-	if keyVal == IBUS_space || keyVal == IBUS_KP_Space {
-		e.ignorePreedit = false
-		var processedStr = e.getCommitString()
-		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
-			processedStr = e.macroTable.GetText(processedStr)
-			e.commitText(e.encodeText(processedStr))
-		} else {
-			e.commitPreedit(0)
-		}
-		return false, nil
-	}
-
-	if keyVal == IBUS_Return || keyVal == IBUS_KP_Enter {
-		e.ignorePreedit = false
-		if rawKeyLen > 0 {
-			e.commitPreedit(keyVal)
-			e.ForwardKeyEvent(keyVal, keyCode, state)
-			return true, nil
-		} else {
-			return false, nil
-		}
-	}
-
-	if keyVal == IBUS_Escape {
-		e.ignorePreedit = false
-		if rawKeyLen > 0 {
-			e.commitPreedit(keyVal)
-			return true, nil
-		}
-		return false, nil
-	}
-	fmt.Printf("keyCode 0x%04x keyval 0x%04x | %c\n", keyCode, keyVal, rune(keyVal))
-
-	if (keyVal >= 'a' && keyVal <= 'z') ||
-		(keyVal >= 'A' && keyVal <= 'Z') ||
-		(keyVal >= '0' && keyVal <= '9') ||
-		(inKeyMap(e.preediter.GetInputMethod().Keys, rune(keyVal))) {
-		var keyRune = rune(keyVal)
-		if state&IBUS_LOCK_MASK != 0 {
-			keyRune = toUpper(keyRune)
-		}
-		if e.ignorePreedit {
-			return false, nil
-		}
-		if e.config.IBflags&IBautoNonVnRestore == 0 {
-			e.preediter.ProcessChar(keyRune, bamboo.VietnameseMode)
-			e.updatePreedit()
-			return true, nil
-		}
-		e.preediter.ProcessChar(keyRune, e.getMode())
-		if (e.config.IBflags&IBautoCommitWithVnNotMatch != 0 &&
-			e.getSpellingMatchResult(false) == bamboo.FindResultNotMatch) ||
-			(e.config.IBflags&IBautoCommitWithVnFullMatch != 0 && e.preediter.HasTone() &&
-				e.getSpellingMatchResult(true) == bamboo.FindResultMatchFull) {
-			e.ignorePreedit = true
-			e.commitPreedit(0)
-			e.preediter.Reset()
-			return true, nil
-		}
-		e.updatePreedit()
-		return true, nil
-	} else {
-		e.commitPreedit(keyVal)
-		//forward lastKey
-		e.ForwardKeyEvent(keyVal, keyCode, state)
+	if keyVal == IBUS_OpenLookupTable && e.lookupTableIsOpened == false {
+		e.lookupTableIsOpened = true
+		e.openLookupTable()
 		return true, nil
 	}
-	return false, nil
+	if e.lookupTableIsOpened {
+		e.lookupTableIsOpened = false
+		return e.ltProcessKeyEvent(keyVal, keyCode, state)
+	}
+	if e.inBackspaceWhiteList(e.wmClasses) {
+		return e.backspaceProcessKeyEvent(keyVal, keyCode, state)
+	}
+	return e.preeditProcessKeyEvent(keyVal, keyCode, state)
 }
 
 func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 	e.Lock()
 	defer e.Unlock()
+	if e.display == nil {
+		e.display = x11OpenDisplay()
+	}
+	if e.display != nil {
+		e.wmClasses = x11GetFocusWindowClass(e.display)
+		log.Println(e.wmClasses)
+	}
 
 	e.RegisterProperties(e.propList)
 	e.HidePreeditText()
@@ -195,6 +139,10 @@ func (e *IBusBambooEngine) Enable() *dbus.Error {
 func (e *IBusBambooEngine) Disable() *dbus.Error {
 	fmt.Print("Disable.")
 	mouseCaptureExit()
+	if e.display != nil {
+		x11CloseDisplay(e.display)
+		e.display = nil
+	}
 	return nil
 }
 

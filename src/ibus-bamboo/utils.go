@@ -48,6 +48,29 @@ func inKeyMap(keys []rune, key rune) bool {
 	return false
 }
 
+func inWhiteList(list map[string]bool, classes []string) bool {
+	for _, cl := range classes {
+		if list[cl] {
+			return true
+		}
+	}
+	return false
+}
+
+func removeWhiteList(list map[string]bool, classes []string) map[string]bool {
+	for _, cl := range classes {
+		list[cl] = false
+	}
+	return list
+}
+
+func addWhiteList(list map[string]bool, classes []string) map[string]bool {
+	for _, cl := range classes {
+		list[cl] = true
+	}
+	return list
+}
+
 func getCharsetFromPropKey(str string) string {
 	var arr = strings.Split(str, "-")
 	if len(arr) == 2 {
