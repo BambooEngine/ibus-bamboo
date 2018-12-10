@@ -57,6 +57,13 @@ func inWhiteList(list map[string]bool, classes []string) bool {
 	return false
 }
 
+func isSameClasses(cl1 []string, cl2 []string) bool {
+	if len(cl1) != len(cl2) || len(cl1) != 1 {
+		return false
+	}
+	return cl1[0] == cl2[0]
+}
+
 func removeFromWhiteList(list map[string]bool, classes []string) map[string]bool {
 	for _, cl := range classes {
 		if list[cl] {

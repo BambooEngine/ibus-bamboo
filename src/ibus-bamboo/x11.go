@@ -21,10 +21,16 @@ package main
 
 /*
 #cgo CFLAGS: -std=c99
-#cgo LDFLAGS: -lX11
+#cgo LDFLAGS: -lX11 -lXtst
+#include <sys/time.h>
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/keysym.h> //xproto-devel
+#include <X11/Intrinsic.h>
+#include <X11/extensions/XTest.h>
 inline void ucharfree(unsigned char* uc) {
 	XFree(uc);
 }
@@ -53,45 +59,59 @@ static int ignore_x_error(Display *display, XErrorEvent *error) {
 void setXIgnoreErrorHandler() {
 	XSetErrorHandler(ignore_x_error);
 }
+static void delay(int sec, long msec) {
+    long pause;
+    clock_t now,then;
 
+    pause = msec*(CLOCKS_PER_SEC/1000);
+    now = then = clock();
+    while( (now-then) < pause )
+        now = clock();
+}
 void SendBackspace() {
 	Display *display = XOpenDisplay(NULL);
 	if (display) {
-
 		//find out window with current focus:
         Window winfocus;
         int    revert;
         XGetInputFocus(display, &winfocus, &revert);
 
-		XKeyEvent keyEvent;
-        keyEvent.send_event=1;
-        keyEvent.keycode=22;
-        keyEvent.display=display;
-        //keyEvent.root=winfocus;
-        keyEvent.window=winfocus;
-
-		XEvent *event = (XEvent*)&keyEvent;
-
-
-        keyEvent.type=KeyPress;
-        keyEvent.state=16;
-
-		XSendEvent(display, InputFocus, False, KeyPressMask, event);
+        KeyCode modcode = XKeysymToKeycode(display, XStringToKeysym("BackSpace"));
+		XTestFakeKeyEvent(display, modcode, True, 0);
+		XTestFakeKeyEvent(display, modcode, False, 0);
 		XSync(display, 1);
-
-        keyEvent.type=KeyRelease;
-        keyEvent.state=1073741840;
-		XSendEvent(display, InputFocus, False, KeyReleaseMask, event);
-		XSync(display, 1);
+		//delay(0, 1000);
 
 		XCloseDisplay(display);
 	}
 }
 
 
+void SendText(char* str, int len) {
+	Display *display = XOpenDisplay(NULL);
+	if (display) {
+		//find out window with current focus:
+        Window winfocus;
+        int    revert;
+        XGetInputFocus(display, &winfocus, &revert);
+
+		for (int i=0; i<len; i++) {
+			int modcode = str[i];
+			XTestFakeKeyEvent(display, modcode, True, 0);
+			XTestFakeKeyEvent(display, modcode, False, 0);
+		}
+		XSync(display, 1);
+		//delay(0, 1000);
+
+		XCloseDisplay(display);
+	}
+}
 */
 import "C"
-import "strings"
+import (
+	"strings"
+	"unsafe"
+)
 
 const (
 	MaxPropertyLen = 128
@@ -118,6 +138,13 @@ func x11Flush(display *C.Display) {
 
 func x11Backspace() {
 	C.SendBackspace()
+}
+
+func x11SendText(str string) {
+	cs := C.CString(str)
+	defer C.free(unsafe.Pointer(cs))
+	l := len([]rune(str))
+	C.SendText(cs, C.int(l))
 }
 
 func x11GetUCharProperty(display *C.Display, window C.Window, propName string) (*C.uchar, C.ulong) {

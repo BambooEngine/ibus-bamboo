@@ -24,7 +24,6 @@ import (
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
-	"log"
 	"os/exec"
 	"sync"
 )
@@ -45,6 +44,8 @@ type IBusBambooEngine struct {
 	wmClasses           []string
 	lookupTableIsOpened bool
 	capSurrounding      bool
+	nBackSpace          int
+	newChars            []rune
 }
 
 /**
@@ -109,14 +110,18 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 	if e.display == nil {
 		e.display = x11OpenDisplay()
 	}
+	var wmClasses []string
 	if e.display != nil {
-		e.wmClasses = x11GetFocusWindowClass(e.display)
-		log.Println(e.wmClasses)
+		wmClasses = x11GetFocusWindowClass(e.display)
+		fmt.Println(e.wmClasses)
 	}
 
 	e.RegisterProperties(e.propList)
 	e.HidePreeditText()
-	e.preediter.Reset()
+	if !isSameClasses(e.wmClasses, wmClasses) {
+		e.preediter.Reset()
+	}
+	e.wmClasses = wmClasses
 	fmt.Print("FocusIn.")
 
 	return nil
@@ -124,7 +129,7 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 
 func (e *IBusBambooEngine) FocusOut() *dbus.Error {
 	fmt.Print("FocusOut.")
-	e.wmClasses = []string{}
+	//e.wmClasses = []string{}
 	return nil
 }
 
