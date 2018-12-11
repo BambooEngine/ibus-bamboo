@@ -25,7 +25,7 @@ Architecture: any
 Version: 0.2.4-0
 Maintainer: Luong Thanh Lam <ltlam93@gmail.com>
 Homepage: https://github.com/BambooEngine/ibus-bamboo
-Build-Depends: debhelper, golang, libx11-dev, libxt-dev
+Build-Depends: debhelper, golang, libx11-dev, libxt-dev, libxtst-dev
 Files:
  0 0 ibus-bamboo-0.2.4.tar.gz
 
