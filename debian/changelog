@@ -1,4 +1,4 @@
-ibus-bamboo (0.2.4ubuntu1) stable; urgency=medium
+ibus-bamboo (0.2.4ubuntu2) stable; urgency=medium
 
   * Release 0.2.4
     - Fix x11 fake event
