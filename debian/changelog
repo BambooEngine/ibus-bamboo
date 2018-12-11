@@ -3,7 +3,7 @@ ibus-bamboo (0.2.4ubuntu1) stable; urgency=medium
   * Release 0.2.4
     - Fix x11 fake event
 
- -- Luong Thanh Lam <ltlam93@gmail.com>  Sun, 09 Dec 2018 02:49:12 +0700
+ -- Luong Thanh Lam <ltlam93@gmail.com>  Sun, 09 Dec 2018 03:49:12 +0700
 
 ibus-bamboo (0.2.31ubuntu1) stable; urgency=medium
 
