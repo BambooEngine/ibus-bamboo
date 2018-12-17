@@ -90,6 +90,7 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 	}
 	fmt.Printf("keyCode 0x%04x keyval 0x%04x | %c\n", keyCode, keyVal, rune(keyVal))
 	if keyVal == IBUS_OpenLookupTable && e.lookupTableIsOpened == false {
+		e.preediter.Reset()
 		e.lookupTableIsOpened = true
 		e.openLookupTable()
 		return true, nil

@@ -43,7 +43,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 
 	if keyVal == IBUS_space || keyVal == IBUS_KP_Space {
 		e.ignorePreedit = false
-		var processedStr = e.getCommitString()
+		var processedStr = e.getComposedString()
 		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
 			processedStr = e.macroTable.GetText(processedStr)
 			e.preediter.Reset()
@@ -203,7 +203,7 @@ func (e *IBusBambooEngine) getSpellingMatchResult(deepSearch bool) uint8 {
 	return e.preediter.GetSpellingMatchResult(bamboo.NoTone, deepSearch)
 }
 
-func (e *IBusBambooEngine) getCommitString() string {
+func (e *IBusBambooEngine) getComposedString() string {
 	var processedStr string
 	if e.config.IBflags&IBautoNonVnRestore == 0 {
 		processedStr = e.getVnSeq()
@@ -247,7 +247,7 @@ func (e *IBusBambooEngine) getMode() bamboo.Mode {
 
 func (e *IBusBambooEngine) commitPreedit(lastKey uint32) {
 	var commitStr string
-	commitStr += e.getCommitString()
+	commitStr += e.getComposedString()
 
 	e.preediter.Reset()
 	e.commitText(e.encodeText(commitStr))
