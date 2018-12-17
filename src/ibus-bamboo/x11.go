@@ -59,6 +59,7 @@ static int ignore_x_error(Display *display, XErrorEvent *error) {
 void setXIgnoreErrorHandler() {
 	XSetErrorHandler(ignore_x_error);
 }
+
 static void delay(int sec, long msec) {
     long pause;
     clock_t now,then;
@@ -68,17 +69,21 @@ static void delay(int sec, long msec) {
     while( (now-then) < pause )
         now = clock();
 }
-void SendBackspace() {
+
+void SendBackspace(int n) {
 	Display *display = XOpenDisplay(NULL);
 	if (display) {
 		//find out window with current focus:
         Window winfocus;
+        KeyCode modcode;
         int    revert;
         XGetInputFocus(display, &winfocus, &revert);
 
-        KeyCode modcode = XKeysymToKeycode(display, XStringToKeysym("BackSpace"));
-		XTestFakeKeyEvent(display, modcode, True, 0);
-		XTestFakeKeyEvent(display, modcode, False, 0);
+        modcode = XKeysymToKeycode(display, XStringToKeysym("BackSpace"));
+        for (int i=0; i<n; i++) {
+            XTestFakeKeyEvent(display, modcode, True, 0);
+            XTestFakeKeyEvent(display, modcode, False, 0);
+        }
 		XSync(display, 1);
 		//delay(0, 1000);
 
@@ -136,8 +141,8 @@ func x11Flush(display *C.Display) {
 	C.XFlush(display)
 }
 
-func x11Backspace() {
-	C.SendBackspace()
+func x11SendBackspace(n uint32) {
+	C.SendBackspace(C.int(n))
 }
 
 func x11SendText(str string) {
