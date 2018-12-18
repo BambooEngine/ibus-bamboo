@@ -2,7 +2,8 @@ sudo: required
 language: go
 
 before_install:
-  - sudo apt install -y libx11-dev
+  - sudo apt-get update
+  - sudo apt-get install -y libx11-dev libxtst-dev
 
 install:
   - make build
