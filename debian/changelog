@@ -1,3 +1,10 @@
+ibus-bamboo (0.2.51ubuntu1) stable; urgency=medium
+
+  * Release 0.2.51
+    - Fix backspace processing
+
+ -- Luong Thanh Lam <ltlam93@gmail.com>  Tue, 18 Dec 2018 10:49:12 +0700
+
 ibus-bamboo (0.2.5ubuntu2) stable; urgency=medium
 
   * Release 0.2.5
