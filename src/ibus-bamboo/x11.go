@@ -29,7 +29,6 @@ package main
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/keysym.h> //xproto-devel
-#include <X11/Intrinsic.h>
 #include <X11/extensions/XTest.h>
 inline void ucharfree(unsigned char* uc) {
 	XFree(uc);
