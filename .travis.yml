@@ -1,6 +1,9 @@
 sudo: required
 language: go
 
+before_install:
+  - sudo apt install -y libx11-dev libxtst-dev
+
 install:
   - make build
   - bash deploy.bash
