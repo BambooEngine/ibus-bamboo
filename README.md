@@ -30,3 +30,8 @@ ibus restart
 ```
 
 *Hướng dẫn cài đặt từ mã nguồn: [wiki](https://github.com/BambooEngine/ibus-bamboo/wiki/H%C6%B0%E1%BB%9Bng-d%E1%BA%ABn-c%C3%A0i-%C4%91%E1%BA%B7t-t%E1%BB%AB-m%C3%A3-ngu%E1%BB%93n)*
+
+### Giấy phép
+ibus-bamboo là bộ gõ được fork từ dự án [ibus-teni](https://github.com/teni-ime/ibus-teni), sử dụng Bamboo Engine để xử lý tiếng Việt thay cho Teni Engine.
+
+ibus-bamboo là phần mềm tự do nguồn mở. Toàn bộ mã nguồn của ibus-bamboo và bamboo-core đều được phát hành dưới các quy định ghi trong Giấy phép Công cộng GNU (GNU General Public License v3.0).
