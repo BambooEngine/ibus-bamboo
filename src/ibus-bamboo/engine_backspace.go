@@ -26,20 +26,6 @@ import (
 	"time"
 )
 
-var backspaceUpdateChan = make(chan []rune)
-
-func (e *IBusBambooEngine) startBackspaceAutoCommit() {
-	for {
-		select {
-		case <-backspaceUpdateChan:
-			time.Sleep(5 * time.Millisecond)
-			x11SendText("`")
-			e.nBackSpace = -1
-			break
-		}
-	}
-}
-
 func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
 	var rawKeyLen = e.getRawKeyLen()
 	if keyVal == IBUS_BackSpace {
@@ -54,7 +40,8 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 			if e.nBackSpace > 0 {
 				e.nBackSpace--
 				if e.nBackSpace == 0 {
-					backspaceUpdateChan <- e.newChars
+					x11SendText("`") //send pingback
+					e.nBackSpace = -1
 				}
 			} else {
 				e.preediter.Reset()
@@ -81,7 +68,8 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 	}
 	var keyRune = rune(keyVal)
 
-	if e.inX11BackspaceList() && keyCode == 0x0058 {
+	if e.inX11BackspaceList() && keyCode == 0x0058 { // received pingback
+		time.Sleep(5 * time.Millisecond)
 		e.SendText(e.newChars)
 		e.newChars = nil
 		e.nBackSpace = 0
@@ -97,7 +85,7 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 			if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
 				macText := e.macroTable.GetText(processedStr)
 				if e.inX11BackspaceList() {
-					macText = macText + " "
+					macText = macText + string(keyRune)
 				}
 				e.updatePreviousText([]rune(macText), []rune(processedStr), state)
 				if e.inX11BackspaceList() {
@@ -129,14 +117,21 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 		newRunes := []rune(e.getPreeditString())
 		e.updatePreviousText(newRunes, oldRunes, state)
 		return true, nil
-	} else {
-		if rawKeyLen > 0 {
-			e.preediter.Reset()
-			return false, nil
-		}
-		//pre-edit empty, just forward key
-		return false, nil
 	}
+	// special key processing
+	var processedStr = e.preediter.GetProcessedString(bamboo.VietnameseMode)
+	if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
+		macText := e.macroTable.GetText(processedStr)
+		if e.inX11BackspaceList() {
+			macText = macText + string(keyRune)
+		}
+		e.updatePreviousText([]rune(macText), []rune(processedStr), state)
+		if e.inX11BackspaceList() {
+			e.preediter.Reset()
+			return true, nil
+		}
+	}
+	e.preediter.Reset()
 	return false, nil
 }
 
@@ -161,9 +156,9 @@ func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state u
 	log.Println(string(oldRunes), string(newRunes), diffFrom)
 
 	nBackSpace := 0
-	if diffFrom < newLen && diffFrom < oldLen {
-		//e.SendText([]rune{0x200A}) // https://en.wikipedia.org/wiki/Whitespace_character
-		//nBackSpace += 1
+	if !e.inX11BackspaceList() && diffFrom < newLen && diffFrom < oldLen {
+		e.SendText([]rune{0x200A}) // https://en.wikipedia.org/wiki/Whitespace_character
+		nBackSpace += 1
 	}
 
 	if diffFrom < oldLen {

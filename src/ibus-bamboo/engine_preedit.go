@@ -187,7 +187,7 @@ func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
 		}
 	}
 	if e.config.IBflags&IBspellCheckingWithDicts != 0 {
-		return !e.dictionary[vnSeq]
+		return !e.dictionary[strings.ToLower(vnSeq)]
 	}
 	if e.getSpellingMatchResult(false) == bamboo.FindResultMatchFull {
 		return false

@@ -48,7 +48,6 @@ func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath
 		engine.macroTable.Enable()
 	}
 	go engine.startAutoCommit()
-	go engine.startBackspaceAutoCommit()
 
 	onMouseMove = func() {
 		if engine.config.IBflags&IBautoCommitWithMouseMovement == 0 {

@@ -82,9 +82,10 @@ void SendBackspace(int n) {
         for (int i=0; i<n; i++) {
             XTestFakeKeyEvent(display, modcode, True, 0);
             XTestFakeKeyEvent(display, modcode, False, 0);
+			XSync(display, 0);
+			delay(0, 10);
         }
-		XSync(display, 1);
-		//delay(0, 1000);
+		XSync(display, 0);
 
 		XCloseDisplay(display);
 	}
