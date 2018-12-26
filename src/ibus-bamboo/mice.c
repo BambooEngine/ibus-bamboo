@@ -14,7 +14,7 @@ static int mcap_running;
 static int mcap_grabbing;
 
 static void signalHandler(int signo) {
-    mcap_running = 1;
+    mcap_running = 0;
 }
 /**
  * milliseconds over 1000 will be ignored
