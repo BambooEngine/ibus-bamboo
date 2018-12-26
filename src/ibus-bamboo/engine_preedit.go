@@ -261,12 +261,11 @@ func (e *IBusBambooEngine) commitPreedit(lastKey uint32) {
 }
 
 func (e *IBusBambooEngine) commitText(str string) {
+	e.HidePreeditText()
 	for _, chr := range []rune(str) {
 		e.CommitText(ibus.NewText(string(chr)))
 	}
 	//e.CommitText(ibus.NewText(commitStr))
-
-	e.HidePreeditText()
 }
 
 func (e *IBusBambooEngine) getVnSeq() string {

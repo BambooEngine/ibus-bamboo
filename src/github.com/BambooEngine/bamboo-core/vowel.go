@@ -2,7 +2,7 @@ package bamboo
 
 import "strings"
 
-var vowels = []rune("aàáảãạăằắẳẵặâầấẩẫậeèéẻẽẹêềếểễệiìíỉĩịoòóỏõọôồốổỗộơờớởỡợuùúủũụưừứửữựyỳýỷỹỵ")
+var Vowels = []rune("aàáảãạăằắẳẵặâầấẩẫậeèéẻẽẹêềếểễệiìíỉĩịoòóỏõọôồốổỗộơờớởỡợuùúủũụưừứửữựyỳýỷỹỵ")
 
 var vowelMap = map[string]rune{
 	"uo": 'o',
@@ -15,7 +15,7 @@ var vowelMap = map[string]rune{
 
 func IsVowel(chr rune) bool {
 	isVowel := false
-	for _, v := range vowels {
+	for _, v := range Vowels {
 		if v == chr {
 			isVowel = true
 		}
@@ -33,7 +33,7 @@ func HasVowel(seq []rune) bool {
 }
 
 func FindVowelPosition(chr rune) int {
-	for pos, v := range vowels {
+	for pos, v := range Vowels {
 		if v == chr {
 			return pos
 		}

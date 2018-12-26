@@ -14,7 +14,7 @@ static int mcap_running;
 static int mcap_grabbing;
 
 static void signalHandler(int signo) {
-    mcap_running = 0;
+    mcap_running = 1;
 }
 /**
  * milliseconds over 1000 will be ignored
@@ -137,12 +137,12 @@ void mouse_capture_init()
 
 void mouse_capture_exit()
 {
+    mcap_running = 0;
     if (mcap_grabbing == 1 && dpy != NULL) {
         XUngrabPointer(dpy, CurrentTime);
         XFlush(dpy);
         mcap_grabbing = 0;
     }
-    mcap_running = 0;
     pthread_mutex_unlock(&mutex_mcap); // unlock mutex, so thread can exit
 }
 

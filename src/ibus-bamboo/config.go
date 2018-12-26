@@ -68,7 +68,7 @@ type Config struct {
 
 func LoadConfig(engineName string) *Config {
 	var c = Config{
-		InputMethod:            "Telex 2",
+		InputMethod:            "Telex",
 		Charset:                "Unicode",
 		Flags:                  bamboo.EstdFlags,
 		IBflags:                IBstdFlags,

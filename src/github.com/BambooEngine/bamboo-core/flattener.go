@@ -20,6 +20,7 @@
 package bamboo
 
 import (
+	"log"
 	"strings"
 	"unicode"
 )
@@ -41,8 +42,15 @@ func Flatten(composition []*Transformation, mode Mode) string {
 
 func (f *BambooFlattener) Flatten(composition []*Transformation, mode Mode) string {
 	canvas := f.GetCanvas(composition, mode)
+	if mode&LowerCase != 0 {
+		return string(canvas)
+	}
 	for _, trans := range composition {
 		if trans.Rule.EffectType == Appending {
+			if int(trans.Dest) >= len(canvas) {
+				log.Println("Something is wrong with dest of trans")
+				continue
+			}
 			if trans.IsUpperCase {
 				canvas[trans.Dest] = unicode.ToUpper(canvas[trans.Dest])
 			}
@@ -62,6 +70,7 @@ func (f *BambooFlattener) GetCanvas(composition []*Transformation, mode Mode) []
 		canvas[index] = callback(canvas[index], trans.Rule.Effect)
 	}
 	for _, trans := range composition {
+		trans.Dest = 0
 		if trans.IsDeleted {
 			continue
 		}

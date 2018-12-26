@@ -32,7 +32,7 @@ func AddToneToChar(chr rune, tone uint8) rune {
 	if pos > -1 {
 		current_tone := pos % 6
 		offset := int(tone) - current_tone
-		return vowels[pos+offset]
+		return Vowels[pos+offset]
 	} else {
 		return chr
 	}

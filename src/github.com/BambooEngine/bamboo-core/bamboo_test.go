@@ -298,9 +298,18 @@ func TestProcessTnoss(t *testing.T) {
 
 //ềng
 func TestProcessEenghf(t *testing.T) {
-	ng := NewEngine("Telex 2", EstdFlags, []string{"ềngh"})
+	ng := NewEngine("Telex 2", EstdFlags, map[string]bool{"ềngh": true})
 	ng.ProcessString("eenghf", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode) != "ềngh" {
 		t.Errorf("TestProcessToorr, got [%v] expected [ềnhg]", ng.GetProcessedString(VietnameseMode))
+	}
+}
+
+//HIEEUR
+func TestProcessHIEEUR(t *testing.T) {
+	ng := NewEngine("Telex 2", EstdFlags, nil)
+	ng.ProcessString("HIEEUR", VietnameseMode)
+	if ng.GetProcessedString(VietnameseMode) != "HIỂU" {
+		t.Errorf("TestProcessToorr, got [%v] expected [HIỂU]", ng.GetProcessedString(VietnameseMode))
 	}
 }
