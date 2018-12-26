@@ -103,7 +103,14 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		e.updatePreedit()
 		return true, nil
 	} else {
-		e.commitPreedit(keyVal)
+		var processedStr = e.getComposedString()
+		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
+			processedStr = e.macroTable.GetText(processedStr)
+			e.preediter.Reset()
+			e.commitText(e.encodeText(processedStr))
+		} else {
+			e.commitPreedit(keyVal)
+		}
 		return false, nil
 	}
 	return false, nil

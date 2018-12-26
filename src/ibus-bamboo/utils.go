@@ -25,6 +25,22 @@ import (
 	"unicode"
 )
 
+var wordBreakSyms = []rune{
+	',', ';', ':', '.', '"', '\'', '!', '?', ' ',
+	'<', '>', '=', '+', '-', '*', '/', '\\',
+	'_', '~', '`', '@', '#', '$', '%', '^', '&', '(', ')', '{', '}', '[', ']',
+	'|',
+}
+
+func isWordBreakSymbol(key rune) bool {
+	for _, c := range wordBreakSyms {
+		if c == key {
+			return true
+		}
+	}
+	return false
+}
+
 func toUpper(keyRune rune) rune {
 	var upperSpecialKeys = map[rune]rune{
 		'[': '{',

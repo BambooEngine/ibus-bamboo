@@ -84,14 +84,10 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 			var processedStr = e.preediter.GetProcessedString(bamboo.VietnameseMode)
 			if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
 				macText := e.macroTable.GetText(processedStr)
-				if e.inX11BackspaceList() {
-					macText = macText + string(keyRune)
-				}
+				macText = macText + string(keyRune)
 				e.updatePreviousText([]rune(macText), []rune(processedStr), state)
-				if e.inX11BackspaceList() {
-					e.preediter.Reset()
-					return true, nil
-				}
+				e.preediter.Reset()
+				return true, nil
 			}
 			e.preediter.Reset()
 			return false, nil
@@ -117,16 +113,13 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 		newRunes := []rune(e.getPreeditString())
 		e.updatePreviousText(newRunes, oldRunes, state)
 		return true, nil
-	}
-	// special key processing
-	var processedStr = e.preediter.GetProcessedString(bamboo.VietnameseMode)
-	if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
-		macText := e.macroTable.GetText(processedStr)
-		if e.inX11BackspaceList() {
+	} else if isWordBreakSymbol(keyRune) {
+		// special key processing
+		var processedStr = e.preediter.GetProcessedString(bamboo.VietnameseMode)
+		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
+			macText := e.macroTable.GetText(processedStr)
 			macText = macText + string(keyRune)
-		}
-		e.updatePreviousText([]rune(macText), []rune(processedStr), state)
-		if e.inX11BackspaceList() {
+			e.updatePreviousText([]rune(macText), []rune(processedStr), state)
 			e.preediter.Reset()
 			return true, nil
 		}
