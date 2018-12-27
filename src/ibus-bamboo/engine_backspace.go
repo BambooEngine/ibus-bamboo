@@ -21,6 +21,7 @@ package main
 
 import (
 	"github.com/BambooEngine/bamboo-core"
+	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
 	"log"
 	"time"
@@ -129,7 +130,6 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 }
 
 func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state uint32) {
-	mouseCaptureUnlock()
 	oldLen := len(oldRunes)
 	newLen := len(newRunes)
 	minLen := oldLen
@@ -170,6 +170,7 @@ func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state u
 	} else {
 		e.SendText(newRunes[diffFrom:])
 	}
+	mouseCaptureUnlock()
 }
 
 func (e *IBusBambooEngine) SendBackSpace(state uint32, n int) {
@@ -189,9 +190,8 @@ func (e *IBusBambooEngine) SendBackSpace(state uint32, n int) {
 		for i := 0; i < n; i++ {
 			e.ForwardKeyEvent(IBUS_BackSpace, 14, state)
 			e.ForwardKeyEvent(IBUS_BackSpace, 14, state|IBUS_RELEASE_MASK)
+			time.Sleep(5 * time.Millisecond)
 		}
-		x11Sync(e.display)
-		time.Sleep(5 * time.Millisecond)
 	} else {
 		log.Println("There's something wrong with wmClasses")
 	}
@@ -199,10 +199,7 @@ func (e *IBusBambooEngine) SendBackSpace(state uint32, n int) {
 
 func (e *IBusBambooEngine) SendText(rs []rune) {
 	log.Println("Send text", string(rs))
-	e.HidePreeditText()
-
-	//e.CommitText(ibus.NewText(string(rs)))
-	e.commitText(string(rs))
+	e.CommitText(ibus.NewText(string(rs)))
 }
 
 func (e *IBusBambooEngine) inBackspaceWhiteList(wmClasses []string) bool {

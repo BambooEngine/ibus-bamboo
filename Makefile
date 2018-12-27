@@ -31,7 +31,7 @@ rpm_src_tar=$(rpm_src_dir)/$(tar_file)
 tar_options_src=--transform "s/^\./$(pkg_name)-$(version)/" --exclude={"*.tar.gz",".git",".idea"} .
 
 build:
-	GOPATH=$(CURDIR) go build -ldflags "-w -s" -o $(ibus_e_name) ./src/ibus-$(engine_name)
+	GOPATH=$(CURDIR) go build -o $(ibus_e_name) ./src/ibus-$(engine_name)
 
 clean:
 	rm -f ibus-engine-* *_linux *_cover.html go_test_* go_build_* test *.gz test

@@ -136,7 +136,7 @@ func (e *IBusBambooEngine) startAutoCommit() {
 func (e *IBusBambooEngine) updatePreedit() {
 	var processedStr = e.getPreeditString()
 	var preeditLen = uint32(len([]rune(processedStr)))
-	var ibusText = ibus.NewText(processedStr)
+	var ibusText = ibus.NewText(e.encodeText(processedStr))
 
 	if e.config.IBflags&IBpreeditInvisibility != 0 {
 		ibusText.AppendAttr(ibus.IBUS_ATTR_TYPE_NONE, ibus.IBUS_ATTR_UNDERLINE_SINGLE, 0, preeditLen)
@@ -265,7 +265,7 @@ func (e *IBusBambooEngine) commitText(str string) {
 	for _, chr := range []rune(str) {
 		e.CommitText(ibus.NewText(string(chr)))
 	}
-	//e.CommitText(ibus.NewText(commitStr))
+	//e.CommitText(ibus.NewText(str))
 }
 
 func (e *IBusBambooEngine) getVnSeq() string {
