@@ -141,13 +141,11 @@ func (e *IBusBambooEngine) Reset() *dbus.Error {
 
 func (e *IBusBambooEngine) Enable() *dbus.Error {
 	fmt.Print("Enable.")
-	mouseCaptureInit()
 	return nil
 }
 
 func (e *IBusBambooEngine) Disable() *dbus.Error {
 	fmt.Print("Disable.")
-	mouseCaptureExit()
 	if e.display != nil {
 		x11CloseDisplay(e.display)
 		e.display = nil
@@ -259,8 +257,10 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	if propName == PropKeyAutoCommitWithMouseMovement {
 		if propState == ibus.PROP_STATE_CHECKED {
 			e.config.IBflags |= IBautoCommitWithMouseMovement
+			mouseCaptureInit()
 		} else {
 			e.config.IBflags &= ^IBautoCommitWithMouseMovement
+			mouseCaptureExit()
 		}
 	}
 	if propName == PropKeyAutoCommitWithDelay {
