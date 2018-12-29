@@ -49,10 +49,11 @@ func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath
 	}
 	go engine.startAutoCommit()
 
+	if engine.config.IBflags&IBautoCommitWithMouseMovement != 0 {
+		mouseCaptureInit()
+	}
+
 	onMouseMove = func() {
-		if engine.config.IBflags&IBautoCommitWithMouseMovement == 0 {
-			return
-		}
 		engine.ignorePreedit = false
 		if engine.getRawKeyLen() == 0 {
 			return

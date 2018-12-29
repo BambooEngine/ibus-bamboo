@@ -19,8 +19,8 @@
 package main
 
 /*
-#cgo CFLAGS: -std=c99
-#cgo LDFLAGS: -lX11
+#cgo CFLAGS: -std=gnu99
+#cgo LDFLAGS: -lX11 -pthread
 extern void mouse_capture_init();
 extern void mouse_capture_exit();
 extern void mouse_capture_unlock();
