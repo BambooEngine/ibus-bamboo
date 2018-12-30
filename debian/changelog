@@ -1,3 +1,11 @@
+ibus-bamboo (0.2.71ubuntu2) stable; urgency=medium
+
+  * Release 0.2.8
+    - Fix crash with mouse movement
+    - Fix uppercase issue
+
+ -- Luong Thanh Lam <ltlam93@gmail.com>  Sun, 30 Dec 2018 09:27:09 +0700
+
 ibus-bamboo (0.2.71ubuntu1) stable; urgency=medium
 
   * Release 0.2.71
