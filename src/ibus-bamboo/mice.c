@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <X11/Xlib.h>
 #include <stdlib.h>
 #include <stdio.h>

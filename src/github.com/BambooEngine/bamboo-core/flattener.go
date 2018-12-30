@@ -76,6 +76,7 @@ func (f *BambooFlattener) GetCanvas(composition []*Transformation, mode Mode) []
 		}
 		if mode&EnglishMode != 0 {
 			if trans.Rule.Key > 0 {
+				trans.Dest = uint(len(canvas))
 				canvas = append(canvas, trans.Rule.Key)
 			}
 			// ignore virtual key
