@@ -65,6 +65,10 @@ func findMissingRuleForUo(composition []*Transformation, isSuperKey bool) (Rule,
 	return rule, false
 }
 
+func IsAlpha(c rune) bool {
+	return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z')
+}
+
 func findIndexRune(chars []rune, r rune) int {
 	for i, c := range chars {
 		if c == r {
@@ -99,6 +103,15 @@ func hasSuperWord(composition []*Transformation) bool {
 	}
 	str := Flatten(vowels, NoTone|LowerCase)
 	return strings.Contains(str, "uo")
+}
+
+func inKeyMap(keys []rune, key rune) bool {
+	for _, k := range keys {
+		if k == key {
+			return true
+		}
+	}
+	return false
 }
 
 /***** BEGIN SIDE-EFFECT METHODS ******/

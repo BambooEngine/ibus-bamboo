@@ -28,7 +28,7 @@ import (
 )
 
 func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
-	var rawKeyLen = e.getRawKeyLen()
+	var rawKeyLen = e.getRawKeyLen(true)
 
 	if keyVal == IBUS_BackSpace {
 		e.ignorePreedit = false
@@ -125,7 +125,7 @@ func (e *IBusBambooEngine) startAutoCommit() {
 		case <-preeditUpdateChan:
 			break
 		case <-time.After(time.Duration(timeout) * time.Millisecond):
-			var rawKeyLen = e.getRawKeyLen()
+			var rawKeyLen = e.getRawKeyLen(true)
 			if e.config.IBflags&IBautoCommitWithDelay != 0 && rawKeyLen > 0 {
 				e.commitPreedit(0)
 			}
@@ -158,7 +158,7 @@ func (e *IBusBambooEngine) shouldFallbackToEnglish() bool {
 	if e.config.IBflags&IBautoNonVnRestore == 0 {
 		return false
 	}
-	var vnSeq = e.getProcessedString(bamboo.VietnameseMode)
+	var vnSeq = e.getProcessedString(bamboo.VietnameseMode, true)
 	var vnRunes = []rune(vnSeq)
 	if len(vnRunes) == 0 {
 		return false
@@ -182,7 +182,7 @@ func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
 	if e.config.IBflags&IBautoNonVnRestore == 0 {
 		return false
 	}
-	var vnSeq = e.getProcessedString(bamboo.VietnameseMode)
+	var vnSeq = e.getProcessedString(bamboo.VietnameseMode, true)
 	var vnRunes = []rune(vnSeq)
 	if len(vnRunes) == 0 {
 		return false
@@ -215,10 +215,10 @@ func (e *IBusBambooEngine) getComposedString() string {
 	if e.config.IBflags&IBautoNonVnRestore == 0 {
 		processedStr = e.getVnSeq()
 	} else {
-		processedStr = e.getProcessedString(bamboo.VietnameseMode)
+		processedStr = e.getProcessedString(bamboo.VietnameseMode, true)
 	}
 	if e.mustFallbackToEnglish() {
-		processedStr = e.getProcessedString(bamboo.EnglishMode)
+		processedStr = e.getProcessedString(bamboo.EnglishMode, true)
 		return processedStr
 	}
 	return processedStr
@@ -228,11 +228,11 @@ func (e *IBusBambooEngine) encodeText(text string) string {
 	return bamboo.Encode(e.config.Charset, text)
 }
 
-func (e *IBusBambooEngine) getProcessedString(mode bamboo.Mode) string {
+func (e *IBusBambooEngine) getProcessedString(mode bamboo.Mode, lastWordOnly bool) string {
 	if e.config.IBflags&IBautoNonVnRestore != 0 {
-		return e.preediter.GetProcessedString(mode)
+		return e.preediter.GetProcessedString(mode, lastWordOnly)
 	}
-	return e.getVnSeq()
+	return e.preediter.GetProcessedString(bamboo.VietnameseMode, lastWordOnly)
 }
 
 func (e *IBusBambooEngine) getPreeditString() string {
@@ -240,9 +240,9 @@ func (e *IBusBambooEngine) getPreeditString() string {
 		return e.getVnSeq()
 	}
 	if e.shouldFallbackToEnglish() {
-		return e.getProcessedString(bamboo.EnglishMode)
+		return e.getProcessedString(bamboo.EnglishMode, true)
 	}
-	return e.getProcessedString(bamboo.VietnameseMode)
+	return e.getProcessedString(bamboo.VietnameseMode, true)
 }
 
 func (e *IBusBambooEngine) getMode() bamboo.Mode {
@@ -269,7 +269,7 @@ func (e *IBusBambooEngine) commitText(str string) {
 }
 
 func (e *IBusBambooEngine) getVnSeq() string {
-	return e.preediter.GetProcessedString(bamboo.VietnameseMode)
+	return e.preediter.GetProcessedString(bamboo.VietnameseMode, true)
 }
 
 func (e *IBusBambooEngine) hasMacroKey(key string) bool {

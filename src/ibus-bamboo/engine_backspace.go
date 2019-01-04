@@ -20,6 +20,7 @@
 package main
 
 import (
+	"fmt"
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
@@ -28,72 +29,41 @@ import (
 )
 
 func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
-	var rawKeyLen = e.getRawKeyLen()
+	var rawKeyLen = e.getRawKeyLen(false)
 	if keyVal == IBUS_BackSpace {
-		if !e.inX11BackspaceList() && rawKeyLen > 0 {
-			oldRunes := []rune(e.getPreeditString())
-			e.preediter.RemoveLastChar()
-			newRunes := []rune(e.getPreeditString())
-			e.updatePreviousText(newRunes, oldRunes, state)
-			return true, nil
-		}
-		if e.inX11BackspaceList() {
-			if e.nBackSpace > 0 {
-				e.nBackSpace--
-				if e.nBackSpace == 0 {
-					x11SendText("`") //send pingback
-					e.nBackSpace = -1
+		log.Println("Number of fake backspaces::", e.nFakeBackSpace)
+		if e.nFakeBackSpace == nFakeBackspaceDefault { // just a normal backspace
+			if rawKeyLen > 0 {
+				oldRunes := []rune(e.getPreeditString())
+				e.preediter.RemoveLastChar()
+				newRunes := []rune(e.getPreeditString())
+				if len(oldRunes) == 0 {
+					return false, nil
 				}
-			} else {
-				e.preediter.Reset()
+				e.updatePreviousText(newRunes, oldRunes, state)
+				return true, nil
 			}
+		} else {
+			e.nFakeBackSpace--
 		}
-
-		//No thing left, just ignore
 		return false, nil
 	}
 
 	if keyVal == IBUS_Return || keyVal == IBUS_KP_Enter {
-		if rawKeyLen > 0 {
-			e.preediter.Reset()
-		}
+		e.resetFakeBackspace()
+		e.preediter.Reset()
 		return false, nil
 	}
 
 	if keyVal == IBUS_Escape {
-		if rawKeyLen > 0 {
+		e.resetFakeBackspace()
+		if e.getRawKeyLen(false) > 0 {
 			e.preediter.Reset()
 			return true, nil
 		}
 		return false, nil
 	}
 	var keyRune = rune(keyVal)
-
-	if e.inX11BackspaceList() && keyCode == 0x0058 { // received pingback
-		time.Sleep(5 * time.Millisecond)
-		e.SendText(e.newChars)
-		e.newChars = nil
-		e.nBackSpace = 0
-		return true, nil
-	} else if e.nBackSpace == -1 {
-		e.nBackSpace = 0
-		return true, nil
-	}
-
-	if keyVal == IBUS_space || keyVal == IBUS_KP_Space {
-		if rawKeyLen > 0 {
-			var processedStr = e.preediter.GetProcessedString(bamboo.VietnameseMode)
-			if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
-				macText := e.macroTable.GetText(processedStr)
-				macText = macText + string(keyRune)
-				e.updatePreviousText([]rune(macText), []rune(processedStr), state)
-				e.preediter.Reset()
-				return true, nil
-			}
-			e.preediter.Reset()
-			return false, nil
-		}
-	}
 
 	if (keyVal >= 'a' && keyVal <= 'z') ||
 		(keyVal >= 'A' && keyVal <= 'Z') ||
@@ -103,9 +73,9 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 			keyRune = toUpper(keyRune)
 		}
 		if e.config.IBflags&IBautoNonVnRestore == 0 {
-			oldRunes := []rune(e.preediter.GetProcessedString(bamboo.VietnameseMode))
+			oldRunes := []rune(e.preediter.GetProcessedString(bamboo.VietnameseMode, true))
 			e.preediter.ProcessChar(keyRune, bamboo.VietnameseMode)
-			newRunes := []rune(e.preediter.GetProcessedString(bamboo.VietnameseMode))
+			newRunes := []rune(e.preediter.GetProcessedString(bamboo.VietnameseMode, true))
 			e.updatePreviousText(newRunes, oldRunes, state)
 			return true, nil
 		}
@@ -114,9 +84,9 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 		newRunes := []rune(e.getPreeditString())
 		e.updatePreviousText(newRunes, oldRunes, state)
 		return true, nil
-	} else if isWordBreakSymbol(keyRune) {
-		// special key processing
-		var processedStr = e.preediter.GetProcessedString(bamboo.VietnameseMode)
+	} else if keyVal == IBUS_space || isWordBreakSymbol(keyRune) {
+		// macro processing
+		var processedStr = e.preediter.GetProcessedString(bamboo.VietnameseMode, true)
 		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
 			macText := e.macroTable.GetText(processedStr)
 			macText = macText + string(keyRune)
@@ -124,6 +94,8 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 			e.preediter.Reset()
 			return true, nil
 		}
+		e.preediter.ProcessChar(keyRune, bamboo.EnglishMode)
+		return false, nil
 	}
 	e.preediter.Reset()
 	return false, nil
@@ -149,7 +121,7 @@ func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state u
 	log.Println(string(oldRunes), string(newRunes), diffFrom)
 
 	nBackSpace := 0
-	if !e.inX11BackspaceList() && diffFrom < newLen && diffFrom < oldLen {
+	if e.inSurroundingList() && diffFrom < newLen && diffFrom < oldLen {
 		e.SendText([]rune{0x200A}) // https://en.wikipedia.org/wiki/Whitespace_character
 		nBackSpace += 1
 	}
@@ -162,9 +134,11 @@ func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state u
 		e.SendBackSpace(state, nBackSpace)
 	}
 	if e.inX11BackspaceList() {
-		e.nBackSpace = nBackSpace
-		e.newChars = newRunes[diffFrom:]
-		if nBackSpace == 0 {
+		if nBackSpace > 0 {
+			e.nFakeBackSpace = nBackSpace
+			x11Copy(string(newRunes[diffFrom:]))
+			x11Paste(e.shortcutKeysID)
+		} else {
 			e.SendText(newRunes[diffFrom:])
 		}
 	} else {
@@ -174,29 +148,32 @@ func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state u
 }
 
 func (e *IBusBambooEngine) SendBackSpace(state uint32, n int) {
-	log.Printf("Sendding %d backSpace\n", n)
+	log.Printf("Sendding %d backSpace.", n)
 	if n == 0 {
 		return
 	}
 
 	if inWhiteList(e.config.SurroundingWhiteList, e.wmClasses) {
-		log.Println("Send backspace via SurroundingText")
+		fmt.Println("Send backspace via SurroundingText")
 		e.DeleteSurroundingText(-int32(n), uint32(n))
 	} else if inWhiteList(e.config.X11BackspaceWhiteList, e.wmClasses) {
-		log.Println("Send backspace via X11 KeyEvent")
+		fmt.Println("Send backspace via X11 KeyEvent")
 		x11SendBackspace(uint32(n))
 	} else if inWhiteList(e.config.IBusBackspaceWhiteList, e.wmClasses) {
-		log.Println("Send backspace via IBus ForwardKeyEvent")
+		fmt.Println("Send backspace via IBus ForwardKeyEvent")
 		for i := 0; i < n; i++ {
-			e.ForwardKeyEvent(IBUS_BackSpace, 14, state)
-			e.ForwardKeyEvent(IBUS_BackSpace, 14, state|IBUS_RELEASE_MASK)
+			e.ForwardKeyEvent(IBUS_BackSpace, 14, 0)
+			e.ForwardKeyEvent(IBUS_BackSpace, 14, IBUS_RELEASE_MASK)
 			time.Sleep(5 * time.Millisecond)
 		}
 	} else {
-		log.Println("There's something wrong with wmClasses")
+		fmt.Println("There's something wrong with wmClasses")
 	}
 }
 
+func (e *IBusBambooEngine) resetFakeBackspace() {
+	e.nFakeBackSpace = nFakeBackspaceDefault
+}
 func (e *IBusBambooEngine) SendText(rs []rune) {
 	log.Println("Send text", string(rs))
 	e.CommitText(ibus.NewText(string(rs)))

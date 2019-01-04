@@ -20,97 +20,25 @@
 package main
 
 /*
-#cgo CFLAGS: -std=c99
-#cgo LDFLAGS: -lX11 -lXtst
-#include <sys/time.h>
-#include <time.h>
-#include <stdio.h>
+#cgo CFLAGS: -std=gnu99
+#cgo LDFLAGS: -lX11 -lXtst -pthread
 #include <stdlib.h>
 #include <X11/Xlib.h>
-#include <X11/Xatom.h>
-#include <X11/keysym.h> //xproto-devel
-#include <X11/extensions/XTest.h>
-inline void ucharfree(unsigned char* uc) {
-	XFree(uc);
-}
 
-inline void windowfree(Window* w) {
-	XFree(w);
-}
-
-inline char* uchar2char(unsigned char* uc, unsigned long len) {
-	for (int i=0; i<len; i++) {
-		if (uc[i] == 0) {
-			uc[i] = '\n';
-		}
-	}
-	return (char*)uc;
-}
-
-inline unsigned long uchar2long(unsigned char* uc) {
-	return *(unsigned long*)(uc);
-}
-
-static int ignore_x_error(Display *display, XErrorEvent *error) {
-    return 0;
-}
-
-void setXIgnoreErrorHandler() {
-	XSetErrorHandler(ignore_x_error);
-}
-
-static void delay(int sec, long msec) {
-    long pause;
-    clock_t now,then;
-
-    pause = msec*(CLOCKS_PER_SEC/1000);
-    now = then = clock();
-    while( (now-then) < pause )
-        now = clock();
-}
-
-void SendBackspace(int n) {
-	Display *display = XOpenDisplay(NULL);
-	if (display) {
-		//find out window with current focus:
-        Window winfocus;
-        KeyCode modcode;
-        int    revert;
-        XGetInputFocus(display, &winfocus, &revert);
-
-        modcode = XKeysymToKeycode(display, XStringToKeysym("BackSpace"));
-        for (int i=0; i<n; i++) {
-            XTestFakeKeyEvent(display, modcode, True, 0);
-            XTestFakeKeyEvent(display, modcode, False, 0);
-			XSync(display, 0);
-			delay(0, 10);
-        }
-		XSync(display, 0);
-
-		XCloseDisplay(display);
-	}
-}
-
-
-void SendText(char* str, int len) {
-	Display *display = XOpenDisplay(NULL);
-	if (display) {
-		//find out window with current focus:
-        Window winfocus;
-        int    revert;
-        XGetInputFocus(display, &winfocus, &revert);
-
-		for (int i=0; i<len; i++) {
-			int modcode = str[i];
-			XTestFakeKeyEvent(display, modcode, True, 0);
-			XTestFakeKeyEvent(display, modcode, False, 0);
-		}
-		XSync(display, 1);
-		//delay(0, 1000);
-
-		XCloseDisplay(display);
-	}
-}
+extern void x11Copy(char*);
+extern void clipboard_init();
+extern void clipboard_exit();
+extern void mouse_capture_init();
+extern void mouse_capture_exit();
+extern void mouse_capture_unlock();
+extern unsigned long uchar2long(unsigned char* uc);
+extern char* uchar2char(unsigned char* uc, unsigned long len);
+extern void windowfree(Window* w);
+extern void ucharfree(unsigned char* uc);
+extern void send_text(char* str);
+extern void x11Paste(int);
+extern void send_backspace(int n);
+extern void setXIgnoreErrorHandler();
 */
 import "C"
 import (
@@ -120,36 +48,61 @@ import (
 
 const (
 	MaxPropertyLen = 128
-	MaxCacheWM     = 16
 
 	WM_CLASS = "WM_CLASS"
 )
 
 type CDisplay *C.Display
 
-var cacheWM = NewCacheWM(MaxCacheWM)
-
 func init() {
 	C.setXIgnoreErrorHandler()
 }
 
-func x11Sync(display *C.Display) {
-	C.XSync(display, 0)
+//export mouse_move_handler
+func mouse_move_handler() {
+	onMouseMove()
 }
 
-func x11Flush(display *C.Display) {
-	C.XFlush(display)
+var onMouseMove func()
+
+func mouseCaptureInit() {
+	C.mouse_capture_init()
+}
+
+func mouseCaptureExit() {
+	C.mouse_capture_exit()
+}
+
+func mouseCaptureUnlock() {
+	C.mouse_capture_unlock()
+}
+
+func x11Copy(str string) {
+	cs := C.CString(str)
+	defer C.free(unsafe.Pointer(cs))
+	C.x11Copy(cs)
+}
+
+func x11ClipboardInit() {
+	C.clipboard_init()
+}
+
+func x11ClipboardExit() {
+	C.clipboard_exit()
+}
+
+func x11Paste(n int) {
+	C.x11Paste(C.int(n))
 }
 
 func x11SendBackspace(n uint32) {
-	C.SendBackspace(C.int(n))
+	C.send_backspace(C.int(n))
 }
 
 func x11SendText(str string) {
 	cs := C.CString(str)
 	defer C.free(unsafe.Pointer(cs))
-	l := len([]rune(str))
-	C.SendText(cs, C.int(l))
+	C.send_text(cs)
 }
 
 func x11GetUCharProperty(display *C.Display, window C.Window, propName string) (*C.uchar, C.ulong) {

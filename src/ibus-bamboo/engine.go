@@ -24,9 +24,12 @@ import (
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
+	"log"
 	"os/exec"
 	"sync"
 )
+
+const nFakeBackspaceDefault = 0
 
 type IBusBambooEngine struct {
 	sync.Mutex
@@ -44,8 +47,9 @@ type IBusBambooEngine struct {
 	wmClasses           []string
 	lookupTableIsOpened bool
 	capSurrounding      bool
-	nBackSpace          int
-	newChars            []rune
+	nFakeBackSpace      int
+	shortcutKeysID      int
+	keyEventQueue       [][]uint32
 }
 
 /**
@@ -58,7 +62,7 @@ Args:
 	modifiers - The state of IBus.ModifierType keys like
 		Shift, Control, etc.
 Return:
-	True - if successfully process the keyevent, it won't be sent to X-server
+	True - if successfully process the keyevent, it won't be sent to X-Client
 	False - otherwise.
 
 This function gets called whenever a key is pressed.
@@ -66,14 +70,28 @@ This function gets called whenever a key is pressed.
 func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
 	e.Lock()
 	defer e.Unlock()
-	var rawKeyLen = e.getRawKeyLen()
-
-	if e.zeroLocation || (!e.inLookupTableControlKeys(keyVal) && inWhiteList(e.config.ExceptWhiteList, e.wmClasses)) ||
-		state&IBUS_RELEASE_MASK != 0 || //Ignore key-up event
-		(state&IBUS_SHIFT_MASK == 0 && (keyVal == IBUS_Shift_L || keyVal == IBUS_Shift_R)) { //Ignore 1 shift key
+	if e.isIgnoredKey(keyVal, state) {
 		return false, nil
 	}
+	// NOTICE: Some key events (Ctrl, Alt,...) will be enqueued but never sent to X-Client
+	if keyVal != IBUS_BackSpace && e.inX11BackspaceList() {
+		log.Printf("Number of fake backspaces: %d | 0x%04x | %d\n", e.nFakeBackSpace, keyCode, len(e.keyEventQueue))
+		if e.nFakeBackSpace > nFakeBackspaceDefault {
+			// fake backspace processing guard
+			e.keyEventQueue = append(e.keyEventQueue, []uint32{keyVal, keyCode, state})
+			return true, nil
+		} else if e.keyEventQueue != nil {
+			for _, keyEvents := range e.keyEventQueue {
+				e.processKeyEvent(keyEvents[0], keyEvents[1], keyEvents[2])
+			}
+			e.keyEventQueue = nil
+		}
+	}
+	return e.processKeyEvent(keyVal, keyCode, state)
+}
 
+func (e *IBusBambooEngine) processKeyEvent(keyVal, keyCode, state uint32) (bool, *dbus.Error) {
+	var rawKeyLen = e.getRawKeyLen(false)
 	if state&IBUS_CONTROL_MASK != 0 ||
 		state&IBUS_MOD1_MASK != 0 ||
 		state&IBUS_IGNORED_MASK != 0 ||

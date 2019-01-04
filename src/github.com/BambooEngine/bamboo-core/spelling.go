@@ -138,22 +138,38 @@ func generateCVC() []string {
 	return ret
 }
 
-func GetLastCombination(composition []*Transformation) []*Transformation {
+func getLastWord(composition []*Transformation) []*Transformation {
+	for i := len(composition) - 1; i >= 0; i-- {
+		var t = composition[i]
+		if t.Rule.EffectType == Appending && !unicode.IsLetter(t.Rule.EffectOn) {
+			if i == len(composition)-1 {
+				return nil
+			}
+			return composition[i+1:]
+		}
+	}
+	return composition
+}
+
+func getLastCombination(composition []*Transformation) []*Transformation {
 	var ret []*Transformation
 	if len(composition) <= 1 {
 		return composition
 	}
 	for i, trans := range composition {
 		ret = append(ret, trans)
-		str := Flatten(ret, VietnameseMode|NoTone)
+		if i < len(composition)-1 && composition[i+1].Rule.EffectType != Appending {
+			continue
+		}
+		str := Flatten(ret, VietnameseMode|NoTone|LowerCase)
 		if str == "" {
 			continue
 		}
 		if FindWord(spellingTrie, []rune(str), false) == FindResultNotMatch {
 			if i == 0 {
-				return GetLastCombination(composition[1:])
+				return getLastCombination(composition[1:])
 			}
-			return GetLastCombination(composition[i:])
+			return getLastCombination(composition[i:])
 		}
 	}
 	return ret

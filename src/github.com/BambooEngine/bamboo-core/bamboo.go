@@ -64,7 +64,7 @@ type IEngine interface {
 	GetInputMethod() InputMethod
 	ProcessChar(rune, Mode)
 	ProcessString(string, Mode)
-	GetProcessedString(Mode) string
+	GetProcessedString(Mode, bool) string
 	IsSpellingCorrect(Mode) bool
 	GetSpellingMatchResult(Mode, bool) uint8
 	HasTone() bool
@@ -216,7 +216,7 @@ func (e *BambooEngine) IsSpellingCorrect(mode Mode) bool {
 }
 
 func (e *BambooEngine) GetSpellingMatchResult(mode Mode, deepSearch bool) uint8 {
-	return getSpellingMatchResult(e.composition, mode, deepSearch)
+	return getSpellingMatchResult(getLastWord(e.composition), mode, deepSearch)
 }
 
 func (e *BambooEngine) createCompositionForKey(chr rune) []*Transformation {
@@ -238,26 +238,46 @@ func (e *BambooEngine) GetRawString() string {
 	return string(seq)
 }
 
-func (e *BambooEngine) GetProcessedString(mode Mode) string {
+func (e *BambooEngine) GetProcessedString(mode Mode, lastWordOnly bool) string {
+	if lastWordOnly {
+		var lastComb = getLastWord(e.composition)
+		if len(lastComb) > 0 {
+			return Flatten(lastComb, mode)
+		}
+		return ""
+	}
 	return Flatten(e.composition, mode)
+}
+
+func (e *BambooEngine) IsSupportedKey(key rune) bool {
+	if IsAlpha(key) {
+		return true
+	}
+	if inKeyMap(e.GetInputMethod().Keys, key) {
+		return true
+	}
+	return false
 }
 
 /***** BEGIN SIDE-EFFECT METHODS ******/
 
 func (e *BambooEngine) ProcessChar(key rune, mode Mode) {
-	if mode&EnglishMode != 0 {
+	if mode&EnglishMode != 0 || !e.IsSupportedKey(key) {
 		e.composition = append(e.composition, createAppendingTrans(key))
 		return
 	}
 	var previousComposition []*Transformation
 	if len(e.composition) > 0 {
-		var lastComb = GetLastCombination(e.composition)
+		var lastComb = getLastCombination(getLastWord(e.composition))
 		if len(lastComb) > 0 {
 			var idx = findTransformationIndex(e.composition, lastComb[0])
 			if idx > 0 {
 				previousComposition = e.composition[:idx]
 				e.composition = lastComb
 			}
+		} else {
+			previousComposition = e.composition
+			e.composition = nil
 		}
 	}
 	if len(e.composition) > 0 && e.isEffectiveKey(key) {
