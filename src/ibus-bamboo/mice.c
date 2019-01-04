@@ -44,7 +44,7 @@ static int grabPointer(Display *dpy, Window w, unsigned int mask) {
             XUngrabPointer(dpy, CurrentTime);
             XSync(dpy, 0);
             fprintf(stderr, "XGrabPointer: ungrab and sleeping\n");
-            delay(3, 0);
+            delay(0, 500);
         }
         rc = XGrabPointer(dpy, w, 0, ButtonPressMask | PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None, CurrentTime);
         mcap_grabbing = 1;
@@ -128,6 +128,7 @@ static void* thread_mouse_capture(void* data)
               mouse_move_handler();
         }
     }
+    mcap_running = 0;
     XCloseDisplay(dpy);
     return NULL;
 }
