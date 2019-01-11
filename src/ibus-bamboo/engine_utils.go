@@ -91,10 +91,10 @@ func (e *IBusBambooEngine) openLookupTable() {
 	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (0/1/2/3/4) để lưu tùy chọn của bạn"), true)
 
 	lt := ibus.NewLookupTable()
-	lt.AppendCandidate("Cấu hình mặc định")
+	lt.AppendCandidate("Cấu hình mặc định (Pre-edit)")
 	lt.AppendCandidate("Tắt gạch chân (Surrounding Text)")
-	lt.AppendCandidate("Tắt gạch chân (IBus)")
-	lt.AppendCandidate("Tắt gạch chân (X11)")
+	lt.AppendCandidate("Tắt gạch chân (Forward key event)")
+	lt.AppendCandidate("Tắt gạch chân (X11 Clipboard)")
 	lt.AppendCandidate("Thêm vào danh sách loại trừ")
 
 	lt.AppendLabel("0:")

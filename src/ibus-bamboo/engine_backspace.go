@@ -67,7 +67,6 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 
 	if (keyVal >= 'a' && keyVal <= 'z') ||
 		(keyVal >= 'A' && keyVal <= 'Z') ||
-		(keyVal >= '0' && keyVal <= '9') ||
 		(inKeyMap(e.preediter.GetInputMethod().Keys, rune(keyVal))) {
 		if state&IBUS_LOCK_MASK != 0 {
 			keyRune = toUpper(keyRune)

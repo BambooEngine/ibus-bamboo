@@ -74,11 +74,10 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		return false, nil
 	}
 
+	var keyRune = rune(keyVal)
 	if (keyVal >= 'a' && keyVal <= 'z') ||
 		(keyVal >= 'A' && keyVal <= 'Z') ||
-		(keyVal >= '0' && keyVal <= '9') ||
-		(inKeyMap(e.preediter.GetInputMethod().Keys, rune(keyVal))) {
-		var keyRune = rune(keyVal)
+		(inKeyMap(e.preediter.GetInputMethod().Keys, keyRune)) {
 		if state&IBUS_LOCK_MASK != 0 {
 			keyRune = toUpper(keyRune)
 		}

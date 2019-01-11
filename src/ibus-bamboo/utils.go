@@ -33,6 +33,9 @@ var wordBreakSyms = []rune{
 }
 
 func isWordBreakSymbol(key rune) bool {
+	if key >= '0' && key <= '9' {
+		return true
+	}
 	for _, c := range wordBreakSyms {
 		if c == key {
 			return true
