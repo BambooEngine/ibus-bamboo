@@ -38,7 +38,9 @@ const (
 func main() {
 	defer func() {
 		mouseCaptureExit()
+		x11ClipboardExit()
 	}()
+	x11ClipboardInit()
 	if isIBusDaemonChild() {
 		if len(os.Args) == 3 && os.Args[1] == "cd" {
 			os.Chdir(os.Args[2])

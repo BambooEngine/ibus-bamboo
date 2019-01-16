@@ -17,8 +17,8 @@ IBus Bamboo - Bộ gõ tiếng Việt cho Linux
   * Dấu thanh chuẩn và dấu thanh kiểu mới
   * Bỏ dấu tự do, Gõ tắt (macro),...
 * Sử dụng phím tắt `<Shift>`+`~` để loại trừ ứng dụng không dùng bộ gõ, chuyển qua lại giữa các chế độ gõ:
-  	* Preedit (default)
-  	* Surrounding text, IBus forward key event, X11 fake backspace
+  	* Pre-edit (default)
+  	* Surrounding text, IBus Forward key event, X11 Clipboard
 
 ### Cài đặt (Ubuntu)
 
@@ -34,4 +34,4 @@ ibus restart
 ### Giấy phép
 ibus-bamboo là bộ gõ được fork từ dự án [ibus-teni](https://github.com/teni-ime/ibus-teni), sử dụng Bamboo Engine để xử lý tiếng Việt thay cho Teni Engine.
 
-ibus-bamboo là phần mềm tự do nguồn mở. Toàn bộ mã nguồn của ibus-bamboo và bamboo-core đều được phát hành dưới các quy định ghi trong Giấy phép Công cộng GNU (GNU General Public License v3.0).
+ibus-bamboo là phần mềm tự do nguồn mở. Toàn bộ mã nguồn của ibus-bamboo được phát hành dưới các quy định ghi trong Giấy phép Công cộng GNU (GNU General Public License v3.0).

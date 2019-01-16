@@ -34,13 +34,14 @@ func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath
 	var dictionary, _ = loadDictionary(DictVietnameseCm)
 
 	engine := &IBusBambooEngine{
-		Engine:     ibus.BaseEngine(conn, objectPath),
-		preediter:  bamboo.NewEngine(config.InputMethod, config.Flags, dictionary),
-		engineName: engineName,
-		config:     config,
-		propList:   GetPropListByConfig(config),
-		macroTable: NewMacroTable(),
-		dictionary: dictionary,
+		Engine:         ibus.BaseEngine(conn, objectPath),
+		preediter:      bamboo.NewEngine(config.InputMethod, config.Flags, dictionary),
+		engineName:     engineName,
+		config:         config,
+		propList:       GetPropListByConfig(config),
+		macroTable:     NewMacroTable(),
+		dictionary:     dictionary,
+		nFakeBackSpace: nFakeBackspaceDefault,
 	}
 	ibus.PublishEngine(conn, objectPath, engine)
 
@@ -55,7 +56,8 @@ func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath
 
 	onMouseMove = func() {
 		engine.ignorePreedit = false
-		if engine.getRawKeyLen() == 0 {
+		engine.resetFakeBackspace()
+		if engine.getRawKeyLen(false) == 0 {
 			return
 		}
 		if engine.inBackspaceWhiteList(engine.wmClasses) {
@@ -68,8 +70,8 @@ func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath
 	return objectPath
 }
 
-func (e *IBusBambooEngine) getRawKeyLen() int {
-	return len(e.getProcessedString(bamboo.EnglishMode))
+func (e *IBusBambooEngine) getRawKeyLen(lastWordOnly bool) int {
+	return len(e.getProcessedString(bamboo.EnglishMode, lastWordOnly))
 }
 
 var lookupTableControlKeys = map[uint32]string{
@@ -89,10 +91,10 @@ func (e *IBusBambooEngine) openLookupTable() {
 	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (0/1/2/3/4) để lưu tùy chọn của bạn"), true)
 
 	lt := ibus.NewLookupTable()
-	lt.AppendCandidate("Cấu hình mặc định")
+	lt.AppendCandidate("Cấu hình mặc định (Pre-edit)")
 	lt.AppendCandidate("Tắt gạch chân (Surrounding Text)")
-	lt.AppendCandidate("Tắt gạch chân (IBus)")
-	lt.AppendCandidate("Tắt gạch chân (X11)")
+	lt.AppendCandidate("Tắt gạch chân (Forward key event)")
+	lt.AppendCandidate("Tắt gạch chân (X11 Clipboard)")
 	lt.AppendCandidate("Thêm vào danh sách loại trừ")
 
 	lt.AppendLabel("0:")
@@ -142,4 +144,32 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 	e.propList = GetPropListByConfig(e.config)
 	e.RegisterProperties(e.propList)
 	return true, nil
+}
+
+func (e *IBusBambooEngine) isIgnoredKey(keyVal, state uint32) bool {
+	if e.inX11BackspaceList() {
+		if state&IBUS_SHIFT_MASK != 0 && keyVal == IBUS_KEY_Insert {
+			return true
+		}
+	}
+	if state&IBUS_RELEASE_MASK != 0 {
+		//Ignore key-up event
+		return true
+	}
+	if keyVal == IBUS_Shift_L {
+		if state&IBUS_SHIFT_MASK == 0 {
+			e.shortcutKeysID = 1
+		}
+		return true
+	} else if keyVal == IBUS_Shift_R {
+		if state&IBUS_SHIFT_MASK == 0 {
+			e.shortcutKeysID = 0
+		}
+		return true
+	}
+	return e.zeroLocation || (!e.inLookupTableControlKeys(keyVal) && inWhiteList(e.config.ExceptWhiteList, e.wmClasses))
+}
+
+func (e *IBusBambooEngine) reset() {
+	e.preediter.Reset()
 }

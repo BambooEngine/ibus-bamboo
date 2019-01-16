@@ -1,3 +1,22 @@
+/*
+ * Bamboo - A Vietnamese Input method editor
+ * Copyright (C) 2018 Luong Thanh Lam <ltlam93@gmail.com>
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ */
+
 #define _GNU_SOURCE
 #include <X11/Xlib.h>
 #include <stdlib.h>
@@ -13,7 +32,6 @@ static pthread_t th_mcap;
 static pthread_mutex_t mutex_mcap;
 static Display* dpy;
 static int mcap_running;
-static int mcap_grabbing;
 
 static void signalHandler(int signo) {
     mcap_running = signo;
@@ -40,14 +58,7 @@ static int grabPointer(Display *dpy, Window w, unsigned int mask) {
     /* retry until we actually get the pointer (with a suitable delay)
      * or we get an error we can't recover from. */
     while (mcap_running == 1) {
-        if (mcap_grabbing == 1) {
-            XUngrabPointer(dpy, CurrentTime);
-            XSync(dpy, 0);
-            fprintf(stderr, "XGrabPointer: ungrab and sleeping\n");
-            delay(0, 500);
-        }
         rc = XGrabPointer(dpy, w, 0, ButtonPressMask | PointerMotionMask, GrabModeAsync, GrabModeAsync, None, None, CurrentTime);
-        mcap_grabbing = 1;
 
         switch (rc) {
             case GrabSuccess:
@@ -56,12 +67,12 @@ static int grabPointer(Display *dpy, Window w, unsigned int mask) {
 
             case AlreadyGrabbed:
                 fprintf(stderr, "XGrabPointer: already grabbed mouse pointer, retrying with delay\n");
-                delay(0, 500);
+                delay(1, 500);
                 break;
 
             case GrabFrozen:
                 fprintf(stderr, "XGrabPointer: grab was frozen, retrying after delay\n");
-                delay(0, 500);
+                delay(1, 500);
                 break;
 
             case GrabNotViewable:
@@ -105,7 +116,6 @@ static void* thread_mouse_capture(void* data)
         }
         XUngrabPointer(dpy, CurrentTime);
         XSync(dpy, 1);
-        mcap_grabbing = 0;
         pthread_mutex_lock(&mutex_mcap); // set mutex to lock status, so this thread will wait until next unlock (by update preedit string)
         if (mcap_running == 0)
             return NULL;
