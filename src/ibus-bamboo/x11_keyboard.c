@@ -65,38 +65,6 @@ static void delay(int sec, long msec) {
         now = clock();
 }
 
-void x11Paste2(Display *display, int n) {
-    //find out window with current focus:
-    KeyCode xk_shift_l = XKeysymToKeycode(display, XK_Shift_L);
-    KeyCode xk_shift_r = XKeysymToKeycode(display, XK_Shift_R);
-    KeyCode xk_control = XKeysymToKeycode(display, XK_Control_L);
-    KeyCode xk_insert = XKeysymToKeycode(display, XK_Insert);
-    KeyCode xk_v = XKeysymToKeycode(display, XK_V);
-
-    switch (n) {
-    case 0:
-        XTestFakeKeyEvent(display, xk_shift_l, True, 0);
-        XTestFakeKeyEvent(display, xk_insert, True, 0);
-        XTestFakeKeyEvent(display, xk_shift_l, False, 0);
-        XTestFakeKeyEvent(display, xk_insert, False, 0);
-        break;
-    case 1:
-        XTestFakeKeyEvent(display, xk_shift_r, True, 0);
-        XTestFakeKeyEvent(display, xk_insert, True, 0);
-        XTestFakeKeyEvent(display, xk_shift_r, False, 0);
-        XTestFakeKeyEvent(display, xk_insert, False, 0);
-        break;
-    case 2:
-        XTestFakeKeyEvent(display, xk_control, True, 0);
-        XTestFakeKeyEvent(display, xk_v, True, 0);
-        XTestFakeKeyEvent(display, xk_control, False, 0);
-        XTestFakeKeyEvent(display, xk_v, False, 0);
-        break;
-    }
-    XSync(display, 0);
-}
-
-
 void send_backspace(int n) {
     Display *display = XOpenDisplay(NULL);
     if (display) {

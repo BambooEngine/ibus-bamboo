@@ -35,7 +35,7 @@ func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath
 
 	engine := &IBusBambooEngine{
 		Engine:         ibus.BaseEngine(conn, objectPath),
-		preediter:      bamboo.NewEngine(config.InputMethod, config.Flags, dictionary),
+		preeditor:      bamboo.NewEngine(config.InputMethod, config.Flags, dictionary),
 		engineName:     engineName,
 		config:         config,
 		propList:       GetPropListByConfig(config),
@@ -61,7 +61,7 @@ func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath
 			return
 		}
 		if engine.inBackspaceWhiteList(engine.wmClasses) {
-			engine.preediter.Reset()
+			engine.preeditor.Reset()
 		} else {
 			engine.commitPreedit(0)
 		}
@@ -171,5 +171,5 @@ func (e *IBusBambooEngine) isIgnoredKey(keyVal, state uint32) bool {
 }
 
 func (e *IBusBambooEngine) reset() {
-	e.preediter.Reset()
+	e.preeditor.Reset()
 }

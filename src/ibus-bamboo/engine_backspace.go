@@ -35,7 +35,7 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 		if e.nFakeBackSpace == nFakeBackspaceDefault { // just a normal backspace
 			if rawKeyLen > 0 {
 				oldRunes := []rune(e.getPreeditString())
-				e.preediter.RemoveLastChar()
+				e.preeditor.RemoveLastChar()
 				newRunes := []rune(e.getPreeditString())
 				if len(oldRunes) == 0 {
 					return false, nil
@@ -51,14 +51,14 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 
 	if keyVal == IBUS_Return || keyVal == IBUS_KP_Enter {
 		e.resetFakeBackspace()
-		e.preediter.Reset()
+		e.preeditor.Reset()
 		return false, nil
 	}
 
 	if keyVal == IBUS_Escape {
 		e.resetFakeBackspace()
 		if e.getRawKeyLen(false) > 0 {
-			e.preediter.Reset()
+			e.preeditor.Reset()
 			return true, nil
 		}
 		return false, nil
@@ -67,36 +67,36 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 
 	if (keyVal >= 'a' && keyVal <= 'z') ||
 		(keyVal >= 'A' && keyVal <= 'Z') ||
-		(inKeyMap(e.preediter.GetInputMethod().Keys, rune(keyVal))) {
+		(inKeyMap(e.preeditor.GetInputMethod().Keys, rune(keyVal))) {
 		if state&IBUS_LOCK_MASK != 0 {
 			keyRune = toUpper(keyRune)
 		}
 		if e.config.IBflags&IBautoNonVnRestore == 0 {
-			oldRunes := []rune(e.preediter.GetProcessedString(bamboo.VietnameseMode, true))
-			e.preediter.ProcessChar(keyRune, bamboo.VietnameseMode)
-			newRunes := []rune(e.preediter.GetProcessedString(bamboo.VietnameseMode, true))
+			oldRunes := []rune(e.preeditor.GetProcessedString(bamboo.VietnameseMode, true))
+			e.preeditor.ProcessChar(keyRune, bamboo.VietnameseMode)
+			newRunes := []rune(e.preeditor.GetProcessedString(bamboo.VietnameseMode, true))
 			e.updatePreviousText(newRunes, oldRunes, state)
 			return true, nil
 		}
 		oldRunes := []rune(e.getPreeditString())
-		e.preediter.ProcessChar(keyRune, e.getMode())
+		e.preeditor.ProcessChar(keyRune, e.getMode())
 		newRunes := []rune(e.getPreeditString())
 		e.updatePreviousText(newRunes, oldRunes, state)
 		return true, nil
 	} else if keyVal == IBUS_space || isWordBreakSymbol(keyRune) {
 		// macro processing
-		var processedStr = e.preediter.GetProcessedString(bamboo.VietnameseMode, true)
+		var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode, true)
 		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
 			macText := e.macroTable.GetText(processedStr)
 			macText = macText + string(keyRune)
 			e.updatePreviousText([]rune(macText), []rune(processedStr), state)
-			e.preediter.Reset()
+			e.preeditor.Reset()
 			return true, nil
 		}
-		e.preediter.ProcessChar(keyRune, bamboo.EnglishMode)
+		e.preeditor.ProcessChar(keyRune, bamboo.EnglishMode)
 		return false, nil
 	}
-	e.preediter.Reset()
+	e.preeditor.Reset()
 	return false, nil
 }
 
@@ -163,8 +163,8 @@ func (e *IBusBambooEngine) SendBackSpace(state uint32, n int) {
 		for i := 0; i < n; i++ {
 			e.ForwardKeyEvent(IBUS_BackSpace, 14, 0)
 			e.ForwardKeyEvent(IBUS_BackSpace, 14, IBUS_RELEASE_MASK)
-			time.Sleep(5 * time.Millisecond)
 		}
+		time.Sleep(5 * time.Millisecond)
 	} else {
 		fmt.Println("There's something wrong with wmClasses")
 	}

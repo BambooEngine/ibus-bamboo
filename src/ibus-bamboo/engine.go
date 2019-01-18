@@ -34,7 +34,7 @@ const nFakeBackspaceDefault = 0
 type IBusBambooEngine struct {
 	sync.Mutex
 	ibus.Engine
-	preediter           bamboo.IEngine
+	preeditor           bamboo.IEngine
 	zeroLocation        bool
 	engineName          string
 	config              *Config
@@ -46,7 +46,7 @@ type IBusBambooEngine struct {
 	display             CDisplay
 	wmClasses           []string
 	lookupTableIsOpened bool
-	capSurrounding      bool
+	capabilities        uint32
 	nFakeBackSpace      int
 	shortcutKeysID      int
 	keyEventQueue       [][]uint32
@@ -108,7 +108,7 @@ func (e *IBusBambooEngine) processKeyEvent(keyVal, keyCode, state uint32) (bool,
 	}
 	fmt.Printf("keyCode 0x%04x keyval 0x%04x | %c\n", keyCode, keyVal, rune(keyVal))
 	if keyVal == IBUS_OpenLookupTable && e.lookupTableIsOpened == false {
-		e.preediter.Reset()
+		e.preeditor.Reset()
 		e.lookupTableIsOpened = true
 		e.openLookupTable()
 		return true, nil
@@ -138,7 +138,7 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 	e.RegisterProperties(e.propList)
 	e.HidePreeditText()
 	if !isSameClasses(e.wmClasses, wmClasses) {
-		e.preediter.Reset()
+		e.preeditor.Reset()
 	}
 	e.wmClasses = wmClasses
 	fmt.Print("FocusIn.")
@@ -172,7 +172,7 @@ func (e *IBusBambooEngine) Disable() *dbus.Error {
 }
 
 func (e *IBusBambooEngine) SetCapabilities(cap uint32) *dbus.Error {
-	e.capSurrounding = cap&IBUS_CAP_SURROUNDING_TEXT != 0
+	e.capabilities = cap
 	return nil
 }
 
@@ -315,7 +315,7 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	}
 	SaveConfig(e.config, e.engineName)
 	e.propList = GetPropListByConfig(e.config)
-	e.preediter = bamboo.NewEngine(e.config.InputMethod, e.config.Flags, e.dictionary)
+	e.preeditor = bamboo.NewEngine(e.config.InputMethod, e.config.Flags, e.dictionary)
 	e.RegisterProperties(e.propList)
 	return nil
 }
