@@ -24,6 +24,7 @@ import (
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
+	"strconv"
 	"time"
 )
 
@@ -56,11 +57,12 @@ func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath
 
 	onMouseMove = func() {
 		engine.ignorePreedit = false
+		x11Copy("")
 		engine.resetFakeBackspace()
 		if engine.getRawKeyLen(false) == 0 {
 			return
 		}
-		if engine.inBackspaceWhiteList(engine.wmClasses) {
+		if engine.inBackspaceWhiteList() {
 			engine.preeditor.Reset()
 		} else {
 			engine.commitPreedit(0)
@@ -74,70 +76,85 @@ func (e *IBusBambooEngine) getRawKeyLen(lastWordOnly bool) int {
 	return len(e.getProcessedString(bamboo.EnglishMode, lastWordOnly))
 }
 
-var lookupTableControlKeys = map[uint32]string{
-	'0': "Cấu hình mặc định",
-	'1': "Tắt gạch chân (Surrounding Text)",
-	'2': "Tắt gạch chân (IBus)",
-	'3': "Tắt gạch chân (X11)",
-	'4': "Thêm vào danh sách loại trừ",
+var lookupTableControlKeys = []string{
+	"Cấu hình mặc định (Pre-edit)",
+	"Tắt gạch chân (Surrounding Text)",
+	"Tắt gạch chân (Forward key event)",
+	"Tắt gạch chân (X11 Clipboard)",
+	"Thêm vào danh sách loại trừ",
 }
 
 func (e *IBusBambooEngine) inLookupTableControlKeys(keyVal uint32) bool {
-	return keyVal == IBUS_OpenLookupTable || lookupTableControlKeys[keyVal] != ""
+	if keyVal == IBUS_OpenLookupTable {
+		return true
+	}
+	if idx, err := strconv.Atoi(string(keyVal)); err == nil {
+		return idx < len(lookupTableControlKeys) && lookupTableControlKeys[idx] != ""
+	}
+	return false
 }
 
 func (e *IBusBambooEngine) openLookupTable() {
+	var whiteList = [][]string{
+		e.config.PreeditWhiteList,
+		e.config.SurroundingTextWhiteList,
+		e.config.ForwardKeyWhiteList,
+		e.config.X11ClipboardWhiteList,
+		e.config.ExceptedWhiteList,
+	}
 
 	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (0/1/2/3/4) để lưu tùy chọn của bạn"), true)
 
 	lt := ibus.NewLookupTable()
-	lt.AppendCandidate("Cấu hình mặc định (Pre-edit)")
-	lt.AppendCandidate("Tắt gạch chân (Surrounding Text)")
-	lt.AppendCandidate("Tắt gạch chân (Forward key event)")
-	lt.AppendCandidate("Tắt gạch chân (X11 Clipboard)")
-	lt.AppendCandidate("Thêm vào danh sách loại trừ")
-
-	lt.AppendLabel("0:")
-	lt.AppendLabel("1:")
-	lt.AppendLabel("2:")
-	lt.AppendLabel("3:")
-	lt.AppendLabel("4:")
-
+	for _, ac := range lookupTableControlKeys {
+		lt.AppendCandidate(ac)
+	}
+	for lb, _ := range lookupTableControlKeys {
+		if inWhiteList(whiteList[lb], e.wmClasses) {
+			lt.AppendLabel("*")
+		} else {
+			lt.AppendLabel(strconv.Itoa(lb))
+		}
+	}
 	e.UpdateLookupTable(lt, true)
 }
 
 func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
-	var wmClasses = x11GetFocusWindowClass(e.display)
+	var wmClasses = x11GetFocusWindowClass()
 	e.HideLookupTable()
 	fmt.Printf("keyCode 0x%04x keyval 0x%04x | %c\n", keyCode, keyVal, rune(keyVal))
 	e.HideAuxiliaryText()
+	if keyVal == IBUS_OpenLookupTable {
+		return false, nil
+	}
 	var reset = func() {
-		e.config.X11BackspaceWhiteList = removeFromWhiteList(e.config.X11BackspaceWhiteList, wmClasses)
-		e.config.IBusBackspaceWhiteList = removeFromWhiteList(e.config.IBusBackspaceWhiteList, wmClasses)
-		e.config.SurroundingWhiteList = removeFromWhiteList(e.config.SurroundingWhiteList, wmClasses)
-		e.config.ExceptWhiteList = removeFromWhiteList(e.config.ExceptWhiteList, wmClasses)
+		e.config.PreeditWhiteList = removeFromWhiteList(e.config.PreeditWhiteList, wmClasses)
+		e.config.X11ClipboardWhiteList = removeFromWhiteList(e.config.X11ClipboardWhiteList, wmClasses)
+		e.config.ForwardKeyWhiteList = removeFromWhiteList(e.config.ForwardKeyWhiteList, wmClasses)
+		e.config.SurroundingTextWhiteList = removeFromWhiteList(e.config.SurroundingTextWhiteList, wmClasses)
+		e.config.ExceptedWhiteList = removeFromWhiteList(e.config.ExceptedWhiteList, wmClasses)
 	}
 	switch keyVal {
 	case '0':
 		reset()
+		e.config.PreeditWhiteList = addToWhiteList(e.config.PreeditWhiteList, wmClasses)
 		break
 	case '1':
 		reset()
-		e.config.SurroundingWhiteList = addToWhiteList(e.config.SurroundingWhiteList, wmClasses)
+		e.config.SurroundingTextWhiteList = addToWhiteList(e.config.SurroundingTextWhiteList, wmClasses)
 		break
 	case '2':
 		reset()
-		e.config.IBusBackspaceWhiteList = addToWhiteList(e.config.IBusBackspaceWhiteList, wmClasses)
+		e.config.ForwardKeyWhiteList = addToWhiteList(e.config.ForwardKeyWhiteList, wmClasses)
 		break
 	case '3':
 		reset()
-		e.config.X11BackspaceWhiteList = addToWhiteList(e.config.X11BackspaceWhiteList, wmClasses)
+		e.config.X11ClipboardWhiteList = addToWhiteList(e.config.X11ClipboardWhiteList, wmClasses)
 		break
 	case '4':
-		e.config.ExceptWhiteList = addToWhiteList(e.config.ExceptWhiteList, wmClasses)
+		reset()
+		e.config.ExceptedWhiteList = addToWhiteList(e.config.ExceptedWhiteList, wmClasses)
 		break
-	case IBUS_OpenLookupTable:
-		return false, nil
 	}
 
 	SaveConfig(e.config, e.engineName)
@@ -147,7 +164,7 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 }
 
 func (e *IBusBambooEngine) isIgnoredKey(keyVal, state uint32) bool {
-	if e.inX11BackspaceList() {
+	if e.inX11ClipboardList() {
 		if state&IBUS_SHIFT_MASK != 0 && keyVal == IBUS_KEY_Insert {
 			return true
 		}
@@ -167,9 +184,39 @@ func (e *IBusBambooEngine) isIgnoredKey(keyVal, state uint32) bool {
 		}
 		return true
 	}
-	return e.zeroLocation || (!e.inLookupTableControlKeys(keyVal) && inWhiteList(e.config.ExceptWhiteList, e.wmClasses))
+	if e.inExceptedList() {
+		if e.inLookupTableControlKeys(keyVal) {
+			return false
+		}
+		return true
+	}
+	return e.zeroLocation
 }
 
 func (e *IBusBambooEngine) reset() {
 	e.preeditor.Reset()
+}
+
+func (e *IBusBambooEngine) inExceptedList() bool {
+	return inWhiteList(e.config.ExceptedWhiteList, e.wmClasses)
+}
+
+func (e *IBusBambooEngine) inPreeditList() bool {
+	return inWhiteList(e.config.PreeditWhiteList, e.wmClasses)
+}
+
+func (e *IBusBambooEngine) inBackspaceWhiteList() bool {
+	return e.inForwardKeyList() || e.inX11ClipboardList() || e.inSurroundingTextList()
+}
+
+func (e *IBusBambooEngine) inSurroundingTextList() bool {
+	return inWhiteList(e.config.SurroundingTextWhiteList, e.wmClasses)
+}
+
+func (e *IBusBambooEngine) inForwardKeyList() bool {
+	return inWhiteList(e.config.ForwardKeyWhiteList, e.wmClasses)
+}
+
+func (e *IBusBambooEngine) inX11ClipboardList() bool {
+	return inWhiteList(e.config.X11ClipboardWhiteList, e.wmClasses)
 }

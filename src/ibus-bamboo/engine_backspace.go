@@ -120,7 +120,7 @@ func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state u
 	log.Println(string(oldRunes), string(newRunes), diffFrom)
 
 	nBackSpace := 0
-	if e.inSurroundingList() && diffFrom < newLen && diffFrom < oldLen {
+	if e.inSurroundingTextList() && diffFrom < newLen && diffFrom < oldLen {
 		e.SendText([]rune{0x200A}) // https://en.wikipedia.org/wiki/Whitespace_character
 		nBackSpace += 1
 	}
@@ -132,7 +132,7 @@ func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state u
 	if nBackSpace > 0 {
 		e.SendBackSpace(state, nBackSpace)
 	}
-	if e.inX11BackspaceList() {
+	if e.inX11ClipboardList() {
 		if nBackSpace > 0 {
 			e.nFakeBackSpace = nBackSpace
 			x11Copy(string(newRunes[diffFrom:]))
@@ -152,13 +152,13 @@ func (e *IBusBambooEngine) SendBackSpace(state uint32, n int) {
 		return
 	}
 
-	if inWhiteList(e.config.SurroundingWhiteList, e.wmClasses) {
+	if e.inSurroundingTextList() {
 		fmt.Println("Send backspace via SurroundingText")
 		e.DeleteSurroundingText(-int32(n), uint32(n))
-	} else if inWhiteList(e.config.X11BackspaceWhiteList, e.wmClasses) {
-		fmt.Println("Send backspace via X11 KeyEvent")
+	} else if e.inX11ClipboardList() {
+		fmt.Println("Send backspace via XTestFakeKeyEvent")
 		x11SendBackspace(uint32(n))
-	} else if inWhiteList(e.config.IBusBackspaceWhiteList, e.wmClasses) {
+	} else if e.inForwardKeyList() {
 		fmt.Println("Send backspace via IBus ForwardKeyEvent")
 		for i := 0; i < n; i++ {
 			e.ForwardKeyEvent(IBUS_BackSpace, 14, 0)
@@ -176,20 +176,4 @@ func (e *IBusBambooEngine) resetFakeBackspace() {
 func (e *IBusBambooEngine) SendText(rs []rune) {
 	log.Println("Send text", string(rs))
 	e.CommitText(ibus.NewText(string(rs)))
-}
-
-func (e *IBusBambooEngine) inBackspaceWhiteList(wmClasses []string) bool {
-	return e.inIBusForwardList() || e.inX11BackspaceList() || e.inSurroundingList()
-}
-
-func (e *IBusBambooEngine) inSurroundingList() bool {
-	return inWhiteList(e.config.SurroundingWhiteList, e.wmClasses)
-}
-
-func (e *IBusBambooEngine) inIBusForwardList() bool {
-	return inWhiteList(e.config.IBusBackspaceWhiteList, e.wmClasses)
-}
-
-func (e *IBusBambooEngine) inX11BackspaceList() bool {
-	return inWhiteList(e.config.X11BackspaceWhiteList, e.wmClasses)
 }

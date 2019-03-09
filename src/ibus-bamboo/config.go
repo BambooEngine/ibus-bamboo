@@ -55,28 +55,30 @@ const (
 )
 
 type Config struct {
-	InputMethod            string
-	Charset                string
-	Flags                  uint
-	IBflags                uint
-	AutoCommitAfter        int64
-	ExceptWhiteList        map[string]bool
-	X11BackspaceWhiteList  map[string]bool
-	IBusBackspaceWhiteList map[string]bool
-	SurroundingWhiteList   map[string]bool
+	InputMethod              string
+	Charset                  string
+	Flags                    uint
+	IBflags                  uint
+	AutoCommitAfter          int64
+	ExceptedWhiteList        []string
+	PreeditWhiteList         []string
+	X11ClipboardWhiteList    []string
+	ForwardKeyWhiteList      []string
+	SurroundingTextWhiteList []string
 }
 
 func LoadConfig(engineName string) *Config {
 	var c = Config{
-		InputMethod:            "Telex",
-		Charset:                "Unicode",
-		Flags:                  bamboo.EstdFlags,
-		IBflags:                IBstdFlags,
-		AutoCommitAfter:        3000,
-		ExceptWhiteList:        map[string]bool{},
-		X11BackspaceWhiteList:  map[string]bool{},
-		IBusBackspaceWhiteList: map[string]bool{},
-		SurroundingWhiteList:   map[string]bool{},
+		InputMethod:              "Telex",
+		Charset:                  "Unicode",
+		Flags:                    bamboo.EstdFlags,
+		IBflags:                  IBstdFlags,
+		AutoCommitAfter:          3000,
+		ExceptedWhiteList:        nil,
+		PreeditWhiteList:         nil,
+		X11ClipboardWhiteList:    nil,
+		ForwardKeyWhiteList:      nil,
+		SurroundingTextWhiteList: nil,
 	}
 
 	u, err := user.Current()

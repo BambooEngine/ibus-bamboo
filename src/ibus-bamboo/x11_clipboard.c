@@ -110,9 +110,8 @@ void clipboard_exit()
 }
 
 void x11Copy(char *str) {
-    text = (char*)realloc(text, strlen(str)+1);
     if (text == NULL) {
-        return;
+        text = (char*)calloc(MAX_TEXT_LEN, sizeof(char));
     }
     strcpy(text, str);
     done = 0;

@@ -26,34 +26,6 @@
 #include <X11/keysym.h> //xproto-devel
 #include <X11/keysymdef.h>
 #include <X11/extensions/XTest.h>
-void ucharfree(unsigned char* uc) {
-    XFree(uc);
-}
-
-void windowfree(Window* w) {
-    XFree(w);
-}
-
-char* uchar2char(unsigned char* uc, unsigned long len) {
-    for (int i=0; i<len; i++) {
-        if (uc[i] == 0) {
-            uc[i] = '\n';
-        }
-    }
-    return (char*)uc;
-}
-
-unsigned long uchar2long(unsigned char* uc) {
-    return *(unsigned long*)(uc);
-}
-
-static int ignore_x_error(Display *display, XErrorEvent *error) {
-    return 0;
-}
-
-void setXIgnoreErrorHandler() {
-    XSetErrorHandler(ignore_x_error);
-}
 
 static void delay(int sec, long msec) {
     long pause;
@@ -65,16 +37,10 @@ static void delay(int sec, long msec) {
         now = clock();
 }
 
-void send_backspace(int n) {
+void x11SendBackspace(int n) {
     Display *display = XOpenDisplay(NULL);
     if (display) {
-        XAutoRepeatOff(display);
-        //find out window with current focus:
-        Window winfocus;
         KeyCode modcode;
-        int    revert;
-        XGetInputFocus(display, &winfocus, &revert);
-
         modcode = XKeysymToKeycode(display, XStringToKeysym("BackSpace"));
         XTestFakeKeyEvent(display, modcode, False, 0);
         XSync(display, 0);
@@ -83,8 +49,8 @@ void send_backspace(int n) {
             XTestFakeKeyEvent(display, modcode, False, 0);
             XSync(display, 0);
         }
-        delay(0, 3);
-        XAutoRepeatOn(display);
+        XSync(display, 0);
+        delay(0, 5);
         XCloseDisplay(display);
     }
 }
@@ -93,15 +59,11 @@ void x11Paste(int n) {
     Display *display = XOpenDisplay(NULL);
     if (display) {
         XAutoRepeatOff(display);
-        //find out window with current focus:
-        Window winfocus;
         KeyCode xk_shift_l = XKeysymToKeycode(display, XK_Shift_L);
         KeyCode xk_shift_r = XKeysymToKeycode(display, XK_Shift_R);
         KeyCode xk_control = XKeysymToKeycode(display, XK_Control_L);
         KeyCode xk_insert = XKeysymToKeycode(display, XK_Insert);
         KeyCode xk_v = XKeysymToKeycode(display, XK_V);
-        int    revert;
-        XGetInputFocus(display, &winfocus, &revert);
 
         switch (n) {
         case 0:
@@ -130,14 +92,9 @@ void x11Paste(int n) {
     }
 }
 
-void send_text(char* str) {
+void x11SendString(char* str) {
     Display *display = XOpenDisplay(NULL);
     if (display) {
-        //find out window with current focus:
-        Window winfocus;
-        int    revert;
-        XGetInputFocus(display, &winfocus, &revert);
-
         for (int i=0; i<strlen(str); i++) {
             char chr[2] = {str[i], '\0'};
             int modcode = XKeysymToKeycode(display, XStringToKeysym(chr));

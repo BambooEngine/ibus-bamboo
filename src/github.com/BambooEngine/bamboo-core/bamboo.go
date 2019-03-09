@@ -1,20 +1,21 @@
 /*
  * Bamboo - A Vietnamese Input method editor
- * Copyright (C) 2018 Luong Thanh Lam <ltlam93@gmail.com>
+ * Copyright (C) Luong Thanh Lam <ltlam93@gmail.com>
  *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation, either version 3 of the License, or
- * (at your option) any later version.
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
+ * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
+ * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
- *
+ * This software is licensed under the MIT license. For more information,
+ * see <https://github.com/BambooEngine/bamboo-core/blob/master/LISENCE>.
  */
 
 package bamboo
@@ -219,14 +220,14 @@ func (e *BambooEngine) GetSpellingMatchResult(mode Mode, deepSearch bool) uint8 
 	return getSpellingMatchResult(getLastWord(e.composition), mode, deepSearch)
 }
 
-func (e *BambooEngine) createCompositionForKey(chr rune) []*Transformation {
-	var isUpperCase bool
-	if unicode.IsUpper(chr) {
-		isUpperCase = true
-	}
-	chr = unicode.ToLower(chr)
+func (e *BambooEngine) createCompositionForKey(chr rune, isUpperCase bool) []*Transformation {
 	var transformations []*Transformation
-	transformations = e.createCompositionForRule(findAppendingRule(e.inputMethod.Rules, chr), isUpperCase)
+	var appendingRule = findAppendingRule(e.inputMethod.Rules, chr)
+	if unicode.IsUpper(appendingRule.EffectOn) {
+		isUpperCase = true
+		appendingRule.EffectOn = unicode.ToLower(appendingRule.EffectOn)
+	}
+	transformations = e.createCompositionForRule(appendingRule, isUpperCase)
 	return transformations
 }
 
@@ -262,14 +263,20 @@ func (e *BambooEngine) IsSupportedKey(key rune) bool {
 /***** BEGIN SIDE-EFFECT METHODS ******/
 
 func (e *BambooEngine) ProcessChar(key rune, mode Mode) {
+	var isUpperCase bool
+	if unicode.IsUpper(key) {
+		isUpperCase = true
+	}
+	key = unicode.ToLower(key)
 	if mode&EnglishMode != 0 || !e.IsSupportedKey(key) {
-		e.composition = append(e.composition, createAppendingTrans(key))
+		e.composition = append(e.composition, createAppendingTrans(key, isUpperCase))
 		return
 	}
 	var previousComposition []*Transformation
 	if len(e.composition) > 0 {
 		var lastComb = getLastCombination(getLastWord(e.composition))
 		if len(lastComb) > 0 {
+			lastComb = getLastCombination(getLastWord(e.composition))
 			var idx = findTransformationIndex(e.composition, lastComb[0])
 			if idx > 0 {
 				previousComposition = e.composition[:idx]
@@ -288,7 +295,7 @@ func (e *BambooEngine) ProcessChar(key rune, mode Mode) {
 			if key == e.composition[len(e.composition)-1].Rule.Key {
 				// Double typing an effect key undoes it and its effects.
 				e.composition = undoesTransformations(e.composition, e.getApplicableRules(key))
-				e.composition = append(e.composition, createAppendingTrans(key))
+				e.composition = append(e.composition, createAppendingTrans(key, isUpperCase))
 
 				if previousComposition != nil {
 					e.composition = append(previousComposition, e.composition...)
@@ -315,7 +322,7 @@ func (e *BambooEngine) ProcessChar(key rune, mode Mode) {
 			}
 		}
 	}
-	transformations := e.createCompositionForKey(key)
+	transformations := e.createCompositionForKey(key, isUpperCase)
 	e.composition = append(e.composition, transformations...)
 
 	/**

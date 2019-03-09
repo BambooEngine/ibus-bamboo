@@ -30,6 +30,7 @@ import (
 )
 
 const nFakeBackspaceDefault = 0
+const nKeyEventQueueMax = 10
 
 type IBusBambooEngine struct {
 	sync.Mutex
@@ -43,8 +44,7 @@ type IBusBambooEngine struct {
 	ignorePreedit       bool
 	macroTable          *MacroTable
 	dictionary          map[string]bool
-	display             CDisplay
-	wmClasses           []string
+	wmClasses           string
 	lookupTableIsOpened bool
 	capabilities        uint32
 	nFakeBackSpace      int
@@ -62,25 +62,28 @@ Args:
 	modifiers - The state of IBus.ModifierType keys like
 		Shift, Control, etc.
 Return:
-	True - if successfully process the keyevent, it won't be sent to X-Client
-	False - otherwise.
+	True - if successfully process the keyevent
+	False - otherwise. The keyevent will be passed to X-Client
 
 This function gets called whenever a key is pressed.
 */
 func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
-	e.Lock()
-	defer e.Unlock()
+	if e.inX11ClipboardList() {
+		e.Lock()
+		defer e.Unlock()
+	}
 	if e.isIgnoredKey(keyVal, state) {
 		return false, nil
 	}
+	// Fake X11 Clipboard backspace processing guard
 	// NOTICE: Some key events (Ctrl, Alt,...) will be enqueued but never sent to X-Client
-	if keyVal != IBUS_BackSpace && e.inX11BackspaceList() {
+	if keyVal != IBUS_BackSpace && e.inX11ClipboardList() {
 		log.Printf("Number of fake backspaces: %d | 0x%04x | %d\n", e.nFakeBackSpace, keyCode, len(e.keyEventQueue))
-		if e.nFakeBackSpace > nFakeBackspaceDefault {
-			// fake backspace processing guard
+		if e.nFakeBackSpace > nFakeBackspaceDefault && len(e.keyEventQueue) < nKeyEventQueueMax {
 			e.keyEventQueue = append(e.keyEventQueue, []uint32{keyVal, keyCode, state})
 			return true, nil
 		} else if e.keyEventQueue != nil {
+			e.resetFakeBackspace()
 			for _, keyEvents := range e.keyEventQueue {
 				e.processKeyEvent(keyEvents[0], keyEvents[1], keyEvents[2])
 			}
@@ -117,7 +120,10 @@ func (e *IBusBambooEngine) processKeyEvent(keyVal, keyCode, state uint32) (bool,
 		e.lookupTableIsOpened = false
 		return e.ltProcessKeyEvent(keyVal, keyCode, state)
 	}
-	if e.inBackspaceWhiteList(e.wmClasses) {
+	if e.inPreeditList() {
+		return e.preeditProcessKeyEvent(keyVal, keyCode, state)
+	}
+	if e.inBackspaceWhiteList() {
 		return e.backspaceProcessKeyEvent(keyVal, keyCode, state)
 	}
 	return e.preeditProcessKeyEvent(keyVal, keyCode, state)
@@ -126,29 +132,25 @@ func (e *IBusBambooEngine) processKeyEvent(keyVal, keyCode, state uint32) (bool,
 func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 	e.Lock()
 	defer e.Unlock()
-	if e.display == nil {
-		e.display = x11OpenDisplay()
-	}
-	var wmClasses []string
-	if e.display != nil {
-		wmClasses = x11GetFocusWindowClass(e.display)
-		fmt.Println(e.wmClasses)
-	}
+	fmt.Print("FocusIn.")
+	var wmClasses string
+	wmClasses = x11GetFocusWindowClass()
+	fmt.Printf("WM_CLASS=(%s)\n", wmClasses)
 
 	e.RegisterProperties(e.propList)
 	e.HidePreeditText()
 	if !isSameClasses(e.wmClasses, wmClasses) {
 		e.preeditor.Reset()
+		x11Copy("")
 	}
 	e.wmClasses = wmClasses
-	fmt.Print("FocusIn.")
 
 	return nil
 }
 
 func (e *IBusBambooEngine) FocusOut() *dbus.Error {
 	fmt.Print("FocusOut.")
-	//e.wmClasses = []string{}
+	//e.wmClasses = ""
 	return nil
 }
 
@@ -164,10 +166,6 @@ func (e *IBusBambooEngine) Enable() *dbus.Error {
 
 func (e *IBusBambooEngine) Disable() *dbus.Error {
 	fmt.Print("Disable.")
-	if e.display != nil {
-		x11CloseDisplay(e.display)
-		e.display = nil
-	}
 	return nil
 }
 

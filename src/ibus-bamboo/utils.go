@@ -67,36 +67,36 @@ func inKeyMap(keys []rune, key rune) bool {
 	return false
 }
 
-func inWhiteList(list map[string]bool, classes []string) bool {
-	for _, cl := range classes {
-		if list[cl] {
+func inWhiteList(list []string, classes string) bool {
+	for _, cl := range list {
+		if cl == classes {
 			return true
 		}
 	}
 	return false
 }
 
-func isSameClasses(cl1 []string, cl2 []string) bool {
-	if len(cl1) != len(cl2) || len(cl1) != 1 {
-		return false
-	}
-	return cl1[0] == cl2[0]
+func isSameClasses(cl1 string, cl2 string) bool {
+	return cl1 == cl2
 }
 
-func removeFromWhiteList(list map[string]bool, classes []string) map[string]bool {
-	for _, cl := range classes {
-		if list[cl] {
-			list[cl] = false
+func removeFromWhiteList(list []string, classes string) []string {
+	var newList []string
+	for _, cl := range list {
+		if cl != classes {
+			newList = append(newList, cl)
 		}
 	}
-	return list
+	return newList
 }
 
-func addToWhiteList(list map[string]bool, classes []string) map[string]bool {
-	for _, cl := range classes {
-		list[cl] = true
+func addToWhiteList(list []string, classes string) []string {
+	for _, cl := range list {
+		if cl == classes {
+			return list
+		}
 	}
-	return list
+	return append(list, classes)
 }
 
 func getCharsetFromPropKey(str string) string {

@@ -23,36 +23,22 @@ package main
 #cgo CFLAGS: -std=gnu99
 #cgo LDFLAGS: -lX11 -lXtst -pthread
 #include <stdlib.h>
-#include <X11/Xlib.h>
 
 extern void x11Copy(char*);
+extern void x11Paste(int);
 extern void clipboard_init();
 extern void clipboard_exit();
 extern void mouse_capture_init();
 extern void mouse_capture_exit();
 extern void mouse_capture_unlock();
-extern unsigned long uchar2long(unsigned char* uc);
-extern char* uchar2char(unsigned char* uc, unsigned long len);
-extern void windowfree(Window* w);
-extern void ucharfree(unsigned char* uc);
-extern void send_text(char* str);
-extern void x11Paste(int);
-extern void send_backspace(int n);
+extern void x11SendBackspace(int n);
 extern void setXIgnoreErrorHandler();
+extern char* x11GetFocusWindowClass();
 */
 import "C"
 import (
-	"strings"
 	"unsafe"
 )
-
-const (
-	MaxPropertyLen = 128
-
-	WM_CLASS = "WM_CLASS"
-)
-
-type CDisplay *C.Display
 
 func init() {
 	C.setXIgnoreErrorHandler()
@@ -96,97 +82,14 @@ func x11Paste(n int) {
 }
 
 func x11SendBackspace(n uint32) {
-	C.send_backspace(C.int(n))
+	C.x11SendBackspace(C.int(n))
 }
 
-func x11SendText(str string) {
-	cs := C.CString(str)
-	defer C.free(unsafe.Pointer(cs))
-	C.send_text(cs)
-}
-
-func x11GetUCharProperty(display *C.Display, window C.Window, propName string) (*C.uchar, C.ulong) {
-	var actualType C.Atom
-	var actualFormat C.int
-	var nItems, bytesAfter C.ulong
-	var prop *C.uchar
-
-	filterAtom := C.XInternAtom(display, C.CString(propName), C.True)
-
-	status := C.XGetWindowProperty(display, window, filterAtom, 0, MaxPropertyLen, C.False, C.AnyPropertyType, &actualType, &actualFormat, &nItems, &bytesAfter, &prop)
-
-	if status == C.Success {
-		return prop, nItems
+func x11GetFocusWindowClass() string {
+	var wmClass = C.x11GetFocusWindowClass()
+	if wmClass != nil {
+		defer C.free(unsafe.Pointer(wmClass))
+		return C.GoString(wmClass)
 	}
-
-	return nil, 0
-}
-
-func x11GetStringProperty(display *C.Display, window C.Window, propName string) string {
-	prop, propLen := x11GetUCharProperty(display, window, propName)
-	if prop != nil {
-		defer C.ucharfree(prop)
-		return C.GoString(C.uchar2char(prop, propLen))
-	}
-
 	return ""
-}
-
-func x11OpenDisplay() *C.Display {
-	return C.XOpenDisplay(nil)
-}
-
-func x11GetInputFocus(display *C.Display) C.Window {
-	var window C.Window
-	var revertTo C.int
-	C.XGetInputFocus(display, &window, &revertTo)
-
-	return window
-}
-
-func x11GetParentWindow(display *C.Display, w C.Window) (rootWindow, parentWindow C.Window) {
-	var childrenWindows *C.Window
-	var nChild C.uint
-	C.XQueryTree(display, w, &rootWindow, &parentWindow, &childrenWindows, &nChild)
-	C.windowfree(childrenWindows)
-
-	return
-}
-
-func x11CloseDisplay(d *C.Display) {
-	C.XCloseDisplay(d)
-}
-
-func x11GetFocusWindowClasses(display *C.Display) []string {
-
-	if display != nil {
-
-		w := x11GetInputFocus(display)
-		strClass := ""
-		for {
-			s := x11GetStringProperty(display, w, WM_CLASS)
-			if len(s) > 0 {
-				strClass += s + "\n"
-			}
-
-			rootWindow, parentWindow := x11GetParentWindow(display, w)
-
-			if rootWindow == parentWindow {
-				break
-			}
-
-			w = parentWindow
-		}
-
-		return strings.Split(strClass, "\n")
-	}
-	return nil
-}
-
-func x11GetFocusWindowClass(display *C.Display) []string {
-	var wmClasses = x11GetFocusWindowClasses(display)
-	if len(wmClasses) >= 2 {
-		return []string{wmClasses[1]}
-	}
-	return nil
 }
