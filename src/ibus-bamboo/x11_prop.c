@@ -23,7 +23,7 @@
 #include <X11/Xlib.h>
 
 #define MaxPropertyLen 128
-#define MaxWmClassesLen 20
+#define MaxWmClassesLen 10
 static char * WM_CLASS = "WM_CLASS";
 static char * WM_NAME = "WM_NAME";
 
@@ -44,21 +44,6 @@ char* uchar2char(unsigned char* uc, unsigned long len) {
     return (char*)uc;
  }
 
-char* str_concat(char * strClasses[], int len) {
-    char * s = NULL;
-    for (int i = 0; i < len; i++) {
-        if (strClasses[i] == NULL || strstr(strClasses[i], "FocusProxy") != NULL) continue;
-        if (s != NULL) {
-            strcat(s, ":");
-        } else {
-            s = calloc(MaxPropertyLen * len, sizeof(char));
-        }
-        strcat(s, strClasses[i]);
-        free(strClasses[i]);
-    }
-    return s;
- }
-
 char * x11GetStringProperty(Display *display, Window window, char * propName) {
     Atom actualType, filterAtom, XA_STRING = 31, XA_ATOM = 4;
     int status, actualFormat = 0;
@@ -74,13 +59,15 @@ char * x11GetStringProperty(Display *display, Window window, char * propName) {
     return NULL;
 }
 
-void x11GetFocusWindowClasses(char * propName, char * strClasses[], int * wmLen) {
-    Display *display = XOpenDisplay(NULL);
+char * x11GetFocusWindowClasses(Display *display, char * propName) {
     Window w;
     int revertTo;
     XGetInputFocus(display, &w, &revertTo);
-    for (;;) {
+    for (int i=0; i<MaxWmClassesLen; i++) {
         char * strClass = x11GetStringProperty(display, w, propName);
+        if (strClass != NULL && strstr(strClass, "FocusProxy") == NULL) {
+            return strClass;
+        }
         Window * childrenWindows;
         Window parentWindow, rootWindow;
         unsigned int nChild = 0;
@@ -89,30 +76,22 @@ void x11GetFocusWindowClasses(char * propName, char * strClasses[], int * wmLen)
             //XFree(childrenWindows);
         }
         if (rootWindow == parentWindow) {
-            //ignore the root window
             break;
-        } else if (strClass != NULL) {
-            strClasses[*wmLen] = strClass;
-            *wmLen += 1;
         }
         w = parentWindow;
     }
-    XCloseDisplay(display);
+    return NULL;
 }
 
 char * x11GetFocusWindowClass() {
-    int wmLen = 0;
-    char * wmClasses[MaxWmClassesLen], * wmNames[MaxWmClassesLen];
-    x11GetFocusWindowClasses(WM_CLASS, wmClasses, &wmLen);
-    if (wmLen > 0) {
-        //concat and FREE wmClasses
-        return str_concat(wmClasses, wmLen);
-    } else {
-        wmLen = 0;
-        x11GetFocusWindowClasses(WM_NAME, wmNames, &wmLen);
-        if (wmLen > 0) {
-            return str_concat(wmNames, wmLen);
-        }
+    Display *display = XOpenDisplay(NULL);
+    if (!display) {
+        return NULL;
     }
-    return NULL;
+    char * strClass = x11GetFocusWindowClasses(display, WM_CLASS);
+    if (strClass == NULL) {
+        strClass = x11GetFocusWindowClasses(display, WM_NAME);
+    }
+    XCloseDisplay(display);
+    return strClass;
 }

@@ -22,7 +22,6 @@
 #include <pthread.h>
 #include <stdlib.h>
 #include <stdio.h>
-#include "_cgo_export.h"
 #define MAX_TEXT_LEN 100
 
 static pthread_t th_clipboard;
@@ -33,8 +32,17 @@ static int done = 0;
 
 Atom targets_atom, text_atom, UTF8, XA_ATOM = 4, XA_STRING = 31;
 
+void clipboard_exit()
+{
+    clipboard_running = 0;
+    //free(text);
+}
+
 static void* thread_clipboard_copy(void* data) {
     Display* display = XOpenDisplay(0);
+    if (!display) {
+        return NULL;
+    }
     int N = DefaultScreen(display);
     Window window = XCreateSimpleWindow(display, RootWindow(display, N), 0, 0, 1, 1, 0,
         BlackPixel(display, N), WhitePixel(display, N));
@@ -70,11 +78,11 @@ static void* thread_clipboard_copy(void* data) {
                     R = XChangeProperty (ev.display, ev.requestor, ev.property, XA_ATOM, 32, PropModeReplace, (unsigned char*)&UTF8, 1);
                 }
                 else if (ev.target == XA_STRING || ev.target == text_atom) {
-                    R = XChangeProperty(ev.display, ev.requestor, ev.property, XA_STRING, 8, PropModeReplace, text, size);
+                    R = XChangeProperty(ev.display, ev.requestor, ev.property, XA_STRING, 8, PropModeReplace, (unsigned char*)text, size);
                     done = 1;
                 }
                 else if (ev.target == UTF8) {
-                    R = XChangeProperty(ev.display, ev.requestor, ev.property, UTF8, 8, PropModeReplace, text, size);
+                    R = XChangeProperty(ev.display, ev.requestor, ev.property, UTF8, 8, PropModeReplace, (unsigned char*)text, size);
                     done = 1;
                 }
                 else ev.property = None;
@@ -101,12 +109,6 @@ void clipboard_init()
         pthread_create(&th_clipboard, NULL, &thread_clipboard_copy, selections[i]);
         pthread_detach(th_clipboard);
     }
-}
-
-void clipboard_exit()
-{
-    clipboard_running = 0;
-    //free(text);
 }
 
 void x11Copy(char *str) {

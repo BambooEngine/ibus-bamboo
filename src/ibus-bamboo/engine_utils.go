@@ -124,6 +124,9 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 	e.HideLookupTable()
 	fmt.Printf("keyCode 0x%04x keyval 0x%04x | %c\n", keyCode, keyVal, rune(keyVal))
 	e.HideAuxiliaryText()
+	if wmClasses == "" {
+		return true, nil
+	}
 	if keyVal == IBUS_OpenLookupTable {
 		return false, nil
 	}
