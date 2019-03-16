@@ -51,13 +51,9 @@ func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath
 	}
 	go engine.startAutoCommit()
 
-	if engine.config.IBflags&IBautoCommitWithMouseMovement != 0 {
-		mouseCaptureInit()
-	}
-
 	onMouseMove = func() {
 		engine.ignorePreedit = false
-		x11Copy("")
+		x11ClipboardReset()
 		engine.resetFakeBackspace()
 		if engine.inBackspaceWhiteList() {
 			engine.preeditor.Reset()
@@ -69,8 +65,8 @@ func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath
 	return objectPath
 }
 
-func (e *IBusBambooEngine) getRawKeyLen(lastWordOnly bool) int {
-	return len(e.getProcessedString(bamboo.EnglishMode, lastWordOnly))
+func (e *IBusBambooEngine) getRawKeyLen() int {
+	return len(e.preeditor.GetRawString())
 }
 
 var lookupTableConfiguration = []string{

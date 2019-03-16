@@ -179,7 +179,7 @@ func getLastSyllable(composition []*Transformation) []*Transformation {
 		if i < len(composition)-1 && composition[i+1].Rule.EffectType != Appending {
 			continue
 		}
-		str := Flatten(ret, VietnameseMode|NoTone|LowerCase)
+		str := Flatten(ret, VietnameseMode|ToneLess|LowerCase)
 		if str == "" {
 			continue
 		}

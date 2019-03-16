@@ -29,8 +29,8 @@ type Mode uint
 const (
 	VietnameseMode Mode = 1 << iota
 	EnglishMode
-	NoTone
-	NoMark
+	ToneLess
+	MarkLess
 	LowerCase
 )
 
@@ -71,6 +71,7 @@ type IEngine interface {
 	HasTone() bool
 	Reset()
 	RemoveLastChar()
+	GetRawString() string
 }
 
 type BambooEngine struct {
@@ -197,7 +198,7 @@ func (e *BambooEngine) isTransformationForUoMissed() bool {
 	return e.flags&EautoCorrectEnabled != 0 &&
 		len(e.composition) > 0 &&
 		hasSuperWord(e.composition) &&
-		getSpellingMatchResult(e.composition, NoTone, false) == FindResultMatchPrefix
+		getSpellingMatchResult(e.composition, ToneLess, false) == FindResultMatchPrefix
 }
 
 func (e *BambooEngine) CanProcessKey(key rune) bool {
@@ -288,6 +289,9 @@ func (e *BambooEngine) Reset() {
 // the transformations that add effects to it.
 func (e *BambooEngine) RemoveLastChar() {
 	var lastAppending = findLastAppendingTrans(e.composition)
+	if lastAppending == nil {
+		return
+	}
 	var transformations = getTransformationsTargetTo(e.composition, lastAppending)
 	for _, trans := range append(transformations, lastAppending) {
 		e.composition = removeTrans(e.composition, trans)

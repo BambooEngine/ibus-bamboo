@@ -94,7 +94,7 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 }
 
 func (e *IBusBambooEngine) processKeyEvent(keyVal, keyCode, state uint32) (bool, *dbus.Error) {
-	var rawKeyLen = e.getRawKeyLen(false)
+	var rawKeyLen = e.getRawKeyLen()
 	if state&IBUS_CONTROL_MASK != 0 ||
 		state&IBUS_MOD1_MASK != 0 ||
 		state&IBUS_IGNORED_MASK != 0 ||
@@ -131,16 +131,16 @@ func (e *IBusBambooEngine) processKeyEvent(keyVal, keyCode, state uint32) (bool,
 
 func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 	fmt.Print("FocusIn.")
-	var wmClasses = x11GetFocusWindowClass()
-	fmt.Printf("WM_CLASS=(%s)\n", wmClasses)
+	var oldWmClasses = e.wmClasses
+	e.wmClasses = x11GetFocusWindowClass()
+	fmt.Printf("WM_CLASS=(%s)\n", e.wmClasses)
 
 	e.RegisterProperties(e.propList)
 	e.HidePreeditText()
-	if !isSameClasses(e.wmClasses, wmClasses) {
+	if !isSameClasses(oldWmClasses, e.wmClasses) {
 		e.preeditor.Reset()
-		x11Copy("")
+		x11ClipboardReset()
 	}
-	e.wmClasses = wmClasses
 
 	return nil
 }
@@ -158,11 +158,17 @@ func (e *IBusBambooEngine) Reset() *dbus.Error {
 
 func (e *IBusBambooEngine) Enable() *dbus.Error {
 	fmt.Print("Enable.")
+
+	if e.config.IBflags&IBautoCommitWithMouseMovement != 0 {
+		mouseCaptureInit()
+	}
 	return nil
 }
 
 func (e *IBusBambooEngine) Disable() *dbus.Error {
 	fmt.Print("Disable.")
+	x11ClipboardExit()
+	mouseCaptureExit()
 	return nil
 }
 

@@ -29,11 +29,10 @@ import (
 )
 
 func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
-	var rawKeyLen = e.getRawKeyLen(false)
 	if keyVal == IBUS_BackSpace {
 		log.Println("Number of fake backspaces::", e.nFakeBackSpace)
 		if e.nFakeBackSpace == nFakeBackspaceDefault { // just a normal backspace
-			if rawKeyLen > 0 {
+			if e.getRawKeyLen() > 0 {
 				oldRunes := []rune(e.getPreeditString())
 				e.preeditor.RemoveLastChar()
 				newRunes := []rune(e.getPreeditString())
@@ -57,7 +56,7 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 
 	if keyVal == IBUS_Escape {
 		e.resetFakeBackspace()
-		if e.getRawKeyLen(false) > 0 {
+		if e.getRawKeyLen() > 0 {
 			e.preeditor.Reset()
 			return true, nil
 		}

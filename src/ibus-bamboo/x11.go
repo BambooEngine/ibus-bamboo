@@ -28,6 +28,7 @@ extern void x11Copy(char*);
 extern void x11Paste(int);
 extern void clipboard_init();
 extern void clipboard_exit();
+extern void x11ClipboardReset();
 extern void mouse_capture_init();
 extern void mouse_capture_exit();
 extern void mouse_capture_unlock();
@@ -75,6 +76,10 @@ func x11ClipboardInit() {
 
 func x11ClipboardExit() {
 	C.clipboard_exit()
+}
+
+func x11ClipboardReset() {
+	C.x11ClipboardReset()
 }
 
 func x11Paste(n int) {

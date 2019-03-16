@@ -28,7 +28,7 @@ import (
 )
 
 func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
-	var rawKeyLen = e.getRawKeyLen(true)
+	var rawKeyLen = e.getRawKeyLen()
 
 	if keyVal == IBUS_BackSpace {
 		e.ignorePreedit = false
@@ -122,8 +122,7 @@ func (e *IBusBambooEngine) startAutoCommit() {
 		case <-preeditUpdateChan:
 			break
 		case <-time.After(time.Duration(timeout) * time.Millisecond):
-			var rawKeyLen = e.getRawKeyLen(true)
-			if e.config.IBflags&IBautoCommitWithDelay != 0 && rawKeyLen > 0 {
+			if e.config.IBflags&IBautoCommitWithDelay != 0 && e.getRawKeyLen() > 0 {
 				e.commitPreedit(0)
 			}
 		}
@@ -204,7 +203,7 @@ func (e *IBusBambooEngine) isSpellingCorrect() bool {
 }
 
 func (e *IBusBambooEngine) getSpellingMatchResult(deepSearch bool) uint8 {
-	return e.preeditor.GetSpellingMatchResult(bamboo.NoTone, deepSearch)
+	return e.preeditor.GetSpellingMatchResult(bamboo.ToneLess, deepSearch)
 }
 
 func (e *IBusBambooEngine) getComposedString() string {

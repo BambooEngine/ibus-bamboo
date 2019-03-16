@@ -134,7 +134,7 @@ func isMarkTargetValid(composition []*Transformation, trans *Transformation) boo
 	}
 	if targetSound == VowelSound {
 		var vowels = getRightMostVowelWithMarks(append(composition, trans))
-		if getSpellingMatchResult(vowels, NoTone, false) == FindResultNotMatch {
+		if getSpellingMatchResult(vowels, ToneLess, false) == FindResultNotMatch {
 			return false
 		}
 	}
@@ -147,7 +147,7 @@ func getCombinationWithSound(composition []*Transformation) ([]*Transformation, 
 	if len(lastComb) <= 0 {
 		return lastComb, nil
 	}
-	var str = Flatten(lastComb, VietnameseMode|NoTone|LowerCase)
+	var str = Flatten(lastComb, VietnameseMode|ToneLess|LowerCase)
 	if FindWord(spellingTrie, []rune(str), false) != FindResultNotMatch {
 		return lastComb, ParseSoundsFromWord(str)
 	}
@@ -173,8 +173,8 @@ func getSpellingMatchResult(composition []*Transformation, mode Mode, deepSearch
 	if len(composition) <= 0 {
 		return FindResultMatchFull
 	}
-	if mode&NoTone != 0 {
-		str := Flatten(composition, NoTone|LowerCase)
+	if mode&ToneLess != 0 {
+		str := Flatten(composition, ToneLess|LowerCase)
 		var chars = []rune(str)
 		if len(chars) <= 1 {
 			return FindResultMatchFull
@@ -249,7 +249,7 @@ func findToneTarget(composition []*Transformation, stdStyle bool) *Transformatio
 	if len(vowels) == 1 {
 		target = vowels[0]
 	} else if len(vowels) == 2 && stdStyle {
-		var str = Flatten(getRightMostVowelWithMarks(composition), NoTone|LowerCase)
+		var str = Flatten(getRightMostVowelWithMarks(composition), ToneLess|LowerCase)
 		var chars = []rune(str)
 		if ohPos := findIndexRune(chars, 'ơ'); ohPos > 0 {
 			target = vowels[ohPos]
@@ -349,7 +349,7 @@ func findTransformationIndex(composition []*Transformation, trans *Transformatio
 var regUhOh = regexp.MustCompile(`\p{L}*(uơ|ưo)\p{L}*`)
 
 func hasSuperWord(composition []*Transformation) bool {
-	str := Flatten(composition, NoTone|LowerCase)
+	str := Flatten(composition, ToneLess|LowerCase)
 	return regUhOh.MatchString(str)
 }
 
