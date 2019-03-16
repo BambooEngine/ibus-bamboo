@@ -1,3 +1,10 @@
+ibus-bamboo (0.3.1ubuntu1) stable; urgency=medium
+
+  * Release 0.3.1
+    - Fix a bug with X11 Clipboard
+
+ -- Luong Thanh Lam <ltlam93@gmail.com>  Mon, 11 Mar 2019 16:57:31 +0700
+
 ibus-bamboo (0.3.0ubuntu1) stable; urgency=medium
 
   * Release 0.3.0
