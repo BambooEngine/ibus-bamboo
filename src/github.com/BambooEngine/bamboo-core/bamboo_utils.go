@@ -20,8 +20,8 @@
 package bamboo
 
 import (
+	"log"
 	"regexp"
-	"strings"
 	"unicode"
 )
 
@@ -119,6 +119,7 @@ func findMarkTarget(composition []*Transformation, rules []Rule) (*Transformatio
 }
 
 func isMarkTargetValid(composition []*Transformation, trans *Transformation) bool {
+	// a target is not applied mark transformation twice
 	if !isFree(composition, trans.Target, MarkTransformation) {
 		return false
 	}
@@ -127,14 +128,87 @@ func isMarkTargetValid(composition []*Transformation, trans *Transformation) boo
 	if !found {
 		return false
 	}
-	// the target of trans is a vowel
+	// the sound of target does not match the sound of the trans that effect on
 	if IsVowel(trans.Rule.EffectOn) && targetSound != VowelSound {
 		return false
 	}
-	if targetSound == VowelSound && !isSpellingCorrect(getRightMostVowelWithMarks(append(composition, trans)), NoTone) {
-		return false
+	if targetSound == VowelSound {
+		var vowels = getRightMostVowelWithMarks(append(composition, trans))
+		if getSpellingMatchResult(vowels, NoTone, false) == FindResultNotMatch {
+			return false
+		}
 	}
 	return true
+}
+
+// only appending trans has sound
+func getCombinationWithSound(composition []*Transformation) ([]*Transformation, []Sound) {
+	var lastComb = getAppendingComposition(composition)
+	if len(lastComb) <= 0 {
+		return lastComb, nil
+	}
+	var str = Flatten(lastComb, VietnameseMode|NoTone|LowerCase)
+	if FindWord(spellingTrie, []rune(str), false) != FindResultNotMatch {
+		return lastComb, ParseSoundsFromWord(str)
+	}
+	return lastComb, ParseSoundsFromWord(str)
+}
+
+func getCompositionBySound(composition []*Transformation, sound Sound) []*Transformation {
+	var lastComb, sounds = getCombinationWithSound(composition)
+	if len(lastComb) != len(sounds) {
+		log.Println("Something is wrong with the length of sounds")
+		return lastComb
+	}
+	var ret []*Transformation
+	for i, s := range sounds {
+		if s == sound {
+			ret = append(ret, lastComb[i])
+		}
+	}
+	return ret
+}
+
+func getSpellingMatchResult(composition []*Transformation, mode Mode, deepSearch bool) uint8 {
+	if len(composition) <= 0 {
+		return FindResultMatchFull
+	}
+	if mode&NoTone != 0 {
+		str := Flatten(composition, NoTone|LowerCase)
+		var chars = []rune(str)
+		if len(chars) <= 1 {
+			return FindResultMatchFull
+		}
+		return FindWord(spellingTrie, chars, deepSearch)
+	}
+	return FindResultNotMatch
+}
+
+func isSpellingCorrect(composition []*Transformation, mode Mode) bool {
+	res := getSpellingMatchResult(composition, mode, false)
+	return res == FindResultMatchFull
+}
+
+func GetSoundMap(composition []*Transformation) map[*Transformation]Sound {
+	var soundMap = map[*Transformation]Sound{}
+	var lastComb, sounds = getCombinationWithSound(composition)
+	if len(sounds) <= 0 || len(sounds) != len(lastComb) {
+		log.Println("Something is wrong with the length of sounds")
+		return soundMap
+	}
+	for i, trans := range lastComb {
+		soundMap[trans] = sounds[i]
+	}
+	return soundMap
+}
+
+func getRightMostVowels(composition []*Transformation) []*Transformation {
+	return getCompositionBySound(composition, VowelSound)
+}
+
+func getRightMostVowelWithMarks(composition []*Transformation) []*Transformation {
+	var vowels = getRightMostVowels(composition)
+	return addMarksToComposition(composition, vowels)
 }
 
 func getMarkTransformationsTargetTo(composition []*Transformation, trans *Transformation) []*Transformation {
@@ -272,68 +346,80 @@ func findTransformationIndex(composition []*Transformation, trans *Transformatio
 	return -1
 }
 
+var regUhOh = regexp.MustCompile(`\p{L}*(uơ|ưo)\p{L}*`)
+
 func hasSuperWord(composition []*Transformation) bool {
-	vowels := getRightMostVowels(composition)
-	if len(vowels) <= 0 {
-		return false
-	}
-	str := Flatten(vowels, NoTone|LowerCase)
-	return strings.Contains(str, "uo")
+	str := Flatten(composition, NoTone|LowerCase)
+	return regUhOh.MatchString(str)
 }
 
-var regUho = regexp.MustCompile(`uơ\p{L}*`)
-var regUoh = regexp.MustCompile(`ưo\p{L}*`)
-var regUoSuffix = regexp.MustCompile(`^(h|th|kh)uo$`)
+func extractLastSyllable(composition []*Transformation) ([]*Transformation, []*Transformation) {
+	var previous, lastSyllable []*Transformation
+	if len(composition) > 0 {
+		var ls = getLastSyllable(getLastWord(composition, nil))
+		if len(ls) > 0 {
+			var idx = findTransformationIndex(composition, ls[0])
+			if idx > 0 {
+				previous = composition[:idx]
+			}
+			lastSyllable = ls
+		} else {
+			previous = composition
+		}
+	}
+	return lastSyllable, previous
+}
 
-func findMissingRuleForUo(composition []*Transformation, isSuperKey bool) (Rule, bool) {
-	var rule Rule
-	if len(composition) < 2 {
-		return rule, false
+func findTargetFromKey(composition []*Transformation, applicableRules []Rule, flags uint) (*Transformation, Rule) {
+	var lastAppending = findLastAppendingTrans(composition)
+	for _, applicableRule := range applicableRules {
+		var target *Transformation = nil
+		if applicableRule.EffectType == MarkTransformation {
+			return findMarkTarget(composition, applicableRules)
+		} else if applicableRule.EffectType == ToneTransformation {
+			if flags&EfreeToneMarking != 0 {
+				if hasValidTone(composition, Tone(applicableRule.Effect)) {
+					target = findToneTarget(composition, flags&EstdToneStyle != 0)
+					if !isFree(composition, target, ToneTransformation) {
+						target = nil
+					}
+				}
+			} else if lastAppending != nil && IsVowel(lastAppending.Rule.EffectOn) {
+				target = lastAppending
+			}
+		}
+		if target != nil {
+			return target, applicableRule
+		}
 	}
-	var target rune
-	var full = strings.ToLower(Flatten(composition, NoTone|LowerCase))
+	return nil, Rule{}
+}
 
-	if !isSuperKey {
-		if regUho.MatchString(full) {
-			target = 'u'
-		}
-		if regUoh.MatchString(full) {
-			target = 'o'
-		}
-	} else {
-		if regUoSuffix.MatchString(full) {
-			return rule, false
-		}
-		var vowels = getRightMostVowelWithMarks(composition)
-		var str = Flatten(vowels, NoTone|LowerCase)
-		if strings.Contains(str, "uo") {
-			target = 'o'
-		}
+// If none of the applicable_rules can actually be applied then this new
+// transformation fallbacks to an APPENDING one.
+func generateTransformations(composition []*Transformation, applicableRules []Rule, appendingTrans *Transformation, flags uint) []*Transformation {
+	var transformations []*Transformation
+	if target, applicableRule := findTargetFromKey(composition, applicableRules, flags); target != nil {
+		appendingTrans.Rule = applicableRule
+		appendingTrans.Target = target
 	}
-	if target > 0 {
-		rule = Rule{
-			Key:        rune(0),
-			EffectType: MarkTransformation,
-			Effect:     uint8(MARK_HORN),
-			EffectOn:   target,
-		}
-		return rule, true
+	transformations = append(transformations, appendingTrans)
+	for _, appendedRule := range appendingTrans.Rule.AppendedRules {
+		transformations = append(transformations, &Transformation{Rule: appendedRule})
 	}
-	return rule, false
+	return transformations
 }
 
 /***** BEGIN SIDE-EFFECT METHODS ******/
 
 func removeTrans(composition []*Transformation, trans *Transformation) []*Transformation {
 	var transIndex = findTransformationIndex(composition, trans)
-	if transIndex < 0 {
-		return composition
-	}
-	return removeTransIdx(composition, transIndex)
+	var t = removeTransIdx(composition, transIndex)
+	return t
 }
 
 func removeTransIdx(composition []*Transformation, idx int) []*Transformation {
-	if len(composition) > 0 && idx >= 0 && idx < len(composition) {
+	if len(composition) > 0 && idx < len(composition) {
 		if idx == len(composition)-1 {
 			return composition[:idx]
 		}

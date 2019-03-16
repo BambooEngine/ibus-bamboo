@@ -93,6 +93,7 @@ static void* thread_clipboard_copy(void* data) {
                 break;
         }
     }
+    clipboard_running = 0;
     XCloseDisplay(display);
     return NULL;
 }

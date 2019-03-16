@@ -21,7 +21,6 @@
 package bamboo
 
 import (
-	"log"
 	"unicode"
 )
 
@@ -63,11 +62,12 @@ type Transformation struct {
 type IEngine interface {
 	SetFlag(uint)
 	GetInputMethod() InputMethod
-	ProcessChar(rune, Mode)
+	ProcessKey(rune, Mode)
 	ProcessString(string, Mode)
 	GetProcessedString(Mode, bool) string
 	IsSpellingCorrect(Mode) bool
 	GetSpellingMatchResult(Mode, bool) uint8
+	CanProcessKey(rune) bool
 	HasTone() bool
 	Reset()
 	RemoveLastChar()
@@ -88,7 +88,7 @@ func NewEngine(im string, flag uint, dictionary map[string]bool) IEngine {
 		inputMethod: inputMethod,
 		flags:       flag,
 	}
-	for word, _ := range dictionary {
+	for word := range dictionary {
 		AddTrie(spellingTrie, []rune(RemoveToneFromWord(word)), false)
 	}
 	return &engine
@@ -106,15 +106,6 @@ func (e *BambooEngine) GetFlag(flag uint) uint {
 	return e.flags
 }
 
-func (e *BambooEngine) isSuperKey(chr rune) bool {
-	for _, key := range e.inputMethod.SuperKeys {
-		if key == chr {
-			return true
-		}
-	}
-	return false
-}
-
 func (e *BambooEngine) HasTone() bool {
 	for _, t := range e.composition {
 		if t.Rule.EffectType == ToneTransformation {
@@ -124,40 +115,51 @@ func (e *BambooEngine) HasTone() bool {
 	return false
 }
 
-func (e *BambooEngine) isToneKey(chr rune) bool {
-	for _, key := range e.inputMethod.ToneKeys {
-		if key == chr {
-			return true
-		}
-	}
-	return false
+func (e *BambooEngine) isSuperKey(key rune) bool {
+	return inKeyList(e.GetInputMethod().SuperKeys, key)
 }
 
-func (e *BambooEngine) isEffectiveKey(chr rune) bool {
-	for _, key := range e.inputMethod.Keys {
-		if key == chr {
-			return true
-		}
+func (e *BambooEngine) isSupportedKey(key rune) bool {
+	if IsAlpha(key) {
+		return true
 	}
-	return false
+	return inKeyList(e.GetInputMethod().Keys, key)
 }
 
-func (e *BambooEngine) isFree(trans *Transformation, effectType EffectType) bool {
+func (e *BambooEngine) isToneKey(key rune) bool {
+	return inKeyList(e.GetInputMethod().ToneKeys, key)
+}
+
+func (e *BambooEngine) isEffectiveKey(key rune) bool {
+	return inKeyList(e.GetInputMethod().Keys, key)
+}
+
+func (e *BambooEngine) IsSpellingCorrect(mode Mode) bool {
+	return isSpellingCorrect(e.composition, mode)
+}
+
+func (e *BambooEngine) GetSpellingMatchResult(mode Mode, deepSearch bool) uint8 {
+	return getSpellingMatchResult(getLastWord(e.composition, nil), mode, deepSearch)
+}
+
+func (e *BambooEngine) GetRawString() string {
+	var seq []rune
 	for _, t := range e.composition {
-		if t.Target == trans && t.Rule.EffectType == effectType {
-			return false
-		}
+		seq = append(seq, t.Rule.Key)
 	}
-	return true
+	return string(seq)
 }
 
-func (e *BambooEngine) isCharFree(c rune, effectType EffectType) bool {
-	for _, t := range e.composition {
-		if t.Rule.EffectOn == c && t.Rule.EffectType == effectType {
-			return false
-		}
+func (e *BambooEngine) GetProcessedString(mode Mode, lastWordOnly bool) string {
+	var effectiveKeys = e.inputMethod.Keys
+	if lastWordOnly {
+		effectiveKeys = nil
 	}
-	return true
+	var lastComb = getLastWord(e.composition, effectiveKeys)
+	if len(lastComb) > 0 {
+		return Flatten(lastComb, mode)
+	}
+	return ""
 }
 
 func (e *BambooEngine) getApplicableRules(key rune) []Rule {
@@ -170,135 +172,67 @@ func (e *BambooEngine) getApplicableRules(key rune) []Rule {
 	return applicableRules
 }
 
-func (e *BambooEngine) findTargetForKey(key rune) (*Transformation, Rule) {
-	var applicableRules = e.getApplicableRules(key)
-	var lastAppending = findLastAppendingTrans(e.composition)
-	for _, applicableRule := range applicableRules {
-		var target *Transformation = nil
-		if applicableRule.EffectType == MarkTransformation {
-			return findMarkTarget(e.composition, applicableRules)
-		} else if applicableRule.EffectType == ToneTransformation {
-			if e.flags&EfreeToneMarking != 0 {
-				if hasValidTone(e.composition, Tone(applicableRule.Effect)) {
-					target = findToneTarget(e.composition, e.flags&EstdToneStyle != 0)
-					if !isFree(e.composition, target, ToneTransformation) {
-						target = nil
-					}
-				}
-			} else if lastAppending != nil && IsVowel(lastAppending.Rule.EffectOn) {
-				target = lastAppending
-			}
-		}
-		if target != nil {
-			return target, applicableRule
-		}
-	}
-	return nil, Rule{}
+func (e *BambooEngine) findTargetFromKey(key rune) (*Transformation, Rule) {
+	return findTargetFromKey(e.composition, e.getApplicableRules(key), e.flags)
 }
 
-func (e *BambooEngine) createCompositionForRule(rule Rule, isUpperKey bool) []*Transformation {
-	var transformations []*Transformation
-	var trans = new(Transformation)
-	trans.Rule = rule
-	trans.IsUpperCase = isUpperKey
-	if target, applicableRule := e.findTargetForKey(rule.Key); target != nil {
-		trans.Rule = applicableRule
-		trans.Target = target
-	}
-	transformations = append(transformations, trans)
-	for _, appendedRule := range trans.Rule.AppendedRules {
-		transformations = append(transformations, &Transformation{Rule: appendedRule})
-	}
-	return transformations
-}
-
-func (e *BambooEngine) IsSpellingCorrect(mode Mode) bool {
-	return isSpellingCorrect(e.composition, mode)
-}
-
-func (e *BambooEngine) GetSpellingMatchResult(mode Mode, deepSearch bool) uint8 {
-	return getSpellingMatchResult(getLastWord(e.composition), mode, deepSearch)
-}
-
-func (e *BambooEngine) createCompositionForKey(chr rune, isUpperCase bool) []*Transformation {
-	var transformations []*Transformation
-	var appendingRule = findAppendingRule(e.inputMethod.Rules, chr)
+func (e *BambooEngine) createAppendingTransFromKey(key rune, isUpperCase bool) *Transformation {
+	var appendingRule = findAppendingRule(e.inputMethod.Rules, key)
 	if unicode.IsUpper(appendingRule.EffectOn) {
 		isUpperCase = true
 		appendingRule.EffectOn = unicode.ToLower(appendingRule.EffectOn)
 	}
-	transformations = e.createCompositionForRule(appendingRule, isUpperCase)
-	return transformations
+	var trans = new(Transformation)
+	trans.Rule = appendingRule
+	trans.IsUpperCase = isUpperCase
+	return trans
 }
 
-func (e *BambooEngine) GetRawString() string {
-	var seq []rune
-	for _, t := range e.composition {
-		seq = append(seq, t.Rule.Key)
-	}
-	return string(seq)
+// Find all possible transformations this keypress can generate
+func (e *BambooEngine) createTransformations(key rune, isUpperCase bool) []*Transformation {
+	return generateTransformations(e.composition, e.getApplicableRules(key), e.createAppendingTransFromKey(key, isUpperCase), e.flags)
 }
 
-func (e *BambooEngine) GetProcessedString(mode Mode, lastWordOnly bool) string {
-	if lastWordOnly {
-		var lastComb = getLastWord(e.composition)
-		if len(lastComb) > 0 {
-			return Flatten(lastComb, mode)
-		}
-		return ""
-	}
-	return Flatten(e.composition, mode)
+func (e *BambooEngine) isTransformationForUoMissed() bool {
+	return e.flags&EautoCorrectEnabled != 0 &&
+		len(e.composition) > 0 &&
+		hasSuperWord(e.composition) &&
+		getSpellingMatchResult(e.composition, NoTone, false) == FindResultMatchPrefix
 }
 
-func (e *BambooEngine) IsSupportedKey(key rune) bool {
-	if IsAlpha(key) {
-		return true
-	}
-	if inKeyMap(e.GetInputMethod().Keys, key) {
-		return true
-	}
-	return false
+func (e *BambooEngine) CanProcessKey(key rune) bool {
+	return e.isSupportedKey(key)
 }
 
 /***** BEGIN SIDE-EFFECT METHODS ******/
 
-func (e *BambooEngine) ProcessChar(key rune, mode Mode) {
+func (e *BambooEngine) ProcessKey(key rune, mode Mode) {
 	var isUpperCase bool
 	if unicode.IsUpper(key) {
 		isUpperCase = true
 	}
 	key = unicode.ToLower(key)
-	if mode&EnglishMode != 0 || !e.IsSupportedKey(key) {
+	if mode&EnglishMode != 0 || !e.isSupportedKey(key) {
 		e.composition = append(e.composition, createAppendingTrans(key, isUpperCase))
 		return
 	}
-	var previousComposition []*Transformation
-	if len(e.composition) > 0 {
-		var lastComb = getLastCombination(getLastWord(e.composition))
-		if len(lastComb) > 0 {
-			lastComb = getLastCombination(getLastWord(e.composition))
-			var idx = findTransformationIndex(e.composition, lastComb[0])
-			if idx > 0 {
-				previousComposition = e.composition[:idx]
-				e.composition = lastComb
-			}
-		} else {
-			previousComposition = e.composition
-			e.composition = nil
-		}
-	}
+	// Extract the last syllable from the composition
+	var lastSyllable, previousTransformations = extractLastSyllable(e.composition)
+	e.composition = lastSyllable
+
+	// Implement the double typing an effective key
 	if len(e.composition) > 0 && e.isEffectiveKey(key) {
-		// garbage collection
+		// remove unused transformations
 		e.composition = freeComposition(e.composition)
 
-		if target, _ := e.findTargetForKey(key); target == nil {
+		if target, _ := e.findTargetFromKey(key); target == nil {
 			if key == e.composition[len(e.composition)-1].Rule.Key {
 				// Double typing an effect key undoes it and its effects.
 				e.composition = undoesTransformations(e.composition, e.getApplicableRules(key))
 				e.composition = append(e.composition, createAppendingTrans(key, isUpperCase))
 
-				if previousComposition != nil {
-					e.composition = append(previousComposition, e.composition...)
+				if previousTransformations != nil {
+					e.composition = append(previousTransformations, e.composition...)
 				}
 				return
 			} else {
@@ -307,24 +241,23 @@ func (e *BambooEngine) ProcessChar(key rune, mode Mode) {
 			}
 		}
 	}
-	// TODO: need to refactor
-	if e.flags&EautoCorrectEnabled != 0 && (e.isSuperKey(key) || (!e.isToneKey(key) && hasSuperWord(e.composition))) {
-		if missingRule, found := findMissingRuleForUo(e.composition, e.isSuperKey(key)); found {
-			var targets = findMarkTargets(e.composition, missingRule)
-			if len(targets) > 0 {
-				virtualTrans := &Transformation{
-					Rule:   missingRule,
-					Target: targets[len(targets)-1],
-				}
-				e.composition = append(e.composition, virtualTrans)
-			} else {
-				log.Println("Cannot find targets for the missing rule for uo")
-			}
-		}
-	}
-	transformations := e.createCompositionForKey(key, isUpperCase)
+
+	// Just process the key stroke on the last syllable
+	transformations := e.createTransformations(key, isUpperCase)
 	e.composition = append(e.composition, transformations...)
 
+	// Implement the uow typing shortcut by creating a virtual
+	// Mark.HORN rule that targets 'u' or 'o'.
+	if e.isTransformationForUoMissed() {
+		if target, missingRule := e.findTargetFromKey(e.inputMethod.SuperKeys[0]); target != nil {
+			missingRule.Key = rune(0) // virtual rule should not appear in the raw string
+			virtualTrans := &Transformation{
+				Rule:   missingRule,
+				Target: target,
+			}
+			e.composition = append(e.composition, virtualTrans)
+		}
+	}
 	/**
 	* Sometimes, a tone's position in a previous state must be changed to fit the new state
 	*
@@ -336,14 +269,14 @@ func (e *BambooEngine) ProcessChar(key rune, mode Mode) {
 		e.composition = refreshLastToneTarget(e.composition)
 	}
 
-	if previousComposition != nil {
-		e.composition = append(previousComposition, e.composition...)
+	if previousTransformations != nil {
+		e.composition = append(previousTransformations, e.composition...)
 	}
 }
 
 func (e *BambooEngine) ProcessString(str string, mode Mode) {
-	for _, chr := range []rune(str) {
-		e.ProcessChar(chr, mode)
+	for _, key := range []rune(str) {
+		e.ProcessKey(key, mode)
 	}
 }
 
@@ -351,6 +284,8 @@ func (e *BambooEngine) Reset() {
 	e.composition = []*Transformation{}
 }
 
+// Find the last APPENDING transformation and all
+// the transformations that add effects to it.
 func (e *BambooEngine) RemoveLastChar() {
 	var lastAppending = findLastAppendingTrans(e.composition)
 	var transformations = getTransformationsTargetTo(e.composition, lastAppending)

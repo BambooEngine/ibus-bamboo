@@ -21,6 +21,25 @@ package bamboo
 
 var Vowels = []rune("aàáảãạăằắẳẵặâầấẩẫậeèéẻẽẹêềếểễệiìíỉĩịoòóỏõọôồốổỗộơờớởỡợuùúủũụưừứửữựyỳýỷỹỵ")
 
+var WordBreakSymbols = []rune{
+	',', ';', ':', '.', '"', '\'', '!', '?', ' ',
+	'<', '>', '=', '+', '-', '*', '/', '\\',
+	'_', '~', '`', '@', '#', '$', '%', '^', '&', '(', ')', '{', '}', '[', ']',
+	'|',
+}
+
+func IsWordBreakSymbol(key rune) bool {
+	if key >= '0' && key <= '9' {
+		return true
+	}
+	for _, c := range WordBreakSymbols {
+		if c == key {
+			return true
+		}
+	}
+	return false
+}
+
 func IsVowel(chr rune) bool {
 	isVowel := false
 	for _, v := range Vowels {
@@ -120,7 +139,7 @@ func findIndexRune(chars []rune, r rune) int {
 	return -1
 }
 
-func inKeyMap(keys []rune, key rune) bool {
+func inKeyList(keys []rune, key rune) bool {
 	for _, k := range keys {
 		if k == key {
 			return true

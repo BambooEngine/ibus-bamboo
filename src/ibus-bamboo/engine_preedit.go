@@ -75,9 +75,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	}
 
 	var keyRune = rune(keyVal)
-	if (keyVal >= 'a' && keyVal <= 'z') ||
-		(keyVal >= 'A' && keyVal <= 'Z') ||
-		(inKeyMap(e.preeditor.GetInputMethod().Keys, keyRune)) {
+	if e.preeditor.CanProcessKey(keyRune) {
 		if state&IBUS_LOCK_MASK != 0 {
 			keyRune = toUpper(keyRune)
 		}
@@ -85,11 +83,11 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 			return false, nil
 		}
 		if e.config.IBflags&IBautoNonVnRestore == 0 {
-			e.preeditor.ProcessChar(keyRune, bamboo.VietnameseMode)
+			e.preeditor.ProcessKey(keyRune, bamboo.VietnameseMode)
 			e.updatePreedit()
 			return true, nil
 		}
-		e.preeditor.ProcessChar(keyRune, e.getMode())
+		e.preeditor.ProcessKey(keyRune, e.getMode())
 		if (e.config.IBflags&IBautoCommitWithVnNotMatch != 0 &&
 			e.getSpellingMatchResult(false) == bamboo.FindResultNotMatch) ||
 			(e.config.IBflags&IBautoCommitWithVnFullMatch != 0 && e.preeditor.HasTone() &&
@@ -214,10 +212,10 @@ func (e *IBusBambooEngine) getComposedString() string {
 	if e.config.IBflags&IBautoNonVnRestore == 0 {
 		processedStr = e.getVnSeq()
 	} else {
-		processedStr = e.getProcessedString(bamboo.VietnameseMode, true)
+		processedStr = e.getProcessedString(bamboo.VietnameseMode, false)
 	}
 	if e.mustFallbackToEnglish() {
-		processedStr = e.getProcessedString(bamboo.EnglishMode, true)
+		processedStr = e.getProcessedString(bamboo.EnglishMode, false)
 		return processedStr
 	}
 	return processedStr
@@ -239,9 +237,9 @@ func (e *IBusBambooEngine) getPreeditString() string {
 		return e.getVnSeq()
 	}
 	if e.shouldFallbackToEnglish() {
-		return e.getProcessedString(bamboo.EnglishMode, true)
+		return e.getProcessedString(bamboo.EnglishMode, false)
 	}
-	return e.getProcessedString(bamboo.VietnameseMode, true)
+	return e.getProcessedString(bamboo.VietnameseMode, false)
 }
 
 func (e *IBusBambooEngine) getMode() bamboo.Mode {
@@ -268,7 +266,7 @@ func (e *IBusBambooEngine) commitText(str string) {
 }
 
 func (e *IBusBambooEngine) getVnSeq() string {
-	return e.preeditor.GetProcessedString(bamboo.VietnameseMode, true)
+	return e.preeditor.GetProcessedString(bamboo.VietnameseMode, false)
 }
 
 func (e *IBusBambooEngine) hasMacroKey(key string) bool {

@@ -20,7 +20,6 @@
 package bamboo
 
 import (
-	"log"
 	"regexp"
 	"strings"
 	"unicode"
@@ -157,10 +156,10 @@ func generateCVC() []string {
 	return ret
 }
 
-func getLastWord(composition []*Transformation) []*Transformation {
+func getLastWord(composition []*Transformation, effectiveKeys []rune) []*Transformation {
 	for i := len(composition) - 1; i >= 0; i-- {
 		var t = composition[i]
-		if t.Rule.EffectType == Appending && !unicode.IsLetter(t.Rule.EffectOn) {
+		if t.Rule.EffectType == Appending && !unicode.IsLetter(t.Rule.EffectOn) && !inKeyList(effectiveKeys, t.Rule.EffectOn) {
 			if i == len(composition)-1 {
 				return nil
 			}
@@ -170,7 +169,7 @@ func getLastWord(composition []*Transformation) []*Transformation {
 	return composition
 }
 
-func getLastCombination(composition []*Transformation) []*Transformation {
+func getLastSyllable(composition []*Transformation) []*Transformation {
 	var ret []*Transformation
 	if len(composition) <= 1 {
 		return composition
@@ -186,82 +185,12 @@ func getLastCombination(composition []*Transformation) []*Transformation {
 		}
 		if FindWord(spellingTrie, []rune(str), false) == FindResultNotMatch {
 			if i == 0 {
-				return getLastCombination(composition[1:])
+				return getLastSyllable(composition[1:])
 			}
-			return getLastCombination(composition[i:])
+			return getLastSyllable(composition[i:])
 		}
 	}
 	return ret
-}
-
-// only appending trans has sound
-func getCombinationWithSound(composition []*Transformation) ([]*Transformation, []Sound) {
-	var lastComb = getAppendingComposition(composition)
-	if len(lastComb) <= 0 {
-		return lastComb, nil
-	}
-	var str = Flatten(lastComb, VietnameseMode|NoTone|LowerCase)
-	if FindWord(spellingTrie, []rune(str), false) != FindResultNotMatch {
-		return lastComb, ParseSoundsFromWord(str)
-	}
-	return lastComb, ParseSoundsFromWord(str)
-}
-
-func getCompositionBySound(composition []*Transformation, sound Sound) []*Transformation {
-	var lastComb, sounds = getCombinationWithSound(composition)
-	if len(lastComb) != len(sounds) {
-		log.Println("Something is wrong with the length of sounds")
-		return lastComb
-	}
-	var ret []*Transformation
-	for i, s := range sounds {
-		if s == sound {
-			ret = append(ret, lastComb[i])
-		}
-	}
-	return ret
-}
-
-func getSpellingMatchResult(composition []*Transformation, mode Mode, deepSearch bool) uint8 {
-	if len(composition) <= 0 {
-		return FindResultMatchFull
-	}
-	if mode&NoTone != 0 {
-		str := Flatten(composition, NoTone|LowerCase)
-		var chars = []rune(str)
-		if len(chars) <= 1 {
-			return FindResultMatchFull
-		}
-		return FindWord(spellingTrie, chars, deepSearch)
-	}
-	return FindResultNotMatch
-}
-
-func isSpellingCorrect(composition []*Transformation, mode Mode) bool {
-	res := getSpellingMatchResult(composition, mode, false)
-	return res == FindResultMatchFull
-}
-
-func GetSoundMap(composition []*Transformation) map[*Transformation]Sound {
-	var soundMap = map[*Transformation]Sound{}
-	var lastComb, sounds = getCombinationWithSound(composition)
-	if len(sounds) <= 0 || len(sounds) != len(lastComb) {
-		log.Println("Something is wrong with the length of sounds")
-		return soundMap
-	}
-	for i, trans := range lastComb {
-		soundMap[trans] = sounds[i]
-	}
-	return soundMap
-}
-
-func getRightMostVowels(composition []*Transformation) []*Transformation {
-	return getCompositionBySound(composition, VowelSound)
-}
-
-func getRightMostVowelWithMarks(composition []*Transformation) []*Transformation {
-	var vowels = getRightMostVowels(composition)
-	return addMarksToComposition(composition, vowels)
 }
 
 var regGI = regexp.MustCompile(`^(qu|gi)(\p{L}+)`)

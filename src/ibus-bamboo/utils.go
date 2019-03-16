@@ -25,25 +25,6 @@ import (
 	"unicode"
 )
 
-var wordBreakSyms = []rune{
-	',', ';', ':', '.', '"', '\'', '!', '?', ' ',
-	'<', '>', '=', '+', '-', '*', '/', '\\',
-	'_', '~', '`', '@', '#', '$', '%', '^', '&', '(', ')', '{', '}', '[', ']',
-	'|',
-}
-
-func isWordBreakSymbol(key rune) bool {
-	if key >= '0' && key <= '9' {
-		return true
-	}
-	for _, c := range wordBreakSyms {
-		if c == key {
-			return true
-		}
-	}
-	return false
-}
-
 func toUpper(keyRune rune) rune {
 	var upperSpecialKeys = map[rune]rune{
 		'[': '{',
@@ -99,12 +80,12 @@ func addToWhiteList(list []string, classes string) []string {
 	return append(list, classes)
 }
 
-func getCharsetFromPropKey(str string) string {
+func getCharsetFromPropKey(str string) (string, bool) {
 	var arr = strings.Split(str, "-")
 	if len(arr) == 2 {
-		return arr[1]
+		return arr[1], true
 	}
-	return str
+	return str, false
 }
 
 func isValidCharset(str string) bool {

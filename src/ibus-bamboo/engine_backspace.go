@@ -65,27 +65,25 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 	}
 	var keyRune = rune(keyVal)
 
-	if (keyVal >= 'a' && keyVal <= 'z') ||
-		(keyVal >= 'A' && keyVal <= 'Z') ||
-		(inKeyMap(e.preeditor.GetInputMethod().Keys, rune(keyVal))) {
+	if e.preeditor.CanProcessKey(keyRune) {
 		if state&IBUS_LOCK_MASK != 0 {
 			keyRune = toUpper(keyRune)
 		}
 		if e.config.IBflags&IBautoNonVnRestore == 0 {
-			oldRunes := []rune(e.preeditor.GetProcessedString(bamboo.VietnameseMode, true))
-			e.preeditor.ProcessChar(keyRune, bamboo.VietnameseMode)
-			newRunes := []rune(e.preeditor.GetProcessedString(bamboo.VietnameseMode, true))
+			oldRunes := []rune(e.preeditor.GetProcessedString(bamboo.VietnameseMode, false))
+			e.preeditor.ProcessKey(keyRune, bamboo.VietnameseMode)
+			newRunes := []rune(e.preeditor.GetProcessedString(bamboo.VietnameseMode, false))
 			e.updatePreviousText(newRunes, oldRunes, state)
 			return true, nil
 		}
 		oldRunes := []rune(e.getPreeditString())
-		e.preeditor.ProcessChar(keyRune, e.getMode())
+		e.preeditor.ProcessKey(keyRune, e.getMode())
 		newRunes := []rune(e.getPreeditString())
 		e.updatePreviousText(newRunes, oldRunes, state)
 		return true, nil
-	} else if keyVal == IBUS_space || isWordBreakSymbol(keyRune) {
+	} else if keyVal == IBUS_space || bamboo.IsWordBreakSymbol(keyRune) {
 		// macro processing
-		var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode, true)
+		var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode, false)
 		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
 			macText := e.macroTable.GetText(processedStr)
 			macText = macText + string(keyRune)
@@ -93,7 +91,7 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 			e.preeditor.Reset()
 			return true, nil
 		}
-		e.preeditor.ProcessChar(keyRune, bamboo.EnglishMode)
+		e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
 		return false, nil
 	}
 	e.preeditor.Reset()
@@ -129,28 +127,29 @@ func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state u
 		nBackSpace += oldLen - diffFrom
 	}
 
+	e.sendBackspaceAndNewRunes(state, nBackSpace, newRunes[diffFrom:])
+	mouseCaptureUnlock()
+}
+
+func (e *IBusBambooEngine) sendBackspaceAndNewRunes(state uint32, nBackSpace int, newRunes []rune) {
 	if nBackSpace > 0 {
 		e.SendBackSpace(state, nBackSpace)
 	}
 	if e.inX11ClipboardList() {
 		if nBackSpace > 0 {
 			e.nFakeBackSpace = nBackSpace
-			x11Copy(string(newRunes[diffFrom:]))
+			x11Copy(string(newRunes))
 			x11Paste(e.shortcutKeysID)
 		} else {
-			e.SendText(newRunes[diffFrom:])
+			e.SendText(newRunes)
 		}
 	} else {
-		e.SendText(newRunes[diffFrom:])
+		e.SendText(newRunes)
 	}
-	mouseCaptureUnlock()
 }
 
 func (e *IBusBambooEngine) SendBackSpace(state uint32, n int) {
 	log.Printf("Sendding %d backSpace.", n)
-	if n == 0 {
-		return
-	}
 
 	if e.inSurroundingTextList() {
 		fmt.Println("Send backspace via SurroundingText")

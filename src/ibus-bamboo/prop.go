@@ -188,7 +188,7 @@ func GetCharsetPropListByConfig(c *Config) *ibus.PropList {
 
 func GetIMPropListByConfig(c *Config) *ibus.PropList {
 	var imProperties []*ibus.Property
-	for im, _ := range bamboo.InputMethods {
+	for im := range bamboo.InputMethods {
 		var state = ibus.PROP_STATE_UNCHECKED
 		if im == c.InputMethod {
 			state = ibus.PROP_STATE_CHECKED

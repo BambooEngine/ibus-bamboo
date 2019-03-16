@@ -1,4 +1,4 @@
-# bamboo-core
+Text processing library for Vietnamese
 
 ## License
 

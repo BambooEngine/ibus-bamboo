@@ -130,11 +130,8 @@ func (e *IBusBambooEngine) processKeyEvent(keyVal, keyCode, state uint32) (bool,
 }
 
 func (e *IBusBambooEngine) FocusIn() *dbus.Error {
-	e.Lock()
-	defer e.Unlock()
 	fmt.Print("FocusIn.")
-	var wmClasses string
-	wmClasses = x11GetFocusWindowClass()
+	var wmClasses = x11GetFocusWindowClass()
 	fmt.Printf("WM_CLASS=(%s)\n", wmClasses)
 
 	e.RegisterProperties(e.propList)
@@ -305,8 +302,9 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 			e.config.IBflags &= ^IBpreeditInvisibility
 		}
 	}
-	if isValidCharset(getCharsetFromPropKey(propName)) && propState == ibus.PROP_STATE_CHECKED {
-		e.config.Charset = getCharsetFromPropKey(propName)
+	var charset, foundCs = getCharsetFromPropKey(propName)
+	if foundCs && isValidCharset(charset) && propState == ibus.PROP_STATE_CHECKED {
+		e.config.Charset = charset
 	}
 	if _, found := bamboo.InputMethods[propName]; found && propState == ibus.PROP_STATE_CHECKED {
 		e.config.InputMethod = propName

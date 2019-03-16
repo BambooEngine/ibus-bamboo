@@ -23,7 +23,7 @@
 #include <X11/Xlib.h>
 
 #define MaxPropertyLen 128
-#define MaxWmClassesLen 10
+#define MaxWmClassesLen 5
 static char * WM_CLASS = "WM_CLASS";
 static char * WM_NAME = "WM_NAME";
 

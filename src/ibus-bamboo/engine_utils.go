@@ -59,9 +59,6 @@ func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath
 		engine.ignorePreedit = false
 		x11Copy("")
 		engine.resetFakeBackspace()
-		if engine.getRawKeyLen(false) == 0 {
-			return
-		}
 		if engine.inBackspaceWhiteList() {
 			engine.preeditor.Reset()
 		} else {
@@ -76,7 +73,7 @@ func (e *IBusBambooEngine) getRawKeyLen(lastWordOnly bool) int {
 	return len(e.getProcessedString(bamboo.EnglishMode, lastWordOnly))
 }
 
-var lookupTableControlKeys = []string{
+var lookupTableConfiguration = []string{
 	"Cấu hình mặc định (Pre-edit)",
 	"Tắt gạch chân (Surrounding Text)",
 	"Tắt gạch chân (Forward key event)",
@@ -89,7 +86,7 @@ func (e *IBusBambooEngine) inLookupTableControlKeys(keyVal uint32) bool {
 		return true
 	}
 	if idx, err := strconv.Atoi(string(keyVal)); err == nil {
-		return idx < len(lookupTableControlKeys) && lookupTableControlKeys[idx] != ""
+		return idx < len(lookupTableConfiguration) && lookupTableConfiguration[idx] != ""
 	}
 	return false
 }
@@ -106,10 +103,10 @@ func (e *IBusBambooEngine) openLookupTable() {
 	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (0/1/2/3/4) để lưu tùy chọn của bạn"), true)
 
 	lt := ibus.NewLookupTable()
-	for _, ac := range lookupTableControlKeys {
+	for _, ac := range lookupTableConfiguration {
 		lt.AppendCandidate(ac)
 	}
-	for lb, _ := range lookupTableControlKeys {
+	for lb, _ := range lookupTableConfiguration {
 		if inWhiteList(whiteList[lb], e.wmClasses) {
 			lt.AppendLabel("*")
 		} else {
