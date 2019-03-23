@@ -94,11 +94,7 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 		e.emoji.ProcessKey(keyRune)
 	} else if keyRune < 128 && rawTextLen > 0 {
 		reset()
-		if len(cps) > 0 {
-			e.CommitText(ibus.NewText(cps[0]))
-		} else {
-			e.CommitText(ibus.NewText(raw))
-		}
+		e.CommitText(ibus.NewText(raw))
 		return false, nil
 	}
 	raw = e.emoji.GetRawString()
