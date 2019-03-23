@@ -41,6 +41,7 @@ const (
 	PropKeyAutoCommitWithDelay         = "AutoCommitWithDelay"
 	PropKeyMacroEnabled                = "macro_enabled"
 	PropKeyMacroTable                  = "macro_table"
+	PropKeyEmojiEnabled                = "emoji_enabled"
 )
 
 var runMode = ""
@@ -320,6 +321,7 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 	toneStdChecked := ibus.PROP_STATE_UNCHECKED
 	toneFreeMarkingChecked := ibus.PROP_STATE_UNCHECKED
 	preeditInvisibilityChecked := ibus.PROP_STATE_UNCHECKED
+	emojiChecked := ibus.PROP_STATE_CHECKED
 
 	if c.Flags&bamboo.EstdToneStyle != 0 {
 		toneStdChecked = ibus.PROP_STATE_CHECKED
@@ -329,6 +331,9 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 	}
 	if c.IBflags&IBpreeditInvisibility != 0 {
 		preeditInvisibilityChecked = ibus.PROP_STATE_CHECKED
+	}
+	if c.IBflags&IBemojiDisabled != 0 {
+		emojiChecked = ibus.PROP_STATE_UNCHECKED
 	}
 
 	return ibus.NewPropList(
@@ -366,6 +371,18 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 			Visible:   true,
 			State:     preeditInvisibilityChecked,
 			Symbol:    dbus.MakeVariant(ibus.NewText("P")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       PropKeyEmojiEnabled,
+			Type:      ibus.PROP_TYPE_TOGGLE,
+			Label:     dbus.MakeVariant(ibus.NewText("Emoji")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Emoji")),
+			Sensitive: true,
+			Visible:   true,
+			State:     emojiChecked,
+			Symbol:    dbus.MakeVariant(ibus.NewText(":)")),
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
 	)

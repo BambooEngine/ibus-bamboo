@@ -94,3 +94,9 @@ const (
 	IBUS_Deadkey          = 96
 	IBUS_OpenLookupTable  = IBUS_TILDE
 )
+
+const (
+	IBUS_ORIENTATION_HORIZONTAL = 0
+	IBUS_ORIENTATION_VERTICAL   = 1
+	IBUS_ORIENTATION_SYSTEM     = 2
+)

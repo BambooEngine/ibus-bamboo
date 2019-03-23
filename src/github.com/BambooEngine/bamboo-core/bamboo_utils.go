@@ -148,7 +148,7 @@ func getCombinationWithSound(composition []*Transformation) ([]*Transformation, 
 		return lastComb, nil
 	}
 	var str = Flatten(lastComb, VietnameseMode|ToneLess|LowerCase)
-	if FindWord(spellingTrie, []rune(str), false) != FindResultNotMatch {
+	if TestString(spellingTrie, []rune(str), false) != FindResultNotMatch {
 		return lastComb, ParseSoundsFromWord(str)
 	}
 	return lastComb, ParseSoundsFromWord(str)
@@ -179,7 +179,7 @@ func getSpellingMatchResult(composition []*Transformation, mode Mode, deepSearch
 		if len(chars) <= 1 {
 			return FindResultMatchFull
 		}
-		return FindWord(spellingTrie, chars, deepSearch)
+		return TestString(spellingTrie, chars, deepSearch)
 	}
 	return FindResultNotMatch
 }

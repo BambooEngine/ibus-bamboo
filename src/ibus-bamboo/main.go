@@ -33,6 +33,7 @@ const (
 	VnConvertPage = "https://font.ssc.vn"
 
 	DictVietnameseCm = "data/vietnamese.cm.dict"
+	DictEmojiOne     = "data/emojione.json"
 )
 
 func main() {

@@ -30,6 +30,9 @@ tar_file=$(pkg_name)-$(version).tar.gz
 rpm_src_tar=$(rpm_src_dir)/$(tar_file)
 tar_options_src=--transform "s/^\./$(pkg_name)-$(version)/" --exclude={"*.tar.gz",".git",".idea"} .
 
+test:
+	GOPATH=$(CURDIR) go test ./src/ibus-$(engine_name)
+
 build:
 	GOPATH=$(CURDIR) go build -o $(ibus_e_name) ./src/ibus-$(engine_name)
 

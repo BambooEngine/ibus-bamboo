@@ -34,8 +34,8 @@ func TestProcessString(t *testing.T) {
 func TestProcessDDString(t *testing.T) {
 	ng := newStdEngine()
 	ng.ProcessString("dd", VietnameseMode)
-	if ng.IsSpellingCorrect(ToneLess) != true {
-		t.Errorf("IsSpellingCorrect [dd], got [%v] expected [true]", ng.IsSpellingCorrect(ToneLess))
+	if ng.GetSpellingMatchResult(ToneLess, false) == FindResultNotMatch {
+		t.Errorf("IsSpellingCorrect [dd], got [%v] expected [true]", ng.GetSpellingMatchResult(ToneLess, false) == FindResultNotMatch)
 	}
 	ng.Reset()
 	ng.ProcessString("ddafi", VietnameseMode)
@@ -106,8 +106,8 @@ func TestSpellingCheck(t *testing.T) {
 func TestProcessDD(t *testing.T) {
 	ng := newStdEngine()
 	ng.ProcessString("dd", VietnameseMode)
-	if ng.IsSpellingCorrect(ToneLess) != true {
-		t.Errorf("Check spelling for [dd], got [%v] expected [true]", ng.IsSpellingCorrect(ToneLess))
+	if ng.GetSpellingMatchResult(ToneLess, false) == FindResultNotMatch {
+		t.Errorf("Check spelling for [dd], got [%v] expected [true]", ng.GetSpellingMatchResult(ToneLess, false) == FindResultNotMatch)
 	}
 	if ng.GetProcessedString(VietnameseMode, false) != "đ" {
 		t.Errorf("Process [dd], got [%s] expected [đ]", ng.GetProcessedString(EnglishMode, false))
@@ -172,8 +172,8 @@ func TestProcessAlooString(t *testing.T) {
 func TestSpellingCheckForGiw(t *testing.T) {
 	ng := newStdEngine()
 	ng.ProcessString("giw", VietnameseMode)
-	if ng.IsSpellingCorrect(ToneLess|MarkLess) != true {
-		t.Errorf("TestSpellingCheckForGiw, got [%v] expected [%v]", ng.IsSpellingCorrect(ToneLess|MarkLess), true)
+	if ng.GetSpellingMatchResult(ToneLess, false) == FindResultNotMatch {
+		t.Errorf("TestSpellingCheckForGiw, got [%v] expected [%v]", ng.GetSpellingMatchResult(ToneLess, false) == FindResultNotMatch, true)
 	}
 }
 
@@ -269,8 +269,8 @@ func TestProcessKimso(t *testing.T) {
 func TestProcessTo(t *testing.T) {
 	ng := newStdEngine()
 	ng.ProcessString("to", VietnameseMode)
-	if ng.IsSpellingCorrect(VietnameseMode|ToneLess) != true {
-		t.Errorf("TestProcessTo, got [%v] expected [true]", ng.IsSpellingCorrect(VietnameseMode))
+	if ng.GetSpellingMatchResult(ToneLess, false) == FindResultNotMatch {
+		t.Errorf("TestProcessTo, got [%v] expected [true]", ng.GetSpellingMatchResult(ToneLess, false) == FindResultNotMatch)
 	}
 }
 

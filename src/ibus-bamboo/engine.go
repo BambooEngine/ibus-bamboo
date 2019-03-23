@@ -45,11 +45,14 @@ type IBusBambooEngine struct {
 	macroTable          *MacroTable
 	dictionary          map[string]bool
 	wmClasses           string
-	lookupTableIsOpened bool
+	isLookupTableOpened bool
+	isEmojiTableOpened  bool
+	emojiLookupTable    *ibus.LookupTable
 	capabilities        uint32
 	nFakeBackSpace      int
 	shortcutKeysID      int
 	keyEventQueue       [][]uint32
+	emoji               *BambooEmoji
 }
 
 /**
@@ -110,15 +113,24 @@ func (e *IBusBambooEngine) processKeyEvent(keyVal, keyCode, state uint32) (bool,
 		}
 	}
 	fmt.Printf("keyCode 0x%04x keyval 0x%04x | %c\n", keyCode, keyVal, rune(keyVal))
-	if keyVal == IBUS_OpenLookupTable && e.lookupTableIsOpened == false {
+	if keyVal == IBUS_OpenLookupTable && e.isLookupTableOpened == false {
 		e.preeditor.Reset()
-		e.lookupTableIsOpened = true
+		e.isLookupTableOpened = true
 		e.openLookupTable()
 		return true, nil
 	}
-	if e.lookupTableIsOpened {
-		e.lookupTableIsOpened = false
+	if e.config.IBflags&IBemojiDisabled == 0 && rune(keyVal) == ':' && e.isEmojiTableOpened == false {
+		e.preeditor.Reset()
+		e.isEmojiTableOpened = true
+		e.openEmojiList()
+		return true, nil
+	}
+	if e.isLookupTableOpened {
+		e.isLookupTableOpened = false
 		return e.ltProcessKeyEvent(keyVal, keyCode, state)
+	}
+	if e.isEmojiTableOpened {
+		return e.emojiProcessKeyEvent(keyVal, keyCode, state)
 	}
 	if e.inPreeditList() {
 		return e.preeditProcessKeyEvent(keyVal, keyCode, state)
@@ -137,7 +149,7 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 
 	e.RegisterProperties(e.propList)
 	e.HidePreeditText()
-	if !isSameClasses(oldWmClasses, e.wmClasses) {
+	if oldWmClasses != e.wmClasses {
 		e.preeditor.Reset()
 		x11ClipboardReset()
 	}
@@ -169,6 +181,38 @@ func (e *IBusBambooEngine) Disable() *dbus.Error {
 	fmt.Print("Disable.")
 	x11ClipboardExit()
 	mouseCaptureExit()
+	return nil
+}
+
+func (e *IBusBambooEngine) PageUp() *dbus.Error {
+	if e.isEmojiTableOpened && e.emojiLookupTable.PageUp() {
+		e.emojiUpdateLookupTable()
+	}
+	return nil
+}
+
+func (e *IBusBambooEngine) PageDown() *dbus.Error {
+	if e.isEmojiTableOpened && e.emojiLookupTable.PageDown() {
+		e.emojiUpdateLookupTable()
+	}
+	return nil
+}
+
+func (e *IBusBambooEngine) CursorUp() *dbus.Error {
+	if e.isEmojiTableOpened && e.emojiLookupTable.CursorUp() {
+		e.emojiUpdateLookupTable()
+	}
+	return nil
+}
+
+func (e *IBusBambooEngine) CursorDown() *dbus.Error {
+	if e.isEmojiTableOpened && e.emojiLookupTable.CursorDown() {
+		e.emojiUpdateLookupTable()
+	}
+	return nil
+}
+
+func (e *IBusBambooEngine) CandidateClicked(index uint32, button uint32, state uint32) *dbus.Error {
 	return nil
 }
 
@@ -215,6 +259,13 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		}
 	}
 
+	if propName == PropKeyEmojiEnabled {
+		if propState == ibus.PROP_STATE_CHECKED {
+			e.config.IBflags &= ^IBemojiDisabled
+		} else {
+			e.config.IBflags |= IBemojiDisabled
+		}
+	}
 	if propName == PropKeyStdToneStyle {
 		if propState == ibus.PROP_STATE_CHECKED {
 			e.config.Flags |= bamboo.EstdToneStyle

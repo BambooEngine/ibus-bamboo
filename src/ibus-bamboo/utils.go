@@ -21,6 +21,7 @@ package main
 
 import (
 	"github.com/BambooEngine/bamboo-core"
+	"sort"
 	"strings"
 	"unicode"
 )
@@ -39,26 +40,13 @@ func toUpper(keyRune rune) rune {
 	return keyRune
 }
 
-func inKeyMap(keys []rune, key rune) bool {
-	for _, k := range keys {
-		if k == key {
+func inStringList(list []string, str string) bool {
+	for _, s := range list {
+		if s == str {
 			return true
 		}
 	}
 	return false
-}
-
-func inWhiteList(list []string, classes string) bool {
-	for _, cl := range list {
-		if cl == classes {
-			return true
-		}
-	}
-	return false
-}
-
-func isSameClasses(cl1 string, cl2 string) bool {
-	return cl1 == cl2
 }
 
 func removeFromWhiteList(list []string, classes string) []string {
@@ -96,4 +84,22 @@ func isValidCharset(str string) bool {
 		}
 	}
 	return false
+}
+
+type byString []string
+
+func (s byString) Less(i, j int) bool {
+	return s[i] < s[j]
+}
+func (s byString) Len() int {
+	return len(s)
+}
+func (s byString) Swap(i, j int) {
+	s[i], s[j] = s[j], s[i]
+}
+
+func sortStrings(list []string) []string {
+	var strList = byString(list)
+	sort.Sort(strList)
+	return strList
 }

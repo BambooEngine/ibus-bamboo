@@ -70,7 +70,7 @@ func AddTrie(trie *W, s []rune, down bool) {
 	}
 }
 
-func FindWord(trie *W, s []rune, deepSearch bool) uint8 {
+func TestString(trie *W, s []rune, deepSearch bool) uint8 {
 
 	if len(s) == 0 {
 		if trie.F {
@@ -85,11 +85,52 @@ func FindWord(trie *W, s []rune, deepSearch bool) uint8 {
 	c := unicode.ToLower(s[0])
 
 	if trie.N[c] != nil {
-		r := FindWord(trie.N[c], s[1:], deepSearch)
+		r := TestString(trie.N[c], s[1:], deepSearch)
 		if r != FindResultNotMatch {
 			return r
 		}
 	}
 
 	return FindResultNotMatch
+}
+
+func dfs(trie *W, lookup map[string]bool, s string) {
+	if trie.F {
+		lookup[s] = true
+		return
+	}
+	for chr, t := range trie.N {
+		var key = s + string(chr)
+		if t.F {
+			lookup[key] = true
+		} else {
+			dfs(t, lookup, key)
+		}
+	}
+}
+
+func FindNode(trie *W, s []rune) *W {
+	if len(s) == 0 {
+		return trie
+	}
+	c := s[0]
+	if trie.N[c] != nil {
+		return FindNode(trie.N[c], s[1:])
+	}
+	// not match
+	return nil
+}
+
+func FindWords(trie *W, s string) []string {
+	var words []string
+	var node = FindNode(trie, []rune(s))
+	if node == nil {
+		return nil
+	}
+	var lookup = map[string]bool{}
+	dfs(node, lookup, s)
+	for w := range lookup {
+		words = append(words, w)
+	}
+	return words
 }

@@ -50,8 +50,9 @@ const (
 	IBspellCheckingWithDicts
 	IBautoCommitWithDelay
 	IBautoCommitWithMouseMovement
+	IBemojiDisabled
 	IBstdFlags = IBspellChecking | IBspellCheckingWithRules | IBautoNonVnRestore | IBddFreeStyle |
-		IBpreeditInvisibility | IBautoCommitWithMouseMovement
+		IBpreeditInvisibility | IBautoCommitWithMouseMovement | IBemojiDisabled
 )
 
 type Config struct {

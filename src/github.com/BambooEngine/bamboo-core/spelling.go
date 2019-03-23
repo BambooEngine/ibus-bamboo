@@ -183,7 +183,7 @@ func getLastSyllable(composition []*Transformation) []*Transformation {
 		if str == "" {
 			continue
 		}
-		if FindWord(spellingTrie, []rune(str), false) == FindResultNotMatch {
+		if TestString(spellingTrie, []rune(str), false) == FindResultNotMatch {
 			if i == 0 {
 				return getLastSyllable(composition[1:])
 			}

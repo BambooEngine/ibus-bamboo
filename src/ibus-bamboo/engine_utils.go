@@ -43,6 +43,7 @@ func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath
 		macroTable:     NewMacroTable(),
 		dictionary:     dictionary,
 		nFakeBackSpace: nFakeBackspaceDefault,
+		emoji:          NewBambooEmoji(DictEmojiOne),
 	}
 	ibus.PublishEngine(conn, objectPath, engine)
 
@@ -57,6 +58,14 @@ func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath
 		engine.resetFakeBackspace()
 		if engine.inBackspaceWhiteList() {
 			engine.preeditor.Reset()
+		} else if engine.isEmojiTableOpened {
+			if cps := engine.emoji.Query(); len(cps) > 0 {
+				engine.CommitText(ibus.NewText(cps[0]))
+			}
+			engine.emoji.Reset()
+			engine.HidePreeditText()
+			engine.HideLookupTable()
+			engine.HideAuxiliaryText()
 		} else {
 			engine.commitPreedit(0)
 		}
@@ -99,11 +108,12 @@ func (e *IBusBambooEngine) openLookupTable() {
 	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (0/1/2/3/4) để lưu tùy chọn của bạn"), true)
 
 	lt := ibus.NewLookupTable()
+	lt.Orientation = IBUS_ORIENTATION_VERTICAL
 	for _, ac := range lookupTableConfiguration {
 		lt.AppendCandidate(ac)
 	}
 	for lb, _ := range lookupTableConfiguration {
-		if inWhiteList(whiteList[lb], e.wmClasses) {
+		if inStringList(whiteList[lb], e.wmClasses) {
 			lt.AppendLabel("*")
 		} else {
 			lt.AppendLabel(strconv.Itoa(lb))
@@ -194,11 +204,11 @@ func (e *IBusBambooEngine) reset() {
 }
 
 func (e *IBusBambooEngine) inExceptedList() bool {
-	return inWhiteList(e.config.ExceptedWhiteList, e.wmClasses)
+	return inStringList(e.config.ExceptedWhiteList, e.wmClasses)
 }
 
 func (e *IBusBambooEngine) inPreeditList() bool {
-	return inWhiteList(e.config.PreeditWhiteList, e.wmClasses)
+	return inStringList(e.config.PreeditWhiteList, e.wmClasses)
 }
 
 func (e *IBusBambooEngine) inBackspaceWhiteList() bool {
@@ -206,13 +216,13 @@ func (e *IBusBambooEngine) inBackspaceWhiteList() bool {
 }
 
 func (e *IBusBambooEngine) inSurroundingTextList() bool {
-	return inWhiteList(e.config.SurroundingTextWhiteList, e.wmClasses)
+	return inStringList(e.config.SurroundingTextWhiteList, e.wmClasses)
 }
 
 func (e *IBusBambooEngine) inForwardKeyList() bool {
-	return inWhiteList(e.config.ForwardKeyWhiteList, e.wmClasses)
+	return inStringList(e.config.ForwardKeyWhiteList, e.wmClasses)
 }
 
 func (e *IBusBambooEngine) inX11ClipboardList() bool {
-	return inWhiteList(e.config.X11ClipboardWhiteList, e.wmClasses)
+	return inStringList(e.config.X11ClipboardWhiteList, e.wmClasses)
 }
