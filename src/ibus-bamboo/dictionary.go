@@ -23,8 +23,6 @@ import (
 	"bufio"
 	"os"
 	"path/filepath"
-	"runtime"
-	"runtime/debug"
 )
 
 //var rootWordTrie = &bamboo.W{F: false}
@@ -58,7 +56,5 @@ func loadDictionary(dataFiles ...string) (map[string]bool, error) {
 		}
 		f.Close()
 	}
-	runtime.GC()
-	debug.FreeOSMemory()
 	return dictionary, nil
 }

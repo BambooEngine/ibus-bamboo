@@ -24,54 +24,61 @@ import (
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
+	"runtime"
+	"runtime/debug"
 	"strconv"
 	"time"
 )
 
-func IBusBambooEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath {
+func GetIBusBambooEngine() func(conn *dbus.Conn, engineName string) dbus.ObjectPath {
 	objectPath := dbus.ObjectPath(fmt.Sprintf("/org/freedesktop/IBus/Engine/bamboo/%d", time.Now().UnixNano()))
-
-	var config = LoadConfig(engineName)
 	var dictionary, _ = loadDictionary(DictVietnameseCm)
+	var bambooEmoji = NewBambooEmoji(DictEmojiOne)
+	var mTable = NewMacroTable()
+	var config = LoadConfig(EngineName)
+	var preeditor = bamboo.NewEngine(config.InputMethod, config.Flags, dictionary)
 
-	engine := &IBusBambooEngine{
-		Engine:         ibus.BaseEngine(conn, objectPath),
-		preeditor:      bamboo.NewEngine(config.InputMethod, config.Flags, dictionary),
-		engineName:     engineName,
-		config:         config,
-		propList:       GetPropListByConfig(config),
-		macroTable:     NewMacroTable(),
-		dictionary:     dictionary,
-		nFakeBackSpace: nFakeBackspaceDefault,
-		emoji:          NewBambooEmoji(DictEmojiOne),
-	}
-	ibus.PublishEngine(conn, objectPath, engine)
-
-	if config.IBflags&IBmarcoEnabled != 0 {
-		engine.macroTable.Enable()
-	}
-	go engine.startAutoCommit()
-
-	onMouseMove = func() {
-		engine.ignorePreedit = false
-		x11ClipboardReset()
-		engine.resetFakeBackspace()
-		if engine.inBackspaceWhiteList() {
-			engine.preeditor.Reset()
-		} else if engine.isEmojiTableOpened {
-			if cps := engine.emoji.Query(); len(cps) > 0 {
-				engine.CommitText(ibus.NewText(cps[0]))
-			}
-			engine.emoji.Reset()
-			engine.HidePreeditText()
-			engine.HideLookupTable()
-			engine.HideAuxiliaryText()
-		} else {
-			engine.commitPreedit(0)
+	return func(conn *dbus.Conn, engineName string) dbus.ObjectPath {
+		engine := &IBusBambooEngine{
+			Engine:         ibus.BaseEngine(conn, objectPath),
+			preeditor:      preeditor,
+			engineName:     engineName,
+			config:         config,
+			propList:       GetPropListByConfig(config),
+			macroTable:     mTable,
+			dictionary:     dictionary,
+			nFakeBackSpace: nFakeBackspaceDefault,
+			emoji:          bambooEmoji,
 		}
-	}
+		ibus.PublishEngine(conn, objectPath, engine)
 
-	return objectPath
+		if config.IBflags&IBmarcoEnabled != 0 {
+			engine.macroTable.Enable()
+		}
+		go engine.startAutoCommit()
+
+		onMouseMove = func() {
+			engine.ignorePreedit = false
+			x11ClipboardReset()
+			engine.resetFakeBackspace()
+			if engine.inBackspaceWhiteList() {
+				engine.preeditor.Reset()
+			} else if engine.isEmojiTableOpened {
+				if cps := engine.emoji.Query(); len(cps) > 0 {
+					engine.CommitText(ibus.NewText(cps[0]))
+				}
+				engine.emoji.Reset()
+				engine.HidePreeditText()
+				engine.HideLookupTable()
+				engine.HideAuxiliaryText()
+			} else {
+				engine.commitPreedit(0)
+			}
+		}
+		runtime.GC()
+		debug.FreeOSMemory()
+		return objectPath
+	}
 }
 
 func (e *IBusBambooEngine) getRawKeyLen() int {

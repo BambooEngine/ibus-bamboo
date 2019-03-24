@@ -24,8 +24,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"runtime"
-	"runtime/debug"
 	"sort"
 	"strconv"
 	"strings"
@@ -82,8 +80,6 @@ func NewBambooEmoji(emojiDictPath string) *BambooEmoji {
 		}
 		bamboo.AddTrie(be.emojiTrie, []rune(shortName), false)
 	}
-	runtime.GC()
-	debug.FreeOSMemory()
 	return be
 }
 
