@@ -25,27 +25,6 @@ import (
 	"unicode"
 )
 
-func findAppendingRule(rules []Rule, key rune) Rule {
-	var result Rule
-	result.EffectType = Appending
-	result.Key = key
-	result.EffectOn = key
-	var applicableRules []Rule
-	for _, inputRule := range rules {
-		if inputRule.Key == key {
-			applicableRules = append(applicableRules, inputRule)
-		}
-	}
-	for _, applicableRule := range applicableRules {
-		if applicableRule.EffectType == Appending {
-			result.EffectOn = applicableRule.EffectOn
-			result.AppendedRules = applicableRule.AppendedRules
-			return result
-		}
-	}
-	return result
-}
-
 func findLastAppendingTrans(composition []*Transformation) *Transformation {
 	for i := len(composition) - 1; i >= 0; i-- {
 		var trans = composition[i]
@@ -76,12 +55,40 @@ func createAppendingTrans(key rune, isUpperCase bool) *Transformation {
 	return &Transformation{
 		IsUpperCase: isUpperCase,
 		Rule: Rule{
-			Key:        unicode.ToLower(key),
-			EffectOn:   unicode.ToLower(key),
+			Key:        key,
+			EffectOn:   key,
 			EffectType: Appending,
 		},
 	}
 }
+
+func createAppendingComposition(rules []Rule, lowerKey rune, isUpperCase bool) []*Transformation {
+	var transformations []*Transformation
+	for _, rule := range rules {
+		if rule.Key == lowerKey && rule.EffectType == Appending {
+			var _isUpperCase = isUpperCase || unicode.IsUpper(rule.EffectOn)
+			rule.EffectOn = unicode.ToLower(rule.EffectOn)
+			transformations = append(transformations, &Transformation{
+				IsUpperCase: _isUpperCase,
+				Rule:        rule,
+			})
+			for _, appendedRule := range rule.AppendedRules {
+				var _isUpperCase = isUpperCase || unicode.IsUpper(appendedRule.EffectOn)
+				appendedRule.Key = 0 // this is a virtual key
+				appendedRule.EffectOn = unicode.ToLower(appendedRule.EffectOn)
+				transformations = append(transformations, &Transformation{
+					Rule:        appendedRule,
+					IsUpperCase: _isUpperCase,
+				})
+			}
+		}
+	}
+	if len(transformations) == 0 {
+		transformations = append(transformations, createAppendingTrans(lowerKey, isUpperCase))
+	}
+	return transformations
+}
+
 func getAppendingComposition(composition []*Transformation) []*Transformation {
 	var appendingTransformations []*Transformation
 	for _, trans := range composition {
@@ -90,16 +97,6 @@ func getAppendingComposition(composition []*Transformation) []*Transformation {
 		}
 	}
 	return appendingTransformations
-}
-
-func findMarkTargets(composition []*Transformation, rule Rule) []*Transformation {
-	var result []*Transformation
-	for _, trans := range composition {
-		if trans.Rule.Key == rule.EffectOn {
-			result = append(result, trans)
-		}
-	}
-	return result
 }
 
 func findMarkTarget(composition []*Transformation, rules []Rule) (*Transformation, Rule) {
@@ -263,11 +260,15 @@ func findToneTarget(composition []*Transformation, stdStyle bool) *Transformatio
 			}
 		}
 	} else if len(vowels) == 2 {
-		var str = Flatten(getRightMostVowels(composition), EnglishMode|LowerCase)
-		if str == "oa" || str == "oe" || str == "uy" {
+		if _, found := findNextAppendingTransformation(composition, vowels[1]); found {
 			target = vowels[1]
 		} else {
-			target = vowels[0]
+			var str = Flatten(getRightMostVowels(composition), EnglishMode|LowerCase)
+			if str == "oa" || str == "oe" || str == "uy" || str == "ue" || str == "uo" {
+				target = vowels[1]
+			} else {
+				target = vowels[0]
+			}
 		}
 	} else if len(vowels) == 3 {
 		if Flatten(vowels, EnglishMode|LowerCase) == "uye" {
@@ -305,15 +306,13 @@ func getLastToneTransformation(composition []*Transformation) *Transformation {
 	return nil
 }
 
-func shouldRefreshLastToneTarget(transformations []*Transformation) bool {
-	var vowels = getRightMostVowels(transformations)
-	if len(vowels) <= 0 {
-		return false
-	}
-	return len(transformations) > 0 && transformations[len(transformations)-1].Rule.EffectType == Appending
+func isTransformationForUoMissed(composition []*Transformation) bool {
+	return len(composition) > 0 &&
+		hasSuperWord(composition) &&
+		getSpellingMatchResult(composition, ToneLess, false) == FindResultMatchPrefix
 }
 
-func refreshLastToneTarget(transformations []*Transformation) []*Transformation {
+func refreshLastToneTarget(transformations []*Transformation, stdStyle bool) []*Transformation {
 	var composition []*Transformation
 	composition = append(composition, transformations...)
 	var rightmostVowels = getRightMostVowels(composition)
@@ -321,7 +320,7 @@ func refreshLastToneTarget(transformations []*Transformation) []*Transformation 
 	if len(rightmostVowels) == 0 || lastToneTrans == nil {
 		return composition
 	}
-	var newToneTarget = findToneTarget(composition, true)
+	var newToneTarget = findToneTarget(composition, stdStyle)
 	if lastToneTrans.Target != newToneTarget {
 		lastToneTrans.Target = newToneTarget
 	}
@@ -396,16 +395,17 @@ func findTargetFromKey(composition []*Transformation, applicableRules []Rule, fl
 }
 
 // If none of the applicable_rules can actually be applied then this new
-// transformation fallbacks to an APPENDING one.
-func generateTransformations(composition []*Transformation, applicableRules []Rule, appendingTrans *Transformation, flags uint) []*Transformation {
+// transformation fall-backs to an APPENDING one.
+func generateTransformations(composition []*Transformation, applicableRules []Rule, flags uint, key rune, isUpperCase bool) []*Transformation {
 	var transformations []*Transformation
 	if target, applicableRule := findTargetFromKey(composition, applicableRules, flags); target != nil {
-		appendingTrans.Rule = applicableRule
-		appendingTrans.Target = target
-	}
-	transformations = append(transformations, appendingTrans)
-	for _, appendedRule := range appendingTrans.Rule.AppendedRules {
-		transformations = append(transformations, &Transformation{Rule: appendedRule})
+		transformations = append(transformations, &Transformation{
+			Rule:        applicableRule,
+			Target:      target,
+			IsUpperCase: isUpperCase,
+		})
+	} else {
+		transformations = append(transformations, createAppendingComposition(applicableRules, key, isUpperCase)...)
 	}
 	return transformations
 }
@@ -488,14 +488,12 @@ func undoesTransformations(composition []*Transformation, applicableRules []Rule
 }
 
 func freeComposition(composition []*Transformation) []*Transformation {
-	var result []*Transformation
-	result = append(result, composition...)
 	for i, trans := range composition {
 		if trans.IsDeleted {
-			result = removeTransIdx(result, i)
+			composition = removeTransIdx(composition, i)
 		}
 	}
-	return result
+	return composition
 }
 
 /***** END SIDE-EFFECT METHODS ******/

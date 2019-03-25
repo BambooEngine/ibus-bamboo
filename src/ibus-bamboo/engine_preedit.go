@@ -207,34 +207,21 @@ func (e *IBusBambooEngine) getSpellingMatchResult(deepSearch bool) uint8 {
 }
 
 func (e *IBusBambooEngine) getComposedString() string {
-	var processedStr string
-	if e.config.IBflags&IBautoNonVnRestore == 0 {
-		processedStr = e.getVnSeq()
-	} else {
-		processedStr = e.getProcessedString(bamboo.VietnameseMode, false)
-	}
 	if e.mustFallbackToEnglish() {
-		processedStr = e.getProcessedString(bamboo.EnglishMode, false)
-		return processedStr
+		return e.getProcessedString(bamboo.EnglishMode, false)
 	}
-	return processedStr
+	return e.getProcessedString(bamboo.VietnameseMode, false)
 }
 
 func (e *IBusBambooEngine) encodeText(text string) string {
 	return bamboo.Encode(e.config.Charset, text)
 }
 
-func (e *IBusBambooEngine) getProcessedString(mode bamboo.Mode, lastWordOnly bool) string {
-	if e.config.IBflags&IBautoNonVnRestore != 0 {
-		return e.preeditor.GetProcessedString(mode, lastWordOnly)
-	}
-	return e.preeditor.GetProcessedString(bamboo.VietnameseMode, lastWordOnly)
+func (e *IBusBambooEngine) getProcessedString(mode bamboo.Mode, letterOnly bool) string {
+	return e.preeditor.GetProcessedString(mode, letterOnly)
 }
 
 func (e *IBusBambooEngine) getPreeditString() string {
-	if e.config.IBflags&IBautoNonVnRestore == 0 {
-		return e.getVnSeq()
-	}
 	if e.shouldFallbackToEnglish() {
 		return e.getProcessedString(bamboo.EnglishMode, false)
 	}

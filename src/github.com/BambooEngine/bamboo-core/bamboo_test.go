@@ -341,3 +341,31 @@ func TestProcessTo5(t *testing.T) {
 		t.Errorf("TestProcessToorr, got [%v] expected []", ng.GetProcessedString(VietnameseMode, true))
 	}
 }
+
+//duwongwj
+func TestProcesshuoswc(t *testing.T) {
+	ng := NewEngine("Telex 2", EstdFlags, nil)
+	ng.ProcessString("duwongwj", VietnameseMode)
+	if ng.GetProcessedString(VietnameseMode, false) != "dượng" {
+		t.Errorf("TestProcessToorr, got [%v] expected [dượng]", ng.GetProcessedString(VietnameseMode, false))
+	}
+}
+
+//choas, bieecs, uese
+func TestProcesschoas(t *testing.T) {
+	ng := NewEngine("Telex 2", EstdFlags&^EstdToneStyle, nil)
+	ng.ProcessString("choas", VietnameseMode)
+	if ng.GetProcessedString(VietnameseMode, false) != "choá" {
+		t.Errorf("TestProcessToorr, got [%v] expected [choá]", ng.GetProcessedString(VietnameseMode, false))
+	}
+	ng.Reset()
+	ng.ProcessString("bieecs", VietnameseMode)
+	if ng.GetProcessedString(VietnameseMode, false) != "biếc" {
+		t.Errorf("TestProcessToorr, got [%v] expected [biếc]", ng.GetProcessedString(VietnameseMode, false))
+	}
+	ng.Reset()
+	ng.ProcessString("uese", VietnameseMode)
+	if ng.GetProcessedString(VietnameseMode, false) != "uế" {
+		t.Errorf("TestProcessToorr, got [%v] expected [uế]", ng.GetProcessedString(VietnameseMode, false))
+	}
+}

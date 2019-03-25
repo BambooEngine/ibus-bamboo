@@ -88,7 +88,7 @@ func (be *BambooEmoji) TestString(s string) uint8 {
 }
 
 func (be *BambooEmoji) Filter(s string) []string {
-	var codePoints byString
+	var codePoints []string
 	var names = byString(bamboo.FindWords(be.emojiTrie, s))
 	sort.Sort(names)
 	for _, name := range names {

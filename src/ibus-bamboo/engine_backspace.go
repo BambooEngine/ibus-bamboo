@@ -89,6 +89,11 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 			e.updatePreviousText([]rune(macText), []rune(processedStr), state)
 			e.preeditor.Reset()
 			return true, nil
+		} else if e.mustFallbackToEnglish() && !e.inX11ClipboardList() {
+			oldRunes := []rune(e.getPreeditString())
+			newRunes := []rune(e.getComposedString())
+			e.updatePreviousText(newRunes, oldRunes, state)
+			e.preeditor.Reset()
 		}
 		e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
 		return false, nil
