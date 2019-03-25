@@ -26,7 +26,7 @@ Nếu cần thiết, hãy [đính kèm hình ảnh](https://help.github.com/arti
  - OS và version: (ví dụ: Ubuntu 18.10)
  - Desktop: (Xfce, KDE, Gnome,... hoặc **mặc định**)
  - Phiên bản ibus: (chạy command `ibus version` để xem phiên bản ibus)
- - Phiên bản ibus-bamboo: (bản mới nhất là v0.3.2)
+ - Phiên bản ibus-bamboo: (bản mới nhất là v0.3.3)
 
 **Thông tin thêm**
 Các nội dung khác có liên quan đến lỗi đang xảy ra.
