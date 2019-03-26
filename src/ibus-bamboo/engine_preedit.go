@@ -82,11 +82,6 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		if e.ignorePreedit {
 			return false, nil
 		}
-		if e.config.IBflags&IBautoNonVnRestore == 0 {
-			e.preeditor.ProcessKey(keyRune, bamboo.VietnameseMode)
-			e.updatePreedit()
-			return true, nil
-		}
 		e.preeditor.ProcessKey(keyRune, e.getMode())
 		if (e.config.IBflags&IBautoCommitWithVnNotMatch != 0 &&
 			e.getSpellingMatchResult(false) == bamboo.FindResultNotMatch) ||
@@ -100,7 +95,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		e.updatePreedit()
 		return true, nil
 	} else {
-		var processedStr = e.getComposedString()
+		var processedStr = e.getPreeditString()
 		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
 			processedStr = e.macroTable.GetText(processedStr)
 			e.preeditor.Reset()
@@ -229,6 +224,9 @@ func (e *IBusBambooEngine) getPreeditString() string {
 }
 
 func (e *IBusBambooEngine) getMode() bamboo.Mode {
+	if e.config.IBflags&IBautoNonVnRestore == 0 {
+		return bamboo.VietnameseMode
+	}
 	if e.shouldFallbackToEnglish() {
 		return bamboo.EnglishMode
 	}

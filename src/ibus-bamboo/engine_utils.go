@@ -30,12 +30,12 @@ import (
 	"time"
 )
 
-func GetIBusBambooEngine() func(conn *dbus.Conn, engineName string) dbus.ObjectPath {
+func GetIBusBambooEngine(ngName string) func(conn *dbus.Conn, engineName string) dbus.ObjectPath {
 	objectPath := dbus.ObjectPath(fmt.Sprintf("/org/freedesktop/IBus/Engine/bamboo/%d", time.Now().UnixNano()))
 	var dictionary, _ = loadDictionary(DictVietnameseCm)
 	var bambooEmoji = NewBambooEmoji(DictEmojiOne)
 	var mTable = NewMacroTable()
-	var config = LoadConfig(EngineName)
+	var config = LoadConfig(ngName)
 	var preeditor = bamboo.NewEngine(config.InputMethod, config.Flags, dictionary)
 
 	return func(conn *dbus.Conn, engineName string) dbus.ObjectPath {
@@ -52,9 +52,6 @@ func GetIBusBambooEngine() func(conn *dbus.Conn, engineName string) dbus.ObjectP
 		}
 		ibus.PublishEngine(conn, objectPath, engine)
 
-		if config.IBflags&IBmarcoEnabled != 0 {
-			engine.macroTable.Enable()
-		}
 		go engine.startAutoCommit()
 
 		onMouseMove = func() {
@@ -63,14 +60,6 @@ func GetIBusBambooEngine() func(conn *dbus.Conn, engineName string) dbus.ObjectP
 			engine.resetFakeBackspace()
 			if engine.inBackspaceWhiteList() {
 				engine.preeditor.Reset()
-			} else if engine.isEmojiTableOpened {
-				if cps := engine.emoji.Query(); len(cps) > 0 {
-					engine.CommitText(ibus.NewText(cps[0]))
-				}
-				engine.emoji.Reset()
-				engine.HidePreeditText()
-				engine.HideLookupTable()
-				engine.HideAuxiliaryText()
 			} else {
 				engine.commitPreedit(0)
 			}

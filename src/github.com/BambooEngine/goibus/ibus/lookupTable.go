@@ -38,6 +38,18 @@ func (lt *LookupTable) AppendLabel(label string) {
 	lt.Labels = append(lt.Labels, dbus.MakeVariant(*l))
 }
 
+func (lt *LookupTable) SetCursorPos(pos uint32) bool {
+	if pos >= uint32(len(lt.Candidates)) || pos < 0 {
+		return false
+	}
+	lt.CursorPos = pos
+	return true
+}
+
+func (lt *LookupTable) GetCursorPos() uint32 {
+	return lt.CursorPos
+}
+
 func (lt *LookupTable) GetCursorPosInCurrentPage() uint32 {
 	return lt.CursorPos % lt.PageSize
 }

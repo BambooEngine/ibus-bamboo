@@ -24,13 +24,17 @@ import (
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
-	"log"
 	"time"
 )
 
 func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
 	if keyVal == IBUS_BackSpace {
-		log.Println("Number of fake backspaces::", e.nFakeBackSpace)
+		if e.config.IBflags&IBautoNonVnRestore == 0 {
+			if e.getRawKeyLen() > 0 {
+				e.preeditor.RemoveLastChar()
+			}
+			return false, nil
+		}
 		if e.nFakeBackSpace == nFakeBackspaceDefault { // just a normal backspace
 			if e.getRawKeyLen() > 0 {
 				oldRunes := []rune(e.getPreeditString())
@@ -67,13 +71,6 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 	if e.preeditor.CanProcessKey(keyRune) {
 		if state&IBUS_LOCK_MASK != 0 {
 			keyRune = toUpper(keyRune)
-		}
-		if e.config.IBflags&IBautoNonVnRestore == 0 {
-			oldRunes := []rune(e.preeditor.GetProcessedString(bamboo.VietnameseMode, false))
-			e.preeditor.ProcessKey(keyRune, bamboo.VietnameseMode)
-			newRunes := []rune(e.preeditor.GetProcessedString(bamboo.VietnameseMode, false))
-			e.updatePreviousText(newRunes, oldRunes, state)
-			return true, nil
 		}
 		oldRunes := []rune(e.getPreeditString())
 		e.preeditor.ProcessKey(keyRune, e.getMode())
@@ -119,13 +116,9 @@ func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state u
 		}
 	}
 	diffFrom := sameTo + 1
-	log.Println(string(oldRunes), string(newRunes), diffFrom)
+	fmt.Println(string(oldRunes), string(newRunes), diffFrom)
 
 	nBackSpace := 0
-	if e.inSurroundingTextList() && diffFrom < newLen && diffFrom < oldLen {
-		e.SendText([]rune{0x200A}) // https://en.wikipedia.org/wiki/Whitespace_character
-		nBackSpace += 1
-	}
 
 	if diffFrom < oldLen {
 		nBackSpace += oldLen - diffFrom
@@ -153,7 +146,7 @@ func (e *IBusBambooEngine) sendBackspaceAndNewRunes(state uint32, nBackSpace int
 }
 
 func (e *IBusBambooEngine) SendBackSpace(state uint32, n int) {
-	log.Printf("Sendding %d backSpace.", n)
+	fmt.Printf("Sendding %d backSpace.", n)
 
 	if e.inSurroundingTextList() {
 		fmt.Println("Send backspace via SurroundingText")
@@ -177,6 +170,6 @@ func (e *IBusBambooEngine) resetFakeBackspace() {
 	e.nFakeBackSpace = nFakeBackspaceDefault
 }
 func (e *IBusBambooEngine) SendText(rs []rune) {
-	log.Println("Send text", string(rs))
+	fmt.Println("Send text", string(rs))
 	e.CommitText(ibus.NewText(string(rs)))
 }

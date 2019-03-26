@@ -81,7 +81,7 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 	// Fake X11 Clipboard backspace processing guard
 	// NOTICE: Some key events (Ctrl, Alt,...) will be enqueued but never sent to X-Client
 	if keyVal != IBUS_BackSpace && e.inX11ClipboardList() {
-		log.Printf("Number of fake backspaces: %d | 0x%04x | %d\n", e.nFakeBackSpace, keyCode, len(e.keyEventQueue))
+		//log.Printf("Number of fake backspaces: %d | 0x%04x | %d\n", e.nFakeBackSpace, keyCode, len(e.keyEventQueue))
 		if e.nFakeBackSpace > nFakeBackspaceDefault && len(e.keyEventQueue) < nKeyEventQueueMax {
 			e.keyEventQueue = append(e.keyEventQueue, []uint32{keyVal, keyCode, state})
 			return true, nil
@@ -112,14 +112,14 @@ func (e *IBusBambooEngine) processKeyEvent(keyVal, keyCode, state uint32) (bool,
 			return true, nil
 		}
 	}
-	fmt.Printf("keyCode 0x%04x keyval 0x%04x | %c\n", keyCode, keyVal, rune(keyVal))
+	log.Printf("keyCode 0x%04x keyval 0x%04x | %c\n", keyCode, keyVal, rune(keyVal))
 	if keyVal == IBUS_OpenLookupTable && e.isLookupTableOpened == false {
 		e.preeditor.Reset()
 		e.isLookupTableOpened = true
 		e.openLookupTable()
 		return true, nil
 	}
-	if e.config.IBflags&IBemojiDisabled == 0 && rune(keyVal) == ':' && e.isEmojiTableOpened == false {
+	if e.config.IBflags&IBemojiDisabled == 0 && keyVal == IBUS_Colon && e.isEmojiTableOpened == false {
 		e.preeditor.Reset()
 		e.isEmojiTableOpened = true
 		e.openEmojiList()
@@ -174,6 +174,10 @@ func (e *IBusBambooEngine) Enable() *dbus.Error {
 	if e.config.IBflags&IBautoCommitWithMouseMovement != 0 {
 		mouseCaptureInit()
 	}
+
+	if e.config.IBflags&IBmarcoEnabled != 0 {
+		e.macroTable.Enable()
+	}
 	return nil
 }
 
@@ -213,6 +217,10 @@ func (e *IBusBambooEngine) CursorDown() *dbus.Error {
 }
 
 func (e *IBusBambooEngine) CandidateClicked(index uint32, button uint32, state uint32) *dbus.Error {
+	if e.isEmojiTableOpened && e.emojiLookupTable.SetCursorPosInCurrentPage(index) {
+		e.commitEmojiCandidate()
+		e.closeEmojiCandidates()
+	}
 	return nil
 }
 

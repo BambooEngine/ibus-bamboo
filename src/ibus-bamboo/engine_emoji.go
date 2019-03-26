@@ -42,36 +42,43 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 	var rawTextLen = len([]rune(raw))
 	var keyRune = rune(keyVal)
 	var cps = e.emoji.Query()
-	var reset = func() {
-		e.emoji.Reset()
-		e.HideAuxiliaryText()
-		e.HidePreeditText()
-		e.HideLookupTable()
-		e.isEmojiTableOpened = false
-	}
-	if keyRune == ':' {
+	var reset = e.closeEmojiCandidates
+	if keyVal == IBUS_Colon {
 		reset()
 		return false, nil
 	}
 	if keyVal == IBUS_Return || keyVal == IBUS_KP_Enter {
 		if rawTextLen > 0 {
-			reset()
-			if len(cps) > 0 {
-				e.CommitText(ibus.NewText(cps[0]))
+			if len(e.emojiLookupTable.Candidates) > 0 {
+				e.commitEmojiCandidate()
 			} else {
 				e.CommitText(ibus.NewText(raw))
 			}
+			reset()
 			return true, nil
 		}
 		return false, nil
 	}
 	if keyVal == IBUS_Escape {
 		if rawTextLen > 0 {
-			reset()
 			e.CommitText(ibus.NewText(raw))
+			reset()
 			return true, nil
 		}
 		return false, nil
+	}
+	if keyVal == IBUS_Left || keyVal == IBUS_Up {
+		e.CursorUp()
+		return true, nil
+	} else if keyVal == IBUS_Right || keyVal == IBUS_Down {
+		e.CursorDown()
+		return true, nil
+	} else if keyVal == IBUS_Page_Up {
+		e.PageUp()
+		return true, nil
+	} else if keyVal == IBUS_Page_Down {
+		e.PageDown()
+		return true, nil
 	}
 	if keyVal == IBUS_BackSpace {
 		if rawTextLen > 0 {
@@ -108,11 +115,25 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 	}
 	e.emojiLookupTable = lt
 	e.emojiUpdateLookupTable()
-	mouseCaptureUnlock()
 	return true, nil
 }
 
 func (e *IBusBambooEngine) emojiUpdateLookupTable() {
 	var visible = len(e.emojiLookupTable.Candidates) > 0
 	e.UpdateLookupTable(e.emojiLookupTable, visible)
+}
+
+func (e *IBusBambooEngine) commitEmojiCandidate() {
+	var cps = e.emoji.Query()
+	if pos := e.emojiLookupTable.CursorPos; pos >= 0 && pos < uint32(len(cps)) {
+		e.CommitText(ibus.NewText(cps[pos]))
+	}
+}
+
+func (e *IBusBambooEngine) closeEmojiCandidates() {
+	e.emoji.Reset()
+	e.HidePreeditText()
+	e.HideLookupTable()
+	e.HideAuxiliaryText()
+	e.isEmojiTableOpened = false
 }

@@ -74,6 +74,13 @@ const (
 // http://ibus.github.io/docs/ibus-1.5/ibus-ibuskeysyms-compat.htm
 
 const (
+	IBUS_Colon            = 0x03a
+	IBUS_Left             = 0xFF51
+	IBUS_Up               = 0xFF52
+	IBUS_Right            = 0xFF53
+	IBUS_Down             = 0xFF54
+	IBUS_Page_Up          = 0xFF55
+	IBUS_Page_Down        = 0xFF56
 	IBUS_BackSpace        = 0xff08
 	IBUS_Return           = 0xff0d
 	IBUS_Escape           = 0xff1b
@@ -93,6 +100,7 @@ const (
 	IBUS_Deadkey_Currency = 0xfe6f
 	IBUS_Deadkey          = 96
 	IBUS_OpenLookupTable  = IBUS_TILDE
+	IBUS_OpenEmojiTable   = IBUS_Colon
 )
 
 const (
