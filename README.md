@@ -21,14 +21,31 @@ IBus Bamboo - Bộ gõ tiếng Việt cho Linux
   	* Surrounding text, IBus Forward key event, X11 Clipboard
    ![ibus-bamboo](https://github.com/BambooEngine/ibus-bamboo/raw/gh-resources/demo.gif)
 
-### Cài đặt (Ubuntu)
-
+### Cài đặt (Ubuntu và Arch Linux)
+Với Ubuntu
 ```sh
 sudo add-apt-repository ppa:bamboo-engine/ibus-bamboo
 sudo apt-get update
 sudo apt-get install ibus-bamboo
 ibus restart
 ```
+Với Arch Linux, cách cài đặt giống như trên AUR. Đầu tiên:
+```sh
+cd archlinux
+```
+Nếu muốn cài đặt bản git (mới nhất, kéo trực tiếp từ master vệ) 
+```sh 
+cp PKGBUILD-git PKGBUILD
+``` 
+Nếu muốn cài đặt bản release.
+```sh 
+cp PKGBUILD-release PKGBUILD
+``` 
+Cuối cùng chạy 
+```sh
+makepkg -si
+```
+
 
 *Hướng dẫn cài đặt từ mã nguồn: [wiki](https://github.com/BambooEngine/ibus-bamboo/wiki/H%C6%B0%E1%BB%9Bng-d%E1%BA%ABn-c%C3%A0i-%C4%91%E1%BA%B7t-t%E1%BB%AB-m%C3%A3-ngu%E1%BB%93n)*
 
