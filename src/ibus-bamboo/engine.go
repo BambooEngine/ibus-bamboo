@@ -248,8 +248,13 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		exec.Command("xdg-open", VnConvertPage).Start()
 		return nil
 	}
+	if propName == PropKeyBambooConfiguration {
+		exec.Command("xdg-open", getBambooConfigurationPath(e.engineName)).Start()
+		return nil
+	}
 	if propName == PropKeyMacroTable {
 		OpenMactabFile(EngineName)
+		return nil
 	}
 
 	turnSpellChecking := func(on bool) {
@@ -371,12 +376,14 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	if foundCs && isValidCharset(charset) && propState == ibus.PROP_STATE_CHECKED {
 		e.config.Charset = charset
 	}
-	if _, found := bamboo.InputMethods[propName]; found && propState == ibus.PROP_STATE_CHECKED {
+	if _, found := e.config.InputMethodDefinitions[propName]; found && propState == ibus.PROP_STATE_CHECKED {
 		e.config.InputMethod = propName
 	}
 	SaveConfig(e.config, e.engineName)
 	e.propList = GetPropListByConfig(e.config)
-	e.preeditor = bamboo.NewEngine(e.config.InputMethod, e.config.Flags, e.dictionary)
+
+	var inputMethod = bamboo.ParseInputMethod(e.config.InputMethodDefinitions, e.config.InputMethod)
+	e.preeditor = bamboo.NewEngine(inputMethod, e.config.Flags, e.dictionary)
 	e.RegisterProperties(e.propList)
 	return nil
 }

@@ -57,6 +57,7 @@ const (
 
 type Config struct {
 	InputMethod              string
+	InputMethodDefinitions   map[string]bamboo.InputMethodDefinition
 	Charset                  string
 	Flags                    uint
 	IBflags                  uint
@@ -68,10 +69,19 @@ type Config struct {
 	SurroundingTextWhiteList []string
 }
 
+func getBambooConfigurationPath(engineName string) string {
+	u, err := user.Current()
+	if err == nil {
+		return fmt.Sprintf(configFile, u.HomeDir, engineName)
+	}
+	return ""
+}
+
 func LoadConfig(engineName string) *Config {
 	var c = Config{
 		InputMethod:              "Telex",
 		Charset:                  "Unicode",
+		InputMethodDefinitions:   bamboo.InputMethodDefinitions,
 		Flags:                    bamboo.EstdFlags,
 		IBflags:                  IBstdFlags,
 		AutoCommitAfter:          3000,
@@ -82,12 +92,9 @@ func LoadConfig(engineName string) *Config {
 		SurroundingTextWhiteList: nil,
 	}
 
-	u, err := user.Current()
+	data, err := ioutil.ReadFile(getBambooConfigurationPath(engineName))
 	if err == nil {
-		data, err := ioutil.ReadFile(fmt.Sprintf(configFile, u.HomeDir, engineName))
-		if err == nil {
-			json.Unmarshal(data, &c)
-		}
+		json.Unmarshal(data, &c)
 	}
 
 	return &c
@@ -99,7 +106,7 @@ func SaveConfig(c *Config, engineName string) {
 		return
 	}
 
-	data, err := json.Marshal(c)
+	data, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		return
 	}

@@ -79,7 +79,7 @@ func (e *IBusBambooEngine) backspaceProcessKeyEvent(keyVal uint32, keyCode uint3
 		return true, nil
 	} else if keyVal == IBUS_space || bamboo.IsWordBreakSymbol(keyRune) {
 		// macro processing
-		var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode, false)
+		var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode, true)
 		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
 			macText := e.macroTable.GetText(processedStr)
 			macText = macText + string(keyRune)

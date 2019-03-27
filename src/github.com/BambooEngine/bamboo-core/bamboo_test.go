@@ -5,7 +5,8 @@ import (
 )
 
 func newStdEngine() IEngine {
-	return NewEngine("Telex 2", EstdFlags, nil)
+	var im = ParseInputMethod(InputMethodDefinitions, "Telex 2")
+	return NewEngine(im, EstdFlags, nil)
 }
 
 func TestProcessString(t *testing.T) {
@@ -115,7 +116,8 @@ func TestProcessDD(t *testing.T) {
 }
 
 func TestTelex3(t *testing.T) {
-	ng := NewEngine("Telex 3", EstdFlags, nil)
+	var im = ParseInputMethod(InputMethodDefinitions, "Telex 3")
+	var ng = NewEngine(im, EstdFlags, nil)
 	ng.ProcessString("[", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode, false) != "ươ" {
 		t.Errorf("Process Telex 3 [[], got [%v] expected [ươ]", ng.GetProcessedString(VietnameseMode, false))
@@ -293,7 +295,8 @@ func TestProcessTnoss(t *testing.T) {
 
 //ềng
 func TestProcessEenghf(t *testing.T) {
-	ng := NewEngine("Telex 2", EstdFlags, map[string]bool{"ềngh": true})
+	var im = ParseInputMethod(InputMethodDefinitions, "Telex 2")
+	ng := NewEngine(im, EstdFlags, map[string]bool{"ềngh": true})
 	ng.ProcessString("eenghf", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode, false) != "ềngh" {
 		t.Errorf("TestProcessToorr, got [%v] expected [ềnhg]", ng.GetProcessedString(VietnameseMode, false))
@@ -302,7 +305,7 @@ func TestProcessEenghf(t *testing.T) {
 
 //HIEEUR
 func TestProcessHIEEUR(t *testing.T) {
-	ng := NewEngine("Telex 2", EstdFlags, nil)
+	ng := newStdEngine()
 	ng.ProcessString("tooi oo HIEEUR", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode, false) != "HIỂU" {
 		t.Errorf("TestProcessToorr, got [%v] expected [HIỂU]", ng.GetProcessedString(VietnameseMode, false))
@@ -314,7 +317,7 @@ func TestProcessHIEEUR(t *testing.T) {
 
 //NGUOIW
 func TestProcessNGUOIW(t *testing.T) {
-	ng := NewEngine("Telex 2", EstdFlags, nil)
+	ng := newStdEngine()
 	ng.ProcessString("NGUOIW", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode, false) != "NGƯƠI" {
 		t.Errorf("TestProcessToorr, got [%v] expected [NGƯƠI]", ng.GetProcessedString(VietnameseMode, false))
@@ -323,7 +326,7 @@ func TestProcessNGUOIW(t *testing.T) {
 
 //T{s
 func TestProcessTOs(t *testing.T) {
-	ng := NewEngine("Telex 2", EstdFlags, nil)
+	ng := newStdEngine()
 	ng.ProcessString("{s", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode, false) != "Ớ" {
 		t.Errorf("TestProcessToorr, got [%v] expected [Ớ]", ng.GetProcessedString(VietnameseMode, false))
@@ -332,7 +335,8 @@ func TestProcessTOs(t *testing.T) {
 
 //T{s
 func TestProcessTo5(t *testing.T) {
-	ng := NewEngine("VNI", EstdFlags, nil)
+	var im = ParseInputMethod(InputMethodDefinitions, "VNI")
+	ng := NewEngine(im, EstdFlags, nil)
 	ng.ProcessString("o55", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode, false) != "o5" {
 		t.Errorf("TestProcessToorr, got [%v] expected [o5]", ng.GetProcessedString(VietnameseMode, false))
@@ -344,7 +348,7 @@ func TestProcessTo5(t *testing.T) {
 
 //duwongwj
 func TestProcesshuoswc(t *testing.T) {
-	ng := NewEngine("Telex 2", EstdFlags, nil)
+	ng := newStdEngine()
 	ng.ProcessString("duwongwj", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode, false) != "dượng" {
 		t.Errorf("TestProcessToorr, got [%v] expected [dượng]", ng.GetProcessedString(VietnameseMode, false))
@@ -353,7 +357,8 @@ func TestProcesshuoswc(t *testing.T) {
 
 //choas, bieecs, uese
 func TestProcesschoas(t *testing.T) {
-	ng := NewEngine("Telex 2", EstdFlags&^EstdToneStyle, nil)
+	var im = ParseInputMethod(InputMethodDefinitions, "Telex 2")
+	ng := NewEngine(im, EstdFlags&^EstdToneStyle, nil)
 	ng.ProcessString("choas", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode, false) != "choá" {
 		t.Errorf("TestProcessToorr, got [%v] expected [choá]", ng.GetProcessedString(VietnameseMode, false))

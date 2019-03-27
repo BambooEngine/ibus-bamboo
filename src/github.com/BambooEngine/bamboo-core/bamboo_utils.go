@@ -488,12 +488,13 @@ func undoesTransformations(composition []*Transformation, applicableRules []Rule
 }
 
 func freeComposition(composition []*Transformation) []*Transformation {
-	for i, trans := range composition {
-		if trans.IsDeleted {
-			composition = removeTransIdx(composition, i)
+	var result []*Transformation
+	for _, trans := range composition {
+		if !trans.IsDeleted {
+			result = append(result, trans)
 		}
 	}
-	return composition
+	return result
 }
 
 /***** END SIDE-EFFECT METHODS ******/

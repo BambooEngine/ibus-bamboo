@@ -92,11 +92,14 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 		}
 		e.emoji.ProcessKey(keyRune)
 	} else if keyRune >= '1' && keyRune <= '9' {
-		if keyNumber, err := strconv.Atoi(string(keyRune)); err == nil {
-			e.CommitText(ibus.NewText(cps[keyNumber-1]))
-			reset()
-			return true, nil
+		if pos, err := strconv.Atoi(string(keyRune)); err == nil {
+			if e.emojiLookupTable.SetCursorPosInCurrentPage(uint32(pos)) {
+				e.commitEmojiCandidate()
+				reset()
+				return true, nil
+			}
 		}
+		return false, nil
 	} else if keyRune > ' ' && keyRune <= '~' {
 		e.emoji.ProcessKey(keyRune)
 	} else if keyRune < 128 && rawTextLen > 0 {
@@ -125,7 +128,7 @@ func (e *IBusBambooEngine) emojiUpdateLookupTable() {
 
 func (e *IBusBambooEngine) commitEmojiCandidate() {
 	var cps = e.emoji.Query()
-	if pos := e.emojiLookupTable.CursorPos; pos >= 0 && pos < uint32(len(cps)) {
+	if pos := e.emojiLookupTable.CursorPos; pos < uint32(len(cps)) {
 		e.CommitText(ibus.NewText(cps[pos]))
 	}
 }

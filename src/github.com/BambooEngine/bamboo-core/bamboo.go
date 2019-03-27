@@ -76,11 +76,7 @@ type BambooEngine struct {
 	flags       uint
 }
 
-func NewEngine(im string, flag uint, dictionary map[string]bool) IEngine {
-	inputMethod, found := InputMethods[im]
-	if !found {
-		panic("The input method is not supported")
-	}
+func NewEngine(inputMethod InputMethod, flag uint, dictionary map[string]bool) IEngine {
 	engine := BambooEngine{
 		inputMethod: inputMethod,
 		flags:       flag,

@@ -42,6 +42,7 @@ const (
 	PropKeyMacroEnabled                = "macro_enabled"
 	PropKeyMacroTable                  = "macro_table"
 	PropKeyEmojiEnabled                = "emoji_enabled"
+	PropKeyBambooConfiguration         = "bamboo_configuration"
 )
 
 var runMode = ""
@@ -195,7 +196,31 @@ func GetCharsetPropListByConfig(c *Config) *ibus.PropList {
 
 func GetIMPropListByConfig(c *Config) *ibus.PropList {
 	var imProperties []*ibus.Property
-	for im := range bamboo.InputMethods {
+	imProperties = append(imProperties,
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       PropKeyBambooConfiguration,
+			Type:      ibus.PROP_TYPE_NORMAL,
+			Label:     dbus.MakeVariant(ibus.NewText("Tự định nghĩa kiểu gõ")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Tự định nghĩa kiểu gõ")),
+			Sensitive: true,
+			Visible:   false,
+			Symbol:    dbus.MakeVariant(ibus.NewText("BC")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       "-",
+			Type:      ibus.PROP_TYPE_SEPARATOR,
+			Label:     dbus.MakeVariant(ibus.NewText("")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("")),
+			Sensitive: true,
+			Visible:   false,
+			Symbol:    dbus.MakeVariant(ibus.NewText("")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+	)
+	for im := range c.InputMethodDefinitions {
 		var state = ibus.PROP_STATE_UNCHECKED
 		if im == c.InputMethod {
 			state = ibus.PROP_STATE_CHECKED

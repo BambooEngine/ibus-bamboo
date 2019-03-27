@@ -41,19 +41,6 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		}
 	}
 
-	if keyVal == IBUS_space || keyVal == IBUS_KP_Space {
-		e.ignorePreedit = false
-		var processedStr = e.getComposedString()
-		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
-			processedStr = e.macroTable.GetText(processedStr)
-			e.preeditor.Reset()
-			e.commitText(e.encodeText(processedStr))
-		} else {
-			e.commitPreedit(0)
-		}
-		return false, nil
-	}
-
 	if keyVal == IBUS_Return || keyVal == IBUS_KP_Enter {
 		e.ignorePreedit = false
 		if rawKeyLen > 0 {
@@ -94,8 +81,9 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		}
 		e.updatePreedit()
 		return true, nil
-	} else {
-		var processedStr = e.getPreeditString()
+	} else if keyVal == IBUS_space || bamboo.IsWordBreakSymbol(keyRune) {
+		e.ignorePreedit = false
+		var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode, true)
 		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
 			processedStr = e.macroTable.GetText(processedStr)
 			e.preeditor.Reset()
@@ -105,6 +93,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		}
 		return false, nil
 	}
+	e.preeditor.Reset()
 	return false, nil
 }
 

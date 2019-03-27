@@ -95,14 +95,25 @@ type InputMethod struct {
 	Keys      []rune
 }
 
-var InputMethods map[string]InputMethod
+func ParseInputMethod(imDef map[string]InputMethodDefinition, imName string) InputMethod {
+	var inputMethods = parseInputMethods(imDef)
+	if inputMethod, found := inputMethods[imName]; found {
+		return inputMethod
+	}
+	return InputMethod{}
+}
 
-func init() {
-	InputMethods = make(map[string]InputMethod, len(inputMethodDefinitions))
-	for name, imDefinition := range inputMethodDefinitions {
+func parseInputMethods(imDef map[string]InputMethodDefinition) map[string]InputMethod {
+	var inputMethods = make(map[string]InputMethod, len(imDef))
+	for name, imDefinition := range imDef {
 		var im InputMethod
 		im.Name = name
-		for key, line := range imDefinition {
+		for keyStr, line := range imDefinition {
+			var keys = []rune(keyStr)
+			if len(keys) == 0 {
+				continue
+			}
+			var key = keys[0]
 			im.Rules = append(im.Rules, ParseRules(key, line)...)
 			if strings.Contains(strings.ToLower(line), "uo") {
 				im.SuperKeys = append(im.SuperKeys, key)
@@ -112,8 +123,9 @@ func init() {
 			}
 			im.Keys = append(im.Keys, key)
 		}
-		InputMethods[name] = im
+		inputMethods[name] = im
 	}
+	return inputMethods
 }
 
 func ParseRules(key rune, line string) []Rule {

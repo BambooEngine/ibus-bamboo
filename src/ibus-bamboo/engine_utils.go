@@ -36,7 +36,8 @@ func GetIBusBambooEngine(ngName string) func(conn *dbus.Conn, engineName string)
 	var bambooEmoji = NewBambooEmoji(DictEmojiOne)
 	var mTable = NewMacroTable()
 	var config = LoadConfig(ngName)
-	var preeditor = bamboo.NewEngine(config.InputMethod, config.Flags, dictionary)
+	var inputMethod = bamboo.ParseInputMethod(config.InputMethodDefinitions, config.InputMethod)
+	var preeditor = bamboo.NewEngine(inputMethod, config.Flags, dictionary)
 
 	return func(conn *dbus.Conn, engineName string) dbus.ObjectPath {
 		engine := &IBusBambooEngine{
