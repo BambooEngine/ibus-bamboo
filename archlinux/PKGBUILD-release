@@ -25,8 +25,8 @@ license=(GPL3)
 url="https://github.com/BambooEngine/ibus-bamboo"
 depends=(ibus)
 makedepends=('go' 'libx11' 'libxtst')
-source=("$pkgname"::"https://github.com/BambooEngine/$pkgname/archive/v$pkgver.tar.gz")
-md5sums=('SKIP')
+source=("$pkgname-$pkgver.tar.gz"::"https://github.com/BambooEngine/$pkgname/archive/v$pkgver.tar.gz")
+md5sums=('65cfce196144f1863ffcbfa6af8d38fe')
 options=('!strip')
 conflicts=(ibus-bamboo-git)
 
