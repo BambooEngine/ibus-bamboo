@@ -33,7 +33,7 @@ Với Arch Linux, cách cài đặt giống như trên AUR. Đầu tiên:
 ```sh
 cd archlinux
 ```
-Nếu muốn cài đặt bản git (mới nhất, kéo trực tiếp từ master vệ) 
+Nếu muốn cài đặt bản git (mới nhất, kéo trực tiếp từ master về) 
 ```sh 
 cp PKGBUILD-git PKGBUILD
 ``` 
