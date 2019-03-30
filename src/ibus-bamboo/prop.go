@@ -124,8 +124,8 @@ func GetPropListByConfig(c *Config) *ibus.PropList {
 			Name:      "IBusProperty",
 			Key:       "-",
 			Type:      ibus.PROP_TYPE_MENU,
-			Label:     dbus.MakeVariant(ibus.NewText("Tự động gửi buffer")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("Tự động gửi buffer")),
+			Label:     dbus.MakeVariant(ibus.NewText("Tự động kết thúc từ")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Tự động kết thúc từ")),
 			Sensitive: true,
 			Visible:   true,
 			Icon:      "appointment",
@@ -347,6 +347,10 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 	toneFreeMarkingChecked := ibus.PROP_STATE_UNCHECKED
 	preeditInvisibilityChecked := ibus.PROP_STATE_UNCHECKED
 	emojiChecked := ibus.PROP_STATE_CHECKED
+	mouseMovementChecked := ibus.PROP_STATE_UNCHECKED
+	if c.IBflags&IBautoCommitWithMouseMovement != 0 {
+		mouseMovementChecked = ibus.PROP_STATE_CHECKED
+	}
 
 	if c.Flags&bamboo.EstdToneStyle != 0 {
 		toneStdChecked = ibus.PROP_STATE_CHECKED
@@ -410,19 +414,27 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 			Symbol:    dbus.MakeVariant(ibus.NewText(":)")),
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       PropKeyAutoCommitWithMouseMovement,
+			Type:      ibus.PROP_TYPE_TOGGLE,
+			Label:     dbus.MakeVariant(ibus.NewText("Theo dõi chuột")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("mouse tracking")),
+			Sensitive: true,
+			Visible:   true,
+			State:     mouseMovementChecked,
+			Symbol:    dbus.MakeVariant(ibus.NewText("F")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
 	)
 }
 
 func GetAutoCommitPropListByConfig(c *Config) *ibus.PropList {
-	mouseMovementChecked := ibus.PROP_STATE_UNCHECKED
 	vnFullMatchChecked := ibus.PROP_STATE_UNCHECKED
 	vnWordBreakChecked := ibus.PROP_STATE_UNCHECKED
 	vnNotMatchChecked := ibus.PROP_STATE_UNCHECKED
 	delayChecked := ibus.PROP_STATE_UNCHECKED
 
-	if c.IBflags&IBautoCommitWithMouseMovement != 0 {
-		mouseMovementChecked = ibus.PROP_STATE_CHECKED
-	}
 	if c.IBflags&IBautoCommitWithVnFullMatch != 0 {
 		vnFullMatchChecked = ibus.PROP_STATE_CHECKED
 	}
@@ -482,18 +494,6 @@ func GetAutoCommitPropListByConfig(c *Config) *ibus.PropList {
 			Sensitive: true,
 			Visible:   true,
 			State:     delayChecked,
-			Symbol:    dbus.MakeVariant(ibus.NewText("F")),
-			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
-		},
-		&ibus.Property{
-			Name:      "IBusProperty",
-			Key:       PropKeyAutoCommitWithMouseMovement,
-			Type:      ibus.PROP_TYPE_TOGGLE,
-			Label:     dbus.MakeVariant(ibus.NewText("Click hoặc di chuyển chuột")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("Click or move mouse")),
-			Sensitive: true,
-			Visible:   true,
-			State:     mouseMovementChecked,
 			Symbol:    dbus.MakeVariant(ibus.NewText("F")),
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
