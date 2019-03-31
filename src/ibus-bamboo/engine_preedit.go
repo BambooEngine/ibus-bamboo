@@ -93,7 +93,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		}
 		return false, nil
 	}
-	e.preeditor.Reset()
+	e.commitPreedit(0)
 	return false, nil
 }
 
