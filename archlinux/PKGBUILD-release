@@ -17,7 +17,7 @@
 #
 # Maintainer: Luong Thanh Lam <ltlam93@gmail.com>
 pkgname=ibus-bamboo
-pkgver=0.3.0
+pkgver=0.3.4
 pkgrel=1
 pkgdesc='A Vietnamese IME for IBus'
 arch=(any)
@@ -26,7 +26,7 @@ url="https://github.com/BambooEngine/ibus-bamboo"
 depends=(ibus)
 makedepends=('go' 'libx11' 'libxtst')
 source=("$pkgname-$pkgver.tar.gz"::"https://github.com/BambooEngine/$pkgname/archive/v$pkgver.tar.gz")
-md5sums=('65cfce196144f1863ffcbfa6af8d38fe')
+md5sums=('0afaa3afde1f363978ec8a717a23226a')
 options=('!strip')
 conflicts=(ibus-bamboo-git)
 
