@@ -67,7 +67,7 @@ src: clean
 	cp -f debian/changelog $(DESTDIR)/debian.changelog
 	cp -f debian/control $(DESTDIR)/debian.control
 	cp -f debian/rules $(DESTDIR)/debian.rules
-	cp -f PKGBUILD $(DESTDIR)/PKGBUILD
+	cp -f archlinux/PKGBUILD-git $(DESTDIR)/PKGBUILD
 
 
 rpm: clean
