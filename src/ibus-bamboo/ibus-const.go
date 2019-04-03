@@ -96,7 +96,7 @@ const (
 	IBUS_0                = 0x030
 	IBUS_TILDE            = 0x007e
 	IBUS_GRAVE            = 0x0060
-	IBUS_KEY_Insert       = 0xff63
+	IBUS_Insert           = 0xff63
 	IBUS_Deadkey_Currency = 0xfe6f
 	IBUS_Deadkey          = 96
 	IBUS_OpenLookupTable  = IBUS_TILDE

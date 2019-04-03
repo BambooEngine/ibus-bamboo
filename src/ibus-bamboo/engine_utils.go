@@ -27,19 +27,23 @@ import (
 	"runtime"
 	"runtime/debug"
 	"strconv"
+	"strings"
 	"time"
 )
 
-func GetIBusBambooEngine(ngName string) func(conn *dbus.Conn, engineName string) dbus.ObjectPath {
+func GetIBusBambooEngine(engineName string) func(conn *dbus.Conn, engineName string) dbus.ObjectPath {
 	objectPath := dbus.ObjectPath(fmt.Sprintf("/org/freedesktop/IBus/Engine/bamboo/%d", time.Now().UnixNano()))
 	var dictionary, _ = loadDictionary(DictVietnameseCm)
 	var bambooEmoji = NewBambooEmoji(DictEmojiOne)
 	var mTable = NewMacroTable()
-	var config = LoadConfig(ngName)
+	engineName = strings.ToLower(engineName)
+	setupConfigDir()
+	var config = LoadConfig(engineName)
 	var inputMethod = bamboo.ParseInputMethod(config.InputMethodDefinitions, config.InputMethod)
 	var preeditor = bamboo.NewEngine(inputMethod, config.Flags, dictionary)
+	var isRunning = false
 
-	return func(conn *dbus.Conn, engineName string) dbus.ObjectPath {
+	return func(conn *dbus.Conn, ngName string) dbus.ObjectPath {
 		engine := &IBusBambooEngine{
 			Engine:         ibus.BaseEngine(conn, objectPath),
 			preeditor:      preeditor,
@@ -48,12 +52,16 @@ func GetIBusBambooEngine(ngName string) func(conn *dbus.Conn, engineName string)
 			propList:       GetPropListByConfig(config),
 			macroTable:     mTable,
 			dictionary:     dictionary,
-			nFakeBackSpace: nFakeBackspaceDefault,
+			nFakeBackSpace: 0,
 			emoji:          bambooEmoji,
 		}
 		ibus.PublishEngine(conn, objectPath, engine)
 
-		go engine.startAutoCommit()
+		if isRunning == false {
+			isRunning = true
+			go engine.startAutoCommit()
+			go engine.keyPressHandler()
+		}
 
 		onMouseMove = func() {
 			engine.ignorePreedit = false
@@ -77,9 +85,9 @@ func (e *IBusBambooEngine) getRawKeyLen() int {
 
 var lookupTableConfiguration = []string{
 	"Cấu hình mặc định (Pre-edit)",
-	"Tắt gạch chân (Surrounding Text)",
-	"Tắt gạch chân (Forward key event)",
-	"Tắt gạch chân (X11 Clipboard)",
+	"Fix gạch chân (Surrounding Text)",
+	"Fix gạch chân (Forward key event)",
+	"Fix gạch chân (X11 Clipboard)",
 	"Thêm vào danh sách loại trừ",
 }
 
@@ -99,7 +107,7 @@ func (e *IBusBambooEngine) openLookupTable() {
 		e.config.SurroundingTextWhiteList,
 		e.config.ForwardKeyWhiteList,
 		e.config.X11ClipboardWhiteList,
-		e.config.ExceptedWhiteList,
+		e.config.ExceptedList,
 	}
 
 	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (0/1/2/3/4) để lưu tùy chọn của bạn"), true)
@@ -109,7 +117,7 @@ func (e *IBusBambooEngine) openLookupTable() {
 	for _, ac := range lookupTableConfiguration {
 		lt.AppendCandidate(ac)
 	}
-	for lb, _ := range lookupTableConfiguration {
+	for lb := range lookupTableConfiguration {
 		if inStringList(whiteList[lb], e.wmClasses) {
 			lt.AppendLabel("*")
 		} else {
@@ -135,7 +143,7 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		e.config.X11ClipboardWhiteList = removeFromWhiteList(e.config.X11ClipboardWhiteList, wmClasses)
 		e.config.ForwardKeyWhiteList = removeFromWhiteList(e.config.ForwardKeyWhiteList, wmClasses)
 		e.config.SurroundingTextWhiteList = removeFromWhiteList(e.config.SurroundingTextWhiteList, wmClasses)
-		e.config.ExceptedWhiteList = removeFromWhiteList(e.config.ExceptedWhiteList, wmClasses)
+		e.config.ExceptedList = removeFromWhiteList(e.config.ExceptedList, wmClasses)
 	}
 	switch keyVal {
 	case '0':
@@ -156,7 +164,7 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		break
 	case '4':
 		reset()
-		e.config.ExceptedWhiteList = addToWhiteList(e.config.ExceptedWhiteList, wmClasses)
+		e.config.ExceptedList = addToWhiteList(e.config.ExceptedList, wmClasses)
 		break
 	}
 
@@ -168,7 +176,8 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 
 func (e *IBusBambooEngine) isIgnoredKey(keyVal, state uint32) bool {
 	if e.inX11ClipboardList() {
-		if state&IBUS_SHIFT_MASK != 0 && keyVal == IBUS_KEY_Insert {
+		if state&IBUS_SHIFT_MASK != 0 && keyVal == IBUS_Insert {
+			fmt.Println("Received Shift+Insert.")
 			return true
 		}
 	}
@@ -201,7 +210,7 @@ func (e *IBusBambooEngine) reset() {
 }
 
 func (e *IBusBambooEngine) inExceptedList() bool {
-	return inStringList(e.config.ExceptedWhiteList, e.wmClasses)
+	return inStringList(e.config.ExceptedList, e.wmClasses)
 }
 
 func (e *IBusBambooEngine) inPreeditList() bool {
@@ -217,9 +226,13 @@ func (e *IBusBambooEngine) inSurroundingTextList() bool {
 }
 
 func (e *IBusBambooEngine) inForwardKeyList() bool {
-	return inStringList(e.config.ForwardKeyWhiteList, e.wmClasses)
+	return e.config.IBflags&IBfakeBackspaceEnabled != 0 || inStringList(e.config.ForwardKeyWhiteList, e.wmClasses)
 }
 
 func (e *IBusBambooEngine) inX11ClipboardList() bool {
 	return inStringList(e.config.X11ClipboardWhiteList, e.wmClasses)
+}
+
+func (e *IBusBambooEngine) inBrowserList() bool {
+	return inStringList(DefaultBrowserList, e.wmClasses)
 }

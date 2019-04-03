@@ -26,14 +26,24 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"os/exec"
 	"os/user"
 	"path/filepath"
 )
 
 const (
-	configFile       = "%s/.config/ibus/ibus-%s.config.json"
-	mactabFile       = "%s/.config/ibus/ibus-%s.macro.text"
+	ComponentName = "org.freedesktop.IBus.bamboo"
+	EngineName    = "Bamboo"
+	HomePage      = "https://github.com/BambooEngine/ibus-bamboo"
+	VnConvertPage = "https://font.ssc.vn"
+
+	DictVietnameseCm = "data/vietnamese.cm.dict"
+	DictEmojiOne     = "data/emojione.json"
+)
+
+const (
+	configDir        = "%s/.config/ibus-bamboo"
+	configFile       = "%s/ibus-%s.config.json"
+	mactabFile       = "%s/ibus-%s.macro.text"
 	sampleMactabFile = "data/macro.tpl.txt"
 )
 
@@ -51,48 +61,68 @@ const (
 	IBautoCommitWithDelay
 	IBautoCommitWithMouseMovement
 	IBemojiDisabled
+	IBfakeBackspaceEnabled
 	IBstdFlags = IBspellChecking | IBspellCheckingWithRules | IBautoNonVnRestore | IBddFreeStyle |
-		IBpreeditInvisibility | IBautoCommitWithMouseMovement | IBemojiDisabled
+		IBpreeditInvisibility | IBautoCommitWithMouseMovement | IBemojiDisabled | IBfakeBackspaceEnabled
 )
+
+var DefaultExceptedList = []string{
+	"unity-desktop",
+}
+var DefaultBrowserList = []string{
+	"Navigator:Firefox",
+	"google-chrome:Google-chrome",
+	"chromium-browser:Chromium-browser",
+}
 
 type Config struct {
 	InputMethod              string
 	InputMethodDefinitions   map[string]bamboo.InputMethodDefinition
-	Charset                  string
+	OutputCharset            string
 	Flags                    uint
 	IBflags                  uint
 	AutoCommitAfter          int64
-	ExceptedWhiteList        []string
+	ExceptedList             []string
 	PreeditWhiteList         []string
 	X11ClipboardWhiteList    []string
 	ForwardKeyWhiteList      []string
 	SurroundingTextWhiteList []string
 }
 
-func getBambooConfigurationPath(engineName string) string {
+func getConfigDir() string {
 	u, err := user.Current()
 	if err == nil {
-		return fmt.Sprintf(configFile, u.HomeDir, engineName)
+		return fmt.Sprintf(configDir, u.HomeDir)
 	}
-	return ""
+	return fmt.Sprintf(configDir, "~")
+}
+
+func setupConfigDir() {
+	if sta, err := os.Stat(getConfigDir()); err != nil || !sta.IsDir() {
+		os.Mkdir(getConfigDir(), 0777)
+	}
+}
+
+func getConfigPath(engineName string) string {
+	return fmt.Sprintf(configFile, getConfigDir(), engineName)
 }
 
 func LoadConfig(engineName string) *Config {
 	var c = Config{
 		InputMethod:              "Telex",
-		Charset:                  "Unicode",
+		OutputCharset:            "Unicode",
 		InputMethodDefinitions:   bamboo.InputMethodDefinitions,
 		Flags:                    bamboo.EstdFlags,
 		IBflags:                  IBstdFlags,
 		AutoCommitAfter:          3000,
-		ExceptedWhiteList:        nil,
+		ExceptedList:             DefaultExceptedList,
 		PreeditWhiteList:         nil,
 		X11ClipboardWhiteList:    nil,
 		ForwardKeyWhiteList:      nil,
 		SurroundingTextWhiteList: nil,
 	}
 
-	data, err := ioutil.ReadFile(getBambooConfigurationPath(engineName))
+	data, err := ioutil.ReadFile(getConfigPath(engineName))
 	if err == nil {
 		json.Unmarshal(data, &c)
 	}
@@ -101,17 +131,12 @@ func LoadConfig(engineName string) *Config {
 }
 
 func SaveConfig(c *Config, engineName string) {
-	u, err := user.Current()
-	if err != nil {
-		return
-	}
-
 	data, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		return
 	}
 
-	err = ioutil.WriteFile(fmt.Sprintf(configFile, u.HomeDir, engineName), data, 0644)
+	err = ioutil.WriteFile(fmt.Sprintf(configFile, getConfigDir(), engineName), data, 0644)
 	if err != nil {
 		log.Println(err)
 	}
@@ -126,25 +151,4 @@ func getEngineSubFile(fileName string) string {
 	}
 
 	return filepath.Join(filepath.Dir(os.Args[0]), fileName)
-}
-
-func getMactabFile(engineName string) string {
-	u, err := user.Current()
-	if err != nil {
-		return fmt.Sprintf(mactabFile, "~", engineName)
-	}
-
-	return fmt.Sprintf(mactabFile, u.HomeDir, engineName)
-}
-
-func OpenMactabFile(engineName string) {
-	efPath := getMactabFile(engineName)
-	if _, err := os.Stat(efPath); os.IsNotExist(err) {
-		sampleFile := getEngineSubFile(sampleMactabFile)
-		sample, err := ioutil.ReadFile(sampleFile)
-		log.Println(err)
-		ioutil.WriteFile(efPath, sample, 0644)
-	}
-
-	exec.Command("xdg-open", efPath).Start()
 }

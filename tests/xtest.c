@@ -10,6 +10,7 @@
 #include <X11/keysym.h> //xproto-devel
 #include <X11/extensions/XTest.h>
 
+int timeout = 0;
 
 /**
  * milliseconds over 1000 will be ignored
@@ -41,7 +42,7 @@ void SendKeys(long keys[], int len) {
                 // key release
                 XTestFakeKeyEvent(display, modcode, False, 0);
                 XSync(display, 0);
-                delay(0, 50);
+                delay(0, timeout);
             }
 		}
 		XSync(display, 1);
@@ -55,7 +56,12 @@ void str_copy(char* dest, char* src, int start, int end) {
     }
 }
 
-int main() {
+int main(int argc, char * argv[]) {
+    if (argc == 2) {
+        timeout = atoi(argv[1]);
+    } else {
+        timeout = 50;
+    }
     FILE* sample = NULL;
     sample = fopen("xtest.data", "r+");
     int chr = 0;
