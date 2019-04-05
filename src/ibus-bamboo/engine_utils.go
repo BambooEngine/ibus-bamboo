@@ -205,6 +205,25 @@ func (e *IBusBambooEngine) isIgnoredKey(keyVal, state uint32) bool {
 	return e.zeroLocation
 }
 
+func (e *IBusBambooEngine) canProcessKey(keyVal, state uint32) bool {
+	if state&IBUS_CONTROL_MASK != 0 ||
+		state&IBUS_MOD1_MASK != 0 ||
+		state&IBUS_IGNORED_MASK != 0 ||
+		state&IBUS_SUPER_MASK != 0 ||
+		state&IBUS_HYPER_MASK != 0 ||
+		state&IBUS_META_MASK != 0 {
+		return false
+	}
+	if keyVal == IBUS_BackSpace || keyVal == IBUS_space {
+		return true
+	}
+	var keyRune = rune(keyVal)
+	if bamboo.IsWordBreakSymbol(keyRune) {
+		return true
+	}
+	return e.preeditor.CanProcessKey(keyRune)
+}
+
 func (e *IBusBambooEngine) reset() {
 	e.preeditor.Reset()
 }

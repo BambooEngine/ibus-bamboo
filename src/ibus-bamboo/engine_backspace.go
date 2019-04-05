@@ -23,10 +23,38 @@ import (
 	"fmt"
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
+	"github.com/godbus/dbus"
 	"time"
 )
 
 var keyPressChan = make(chan [3]uint32, 10)
+
+func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
+	if e.inX11ClipboardList() {
+		// we don't want to use ForwardKeyEvent api in X11 Clipboard mode (maybe Surrounding Text too)
+		var timeout = time.Duration(len(keyPressChan)) * 5 * time.Millisecond
+		if keyVal == IBUS_BackSpace {
+			if e.nFakeBackSpace > 0 {
+				e.nFakeBackSpace--
+				return false, nil
+			} else {
+				e.preeditor.RemoveLastChar()
+			}
+			time.Sleep(timeout)
+			return false, nil
+		}
+		if !e.canProcessKey(keyVal, state) {
+			e.preeditor.Reset()
+			e.resetFakeBackspace()
+			time.Sleep(timeout)
+			return false, nil
+		}
+	}
+	// if the main thread is busy processing, the keypress events come all mixed up
+	// so we enqueue these keypress events and process them sequentially on another thread
+	keyPressChan <- [3]uint32{keyVal, keyCode, state}
+	return true, nil
+}
 
 func (e *IBusBambooEngine) keyPressHandler() {
 	for {
@@ -34,6 +62,12 @@ func (e *IBusBambooEngine) keyPressHandler() {
 		case keyEvents := <-keyPressChan:
 			fmt.Println("Length of keyPressChan is ", len(keyPressChan))
 			var keyVal, keyCode, state = keyEvents[0], keyEvents[1], keyEvents[2]
+			if !e.canProcessKey(keyVal, state) {
+				e.preeditor.Reset()
+				e.resetFakeBackspace()
+				e.ForwardKeyEvent(keyVal, keyCode, state)
+				break
+			}
 			var keyRune = rune(keyVal)
 			if keyVal == IBUS_BackSpace {
 				if e.config.IBflags&IBautoNonVnRestore == 0 {
@@ -67,7 +101,7 @@ func (e *IBusBambooEngine) keyPressHandler() {
 				newRunes := []rune(e.getPreeditString())
 				e.updatePreviousText(newRunes, oldRunes, state)
 				break
-			} else if keyVal == IBUS_space || bamboo.IsWordBreakSymbol(keyRune) {
+			} else if bamboo.IsWordBreakSymbol(keyRune) {
 				// macro processing
 				var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode, true)
 				if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
@@ -76,7 +110,7 @@ func (e *IBusBambooEngine) keyPressHandler() {
 					e.updatePreviousText([]rune(macText), []rune(processedStr), state)
 					e.preeditor.Reset()
 					break
-				} else if e.mustFallbackToEnglish() {
+				} else if e.mustFallbackToEnglish() && !e.inX11ClipboardList() {
 					oldRunes := []rune(e.getPreeditString())
 					newRunes := []rune(e.getComposedString())
 					newRunes = append(newRunes, keyRune)
@@ -88,9 +122,6 @@ func (e *IBusBambooEngine) keyPressHandler() {
 				e.CommitText(ibus.NewText(string(keyRune)))
 				break
 			}
-			e.preeditor.Reset()
-			e.resetFakeBackspace()
-			e.ForwardKeyEvent(keyVal, keyCode, state)
 		}
 	}
 }
@@ -131,12 +162,12 @@ func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state u
 
 func (e *IBusBambooEngine) sendBackspaceAndNewRunes(nBackSpace int, newRunes []rune) {
 	if nBackSpace > 0 {
+		e.nFakeBackSpace = nBackSpace
 		e.SendBackSpace(nBackSpace)
 		time.Sleep(20 * time.Millisecond)
 	}
 	if nBackSpace > 0 && e.inX11ClipboardList() {
 		x11Copy(string(newRunes))
-		e.nFakeBackSpace = nBackSpace
 		x11Paste(e.shortcutKeysID)
 		// e.ForwardKeyEvent(IBUS_Insert, 110, IBUS_SHIFT_MASK)
 		// e.ForwardKeyEvent(IBUS_Insert, 110, IBUS_RELEASE_MASK)
@@ -147,7 +178,10 @@ func (e *IBusBambooEngine) sendBackspaceAndNewRunes(nBackSpace int, newRunes []r
 }
 
 func (e *IBusBambooEngine) SendBackSpace(n int) {
-	if e.inSurroundingTextList() {
+	if e.inX11ClipboardList() {
+		fmt.Printf("Sendding %d backspace via XTestFakeKeyEvent\n", n)
+		x11SendBackspace(uint32(n))
+	} else if e.inSurroundingTextList() {
 		fmt.Printf("Sendding %d backspace via SurroundingText\n", n)
 		e.DeleteSurroundingText(-int32(n), uint32(n))
 	} else if e.inForwardKeyList() {
@@ -156,9 +190,6 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 			e.ForwardKeyEvent(IBUS_BackSpace, 14, 0)
 			e.ForwardKeyEvent(IBUS_BackSpace, 14, IBUS_RELEASE_MASK)
 		}
-	} else if e.inX11ClipboardList() {
-		fmt.Printf("Sendding %d backspace via XTestFakeKeyEvent\n", n)
-		x11SendBackspace(uint32(n))
 	} else {
 		fmt.Println("There's something wrong with wmClasses")
 	}

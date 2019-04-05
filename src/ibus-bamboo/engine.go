@@ -94,14 +94,7 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 		return e.preeditProcessKeyEvent(keyVal, keyCode, state)
 	}
 	if e.inBackspaceWhiteList() {
-		if keyVal == IBUS_BackSpace && e.nFakeBackSpace > 0 { //fake backspace
-			e.nFakeBackSpace--
-			return false, nil
-		}
-		// if the main thread is busy processing, the keypress events come all mixed up
-		// so we enqueue these keypress events and process them sequentially on another thread
-		keyPressChan <- [3]uint32{keyVal, keyCode, state}
-		return true, nil
+		return e.bsProcessKeyEvent(keyVal, keyCode, state)
 	}
 	return e.preeditProcessKeyEvent(keyVal, keyCode, state)
 }

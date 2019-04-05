@@ -31,6 +31,11 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	var rawKeyLen = e.getRawKeyLen()
 	var keyRune = rune(keyVal)
 
+	if !e.canProcessKey(keyVal, state) {
+		e.ignorePreedit = false
+		e.commitPreedit(0)
+		return false, nil
+	}
 	if keyVal == IBUS_BackSpace {
 		e.ignorePreedit = false
 		if rawKeyLen > 0 {
@@ -60,7 +65,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		}
 		e.updatePreedit()
 		return true, nil
-	} else if keyVal == IBUS_space || bamboo.IsWordBreakSymbol(keyRune) {
+	} else if bamboo.IsWordBreakSymbol(keyRune) {
 		e.ignorePreedit = false
 		var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode, true)
 		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
@@ -70,10 +75,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		} else {
 			e.commitPreedit(keyVal)
 		}
-		return false, nil
 	}
-	e.ignorePreedit = false
-	e.commitPreedit(0)
 	return false, nil
 }
 

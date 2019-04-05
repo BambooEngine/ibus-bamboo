@@ -67,7 +67,7 @@ const (
 )
 
 var DefaultExceptedList = []string{
-	"unity-desktop",
+	"unity-dash",
 }
 var DefaultBrowserList = []string{
 	"Navigator:Firefox",
