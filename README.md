@@ -10,7 +10,7 @@ IBus Bamboo - Bộ gõ tiếng Việt cho Linux
   * VIQR, VNI, VPS, VISCII, BK HCM1, BK HCM2,…
   * Unicode UTF-8, Unicode NCR - for Web editors.
 * Nhiều kiểu gõ:
-  * Simple Telex, Telex 2, Telex 3, Telex + VNI + VIQR
+  * Telex, Telex 2, Telex 3, Telex + VNI + VIQR
   * VNI, VIQR, Microsoft layout
 * Nhiều chế độ gõ:
   * Kiểm tra chính tả (sử dụng từ điển/luật ghép vần)
@@ -26,7 +26,7 @@ Với Ubuntu
 ```sh
 sudo add-apt-repository ppa:bamboo-engine/ibus-bamboo
 sudo apt-get update
-sudo apt-get install ibus-bamboo
+sudo apt-get install ibus-bamboo -y
 ibus restart
 ```
 Với Arch Linux, cách cài đặt giống như trên AUR. Đầu tiên các bạn tải file PKGBUILD tương ứng về máy. Có 2 phiên bản để cài đặt, bản git là bản dùng mã nguồn mới nhất từ master, bản còn lại là release:
