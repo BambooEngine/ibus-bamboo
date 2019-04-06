@@ -29,19 +29,18 @@ sudo apt-get update
 sudo apt-get install ibus-bamboo
 ibus restart
 ```
-Với Arch Linux, cách cài đặt giống như trên AUR. Đầu tiên:
+Với Arch Linux, cách cài đặt giống như trên AUR. Đầu tiên các bạn tải file PKGBUILD tương ứng về máy. Có 2 phiên bản để cài đặt, bản git là bản dùng mã nguồn mới nhất từ master, bản còn lại là release:
 ```sh
-cd archlinux
+mkdir ibus-bamboo
+cd ibus-bamboo
+
+# nếu muốn cài bản git 
+wget https://raw.githubusercontent.com/BambooEngine/ibus-bamboo/master/archlinux/PKGBUILD-git -O PKGBUILD
+# nếu muốn cài bản release 
+wget https://raw.githubusercontent.com/BambooEngine/ibus-bamboo/master/archlinux/PKGBUILD-release -O PKGBUILD
 ```
-Nếu muốn cài đặt bản git (mới nhất, kéo trực tiếp từ master về) 
-```sh 
-cp PKGBUILD-git PKGBUILD
-``` 
-Nếu muốn cài đặt bản release.
-```sh 
-cp PKGBUILD-release PKGBUILD
-``` 
-Cuối cùng chạy 
+
+Cuối cùng build gói và cài đặt 
 ```sh
 makepkg -si
 ```
