@@ -43,6 +43,7 @@ const (
 	PropKeyMacroTable                  = "macro_table"
 	PropKeyEmojiEnabled                = "emoji_enabled"
 	PropKeyBambooConfiguration         = "bamboo_configuration"
+	PropKeyFakeBackspace               = "x11_fake_backspace"
 )
 
 var runMode = ""
@@ -76,18 +77,6 @@ func GetPropListByConfig(c *Config) *ibus.PropList {
 			Name:      "IBusProperty",
 			Key:       "-",
 			Type:      ibus.PROP_TYPE_MENU,
-			Label:     dbus.MakeVariant(ibus.NewText("Kiểu gõ")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("Kiểu gõ")),
-			Sensitive: true,
-			Visible:   true,
-			Icon:      "preferences-desktop",
-			Symbol:    dbus.MakeVariant(ibus.NewText("")),
-			SubProps:  dbus.MakeVariant(GetIMPropListByConfig(c)),
-		},
-		&ibus.Property{
-			Name:      "IBusProperty",
-			Key:       "-",
-			Type:      ibus.PROP_TYPE_MENU,
 			Label:     dbus.MakeVariant(ibus.NewText("Bảng mã")),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("Bảng mã")),
 			Sensitive: true,
@@ -95,6 +84,18 @@ func GetPropListByConfig(c *Config) *ibus.PropList {
 			Icon:      "fonts",
 			Symbol:    dbus.MakeVariant(ibus.NewText("")),
 			SubProps:  dbus.MakeVariant(GetCharsetPropListByConfig(c)),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       "-",
+			Type:      ibus.PROP_TYPE_MENU,
+			Label:     dbus.MakeVariant(ibus.NewText("Kiểu gõ")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Kiểu gõ")),
+			Sensitive: true,
+			Visible:   true,
+			Icon:      "preferences-desktop",
+			Symbol:    dbus.MakeVariant(ibus.NewText("")),
+			SubProps:  dbus.MakeVariant(GetIMPropListByConfig(c)),
 		},
 		&ibus.Property{
 			Name:      "IBusProperty",
@@ -126,8 +127,8 @@ func GetPropListByConfig(c *Config) *ibus.PropList {
 			Type:      ibus.PROP_TYPE_MENU,
 			Label:     dbus.MakeVariant(ibus.NewText("Tự động kết thúc từ")),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("Tự động kết thúc từ")),
-			Sensitive: true,
-			Visible:   true,
+			Sensitive: false,
+			Visible:   false,
 			Icon:      "appointment",
 			Symbol:    dbus.MakeVariant(ibus.NewText("")),
 			SubProps:  dbus.MakeVariant(GetAutoCommitPropListByConfig(c)),
@@ -174,15 +175,15 @@ func GetCharsetPropListByConfig(c *Config) *ibus.PropList {
 		})
 	for _, charset := range bamboo.GetCharsetNames() {
 		var state = ibus.PROP_STATE_UNCHECKED
-		if charset == c.Charset {
+		if charset == c.OutputCharset {
 			state = ibus.PROP_STATE_CHECKED
 		}
 		var imProp = &ibus.Property{
 			Name:      "IBusProperty",
-			Key:       "Charset-" + charset,
+			Key:       "OutputCharset-" + charset,
 			Type:      ibus.PROP_TYPE_RADIO,
 			Label:     dbus.MakeVariant(ibus.NewText(charset)),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("Charset: " + charset)),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("OutputCharset: " + charset)),
 			Sensitive: true,
 			Visible:   true,
 			State:     state,
@@ -346,6 +347,7 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 	toneStdChecked := ibus.PROP_STATE_UNCHECKED
 	toneFreeMarkingChecked := ibus.PROP_STATE_UNCHECKED
 	preeditInvisibilityChecked := ibus.PROP_STATE_UNCHECKED
+	x11FakeBackspaceChecked := ibus.PROP_STATE_UNCHECKED
 	emojiChecked := ibus.PROP_STATE_CHECKED
 	mouseMovementChecked := ibus.PROP_STATE_UNCHECKED
 	if c.IBflags&IBautoCommitWithMouseMovement != 0 {
@@ -361,6 +363,10 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 	if c.IBflags&IBpreeditInvisibility != 0 {
 		preeditInvisibilityChecked = ibus.PROP_STATE_CHECKED
 	}
+	if c.IBflags&IBfakeBackspaceEnabled != 0 {
+		x11FakeBackspaceChecked = ibus.PROP_STATE_CHECKED
+	}
+
 	if c.IBflags&IBemojiDisabled != 0 {
 		emojiChecked = ibus.PROP_STATE_UNCHECKED
 	}
@@ -424,6 +430,18 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 			Visible:   true,
 			State:     mouseMovementChecked,
 			Symbol:    dbus.MakeVariant(ibus.NewText("F")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       PropKeyFakeBackspace,
+			Type:      ibus.PROP_TYPE_TOGGLE,
+			Label:     dbus.MakeVariant(ibus.NewText("Fix lỗi gạch chân")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("FakeBackspace")),
+			Sensitive: true,
+			Visible:   true,
+			State:     x11FakeBackspaceChecked,
+			Symbol:    dbus.MakeVariant(ibus.NewText("X")),
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
 	)

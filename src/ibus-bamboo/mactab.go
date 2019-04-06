@@ -2,17 +2,15 @@ package main
 
 import (
 	"bufio"
-	"errors"
 	"fmt"
+	"io/ioutil"
+	"log"
 	"os"
-	"regexp"
-	"strconv"
+	"os/exec"
 	"strings"
 	"sync"
 	"time"
 )
-
-const MACRO_VERSION_UTF8 uint = 1
 
 type MacroTable struct {
 	sync.RWMutex
@@ -24,35 +22,6 @@ func NewMacroTable() *MacroTable {
 	return &MacroTable{}
 }
 
-//----------------------------------------------------------------------------
-// Read header, if it's present in the file. Get the version of the file
-// If header is absent, go back to the beginning of file and set version to 0
-// Return false if reading failed.
-//
-// Header format: # DO NOT DELETE THIS LINE*** version=n ***
-//----------------------------------------------------------------------------
-func (e *MacroTable) ReadMacVersion(rd *bufio.Reader) (uint, error) {
-	e.Lock()
-	defer e.Unlock()
-	line, _, err := rd.ReadLine()
-	if err != nil || len(line) <= 0 {
-		return 0, nil
-	}
-	var s = strings.TrimSpace(string(line))
-	var reg = regexp.MustCompile(`DO NOT DELETE THIS LINE\*\*\*\sversion=(\d+)\s\*\*\*`)
-	if reg.MatchString(s) {
-		var matches = reg.FindStringSubmatch(s)
-		var version, err = strconv.Atoi(matches[1])
-		return uint(version), err
-	}
-	return 0, errors.New("invalid header")
-}
-
-//---------------------------------------------------------------
-func (e *MacroTable) WriteHeader(f *os.File) {
-	f.WriteString(fmt.Sprintf("# DO NOT DELETE THIS LINE*** version=%d ***\n", MACRO_VERSION_UTF8))
-}
-
 //---------------------------------------------------------------
 func (e *MacroTable) LoadFromFile(macroFileName string) error {
 	f, err := os.Open(macroFileName)
@@ -62,10 +31,6 @@ func (e *MacroTable) LoadFromFile(macroFileName string) error {
 	}
 	e.mTable = map[string]string{}
 	rd := bufio.NewReader(f)
-	var version uint
-	if version, err = e.ReadMacVersion(rd); err != nil {
-		version = 0
-	}
 	for {
 		line, _, err := rd.ReadLine()
 		if err != nil {
@@ -79,24 +44,6 @@ func (e *MacroTable) LoadFromFile(macroFileName string) error {
 		if len(list) == 2 {
 			e.mTable[list[0]] = list[1]
 		}
-	}
-	// Convert old version
-	if version != MACRO_VERSION_UTF8 {
-		//e.WriteToFile(macroFileName)
-	}
-	return nil
-}
-
-//---------------------------------------------------------------
-func (e *MacroTable) WriteToFile(macroFileName string) error {
-	f, err := os.Open(macroFileName)
-	defer f.Close()
-	if err != nil {
-		return err
-	}
-	e.WriteHeader(f)
-	for key, text := range e.mTable {
-		f.WriteString(fmt.Sprintf("%s:%s\n", key, text))
 	}
 	return nil
 }
@@ -125,7 +72,7 @@ func (e *MacroTable) IncludeKey(key string) bool {
 }
 
 //---------------------------------------------------------------
-func (e *MacroTable) Enable() {
+func (e *MacroTable) Enable(engineName string) {
 	e.Lock()
 	defer e.Unlock()
 	e.enable = true
@@ -134,7 +81,7 @@ func (e *MacroTable) Enable() {
 		cont := true
 		modTime := time.Now()
 
-		efPath := getMactabFile(EngineName)
+		efPath := getMactabFile(engineName)
 
 		for cont {
 			if sta, _ := os.Stat(efPath); sta != nil {
@@ -157,4 +104,22 @@ func (e *MacroTable) Disable() {
 	defer e.Unlock()
 	e.enable = false
 	e.mTable = map[string]string{}
+}
+
+//---------------------------------------------------------------
+func getMactabFile(engineName string) string {
+	return fmt.Sprintf(mactabFile, getConfigDir(), engineName)
+}
+
+//---------------------------------------------------------------
+func OpenMactabFile(engineName string) {
+	efPath := getMactabFile(engineName)
+	if _, err := os.Stat(efPath); os.IsNotExist(err) {
+		sampleFile := getEngineSubFile(sampleMactabFile)
+		sample, err := ioutil.ReadFile(sampleFile)
+		log.Println(err)
+		ioutil.WriteFile(efPath, sample, 0644)
+	}
+
+	exec.Command("xdg-open", efPath).Start()
 }

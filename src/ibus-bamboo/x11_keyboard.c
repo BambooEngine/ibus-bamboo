@@ -42,15 +42,12 @@ void x11SendBackspace(int n) {
     if (display) {
         KeyCode modcode;
         modcode = XKeysymToKeycode(display, XStringToKeysym("BackSpace"));
-        XTestFakeKeyEvent(display, modcode, False, 0);
-        XSync(display, 0);
         for (int i=0; i<n; i++) {
             XTestFakeKeyEvent(display, modcode, True, 0);
             XTestFakeKeyEvent(display, modcode, False, 0);
             XSync(display, 0);
+            delay(0, 10);
         }
-        XSync(display, 0);
-        delay(0, 5);
         XCloseDisplay(display);
     }
 }
@@ -58,7 +55,6 @@ void x11SendBackspace(int n) {
 void x11Paste(int n) {
     Display *display = XOpenDisplay(NULL);
     if (display) {
-        XAutoRepeatOff(display);
         KeyCode xk_shift_l = XKeysymToKeycode(display, XK_Shift_L);
         KeyCode xk_shift_r = XKeysymToKeycode(display, XK_Shift_R);
         KeyCode xk_control = XKeysymToKeycode(display, XK_Control_L);
@@ -86,8 +82,6 @@ void x11Paste(int n) {
             break;
         }
         XSync(display, 0);
-
-        XAutoRepeatOn(display);
         XCloseDisplay(display);
     }
 }

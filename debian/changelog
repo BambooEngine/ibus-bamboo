@@ -1,3 +1,12 @@
+ibus-bamboo (0.4.0ubuntu1) stable; urgency=medium
+
+  * Release 0.4.0
+    - Fix fake backspace mechanism
+    - Enable fake backspace mechanism by default
+    - Change config folder
+
+ -- Luong Thanh Lam <ltlam93@gmail.com>  Sat, 06 Apr 2019 09:38:02 +0700
+
 ibus-bamboo (0.3.4ubuntu2) stable; urgency=medium
 
   * Fix a preedit issue

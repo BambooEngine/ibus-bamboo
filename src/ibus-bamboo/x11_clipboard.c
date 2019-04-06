@@ -125,7 +125,7 @@ void x11Copy(char *str) {
     }
     strcpy(text, str);
     done = 0;
-    fprintf(stderr, "...x11Clipboard text=%s\n", text);
+    fprintf(stderr, "...x11Clipboard text=%s, clipboard_running=%d\n", text, clipboard_running);
     if (clipboard_running == 0) {
         clipboard_init();
     }

@@ -20,7 +20,10 @@
 package main
 
 import (
+	"bufio"
 	"github.com/BambooEngine/bamboo-core"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"unicode"
@@ -102,4 +105,36 @@ func sortStrings(list []string) []string {
 	var strList = byString(list)
 	sort.Sort(strList)
 	return strList
+}
+
+func fileExist(p string) bool {
+	sta, err := os.Stat(p)
+	return err == nil && !sta.IsDir()
+}
+
+func loadDictionary(dataFiles ...string) (map[string]bool, error) {
+	var dictionary = map[string]bool{}
+	for _, dataFile := range dataFiles {
+		if !fileExist(dataFile) && !filepath.IsAbs(dataFile) {
+			dataFile = filepath.Join(filepath.Dir(os.Args[0]), dataFile)
+		}
+		f, err := os.Open(dataFile)
+		if err != nil {
+			return nil, err
+		}
+		rd := bufio.NewReader(f)
+		for {
+			line, _, err := rd.ReadLine()
+			if err != nil {
+				break
+			}
+			if len(line) == 0 {
+				continue
+			}
+			dictionary[string(line)] = true
+			//bamboo.AddTrie(rootWordTrie, []rune(string(line)), false)
+		}
+		f.Close()
+	}
+	return dictionary, nil
 }

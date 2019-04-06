@@ -29,7 +29,13 @@ import (
 
 func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
 	var rawKeyLen = e.getRawKeyLen()
+	var keyRune = rune(keyVal)
 
+	if !e.isValidState(state) {
+		e.ignorePreedit = false
+		e.commitPreedit(0)
+		return false, nil
+	}
 	if keyVal == IBUS_BackSpace {
 		e.ignorePreedit = false
 		if rawKeyLen > 0 {
@@ -40,28 +46,6 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 			return false, nil
 		}
 	}
-
-	if keyVal == IBUS_Return || keyVal == IBUS_KP_Enter {
-		e.ignorePreedit = false
-		if rawKeyLen > 0 {
-			e.commitPreedit(keyVal)
-			e.ForwardKeyEvent(keyVal, keyCode, state)
-			return true, nil
-		} else {
-			return false, nil
-		}
-	}
-
-	if keyVal == IBUS_Escape {
-		e.ignorePreedit = false
-		if rawKeyLen > 0 {
-			e.commitPreedit(keyVal)
-			return true, nil
-		}
-		return false, nil
-	}
-
-	var keyRune = rune(keyVal)
 	if e.preeditor.CanProcessKey(keyRune) {
 		if state&IBUS_LOCK_MASK != 0 {
 			keyRune = toUpper(keyRune)
@@ -81,7 +65,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		}
 		e.updatePreedit()
 		return true, nil
-	} else if keyVal == IBUS_space || bamboo.IsWordBreakSymbol(keyRune) {
+	} else if bamboo.IsWordBreakSymbol(keyRune) {
 		e.ignorePreedit = false
 		var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode, true)
 		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
@@ -91,8 +75,8 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		} else {
 			e.commitPreedit(keyVal)
 		}
-		return false, nil
 	}
+	e.ignorePreedit = false
 	e.commitPreedit(0)
 	return false, nil
 }
@@ -198,7 +182,7 @@ func (e *IBusBambooEngine) getComposedString() string {
 }
 
 func (e *IBusBambooEngine) encodeText(text string) string {
-	return bamboo.Encode(e.config.Charset, text)
+	return bamboo.Encode(e.config.OutputCharset, text)
 }
 
 func (e *IBusBambooEngine) getProcessedString(mode bamboo.Mode, letterOnly bool) string {
@@ -213,9 +197,6 @@ func (e *IBusBambooEngine) getPreeditString() string {
 }
 
 func (e *IBusBambooEngine) getMode() bamboo.Mode {
-	if e.config.IBflags&IBautoNonVnRestore == 0 {
-		return bamboo.VietnameseMode
-	}
 	if e.shouldFallbackToEnglish() {
 		return bamboo.EnglishMode
 	}

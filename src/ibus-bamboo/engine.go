@@ -29,9 +29,6 @@ import (
 	"sync"
 )
 
-const nFakeBackspaceDefault = 0
-const nKeyEventQueueMax = 10
-
 type IBusBambooEngine struct {
 	sync.Mutex
 	ibus.Engine
@@ -50,8 +47,6 @@ type IBusBambooEngine struct {
 	emojiLookupTable    *ibus.LookupTable
 	capabilities        uint32
 	nFakeBackSpace      int
-	shortcutKeysID      int
-	keyEventQueue       [][]uint32
 	emoji               *BambooEmoji
 }
 
@@ -71,48 +66,10 @@ Return:
 This function gets called whenever a key is pressed.
 */
 func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
-	if e.inX11ClipboardList() {
-		e.Lock()
-		defer e.Unlock()
-	}
 	if e.isIgnoredKey(keyVal, state) {
 		return false, nil
 	}
-	// Fake X11 Clipboard backspace processing guard
-	// NOTICE: Some key events (Ctrl, Alt,...) will be enqueued but never sent to X-Client
-	if keyVal != IBUS_BackSpace && e.inX11ClipboardList() {
-		//log.Printf("Number of fake backspaces: %d | 0x%04x | %d\n", e.nFakeBackSpace, keyCode, len(e.keyEventQueue))
-		if e.nFakeBackSpace > nFakeBackspaceDefault && len(e.keyEventQueue) < nKeyEventQueueMax {
-			e.keyEventQueue = append(e.keyEventQueue, []uint32{keyVal, keyCode, state})
-			return true, nil
-		} else if e.keyEventQueue != nil {
-			e.resetFakeBackspace()
-			for _, keyEvents := range e.keyEventQueue {
-				e.processKeyEvent(keyEvents[0], keyEvents[1], keyEvents[2])
-			}
-			e.keyEventQueue = nil
-		}
-	}
-	return e.processKeyEvent(keyVal, keyCode, state)
-}
-
-func (e *IBusBambooEngine) processKeyEvent(keyVal, keyCode, state uint32) (bool, *dbus.Error) {
-	var rawKeyLen = e.getRawKeyLen()
-	if state&IBUS_CONTROL_MASK != 0 ||
-		state&IBUS_MOD1_MASK != 0 ||
-		state&IBUS_IGNORED_MASK != 0 ||
-		state&IBUS_SUPER_MASK != 0 ||
-		state&IBUS_HYPER_MASK != 0 ||
-		state&IBUS_META_MASK != 0 {
-		e.ignorePreedit = false
-		if rawKeyLen == 0 {
-			return false, nil
-		} else {
-			//while typing, do not process control keys
-			return true, nil
-		}
-	}
-	log.Printf("keyCode 0x%04x keyval 0x%04x | %c\n", keyCode, keyVal, rune(keyVal))
+	log.Printf("keyCode 0x%04x keyval 0x%04x | %c | %d\n", keyCode, keyVal, rune(keyVal), len(keyPressChan))
 	if keyVal == IBUS_OpenLookupTable && e.isLookupTableOpened == false {
 		e.preeditor.Reset()
 		e.isLookupTableOpened = true
@@ -136,13 +93,13 @@ func (e *IBusBambooEngine) processKeyEvent(keyVal, keyCode, state uint32) (bool,
 		return e.preeditProcessKeyEvent(keyVal, keyCode, state)
 	}
 	if e.inBackspaceWhiteList() {
-		return e.backspaceProcessKeyEvent(keyVal, keyCode, state)
+		return e.bsProcessKeyEvent(keyVal, keyCode, state)
 	}
 	return e.preeditProcessKeyEvent(keyVal, keyCode, state)
 }
 
 func (e *IBusBambooEngine) FocusIn() *dbus.Error {
-	fmt.Print("FocusIn.")
+	log.Print("FocusIn.")
 	var oldWmClasses = e.wmClasses
 	e.wmClasses = x11GetFocusWindowClass()
 	fmt.Printf("WM_CLASS=(%s)\n", e.wmClasses)
@@ -158,7 +115,7 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 }
 
 func (e *IBusBambooEngine) FocusOut() *dbus.Error {
-	fmt.Print("FocusOut.")
+	log.Print("FocusOut.")
 	//e.wmClasses = ""
 	return nil
 }
@@ -170,13 +127,11 @@ func (e *IBusBambooEngine) Reset() *dbus.Error {
 
 func (e *IBusBambooEngine) Enable() *dbus.Error {
 	fmt.Print("Enable.")
-
 	if e.config.IBflags&IBautoCommitWithMouseMovement != 0 {
 		mouseCaptureInit()
 	}
-
 	if e.config.IBflags&IBmarcoEnabled != 0 {
-		e.macroTable.Enable()
+		e.macroTable.Enable(e.engineName)
 	}
 	return nil
 }
@@ -249,11 +204,11 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		return nil
 	}
 	if propName == PropKeyBambooConfiguration {
-		exec.Command("xdg-open", getBambooConfigurationPath(e.engineName)).Start()
+		exec.Command("xdg-open", getConfigPath(e.engineName)).Start()
 		return nil
 	}
 	if propName == PropKeyMacroTable {
-		OpenMactabFile(EngineName)
+		OpenMactabFile(e.engineName)
 		return nil
 	}
 
@@ -359,7 +314,7 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 			e.config.IBflags &= ^IBautoCommitWithVnNotMatch
 			e.config.IBflags &= ^IBautoCommitWithVnFullMatch
 			e.config.IBflags &= ^IBautoCommitWithVnWordBreak
-			e.macroTable.Enable()
+			e.macroTable.Enable(e.engineName)
 		} else {
 			e.config.IBflags &= ^IBmarcoEnabled
 			e.macroTable.Disable()
@@ -372,9 +327,16 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 			e.config.IBflags &= ^IBpreeditInvisibility
 		}
 	}
+	if propName == PropKeyFakeBackspace {
+		if propState == ibus.PROP_STATE_CHECKED {
+			e.config.IBflags |= IBfakeBackspaceEnabled
+		} else {
+			e.config.IBflags &= ^IBfakeBackspaceEnabled
+		}
+	}
 	var charset, foundCs = getCharsetFromPropKey(propName)
 	if foundCs && isValidCharset(charset) && propState == ibus.PROP_STATE_CHECKED {
-		e.config.Charset = charset
+		e.config.OutputCharset = charset
 	}
 	if _, found := e.config.InputMethodDefinitions[propName]; found && propState == ibus.PROP_STATE_CHECKED {
 		e.config.InputMethod = propName

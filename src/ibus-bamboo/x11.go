@@ -86,7 +86,7 @@ func x11Paste(n int) {
 	C.x11Paste(C.int(n))
 }
 
-func x11SendBackspace(n uint32) {
+func x11SendBackspace(n int) {
 	C.x11SendBackspace(C.int(n))
 }
 
