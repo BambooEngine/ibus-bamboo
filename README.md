@@ -18,7 +18,7 @@ IBus Bamboo - Bộ gõ tiếng Việt cho Linux
   * Bỏ dấu tự do, Gõ tắt (macro),...
 * Sử dụng phím tắt `<Shift>`+`~` để loại trừ ứng dụng không dùng bộ gõ, chuyển qua lại giữa các chế độ gõ:
   	* Pre-edit (default)
-  	* Surrounding text, IBus Forward key event, X11 Clipboard
+  	* Surrounding text, IBus Forward key event, XTestFakeKeyEvent
    ![ibus-bamboo](https://github.com/BambooEngine/ibus-bamboo/raw/gh-resources/demo.gif)
 
 ### Cài đặt (Ubuntu và Arch Linux)
