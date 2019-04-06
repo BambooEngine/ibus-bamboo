@@ -31,7 +31,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	var rawKeyLen = e.getRawKeyLen()
 	var keyRune = rune(keyVal)
 
-	if !e.canProcessKey(keyVal, state) {
+	if !e.isValidState(state) {
 		e.ignorePreedit = false
 		e.commitPreedit(0)
 		return false, nil
@@ -76,6 +76,8 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 			e.commitPreedit(keyVal)
 		}
 	}
+	e.ignorePreedit = false
+	e.commitPreedit(0)
 	return false, nil
 }
 

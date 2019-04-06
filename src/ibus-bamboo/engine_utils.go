@@ -44,16 +44,16 @@ func GetIBusBambooEngine(engineName string) func(conn *dbus.Conn, engineName str
 	var isRunning = false
 
 	return func(conn *dbus.Conn, ngName string) dbus.ObjectPath {
+		config = LoadConfig(engineName)
 		engine := &IBusBambooEngine{
-			Engine:         ibus.BaseEngine(conn, objectPath),
-			preeditor:      preeditor,
-			engineName:     engineName,
-			config:         config,
-			propList:       GetPropListByConfig(config),
-			macroTable:     mTable,
-			dictionary:     dictionary,
-			nFakeBackSpace: 0,
-			emoji:          bambooEmoji,
+			Engine:     ibus.BaseEngine(conn, objectPath),
+			preeditor:  preeditor,
+			engineName: engineName,
+			config:     config,
+			propList:   GetPropListByConfig(config),
+			macroTable: mTable,
+			dictionary: dictionary,
+			emoji:      bambooEmoji,
 		}
 		ibus.PublishEngine(conn, objectPath, engine)
 
@@ -85,9 +85,9 @@ func (e *IBusBambooEngine) getRawKeyLen() int {
 
 var lookupTableConfiguration = []string{
 	"Cấu hình mặc định (Pre-edit)",
-	"Fix gạch chân (Surrounding Text)",
-	"Fix gạch chân (Forward key event)",
-	"Fix gạch chân (X11 Clipboard)",
+	"Fix gạch chân (SurroundingText)",
+	"Fix gạch chân (ForwardKeyEvent)",
+	"Fix gạch chân (XTestFakeKeyEvent)",
 	"Thêm vào danh sách loại trừ",
 }
 
@@ -175,25 +175,8 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 }
 
 func (e *IBusBambooEngine) isIgnoredKey(keyVal, state uint32) bool {
-	if e.inX11ClipboardList() {
-		if state&IBUS_SHIFT_MASK != 0 && keyVal == IBUS_Insert {
-			fmt.Println("Received Shift+Insert.")
-			return true
-		}
-	}
 	if state&IBUS_RELEASE_MASK != 0 {
 		//Ignore key-up event
-		return true
-	}
-	if keyVal == IBUS_Shift_L {
-		if state&IBUS_SHIFT_MASK == 0 {
-			e.shortcutKeysID = 1
-		}
-		return true
-	} else if keyVal == IBUS_Shift_R {
-		if state&IBUS_SHIFT_MASK == 0 {
-			e.shortcutKeysID = 0
-		}
 		return true
 	}
 	if e.inExceptedList() {
@@ -205,7 +188,7 @@ func (e *IBusBambooEngine) isIgnoredKey(keyVal, state uint32) bool {
 	return e.zeroLocation
 }
 
-func (e *IBusBambooEngine) canProcessKey(keyVal, state uint32) bool {
+func (e *IBusBambooEngine) isValidState(state uint32) bool {
 	if state&IBUS_CONTROL_MASK != 0 ||
 		state&IBUS_MOD1_MASK != 0 ||
 		state&IBUS_IGNORED_MASK != 0 ||
@@ -214,6 +197,10 @@ func (e *IBusBambooEngine) canProcessKey(keyVal, state uint32) bool {
 		state&IBUS_META_MASK != 0 {
 		return false
 	}
+	return true
+}
+
+func (e *IBusBambooEngine) canProcessKey(keyVal uint32) bool {
 	if keyVal == IBUS_BackSpace || keyVal == IBUS_space {
 		return true
 	}

@@ -42,6 +42,8 @@ func main() {
 		log.Println("Running debug mode")
 		runMode = " (debug)"
 
+		log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+
 		bus := ibus.NewBus()
 		bus.RegisterComponent(makeDebugComponent())
 

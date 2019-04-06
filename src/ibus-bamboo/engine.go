@@ -47,7 +47,6 @@ type IBusBambooEngine struct {
 	emojiLookupTable    *ibus.LookupTable
 	capabilities        uint32
 	nFakeBackSpace      int
-	shortcutKeysID      int
 	emoji               *BambooEmoji
 }
 
@@ -70,7 +69,7 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 	if e.isIgnoredKey(keyVal, state) {
 		return false, nil
 	}
-	log.Printf("keyCode 0x%04x keyval 0x%04x | %c\n", keyCode, keyVal, rune(keyVal))
+	log.Printf("keyCode 0x%04x keyval 0x%04x | %c | %d\n", keyCode, keyVal, rune(keyVal), len(keyPressChan))
 	if keyVal == IBUS_OpenLookupTable && e.isLookupTableOpened == false {
 		e.preeditor.Reset()
 		e.isLookupTableOpened = true
@@ -100,7 +99,7 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 }
 
 func (e *IBusBambooEngine) FocusIn() *dbus.Error {
-	fmt.Print("FocusIn.")
+	log.Print("FocusIn.")
 	var oldWmClasses = e.wmClasses
 	e.wmClasses = x11GetFocusWindowClass()
 	fmt.Printf("WM_CLASS=(%s)\n", e.wmClasses)
@@ -116,7 +115,7 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 }
 
 func (e *IBusBambooEngine) FocusOut() *dbus.Error {
-	fmt.Print("FocusOut.")
+	log.Print("FocusOut.")
 	//e.wmClasses = ""
 	return nil
 }
@@ -128,20 +127,12 @@ func (e *IBusBambooEngine) Reset() *dbus.Error {
 
 func (e *IBusBambooEngine) Enable() *dbus.Error {
 	fmt.Print("Enable.")
-
 	if e.config.IBflags&IBautoCommitWithMouseMovement != 0 {
 		mouseCaptureInit()
 	}
-
 	if e.config.IBflags&IBmarcoEnabled != 0 {
 		e.macroTable.Enable(e.engineName)
 	}
-
-	if e.inX11ClipboardList() {
-		x11Copy("")
-		x11Paste(e.shortcutKeysID)
-	}
-
 	return nil
 }
 

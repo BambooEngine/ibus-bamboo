@@ -24,6 +24,7 @@ import (
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
+	"log"
 	"time"
 )
 
@@ -32,7 +33,11 @@ var keyPressChan = make(chan [3]uint32, 10)
 func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
 	if e.inX11ClipboardList() {
 		// we don't want to use ForwardKeyEvent api in X11 Clipboard mode (maybe Surrounding Text too)
-		var timeout = time.Duration(len(keyPressChan)) * 5 * time.Millisecond
+		var sleep = func() {
+			for len(keyPressChan) > 0 {
+				time.Sleep(5 * time.Millisecond)
+			}
+		}
 		if keyVal == IBUS_BackSpace {
 			if e.nFakeBackSpace > 0 {
 				e.nFakeBackSpace--
@@ -40,13 +45,13 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 			} else {
 				e.preeditor.RemoveLastChar()
 			}
-			time.Sleep(timeout)
+			sleep()
 			return false, nil
 		}
-		if !e.canProcessKey(keyVal, state) {
+		if !e.isValidState(state) || !e.canProcessKey(keyVal) {
 			e.preeditor.Reset()
 			e.resetFakeBackspace()
-			time.Sleep(timeout)
+			sleep()
 			return false, nil
 		}
 	}
@@ -60,11 +65,9 @@ func (e *IBusBambooEngine) keyPressHandler() {
 	for {
 		select {
 		case keyEvents := <-keyPressChan:
-			fmt.Println("Length of keyPressChan is ", len(keyPressChan))
 			var keyVal, keyCode, state = keyEvents[0], keyEvents[1], keyEvents[2]
-			if !e.canProcessKey(keyVal, state) {
+			if !e.isValidState(state) {
 				e.preeditor.Reset()
-				e.resetFakeBackspace()
 				e.ForwardKeyEvent(keyVal, keyCode, state)
 				break
 			}
@@ -122,6 +125,8 @@ func (e *IBusBambooEngine) keyPressHandler() {
 				e.CommitText(ibus.NewText(string(keyRune)))
 				break
 			}
+			e.preeditor.Reset()
+			e.ForwardKeyEvent(keyVal, keyCode, state)
 		}
 	}
 }
@@ -161,34 +166,41 @@ func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state u
 }
 
 func (e *IBusBambooEngine) sendBackspaceAndNewRunes(nBackSpace int, newRunes []rune) {
+	if e.inX11ClipboardList() {
+		if nBackSpace > 0 {
+			e.nFakeBackSpace = nBackSpace
+			e.SendBackSpace(nBackSpace)
+			for e.nFakeBackSpace > 0 && len(keyPressChan) < 5 {
+				time.Sleep(5 * time.Millisecond)
+			}
+			time.Sleep(time.Duration(nBackSpace) * 10 * time.Millisecond)
+			e.SendText(newRunes)
+		} else {
+			e.SendText(newRunes)
+		}
+		return
+	}
 	if nBackSpace > 0 {
-		e.nFakeBackSpace = nBackSpace
 		e.SendBackSpace(nBackSpace)
-		time.Sleep(20 * time.Millisecond)
 	}
-	if nBackSpace > 0 && e.inX11ClipboardList() {
-		x11Copy(string(newRunes))
-		x11Paste(e.shortcutKeysID)
-		// e.ForwardKeyEvent(IBUS_Insert, 110, IBUS_SHIFT_MASK)
-		// e.ForwardKeyEvent(IBUS_Insert, 110, IBUS_RELEASE_MASK)
-	} else {
-		e.SendText(newRunes)
-	}
+	e.SendText(newRunes)
 	time.Sleep(10 * time.Millisecond)
 }
 
 func (e *IBusBambooEngine) SendBackSpace(n int) {
 	if e.inX11ClipboardList() {
 		fmt.Printf("Sendding %d backspace via XTestFakeKeyEvent\n", n)
-		x11SendBackspace(uint32(n))
+		x11SendBackspace(n)
 	} else if e.inSurroundingTextList() {
 		fmt.Printf("Sendding %d backspace via SurroundingText\n", n)
 		e.DeleteSurroundingText(-int32(n), uint32(n))
+		time.Sleep(5 * time.Millisecond)
 	} else if e.inForwardKeyList() {
 		fmt.Printf("Sendding %d backspace via IBus ForwardKeyEvent\n", n)
 		for i := 0; i < n; i++ {
 			e.ForwardKeyEvent(IBUS_BackSpace, 14, 0)
 			e.ForwardKeyEvent(IBUS_BackSpace, 14, IBUS_RELEASE_MASK)
+			time.Sleep(10 * time.Millisecond)
 		}
 	} else {
 		fmt.Println("There's something wrong with wmClasses")
@@ -200,6 +212,6 @@ func (e *IBusBambooEngine) resetFakeBackspace() {
 }
 
 func (e *IBusBambooEngine) SendText(rs []rune) {
-	fmt.Println("Commit text", string(rs))
+	log.Println("Commit text", string(rs))
 	e.CommitText(ibus.NewText(string(rs)))
 }
