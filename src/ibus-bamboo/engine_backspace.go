@@ -122,7 +122,7 @@ func (e *IBusBambooEngine) keyPressHandler() {
 					break
 				}
 				e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
-				e.CommitText(ibus.NewText(string(keyRune)))
+				e.SendText([]rune{keyRune})
 				break
 			}
 			e.preeditor.Reset()
@@ -151,10 +151,13 @@ func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state u
 	fmt.Println("Updating Previous Text", string(oldRunes), string(newRunes), diffFrom)
 
 	nBackSpace := 0
-	if diffFrom < newLen && diffFrom < oldLen && e.inBrowserList() {
+	// workaround for chrome and firefox's address bar
+	if e.firstTimeSendingBS && diffFrom < newLen && diffFrom < oldLen && e.inBrowserList() {
+		fmt.Println("Append a deadkey")
 		e.SendText([]rune(" "))
 		time.Sleep(10 * time.Millisecond)
 		nBackSpace += 1
+		e.firstTimeSendingBS = false
 	}
 
 	if diffFrom < oldLen {
@@ -184,7 +187,6 @@ func (e *IBusBambooEngine) sendBackspaceAndNewRunes(nBackSpace int, newRunes []r
 		e.SendBackSpace(nBackSpace)
 	}
 	e.SendText(newRunes)
-	time.Sleep(10 * time.Millisecond)
 }
 
 func (e *IBusBambooEngine) SendBackSpace(n int) {
@@ -195,8 +197,14 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 		fmt.Printf("Sendding %d backspace via SurroundingText\n", n)
 		e.DeleteSurroundingText(-int32(n), uint32(n))
 		time.Sleep(5 * time.Millisecond)
+	} else if e.inDirectForwardKeyList() {
+		fmt.Printf("Sendding %d backspace via ForwardKeyEvent *\n", n)
+		for i := 0; i < n; i++ {
+			e.ForwardKeyEvent(IBUS_BackSpace, 14, 0)
+		}
+		time.Sleep(5 * time.Millisecond)
 	} else if e.inForwardKeyList() {
-		fmt.Printf("Sendding %d backspace via IBus ForwardKeyEvent\n", n)
+		fmt.Printf("Sendding %d backspace via ForwardKeyEvent **\n", n)
 		for i := 0; i < n; i++ {
 			e.ForwardKeyEvent(IBUS_BackSpace, 14, 0)
 			e.ForwardKeyEvent(IBUS_BackSpace, 14, IBUS_RELEASE_MASK)
@@ -212,6 +220,18 @@ func (e *IBusBambooEngine) resetFakeBackspace() {
 }
 
 func (e *IBusBambooEngine) SendText(rs []rune) {
-	log.Println("Commit text", string(rs))
+	if e.inDirectForwardKeyList() {
+		log.Println("Forward as commit", string(rs))
+		for _, chr := range rs {
+			var keyVal = keysymsMapping[chr]
+			if keyVal == 0 {
+				keyVal = uint32(chr)
+			}
+			e.ForwardKeyEvent(keyVal, 0, 0)
+		}
+		return
+	}
+	log.Println("Sending text", string(rs))
 	e.CommitText(ibus.NewText(string(rs)))
+	time.Sleep(10 * time.Millisecond)
 }

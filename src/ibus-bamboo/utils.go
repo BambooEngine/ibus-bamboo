@@ -24,6 +24,7 @@ import (
 	"github.com/BambooEngine/bamboo-core"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"unicode"
@@ -46,6 +47,17 @@ func toUpper(keyRune rune) rune {
 func inStringList(list []string, str string) bool {
 	for _, s := range list {
 		if s == str {
+			return true
+		}
+	}
+	return false
+}
+
+func inWMList(list []string, str string) bool {
+	for _, s := range list {
+		if s == str {
+			return true
+		} else if re, err := regexp.Compile(s); err == nil && re.MatchString(str) {
 			return true
 		}
 	}

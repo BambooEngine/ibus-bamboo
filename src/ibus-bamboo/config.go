@@ -66,27 +66,45 @@ const (
 		IBpreeditInvisibility | IBautoCommitWithMouseMovement | IBemojiDisabled | IBfakeBackspaceEnabled
 )
 
-var DefaultExceptedList = []string{
-	"unity-dash",
-}
+var DefaultExceptedList = []string{}
 var DefaultBrowserList = []string{
 	"Navigator:Firefox",
 	"google-chrome:Google-chrome",
 	"chromium-browser:Chromium-browser",
 }
+var DefaultPreeditWhiteList = []string{
+	"google-chrome:Google-chrome",
+	"chromium-browser:Chromium-browser",
+}
+var DefaultX11ClipboardWhiteList = []string{
+	"unity-dash",
+	"goldendict:GoldenDict",
+}
+var DefaultDirectForwardKeyWhiteList = []string{
+	"Navigator:Firefox",
+	"gimp-2.8:Gimp-2.8",
+	"gimp-2.9:Gimp-2.9",
+	"gimp-2.10:Gimp-2.10",
+	"gimp-2.11:Gimp-2.11",
+}
+var DefaultSurroundingTextWhiteList = []string{
+	"libreoffice:libreoffice-writer",
+	"libreoffice:libreoffice-calc",
+}
 
 type Config struct {
-	InputMethod              string
-	InputMethodDefinitions   map[string]bamboo.InputMethodDefinition
-	OutputCharset            string
-	Flags                    uint
-	IBflags                  uint
-	AutoCommitAfter          int64
-	ExceptedList             []string
-	PreeditWhiteList         []string
-	X11ClipboardWhiteList    []string
-	ForwardKeyWhiteList      []string
-	SurroundingTextWhiteList []string
+	InputMethod               string
+	InputMethodDefinitions    map[string]bamboo.InputMethodDefinition
+	OutputCharset             string
+	Flags                     uint
+	IBflags                   uint
+	AutoCommitAfter           int64
+	ExceptedList              []string
+	PreeditWhiteList          []string
+	X11ClipboardWhiteList     []string
+	ForwardKeyWhiteList       []string
+	DirectForwardKeyWhiteList []string
+	SurroundingTextWhiteList  []string
 }
 
 func getConfigDir() string {
@@ -109,17 +127,18 @@ func getConfigPath(engineName string) string {
 
 func LoadConfig(engineName string) *Config {
 	var c = Config{
-		InputMethod:              "Telex",
-		OutputCharset:            "Unicode",
-		InputMethodDefinitions:   bamboo.InputMethodDefinitions,
-		Flags:                    bamboo.EstdFlags,
-		IBflags:                  IBstdFlags,
-		AutoCommitAfter:          3000,
-		ExceptedList:             DefaultExceptedList,
-		PreeditWhiteList:         nil,
-		X11ClipboardWhiteList:    nil,
-		ForwardKeyWhiteList:      nil,
-		SurroundingTextWhiteList: nil,
+		InputMethod:               "Telex",
+		OutputCharset:             "Unicode",
+		InputMethodDefinitions:    bamboo.InputMethodDefinitions,
+		Flags:                     bamboo.EstdFlags,
+		IBflags:                   IBstdFlags,
+		AutoCommitAfter:           3000,
+		ExceptedList:              DefaultExceptedList,
+		PreeditWhiteList:          DefaultPreeditWhiteList,
+		X11ClipboardWhiteList:     DefaultX11ClipboardWhiteList,
+		ForwardKeyWhiteList:       nil,
+		DirectForwardKeyWhiteList: DefaultDirectForwardKeyWhiteList,
+		SurroundingTextWhiteList:  DefaultSurroundingTextWhiteList,
 	}
 
 	data, err := ioutil.ReadFile(getConfigPath(engineName))

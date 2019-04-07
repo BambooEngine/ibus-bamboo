@@ -88,6 +88,7 @@ var lookupTableConfiguration = []string{
 	"Fix gạch chân (SurroundingText)",
 	"Fix gạch chân (ForwardKeyEvent)",
 	"Fix gạch chân (XTestFakeKeyEvent)",
+	"Fix gạch chân (DirectForwardKeyEvent)",
 	"Thêm vào danh sách loại trừ",
 }
 
@@ -107,21 +108,23 @@ func (e *IBusBambooEngine) openLookupTable() {
 		e.config.SurroundingTextWhiteList,
 		e.config.ForwardKeyWhiteList,
 		e.config.X11ClipboardWhiteList,
+		e.config.DirectForwardKeyWhiteList,
 		e.config.ExceptedList,
 	}
 
-	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (0/1/2/3/4) để lưu tùy chọn của bạn"), true)
+	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (0/1/2/3/4/5) để lưu tùy chọn của bạn"), true)
 
 	lt := ibus.NewLookupTable()
+	lt.PageSize = uint32(len(lookupTableConfiguration))
 	lt.Orientation = IBUS_ORIENTATION_VERTICAL
 	for _, ac := range lookupTableConfiguration {
 		lt.AppendCandidate(ac)
 	}
-	for lb := range lookupTableConfiguration {
-		if inStringList(whiteList[lb], e.wmClasses) {
+	for i := 0; i < len(lookupTableConfiguration); i++ {
+		if inStringList(whiteList[i], e.wmClasses) {
 			lt.AppendLabel("*")
 		} else {
-			lt.AppendLabel(strconv.Itoa(lb))
+			lt.AppendLabel(strconv.Itoa(i))
 		}
 	}
 	e.UpdateLookupTable(lt, true)
@@ -143,6 +146,7 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		e.config.X11ClipboardWhiteList = removeFromWhiteList(e.config.X11ClipboardWhiteList, wmClasses)
 		e.config.ForwardKeyWhiteList = removeFromWhiteList(e.config.ForwardKeyWhiteList, wmClasses)
 		e.config.SurroundingTextWhiteList = removeFromWhiteList(e.config.SurroundingTextWhiteList, wmClasses)
+		e.config.DirectForwardKeyWhiteList = removeFromWhiteList(e.config.DirectForwardKeyWhiteList, wmClasses)
 		e.config.ExceptedList = removeFromWhiteList(e.config.ExceptedList, wmClasses)
 	}
 	switch keyVal {
@@ -163,6 +167,10 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		e.config.X11ClipboardWhiteList = addToWhiteList(e.config.X11ClipboardWhiteList, wmClasses)
 		break
 	case '4':
+		reset()
+		e.config.DirectForwardKeyWhiteList = addToWhiteList(e.config.DirectForwardKeyWhiteList, wmClasses)
+		break
+	case '5':
 		reset()
 		e.config.ExceptedList = addToWhiteList(e.config.ExceptedList, wmClasses)
 		break
@@ -229,6 +237,10 @@ func (e *IBusBambooEngine) inBackspaceWhiteList() bool {
 
 func (e *IBusBambooEngine) inSurroundingTextList() bool {
 	return inStringList(e.config.SurroundingTextWhiteList, e.wmClasses)
+}
+
+func (e *IBusBambooEngine) inDirectForwardKeyList() bool {
+	return inStringList(e.config.DirectForwardKeyWhiteList, e.wmClasses)
 }
 
 func (e *IBusBambooEngine) inForwardKeyList() bool {

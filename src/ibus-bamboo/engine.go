@@ -47,6 +47,7 @@ type IBusBambooEngine struct {
 	emojiLookupTable    *ibus.LookupTable
 	capabilities        uint32
 	nFakeBackSpace      int
+	firstTimeSendingBS  bool
 	emoji               *BambooEmoji
 }
 
@@ -106,6 +107,7 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 
 	e.RegisterProperties(e.propList)
 	e.HidePreeditText()
+	e.firstTimeSendingBS = true
 	if oldWmClasses != e.wmClasses {
 		e.preeditor.Reset()
 		x11ClipboardReset()
