@@ -20,7 +20,7 @@ Section: utils
 Priority: extra
 Maintainer: Luong Thanh Lam <ltlam93@gmail.com>
 Build-Depends: debhelper, golang, libx11-dev, libxt-dev, libxtst-dev
-Standards-Version: 0.4.0
+Standards-Version: 0.4.1
 Homepage: https://github.com/BambooEngine/ibus-bamboo
 
 Package: ibus-bamboo
