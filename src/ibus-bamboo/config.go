@@ -63,33 +63,13 @@ const (
 	IBemojiDisabled
 	IBfakeBackspaceEnabled
 	IBstdFlags = IBspellChecking | IBspellCheckingWithRules | IBautoNonVnRestore | IBddFreeStyle |
-		IBpreeditInvisibility | IBautoCommitWithMouseMovement | IBemojiDisabled | IBfakeBackspaceEnabled
+		IBpreeditInvisibility | IBautoCommitWithMouseMovement | IBemojiDisabled
 )
 
-var DefaultExceptedList = []string{}
 var DefaultBrowserList = []string{
 	"Navigator:Firefox",
 	"google-chrome:Google-chrome",
 	"chromium-browser:Chromium-browser",
-}
-var DefaultPreeditWhiteList = []string{
-	"google-chrome:Google-chrome",
-	"chromium-browser:Chromium-browser",
-}
-var DefaultX11ClipboardWhiteList = []string{
-	"unity-dash",
-	"goldendict:GoldenDict",
-}
-var DefaultDirectForwardKeyWhiteList = []string{
-	"Navigator:Firefox",
-	"gimp-2.8:Gimp-2.8",
-	"gimp-2.9:Gimp-2.9",
-	"gimp-2.10:Gimp-2.10",
-	"gimp-2.11:Gimp-2.11",
-}
-var DefaultSurroundingTextWhiteList = []string{
-	"libreoffice:libreoffice-writer",
-	"libreoffice:libreoffice-calc",
 }
 
 type Config struct {
@@ -133,12 +113,12 @@ func LoadConfig(engineName string) *Config {
 		Flags:                     bamboo.EstdFlags,
 		IBflags:                   IBstdFlags,
 		AutoCommitAfter:           3000,
-		ExceptedList:              DefaultExceptedList,
-		PreeditWhiteList:          DefaultPreeditWhiteList,
-		X11ClipboardWhiteList:     DefaultX11ClipboardWhiteList,
+		ExceptedList:              nil,
+		PreeditWhiteList:          nil,
+		X11ClipboardWhiteList:     nil,
 		ForwardKeyWhiteList:       nil,
-		DirectForwardKeyWhiteList: DefaultDirectForwardKeyWhiteList,
-		SurroundingTextWhiteList:  DefaultSurroundingTextWhiteList,
+		DirectForwardKeyWhiteList: nil,
+		SurroundingTextWhiteList:  nil,
 	}
 
 	data, err := ioutil.ReadFile(getConfigPath(engineName))
