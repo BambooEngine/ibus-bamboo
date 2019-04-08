@@ -37,7 +37,7 @@ static void delay(int sec, long msec) {
         now = clock();
 }
 
-void x11SendBackspace(int n) {
+void x11SendBackspace(int n, int timeout) {
     Display *display = XOpenDisplay(NULL);
     if (display) {
         KeyCode modcode;
@@ -46,7 +46,7 @@ void x11SendBackspace(int n) {
             XTestFakeKeyEvent(display, modcode, True, 0);
             XTestFakeKeyEvent(display, modcode, False, 0);
             XSync(display, 0);
-            delay(0, 10);
+            delay(0, timeout);
         }
         XCloseDisplay(display);
     }

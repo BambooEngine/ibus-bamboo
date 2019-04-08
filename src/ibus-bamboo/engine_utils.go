@@ -31,20 +31,19 @@ import (
 	"time"
 )
 
-func GetIBusBambooEngine(engineName string) func(conn *dbus.Conn, engineName string) dbus.ObjectPath {
+func GetIBusBambooEngine() func(conn *dbus.Conn, engineName string) dbus.ObjectPath {
 	objectPath := dbus.ObjectPath(fmt.Sprintf("/org/freedesktop/IBus/Engine/bamboo/%d", time.Now().UnixNano()))
 	var dictionary, _ = loadDictionary(DictVietnameseCm)
 	var bambooEmoji = NewBambooEmoji(DictEmojiOne)
 	var mTable = NewMacroTable()
-	engineName = strings.ToLower(engineName)
 	setupConfigDir()
-	var config = LoadConfig(engineName)
-	var inputMethod = bamboo.ParseInputMethod(config.InputMethodDefinitions, config.InputMethod)
-	var preeditor = bamboo.NewEngine(inputMethod, config.Flags, dictionary)
 	var isRunning = false
 
 	return func(conn *dbus.Conn, ngName string) dbus.ObjectPath {
-		config = LoadConfig(engineName)
+		var engineName = strings.ToLower(ngName)
+		var config = LoadConfig(engineName)
+		var inputMethod = bamboo.ParseInputMethod(config.InputMethodDefinitions, config.InputMethod)
+		var preeditor = bamboo.NewEngine(inputMethod, config.Flags, dictionary)
 		engine := &IBusBambooEngine{
 			Engine:     ibus.BaseEngine(conn, objectPath),
 			preeditor:  preeditor,
@@ -85,10 +84,10 @@ func (e *IBusBambooEngine) getRawKeyLen() int {
 
 var lookupTableConfiguration = []string{
 	"Cấu hình mặc định (Pre-edit)",
-	"Fix gạch chân (SurroundingText)",
-	"Fix gạch chân (ForwardKeyEvent)",
+	"Fix gạch chân (Surrounding Text)",
+	"Fix gạch chân (Forward KeyEvent)",
 	"Fix gạch chân (XTestFakeKeyEvent)",
-	"Fix gạch chân (DirectForwardKeyEvent)",
+	"Fix gạch chân (Forward as commit)",
 	"Thêm vào danh sách loại trừ",
 }
 
@@ -115,6 +114,7 @@ func (e *IBusBambooEngine) openLookupTable() {
 	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (0/1/2/3/4/5) để lưu tùy chọn của bạn"), true)
 
 	lt := ibus.NewLookupTable()
+	e.UpdateLookupTable(lt, true) // workaround for issue #18
 	lt.PageSize = uint32(len(lookupTableConfiguration))
 	lt.Orientation = IBUS_ORIENTATION_VERTICAL
 	for _, ac := range lookupTableConfiguration {
@@ -209,7 +209,7 @@ func (e *IBusBambooEngine) isValidState(state uint32) bool {
 }
 
 func (e *IBusBambooEngine) canProcessKey(keyVal uint32) bool {
-	if keyVal == IBUS_BackSpace || keyVal == IBUS_space {
+	if keyVal == IBUS_BackSpace {
 		return true
 	}
 	var keyRune = rune(keyVal)
@@ -232,7 +232,7 @@ func (e *IBusBambooEngine) inPreeditList() bool {
 }
 
 func (e *IBusBambooEngine) inBackspaceWhiteList() bool {
-	return e.inForwardKeyList() || e.inX11ClipboardList() || e.inSurroundingTextList()
+	return e.inForwardKeyList() || e.inXTestFakeKeyEventList() || e.inSurroundingTextList()
 }
 
 func (e *IBusBambooEngine) inSurroundingTextList() bool {
@@ -247,10 +247,18 @@ func (e *IBusBambooEngine) inForwardKeyList() bool {
 	return e.config.IBflags&IBfakeBackspaceEnabled != 0 || inStringList(e.config.ForwardKeyWhiteList, e.wmClasses)
 }
 
-func (e *IBusBambooEngine) inX11ClipboardList() bool {
+func (e *IBusBambooEngine) inXTestFakeKeyEventList() bool {
 	return inStringList(e.config.X11ClipboardWhiteList, e.wmClasses)
 }
 
 func (e *IBusBambooEngine) inBrowserList() bool {
 	return inStringList(DefaultBrowserList, e.wmClasses)
+}
+
+func (e *IBusBambooEngine) inChromeList() bool {
+	var list = []string{
+		"google-chrome:Google-chrome",
+		"chromium-browser:Chromium-browser",
+	}
+	return inStringList(list, e.wmClasses)
 }

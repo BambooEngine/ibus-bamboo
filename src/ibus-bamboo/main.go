@@ -31,11 +31,12 @@ func main() {
 		if len(os.Args) == 3 && os.Args[1] == "cd" {
 			os.Chdir(os.Args[2])
 		}
+		engine := GetIBusBambooEngine()
 		bus := ibus.NewBus()
 		bus.RequestName(ComponentName, 0)
 
 		conn := bus.GetDbusConn()
-		ibus.NewFactory(conn, GetIBusBambooEngine(EngineName))
+		ibus.NewFactory(conn, engine)
 
 		select {}
 	} else {
@@ -48,7 +49,7 @@ func main() {
 		bus.RegisterComponent(makeDebugComponent())
 
 		conn := bus.GetDbusConn()
-		ibus.NewFactory(conn, GetIBusBambooEngine(DebugEngineName))
+		ibus.NewFactory(conn, GetIBusBambooEngine())
 
 		log.Println("Setting Global Engine to", DebugEngineName)
 		bus.CallMethod("SetGlobalEngine", 0, DebugEngineName)

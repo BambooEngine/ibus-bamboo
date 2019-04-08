@@ -93,10 +93,12 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 		e.emoji.ProcessKey(keyRune)
 	} else if keyRune >= '1' && keyRune <= '9' {
 		if pos, err := strconv.Atoi(string(keyRune)); err == nil {
-			if e.emojiLookupTable.SetCursorPosInCurrentPage(uint32(pos)) {
+			if e.emojiLookupTable.SetCursorPosInCurrentPage(uint32(pos - 1)) {
 				e.commitEmojiCandidate()
 				reset()
 				return true, nil
+			} else {
+				reset()
 			}
 		}
 		return false, nil
@@ -135,6 +137,7 @@ func (e *IBusBambooEngine) commitEmojiCandidate() {
 
 func (e *IBusBambooEngine) closeEmojiCandidates() {
 	e.emoji.Reset()
+	e.UpdateLookupTable(ibus.NewLookupTable(), true) // workaround for issue #18
 	e.HidePreeditText()
 	e.HideLookupTable()
 	e.HideAuxiliaryText()

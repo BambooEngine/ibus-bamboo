@@ -28,15 +28,21 @@ import (
 	"time"
 )
 
-var keyPressChan = make(chan [3]uint32, 10)
+var keyPressChan = make(chan [3]uint32, 100)
 
 func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
-	if e.inX11ClipboardList() {
-		// we don't want to use ForwardKeyEvent api in X11 Clipboard mode (maybe Surrounding Text too)
+	if e.inXTestFakeKeyEventList() || e.inSurroundingTextList() {
+		// we don't want to use ForwardKeyEvent Api in X11 XTestFakeKeyEvent and Surrounding Text mode
 		var sleep = func() {
 			for len(keyPressChan) > 0 {
 				time.Sleep(5 * time.Millisecond)
 			}
+		}
+		if !e.isValidState(state) || !e.canProcessKey(keyVal) {
+			e.preeditor.Reset()
+			e.resetFakeBackspace()
+			sleep()
+			return false, nil
 		}
 		if keyVal == IBUS_BackSpace {
 			if e.nFakeBackSpace > 0 {
@@ -45,12 +51,6 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 			} else {
 				e.preeditor.RemoveLastChar()
 			}
-			sleep()
-			return false, nil
-		}
-		if !e.isValidState(state) || !e.canProcessKey(keyVal) {
-			e.preeditor.Reset()
-			e.resetFakeBackspace()
 			sleep()
 			return false, nil
 		}
@@ -113,7 +113,7 @@ func (e *IBusBambooEngine) keyPressHandler() {
 					e.updatePreviousText([]rune(macText), []rune(processedStr), state)
 					e.preeditor.Reset()
 					break
-				} else if e.mustFallbackToEnglish() && !e.inX11ClipboardList() {
+				} else if e.mustFallbackToEnglish() && !e.inXTestFakeKeyEventList() && !e.inSurroundingTextList() {
 					oldRunes := []rune(e.getPreeditString())
 					newRunes := []rune(e.getComposedString())
 					newRunes = append(newRunes, keyRune)
@@ -169,14 +169,19 @@ func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state u
 }
 
 func (e *IBusBambooEngine) sendBackspaceAndNewRunes(nBackSpace int, newRunes []rune) {
-	if e.inX11ClipboardList() {
+	if e.inXTestFakeKeyEventList() {
+		var sleep = func() {
+			var count = 0
+			for e.nFakeBackSpace > 0 && count < 5 {
+				time.Sleep(5 * time.Millisecond)
+				count++
+			}
+			time.Sleep(20 * time.Millisecond)
+		}
 		if nBackSpace > 0 {
 			e.nFakeBackSpace = nBackSpace
 			e.SendBackSpace(nBackSpace)
-			for e.nFakeBackSpace > 0 && len(keyPressChan) < 5 {
-				time.Sleep(5 * time.Millisecond)
-			}
-			time.Sleep(time.Duration(nBackSpace) * 10 * time.Millisecond)
+			sleep()
 			e.SendText(newRunes)
 		} else {
 			e.SendText(newRunes)
@@ -190,26 +195,38 @@ func (e *IBusBambooEngine) sendBackspaceAndNewRunes(nBackSpace int, newRunes []r
 }
 
 func (e *IBusBambooEngine) SendBackSpace(n int) {
-	if e.inX11ClipboardList() {
+	if e.inXTestFakeKeyEventList() {
+		time.Sleep(20 * time.Millisecond)
 		fmt.Printf("Sendding %d backspace via XTestFakeKeyEvent\n", n)
-		x11SendBackspace(n)
+		if e.inChromeList() { // workaround for chrome's address bar
+			x11SendBackspace(n, 0)
+			time.Sleep(time.Duration(n) * 10 * time.Millisecond)
+		} else {
+			x11SendBackspace(n, 10)
+		}
 	} else if e.inSurroundingTextList() {
+		time.Sleep(20 * time.Millisecond)
 		fmt.Printf("Sendding %d backspace via SurroundingText\n", n)
 		e.DeleteSurroundingText(-int32(n), uint32(n))
-		time.Sleep(5 * time.Millisecond)
+		time.Sleep(20 * time.Millisecond)
 	} else if e.inDirectForwardKeyList() {
+		time.Sleep(10 * time.Millisecond)
 		fmt.Printf("Sendding %d backspace via ForwardKeyEvent *\n", n)
 		for i := 0; i < n; i++ {
-			e.ForwardKeyEvent(IBUS_BackSpace, 14, 0)
+			e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, 0)
+			e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, IBUS_RELEASE_MASK)
+			time.Sleep(5 * time.Millisecond)
 		}
-		time.Sleep(5 * time.Millisecond)
+		time.Sleep(10 * time.Millisecond)
 	} else if e.inForwardKeyList() {
+		time.Sleep(10 * time.Millisecond)
 		fmt.Printf("Sendding %d backspace via ForwardKeyEvent **\n", n)
 		for i := 0; i < n; i++ {
-			e.ForwardKeyEvent(IBUS_BackSpace, 14, 0)
-			e.ForwardKeyEvent(IBUS_BackSpace, 14, IBUS_RELEASE_MASK)
-			time.Sleep(10 * time.Millisecond)
+			e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, 0)
+			e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, IBUS_RELEASE_MASK)
+			time.Sleep(5 * time.Millisecond)
 		}
+		time.Sleep(10 * time.Millisecond)
 	} else {
 		fmt.Println("There's something wrong with wmClasses")
 	}
@@ -228,10 +245,11 @@ func (e *IBusBambooEngine) SendText(rs []rune) {
 				keyVal = uint32(chr)
 			}
 			e.ForwardKeyEvent(keyVal, 0, 0)
+			e.ForwardKeyEvent(keyVal, 0, IBUS_RELEASE_MASK)
+			time.Sleep(5 * time.Millisecond)
 		}
 		return
 	}
 	log.Println("Sending text", string(rs))
 	e.CommitText(ibus.NewText(string(rs)))
-	time.Sleep(10 * time.Millisecond)
 }
