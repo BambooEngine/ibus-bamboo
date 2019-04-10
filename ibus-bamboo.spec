@@ -21,7 +21,7 @@
 
 %define engine_name  bamboo
 %define package_name ibus-%{engine_name}
-%define version      0.4.2
+%define version      0.4.3
 
 
 #install directories ----------------------------------------------------------

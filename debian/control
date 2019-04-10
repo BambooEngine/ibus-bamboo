@@ -20,11 +20,11 @@ Section: utils
 Priority: extra
 Maintainer: Luong Thanh Lam <ltlam93@gmail.com>
 Build-Depends: debhelper, golang, libx11-dev, libxt-dev, libxtst-dev
-Standards-Version: 0.4.2
+Standards-Version: 0.4.3
 Homepage: https://github.com/BambooEngine/ibus-bamboo
 
 Package: ibus-bamboo
 Architecture: any
 Depends: ibus
-Description: A Vietnamese IME for IBus using BambooEngine.
- Bộ gõ tiếng Việt cho IBus sử dụng BambooEngine.
+Description: A Vietnamese IME for IBus using Bamboo Engine.
+ Bộ gõ tiếng Việt cho IBus sử dụng Bamboo Engine.

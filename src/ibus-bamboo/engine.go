@@ -72,13 +72,13 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 	}
 	log.Printf("keyCode 0x%04x keyval 0x%04x | %c | %d\n", keyCode, keyVal, rune(keyVal), len(keyPressChan))
 	if keyVal == IBUS_OpenLookupTable && e.isLookupTableOpened == false {
-		e.preeditor.Reset()
+		e.resetBuffer()
 		e.isLookupTableOpened = true
 		e.openLookupTable()
 		return true, nil
 	}
 	if e.config.IBflags&IBemojiDisabled == 0 && keyVal == IBUS_Colon && e.isEmojiTableOpened == false {
-		e.preeditor.Reset()
+		e.resetBuffer()
 		e.isEmojiTableOpened = true
 		e.openEmojiList()
 		return true, nil
@@ -109,7 +109,7 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 	e.HidePreeditText()
 	e.firstTimeSendingBS = true
 	if oldWmClasses != e.wmClasses {
-		e.preeditor.Reset()
+		e.resetBuffer()
 		x11ClipboardReset()
 	}
 

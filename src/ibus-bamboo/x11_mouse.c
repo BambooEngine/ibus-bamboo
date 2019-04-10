@@ -125,6 +125,7 @@ static void* thread_mouse_capture(void* data)
             if ((abs(event.xmotion.x_root - x_root_old) >= CAPTURE_MOUSE_MOVE_DELTA) ||
                 (abs(event.xmotion.y_root - y_root_old) >= CAPTURE_MOUSE_MOVE_DELTA)) // mouse move at least CAPTURE_MOUSE_MOVE_DELTA
             {
+                fprintf(stderr, "MotionNotify: delta_x=%d delta_y=%d\n", abs(event.xmotion.x_root - x_root_old), abs(event.xmotion.y_root - y_root_old));
                 mouse_move_handler();
 
                 x_root_old = event.xmotion.x_root;

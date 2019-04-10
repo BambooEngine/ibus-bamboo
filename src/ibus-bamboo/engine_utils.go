@@ -66,15 +66,19 @@ func GetIBusBambooEngine() func(conn *dbus.Conn, engineName string) dbus.ObjectP
 			engine.ignorePreedit = false
 			x11ClipboardReset()
 			engine.resetFakeBackspace()
-			if engine.inBackspaceWhiteList() {
-				engine.preeditor.Reset()
-			} else {
-				engine.commitPreedit(0)
-			}
+			engine.resetBuffer()
 		}
 		runtime.GC()
 		debug.FreeOSMemory()
 		return objectPath
+	}
+}
+
+func (e *IBusBambooEngine) resetBuffer() {
+	if e.inPreeditList() || !e.inBackspaceWhiteList() {
+		e.commitPreedit()
+	} else {
+		e.preeditor.Reset()
 	}
 }
 
@@ -111,21 +115,20 @@ func (e *IBusBambooEngine) openLookupTable() {
 		e.config.ExceptedList,
 	}
 
-	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (0/1/2/3/4/5) để lưu tùy chọn của bạn"), true)
+	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (1/2/3/4/5/6) để lưu tùy chọn của bạn"), true)
 
 	lt := ibus.NewLookupTable()
-	e.UpdateLookupTable(lt, true) // workaround for issue #18
 	lt.PageSize = uint32(len(lookupTableConfiguration))
 	lt.Orientation = IBUS_ORIENTATION_VERTICAL
-	for _, ac := range lookupTableConfiguration {
-		lt.AppendCandidate(ac)
-	}
 	for i := 0; i < len(lookupTableConfiguration); i++ {
 		if inStringList(whiteList[i], e.wmClasses) {
 			lt.AppendLabel("*")
 		} else {
-			lt.AppendLabel(strconv.Itoa(i))
+			lt.AppendLabel(strconv.Itoa(i + 1))
 		}
+	}
+	for _, ac := range lookupTableConfiguration {
+		lt.AppendCandidate(ac)
 	}
 	e.UpdateLookupTable(lt, true)
 }
@@ -150,27 +153,27 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		e.config.ExceptedList = removeFromWhiteList(e.config.ExceptedList, wmClasses)
 	}
 	switch keyVal {
-	case '0':
+	case '1':
 		reset()
 		e.config.PreeditWhiteList = addToWhiteList(e.config.PreeditWhiteList, wmClasses)
 		break
-	case '1':
+	case '2':
 		reset()
 		e.config.SurroundingTextWhiteList = addToWhiteList(e.config.SurroundingTextWhiteList, wmClasses)
 		break
-	case '2':
+	case '3':
 		reset()
 		e.config.ForwardKeyWhiteList = addToWhiteList(e.config.ForwardKeyWhiteList, wmClasses)
 		break
-	case '3':
+	case '4':
 		reset()
 		e.config.X11ClipboardWhiteList = addToWhiteList(e.config.X11ClipboardWhiteList, wmClasses)
 		break
-	case '4':
+	case '5':
 		reset()
 		e.config.DirectForwardKeyWhiteList = addToWhiteList(e.config.DirectForwardKeyWhiteList, wmClasses)
 		break
-	case '5':
+	case '6':
 		reset()
 		e.config.ExceptedList = addToWhiteList(e.config.ExceptedList, wmClasses)
 		break
@@ -219,10 +222,6 @@ func (e *IBusBambooEngine) canProcessKey(keyVal uint32) bool {
 	return e.preeditor.CanProcessKey(keyRune)
 }
 
-func (e *IBusBambooEngine) reset() {
-	e.preeditor.Reset()
-}
-
 func (e *IBusBambooEngine) inExceptedList() bool {
 	return inStringList(e.config.ExceptedList, e.wmClasses)
 }
@@ -255,7 +254,7 @@ func (e *IBusBambooEngine) inBrowserList() bool {
 	return inStringList(DefaultBrowserList, e.wmClasses)
 }
 
-func (e *IBusBambooEngine) inChromeList() bool {
+func (e *IBusBambooEngine) inChromeFamily() bool {
 	var list = []string{
 		"google-chrome:Google-chrome",
 		"chromium-browser:Chromium-browser",

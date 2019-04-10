@@ -32,12 +32,15 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	var keyRune = rune(keyVal)
 
 	if !e.isValidState(state) {
-		e.ignorePreedit = false
-		e.commitPreedit(0)
+		e.commitPreedit()
 		return false, nil
 	}
+	if keyVal == IBUS_Caps_Lock ||
+		(!(state&IBUS_SHIFT_MASK != 0) && (keyVal == IBUS_Shift_L || keyVal == IBUS_Shift_R)) { // when press one shift key
+		return false, nil
+	}
+
 	if keyVal == IBUS_BackSpace {
-		e.ignorePreedit = false
 		if rawKeyLen > 0 {
 			e.preeditor.RemoveLastChar()
 			e.updatePreedit()
@@ -59,8 +62,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 			(e.config.IBflags&IBautoCommitWithVnFullMatch != 0 && e.preeditor.HasTone() &&
 				e.getSpellingMatchResult(true) == bamboo.FindResultMatchFull) {
 			e.ignorePreedit = true
-			e.commitPreedit(0)
-			e.preeditor.Reset()
+			e.commitPreedit()
 			return true, nil
 		}
 		e.updatePreedit()
@@ -70,14 +72,15 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode, true)
 		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
 			processedStr = e.macroTable.GetText(processedStr)
-			e.preeditor.Reset()
-			e.commitText(e.encodeText(processedStr))
-		} else {
-			e.commitPreedit(keyVal)
+			e.commitText(e.encodeText(processedStr) + string(keyRune))
+			e.resetPreedit()
+			return true, nil
 		}
+		e.commitText(e.encodeText(e.getComposedString()) + string(keyRune))
+		e.resetPreedit()
+		return true, nil
 	}
-	e.ignorePreedit = false
-	e.commitPreedit(0)
+	e.commitPreedit()
 	return false, nil
 }
 
@@ -91,7 +94,7 @@ func (e *IBusBambooEngine) startAutoCommit() {
 			break
 		case <-time.After(time.Duration(timeout) * time.Millisecond):
 			if e.config.IBflags&IBautoCommitWithDelay != 0 && e.getRawKeyLen() > 0 {
-				e.commitPreedit(0)
+				e.commitPreedit()
 			}
 		}
 	}
@@ -100,6 +103,10 @@ func (e *IBusBambooEngine) startAutoCommit() {
 func (e *IBusBambooEngine) updatePreedit() {
 	var processedStr = e.getPreeditString()
 	var preeditLen = uint32(len([]rune(processedStr)))
+	if preeditLen == 0 {
+		e.HidePreeditText()
+		return
+	}
 	var ibusText = ibus.NewText(e.encodeText(processedStr))
 
 	if e.config.IBflags&IBpreeditInvisibility != 0 {
@@ -107,14 +114,9 @@ func (e *IBusBambooEngine) updatePreedit() {
 	} else {
 		ibusText.AppendAttr(ibus.IBUS_ATTR_TYPE_UNDERLINE, ibus.IBUS_ATTR_UNDERLINE_SINGLE, 0, preeditLen)
 	}
-
 	e.UpdatePreeditTextWithMode(ibusText, preeditLen, true, ibus.IBUS_ENGINE_PREEDIT_COMMIT)
-	if preeditLen == 0 {
-		e.HidePreeditText()
-		e.preeditor.Reset()
-	}
-	mouseCaptureUnlock()
 
+	mouseCaptureUnlock()
 	preeditUpdateChan <- 0
 }
 
@@ -203,16 +205,20 @@ func (e *IBusBambooEngine) getMode() bamboo.Mode {
 	return bamboo.VietnameseMode
 }
 
-func (e *IBusBambooEngine) commitPreedit(lastKey uint32) {
-	var commitStr string
-	commitStr += e.getComposedString()
-
+func (e *IBusBambooEngine) resetPreedit() {
+	e.HidePreeditText()
 	e.preeditor.Reset()
-	e.commitText(e.encodeText(commitStr))
+}
+
+func (e *IBusBambooEngine) commitPreedit() {
+	var commitStr = e.getComposedString()
+	if len([]rune(commitStr)) > 0 {
+		e.commitText(e.encodeText(commitStr))
+	}
+	e.resetPreedit()
 }
 
 func (e *IBusBambooEngine) commitText(str string) {
-	e.HidePreeditText()
 	for _, chr := range []rune(str) {
 		e.CommitText(ibus.NewText(string(chr)))
 	}

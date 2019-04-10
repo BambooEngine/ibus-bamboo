@@ -198,7 +198,7 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 	if e.inXTestFakeKeyEventList() {
 		time.Sleep(20 * time.Millisecond)
 		fmt.Printf("Sendding %d backspace via XTestFakeKeyEvent\n", n)
-		if e.inChromeList() { // workaround for chrome's address bar
+		if e.inChromeFamily() { // workaround for chrome's address bar
 			x11SendBackspace(n, 0)
 			time.Sleep(time.Duration(n) * 10 * time.Millisecond)
 		} else {
@@ -221,12 +221,22 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 	} else if e.inForwardKeyList() {
 		time.Sleep(10 * time.Millisecond)
 		fmt.Printf("Sendding %d backspace via ForwardKeyEvent **\n", n)
-		for i := 0; i < n; i++ {
-			e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, 0)
-			e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, IBUS_RELEASE_MASK)
-			time.Sleep(5 * time.Millisecond)
+
+		if e.inChromeFamily() { // workaround for chrome's address bar
+			for i := 0; i < n; i++ {
+				e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, 0)
+				e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, IBUS_RELEASE_MASK)
+				time.Sleep(0 * time.Millisecond)
+			}
+			time.Sleep(time.Duration(n) * 10 * time.Millisecond)
+		} else {
+			for i := 0; i < n; i++ {
+				e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, 0)
+				e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, IBUS_RELEASE_MASK)
+				time.Sleep(5 * time.Millisecond)
+			}
+			time.Sleep(10 * time.Millisecond)
 		}
-		time.Sleep(10 * time.Millisecond)
 	} else {
 		fmt.Println("There's something wrong with wmClasses")
 	}
@@ -251,5 +261,5 @@ func (e *IBusBambooEngine) SendText(rs []rune) {
 		return
 	}
 	log.Println("Sending text", string(rs))
-	e.CommitText(ibus.NewText(string(rs)))
+	e.CommitText(ibus.NewText(e.encodeText(string(rs))))
 }

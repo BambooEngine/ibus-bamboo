@@ -136,6 +136,7 @@ func (e *IBusBambooEngine) commitEmojiCandidate() {
 }
 
 func (e *IBusBambooEngine) closeEmojiCandidates() {
+	e.emojiLookupTable = nil
 	e.emoji.Reset()
 	e.UpdateLookupTable(ibus.NewLookupTable(), true) // workaround for issue #18
 	e.HidePreeditText()
