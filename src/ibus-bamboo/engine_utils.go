@@ -56,17 +56,19 @@ func GetIBusBambooEngine() func(conn *dbus.Conn, engineName string) dbus.ObjectP
 		}
 		ibus.PublishEngine(conn, objectPath, engine)
 
-		if isRunning == false {
-			isRunning = true
-			go engine.startAutoCommit()
-			go engine.keyPressHandler()
+		if isRunning {
+			terminateChan <- true
 		}
+		isRunning = true
+		go engine.startAutoCommit()
+		go engine.keyPressHandler()
 
 		onMouseMove = func() {
 			engine.ignorePreedit = false
 			x11ClipboardReset()
 			engine.resetFakeBackspace()
 			engine.resetBuffer()
+			engine.firstTimeSendingBS = true
 		}
 		runtime.GC()
 		debug.FreeOSMemory()
@@ -200,15 +202,10 @@ func (e *IBusBambooEngine) isIgnoredKey(keyVal, state uint32) bool {
 }
 
 func (e *IBusBambooEngine) isValidState(state uint32) bool {
-	if state&IBUS_CONTROL_MASK != 0 ||
-		state&IBUS_MOD1_MASK != 0 ||
-		state&IBUS_IGNORED_MASK != 0 ||
-		state&IBUS_SUPER_MASK != 0 ||
-		state&IBUS_HYPER_MASK != 0 ||
-		state&IBUS_META_MASK != 0 {
-		return false
+	if state&IBUS_SHIFT_MASK != 0 || state&IBUS_LOCK_MASK != 0 {
+		return true
 	}
-	return true
+	return state == 0
 }
 
 func (e *IBusBambooEngine) canProcessKey(keyVal uint32) bool {

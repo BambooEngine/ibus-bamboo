@@ -48,6 +48,7 @@ type IBusBambooEngine struct {
 	capabilities        uint32
 	nFakeBackSpace      int
 	firstTimeSendingBS  bool
+	isFocusOut          bool
 	emoji               *BambooEmoji
 }
 
@@ -106,9 +107,9 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 	fmt.Printf("WM_CLASS=(%s)\n", e.wmClasses)
 
 	e.RegisterProperties(e.propList)
-	e.HidePreeditText()
-	e.firstTimeSendingBS = true
+	e.isFocusOut = false
 	if oldWmClasses != e.wmClasses {
+		e.firstTimeSendingBS = true
 		e.resetBuffer()
 		x11ClipboardReset()
 	}
@@ -118,6 +119,7 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 
 func (e *IBusBambooEngine) FocusOut() *dbus.Error {
 	log.Print("FocusOut.")
+	e.isFocusOut = true
 	//e.wmClasses = ""
 	return nil
 }

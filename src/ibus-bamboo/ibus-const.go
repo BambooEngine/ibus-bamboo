@@ -24,27 +24,12 @@ package main
 
 const (
 	//IBusModifierType
-	IBUS_SHIFT_MASK   = 1 << 0 //Shift is activated.
-	IBUS_LOCK_MASK    = 1 << 1 //Cap Lock is locked.
-	IBUS_CONTROL_MASK = 1 << 2 //Control key is activated.
-	IBUS_MOD1_MASK    = 1 << 3 //Modifier 1 (Usually Alt_L (0x40), Alt_R (0x6c), Meta_L (0xcd)) activated.
-	//IBUS_MOD2_MASK     = 1 << 4            //Modifier 2 (Usually Num_Lock (0x4d)) activated.
-	//IBUS_MOD3_MASK     = 1 << 5            //Modifier 3 activated.
-	//IBUS_MOD4_MASK     = 1 << 6            //Modifier 4 (Usually Super_L (0xce), Hyper_L (0xcf)) activated.
-	//IBUS_MOD5_MASK     = 1 << 7            //Modifier 5 (ISO_Level3_Shift (0x5c), Mode_switch (0xcb)) activated.
-	//IBUS_BUTTON1_MASK  = 1 << 8            //Mouse button 1 (left) is activated.
-	//IBUS_BUTTON2_MASK  = 1 << 9            //Mouse button 2 (middle) is activated.
-	//IBUS_BUTTON3_MASK  = 1 << 10           //Mouse button 3 (right) is activated.
-	//IBUS_BUTTON4_MASK  = 1 << 11           //Mouse button 4 (scroll up) is activated.
-	//IBUS_BUTTON5_MASK  = 1 << 12           //Mouse button 5 (scroll down) is activated.
-	//IBUS_HANDLED_MASK  = 1 << 24           //Handled mask indicates the event has been handled by ibus.
+	IBUS_SHIFT_MASK   = 1 << 0            //Shift is activated.
+	IBUS_LOCK_MASK    = 1 << 1            //Cap Lock is locked.
+	IBUS_CONTROL_MASK = 1 << 2            //Control key is activated.
 	IBUS_FORWARD_MASK = 1 << 25           //Forward mask indicates the event has been forward from ibus.
 	IBUS_IGNORED_MASK = IBUS_FORWARD_MASK //It is an alias of IBUS_FORWARD_MASK.
-	IBUS_SUPER_MASK   = 1 << 26           //Super (Usually Win) key is activated.
-	IBUS_HYPER_MASK   = 1 << 27           //Hyper key is activated.
-	IBUS_META_MASK    = 1 << 28           //Meta key is activated.
 	IBUS_RELEASE_MASK = 1 << 30           //Key is released.
-	//IBUS_MODIFIER_MASK = 0x5f001fff        //Modifier mask for the all the masks above.
 )
 
 const (

@@ -22,7 +22,6 @@ package main
 import (
 	"fmt"
 	"github.com/BambooEngine/bamboo-core"
-	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
 	"log"
 	"time"
@@ -60,6 +59,8 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 	keyPressChan <- [3]uint32{keyVal, keyCode, state}
 	return true, nil
 }
+
+var terminateChan = make(chan bool)
 
 func (e *IBusBambooEngine) keyPressHandler() {
 	for {
@@ -127,6 +128,8 @@ func (e *IBusBambooEngine) keyPressHandler() {
 			}
 			e.preeditor.Reset()
 			e.ForwardKeyEvent(keyVal, keyCode, state)
+		case <-terminateChan:
+			return
 		}
 	}
 }
@@ -154,8 +157,11 @@ func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state u
 	// workaround for chrome and firefox's address bar
 	if e.firstTimeSendingBS && diffFrom < newLen && diffFrom < oldLen && e.inBrowserList() {
 		fmt.Println("Append a deadkey")
-		e.SendText([]rune(" "))
-		time.Sleep(10 * time.Millisecond)
+		if e.inDirectForwardKeyList() || e.inForwardKeyList() {
+			e.ForwardKeyEvent(IBUS_Space, 65, 0)
+		} else {
+			e.SendText([]rune(" "))
+		}
 		nBackSpace += 1
 		e.firstTimeSendingBS = false
 	}
@@ -169,6 +175,16 @@ func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state u
 }
 
 func (e *IBusBambooEngine) sendBackspaceAndNewRunes(nBackSpace int, newRunes []rune) {
+	if nBackSpace > 0 {
+		if e.inXTestFakeKeyEventList() {
+			e.nFakeBackSpace = nBackSpace
+		}
+		e.SendBackSpace(nBackSpace)
+	}
+	e.SendText(newRunes)
+}
+
+func (e *IBusBambooEngine) SendBackSpace(n int) {
 	if e.inXTestFakeKeyEventList() {
 		var sleep = func() {
 			var count = 0
@@ -178,32 +194,15 @@ func (e *IBusBambooEngine) sendBackspaceAndNewRunes(nBackSpace int, newRunes []r
 			}
 			time.Sleep(20 * time.Millisecond)
 		}
-		if nBackSpace > 0 {
-			e.nFakeBackSpace = nBackSpace
-			e.SendBackSpace(nBackSpace)
-			sleep()
-			e.SendText(newRunes)
-		} else {
-			e.SendText(newRunes)
-		}
-		return
-	}
-	if nBackSpace > 0 {
-		e.SendBackSpace(nBackSpace)
-	}
-	e.SendText(newRunes)
-}
-
-func (e *IBusBambooEngine) SendBackSpace(n int) {
-	if e.inXTestFakeKeyEventList() {
 		time.Sleep(20 * time.Millisecond)
 		fmt.Printf("Sendding %d backspace via XTestFakeKeyEvent\n", n)
 		if e.inChromeFamily() { // workaround for chrome's address bar
 			x11SendBackspace(n, 0)
-			time.Sleep(time.Duration(n) * 10 * time.Millisecond)
+			time.Sleep(time.Duration(n) * 20 * time.Millisecond)
 		} else {
 			x11SendBackspace(n, 10)
 		}
+		sleep()
 	} else if e.inSurroundingTextList() {
 		time.Sleep(20 * time.Millisecond)
 		fmt.Printf("Sendding %d backspace via SurroundingText\n", n)
@@ -211,7 +210,7 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 		time.Sleep(20 * time.Millisecond)
 	} else if e.inDirectForwardKeyList() {
 		time.Sleep(10 * time.Millisecond)
-		fmt.Printf("Sendding %d backspace via ForwardKeyEvent *\n", n)
+		fmt.Printf("Sendding %d backspace via D_ForwardKeyEvent\n", n)
 		for i := 0; i < n; i++ {
 			e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, 0)
 			e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, IBUS_RELEASE_MASK)
@@ -228,7 +227,7 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 				e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, IBUS_RELEASE_MASK)
 				time.Sleep(0 * time.Millisecond)
 			}
-			time.Sleep(time.Duration(n) * 10 * time.Millisecond)
+			time.Sleep(time.Duration(n) * 30 * time.Millisecond)
 		} else {
 			for i := 0; i < n; i++ {
 				e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, 0)
@@ -261,5 +260,5 @@ func (e *IBusBambooEngine) SendText(rs []rune) {
 		return
 	}
 	log.Println("Sending text", string(rs))
-	e.CommitText(ibus.NewText(e.encodeText(string(rs))))
+	e.commitText(string(rs))
 }

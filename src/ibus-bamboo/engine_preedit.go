@@ -72,11 +72,11 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode, true)
 		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
 			processedStr = e.macroTable.GetText(processedStr)
-			e.commitText(e.encodeText(processedStr) + string(keyRune))
+			e.commitText(processedStr + string(keyRune))
 			e.resetPreedit()
 			return true, nil
 		}
-		e.commitText(e.encodeText(e.getComposedString()) + string(keyRune))
+		e.commitText(e.getComposedString() + string(keyRune))
 		e.resetPreedit()
 		return true, nil
 	}
@@ -211,16 +211,13 @@ func (e *IBusBambooEngine) resetPreedit() {
 }
 
 func (e *IBusBambooEngine) commitPreedit() {
-	var commitStr = e.getComposedString()
-	if len([]rune(commitStr)) > 0 {
-		e.commitText(e.encodeText(commitStr))
-	}
+	e.commitText(e.getComposedString())
 	e.resetPreedit()
 }
 
 func (e *IBusBambooEngine) commitText(str string) {
 	for _, chr := range []rune(str) {
-		e.CommitText(ibus.NewText(string(chr)))
+		e.CommitText(ibus.NewText(e.encodeText(string(chr))))
 	}
 	//e.CommitText(ibus.NewText(str))
 }
