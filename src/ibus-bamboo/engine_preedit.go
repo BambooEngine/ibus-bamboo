@@ -24,7 +24,6 @@ import (
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
 	"strings"
-	"time"
 )
 
 func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
@@ -84,22 +83,6 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	return false, nil
 }
 
-var preeditUpdateChan = make(chan uint32)
-
-func (e *IBusBambooEngine) startAutoCommit() {
-	for {
-		var timeout = e.config.AutoCommitAfter
-		select {
-		case <-preeditUpdateChan:
-			break
-		case <-time.After(time.Duration(timeout) * time.Millisecond):
-			if e.config.IBflags&IBautoCommitWithDelay != 0 && e.getRawKeyLen() > 0 {
-				e.commitPreedit()
-			}
-		}
-	}
-}
-
 func (e *IBusBambooEngine) updatePreedit() {
 	var processedStr = e.getPreeditString()
 	var preeditLen = uint32(len([]rune(processedStr)))
@@ -117,7 +100,6 @@ func (e *IBusBambooEngine) updatePreedit() {
 	e.UpdatePreeditTextWithMode(ibusText, preeditLen, true, ibus.IBUS_ENGINE_PREEDIT_COMMIT)
 
 	mouseCaptureUnlock()
-	preeditUpdateChan <- 0
 }
 
 func (e *IBusBambooEngine) shouldFallbackToEnglish() bool {

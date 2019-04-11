@@ -27,8 +27,6 @@ import (
 	"time"
 )
 
-var keyPressChan = make(chan [3]uint32, 100)
-
 func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
 	if e.inXTestFakeKeyEventList() || e.inSurroundingTextList() {
 		// we don't want to use ForwardKeyEvent Api in X11 XTestFakeKeyEvent and Surrounding Text mode
@@ -60,78 +58,68 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 	return true, nil
 }
 
-var terminateChan = make(chan bool)
-
-func (e *IBusBambooEngine) keyPressHandler() {
-	for {
-		select {
-		case keyEvents := <-keyPressChan:
-			var keyVal, keyCode, state = keyEvents[0], keyEvents[1], keyEvents[2]
-			if !e.isValidState(state) {
-				e.preeditor.Reset()
-				e.ForwardKeyEvent(keyVal, keyCode, state)
-				break
+func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
+	if !e.isValidState(state) {
+		e.preeditor.Reset()
+		e.ForwardKeyEvent(keyVal, keyCode, state)
+		return
+	}
+	var keyRune = rune(keyVal)
+	if keyVal == IBUS_BackSpace {
+		if e.config.IBflags&IBautoNonVnRestore == 0 {
+			if e.getRawKeyLen() > 0 {
+				e.preeditor.RemoveLastChar()
 			}
-			var keyRune = rune(keyVal)
-			if keyVal == IBUS_BackSpace {
-				if e.config.IBflags&IBautoNonVnRestore == 0 {
-					if e.getRawKeyLen() > 0 {
-						e.preeditor.RemoveLastChar()
-					}
-					e.ForwardKeyEvent(keyVal, keyCode, state)
-					break
-				}
-				if e.getRawKeyLen() > 0 {
-					oldRunes := []rune(e.getPreeditString())
-					e.preeditor.RemoveLastChar()
-					newRunes := []rune(e.getPreeditString())
-					if len(oldRunes) == 0 {
-						e.ForwardKeyEvent(keyVal, keyCode, state)
-						break
-					}
-					e.updatePreviousText(newRunes, oldRunes, state)
-					break
-				}
-				e.ForwardKeyEvent(keyVal, keyCode, state)
-				break
-			}
-
-			if e.preeditor.CanProcessKey(keyRune) {
-				if state&IBUS_LOCK_MASK != 0 {
-					keyRune = toUpper(keyRune)
-				}
-				oldRunes := []rune(e.getPreeditString())
-				e.preeditor.ProcessKey(keyRune, e.getMode())
-				newRunes := []rune(e.getPreeditString())
-				e.updatePreviousText(newRunes, oldRunes, state)
-				break
-			} else if bamboo.IsWordBreakSymbol(keyRune) {
-				// macro processing
-				var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode, true)
-				if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
-					macText := e.macroTable.GetText(processedStr)
-					macText = macText + string(keyRune)
-					e.updatePreviousText([]rune(macText), []rune(processedStr), state)
-					e.preeditor.Reset()
-					break
-				} else if e.mustFallbackToEnglish() && !e.inXTestFakeKeyEventList() && !e.inSurroundingTextList() {
-					oldRunes := []rune(e.getPreeditString())
-					newRunes := []rune(e.getComposedString())
-					newRunes = append(newRunes, keyRune)
-					e.updatePreviousText(newRunes, oldRunes, state)
-					e.preeditor.Reset()
-					break
-				}
-				e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
-				e.SendText([]rune{keyRune})
-				break
-			}
-			e.preeditor.Reset()
 			e.ForwardKeyEvent(keyVal, keyCode, state)
-		case <-terminateChan:
 			return
 		}
+		if e.getRawKeyLen() > 0 {
+			oldRunes := []rune(e.getPreeditString())
+			e.preeditor.RemoveLastChar()
+			newRunes := []rune(e.getPreeditString())
+			if len(oldRunes) == 0 {
+				e.ForwardKeyEvent(keyVal, keyCode, state)
+				return
+			}
+			e.updatePreviousText(newRunes, oldRunes, state)
+			return
+		}
+		e.ForwardKeyEvent(keyVal, keyCode, state)
+		return
 	}
+
+	if e.preeditor.CanProcessKey(keyRune) {
+		if state&IBUS_LOCK_MASK != 0 {
+			keyRune = toUpper(keyRune)
+		}
+		oldRunes := []rune(e.getPreeditString())
+		e.preeditor.ProcessKey(keyRune, e.getMode())
+		newRunes := []rune(e.getPreeditString())
+		e.updatePreviousText(newRunes, oldRunes, state)
+		return
+	} else if bamboo.IsWordBreakSymbol(keyRune) {
+		// macro processing
+		var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode, true)
+		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
+			macText := e.macroTable.GetText(processedStr)
+			macText = macText + string(keyRune)
+			e.updatePreviousText([]rune(macText), []rune(processedStr), state)
+			e.preeditor.Reset()
+			return
+		} else if e.mustFallbackToEnglish() && !e.inXTestFakeKeyEventList() && !e.inSurroundingTextList() {
+			oldRunes := []rune(e.getPreeditString())
+			newRunes := []rune(e.getComposedString())
+			newRunes = append(newRunes, keyRune)
+			e.updatePreviousText(newRunes, oldRunes, state)
+			e.preeditor.Reset()
+			return
+		}
+		e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
+		e.SendText([]rune{keyRune})
+		return
+	}
+	e.preeditor.Reset()
+	e.ForwardKeyEvent(keyVal, keyCode, state)
 }
 
 func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state uint32) {

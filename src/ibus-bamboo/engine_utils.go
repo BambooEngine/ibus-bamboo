@@ -37,7 +37,7 @@ func GetIBusBambooEngine() func(conn *dbus.Conn, engineName string) dbus.ObjectP
 	var bambooEmoji = NewBambooEmoji(DictEmojiOne)
 	var mTable = NewMacroTable()
 	setupConfigDir()
-	var isRunning = false
+	go keyPressCapturing()
 
 	return func(conn *dbus.Conn, ngName string) dbus.ObjectPath {
 		var engineName = strings.ToLower(ngName)
@@ -56,12 +56,7 @@ func GetIBusBambooEngine() func(conn *dbus.Conn, engineName string) dbus.ObjectP
 		}
 		ibus.PublishEngine(conn, objectPath, engine)
 
-		if isRunning {
-			terminateChan <- true
-		}
-		isRunning = true
-		go engine.startAutoCommit()
-		go engine.keyPressHandler()
+		keyPressHandler = engine.keyPressHandler
 
 		onMouseMove = func() {
 			engine.ignorePreedit = false
@@ -73,6 +68,19 @@ func GetIBusBambooEngine() func(conn *dbus.Conn, engineName string) dbus.ObjectP
 		runtime.GC()
 		debug.FreeOSMemory()
 		return objectPath
+	}
+}
+
+var keyPressHandler = func(keyVal, keyCode, state uint32) {}
+var keyPressChan = make(chan [3]uint32, 100)
+
+func keyPressCapturing() {
+	for {
+		select {
+		case keyEvents := <-keyPressChan:
+			var keyVal, keyCode, state = keyEvents[0], keyEvents[1], keyEvents[2]
+			keyPressHandler(keyVal, keyCode, state)
+		}
 	}
 }
 
