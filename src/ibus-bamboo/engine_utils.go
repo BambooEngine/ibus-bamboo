@@ -210,10 +210,15 @@ func (e *IBusBambooEngine) isIgnoredKey(keyVal, state uint32) bool {
 }
 
 func (e *IBusBambooEngine) isValidState(state uint32) bool {
-	if state&IBUS_SHIFT_MASK != 0 || state&IBUS_LOCK_MASK != 0 {
-		return true
+	if state&IBUS_CONTROL_MASK != 0 ||
+		state&IBUS_MOD1_MASK != 0 ||
+		state&IBUS_IGNORED_MASK != 0 ||
+		state&IBUS_SUPER_MASK != 0 ||
+		state&IBUS_HYPER_MASK != 0 ||
+		state&IBUS_META_MASK != 0 {
+		return false
 	}
-	return state == 0
+	return true
 }
 
 func (e *IBusBambooEngine) canProcessKey(keyVal uint32) bool {

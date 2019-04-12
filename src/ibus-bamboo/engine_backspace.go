@@ -139,18 +139,15 @@ func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state u
 		}
 	}
 	diffFrom := sameTo + 1
-	fmt.Println("Updating Previous Text", string(oldRunes), string(newRunes), diffFrom)
+	log.Println("Updating Previous Text", string(oldRunes), string(newRunes), diffFrom)
 
 	nBackSpace := 0
 	// workaround for chrome and firefox's address bar
 	if e.firstTimeSendingBS && diffFrom < newLen && diffFrom < oldLen && e.inBrowserList() {
 		fmt.Println("Append a deadkey")
-		if e.inDirectForwardKeyList() || e.inForwardKeyList() {
-			e.ForwardKeyEvent(IBUS_Space, 65, 0)
-		} else {
-			e.SendText([]rune(" "))
-		}
+		e.SendText([]rune(" "))
 		nBackSpace += 1
+		time.Sleep(10 * time.Millisecond)
 		e.firstTimeSendingBS = false
 	}
 
@@ -207,7 +204,7 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 		time.Sleep(10 * time.Millisecond)
 	} else if e.inForwardKeyList() {
 		time.Sleep(10 * time.Millisecond)
-		fmt.Printf("Sendding %d backspace via ForwardKeyEvent **\n", n)
+		log.Printf("Sendding %d backspace via ForwardKeyEvent\n", n)
 
 		if e.inChromeFamily() { // workaround for chrome's address bar
 			for i := 0; i < n; i++ {
@@ -215,7 +212,8 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 				e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, IBUS_RELEASE_MASK)
 				time.Sleep(0 * time.Millisecond)
 			}
-			time.Sleep(time.Duration(n) * 30 * time.Millisecond)
+			time.Sleep(time.Duration(n) * 20 * time.Millisecond)
+			time.Sleep(20 * time.Millisecond)
 		} else {
 			for i := 0; i < n; i++ {
 				e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, 0)
