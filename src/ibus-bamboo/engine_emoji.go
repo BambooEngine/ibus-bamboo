@@ -28,6 +28,7 @@ import (
 func (e *IBusBambooEngine) openEmojiList() {
 	e.emoji.ProcessKey(':')
 	e.UpdatePreeditText(ibus.NewText(":"), 1, true)
+	e.UpdateAuxiliaryText(ibus.NewText(":"), true)
 	lt := ibus.NewLookupTable()
 	lt.Orientation = IBUS_ORIENTATION_HORIZONTAL
 	for _, codePoint := range e.emoji.Query() {
@@ -113,6 +114,7 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 	rawTextLen = len([]rune(raw))
 	cps = e.emoji.Query()
 	e.UpdatePreeditTextWithMode(ibus.NewText(raw), uint32(rawTextLen), true, ibus.IBUS_ENGINE_PREEDIT_COMMIT)
+	e.UpdateAuxiliaryText(ibus.NewText(raw), true)
 	lt := ibus.NewLookupTable()
 	lt.Orientation = IBUS_ORIENTATION_HORIZONTAL
 	for _, codePoint := range cps {

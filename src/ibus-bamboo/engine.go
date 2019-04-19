@@ -324,7 +324,7 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 			e.macroTable.Disable()
 		}
 	}
-	if propName == PropKeyPreeditInvisibility {
+	if propName == PropKeyInvisibilityPreedit {
 		if propState == ibus.PROP_STATE_CHECKED {
 			e.config.IBflags |= IBpreeditInvisibility
 		} else {

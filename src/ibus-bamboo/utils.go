@@ -151,7 +151,7 @@ func loadDictionary(dataFiles ...string) (map[string]bool, error) {
 	return dictionary, nil
 }
 
-var keysymsMapping = map[rune]uint32{
+var vnSymMapping = map[rune]uint32{
 	'Ạ': 0x1001ea0,
 	'ạ': 0x1001ea1,
 	'Ả': 0x1001ea2,

@@ -170,6 +170,9 @@ func (e *IBusBambooEngine) sendBackspaceAndNewRunes(nBackSpace int, newRunes []r
 }
 
 func (e *IBusBambooEngine) SendBackSpace(n int) {
+	// Gtk/Qt apps have a serious sync issue with fake backspaces
+	// and normal string committing, so we'll not commit right now
+	// but delay until all the sent backspaces got processed.
 	if e.inXTestFakeKeyEventList() {
 		var sleep = func() {
 			var count = 0
@@ -189,7 +192,11 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 		}
 		sleep()
 	} else if e.inSurroundingTextList() {
-		time.Sleep(20 * time.Millisecond)
+		if e.inBrowserList() {
+			time.Sleep(40 * time.Millisecond)
+		} else {
+			time.Sleep(20 * time.Millisecond)
+		}
 		fmt.Printf("Sendding %d backspace via SurroundingText\n", n)
 		e.DeleteSurroundingText(-int32(n), uint32(n))
 		time.Sleep(20 * time.Millisecond)
@@ -210,7 +217,6 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 			for i := 0; i < n; i++ {
 				e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, 0)
 				e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, IBUS_RELEASE_MASK)
-				time.Sleep(0 * time.Millisecond)
 			}
 			time.Sleep(time.Duration(n) * 20 * time.Millisecond)
 			time.Sleep(20 * time.Millisecond)
@@ -235,7 +241,7 @@ func (e *IBusBambooEngine) SendText(rs []rune) {
 	if e.inDirectForwardKeyList() {
 		log.Println("Forward as commit", string(rs))
 		for _, chr := range rs {
-			var keyVal = keysymsMapping[chr]
+			var keyVal = vnSymMapping[chr]
 			if keyVal == 0 {
 				keyVal = uint32(chr)
 			}

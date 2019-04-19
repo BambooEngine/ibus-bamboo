@@ -206,7 +206,7 @@ func (e *IBusBambooEngine) isIgnoredKey(keyVal, state uint32) bool {
 		}
 		return true
 	}
-	return e.zeroLocation
+	return false
 }
 
 func (e *IBusBambooEngine) isValidState(state uint32) bool {

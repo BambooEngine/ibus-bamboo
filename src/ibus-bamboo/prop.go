@@ -32,7 +32,7 @@ const (
 	PropKeySpellingChecking            = "spelling_checking"
 	PropKeySpellCheckingByRules        = "spelling_checking_by_rules"
 	PropKeySpellCheckingByDicts        = "spelling_checking_by_dicts"
-	PropKeyPreeditInvisibility         = "preedit_hiding"
+	PropKeyInvisibilityPreedit         = "invisibility_preedit"
 	PropKeyVnConvert                   = "vn_convert"
 	PropKeyAutoCommitWithVnNotMatch    = "AutoCommitWithSpellChecking"
 	PropKeyAutoCommitWithVnFullMatch   = "AutoCommitWithVnFullMatch"
@@ -40,7 +40,7 @@ const (
 	PropKeyAutoCommitWithMouseMovement = "AutoCommitWithMouseMovement"
 	PropKeyAutoCommitWithDelay         = "AutoCommitWithDelay"
 	PropKeyMacroEnabled                = "macro_enabled"
-	PropKeyMacroTable                  = "macro_table"
+	PropKeyMacroTable                  = "open_macro_table"
 	PropKeyEmojiEnabled                = "emoji_enabled"
 	PropKeyBambooConfiguration         = "bamboo_configuration"
 	PropKeyFakeBackspace               = "x11_fake_backspace"
@@ -422,7 +422,7 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 		},
 		&ibus.Property{
 			Name:      "IBusProperty",
-			Key:       PropKeyPreeditInvisibility,
+			Key:       PropKeyInvisibilityPreedit,
 			Type:      ibus.PROP_TYPE_TOGGLE,
 			Label:     dbus.MakeVariant(ibus.NewText("Ẩn gạch chân")),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("Ẩn gạch chân")),

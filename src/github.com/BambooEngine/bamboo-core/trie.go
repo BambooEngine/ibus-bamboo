@@ -97,15 +97,10 @@ func TestString(trie *W, s []rune, deepSearch bool) uint8 {
 func dfs(trie *W, lookup map[string]bool, s string) {
 	if trie.F {
 		lookup[s] = true
-		return
 	}
 	for chr, t := range trie.N {
 		var key = s + string(chr)
-		if t.F {
-			lookup[key] = true
-		} else {
-			dfs(t, lookup, key)
-		}
+		dfs(t, lookup, key)
 	}
 }
 
