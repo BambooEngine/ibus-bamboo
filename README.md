@@ -70,7 +70,7 @@ export CLUTTER_IM_MODULE=ibus
 Việc cài đặt trên chỉ có hiệu lực cho người dùng hiện tại, nếu muốn cài đặt cho toàn bộ hệ thống hãy để những dòng trên vào file `/etc/bash.bashrc` và `/etc/profile`.
 
 **Lưu ý:** Nếu bạn dùng shell khác như `zsh` thì thay vì `.bashrc`, hãy thêm vào `.zshrc`. Tương tự với `fish` hay những shell khác.
-*Tham khảo thêm tại [wiki ibus của Archlinux](https://wiki.archlinux.org/index.php/IBus#Initial_setup)*
+*Tham khảo thêm tại [wiki về ibus của Arch Linux](https://wiki.archlinux.org/index.php/IBus#Initial_setup)*
 
 ### Chuyển đổi giữa các chế độ gõ
 Tránh nhầm lẫn **chế độ gõ** với **kiểu gõ** (các kiểu gõ bao gồm `telex`, `vni`, ...). Để chuyển đổi giữa các chế độ gõ, chỉ cần nhấn vào một khung nhập liệu (một cái hộp để nhập văn bản) nào đó, sau đó nhấn tổ hợp `Shift + ~`, một bảng với những chế độ gõ hiện có sẽ xuất hiện, bạn chỉ cần nhấn phím số tương ứng để lựa chọn.
