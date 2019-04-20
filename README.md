@@ -9,7 +9,7 @@ IBus Bamboo - Bộ gõ tiếng Việt cho Linux
 - [Sơ lược tính năng](#sơ-lược-tính-năng)
 - [Hướng dẫn cài đặt](#hướng-dẫn-cài-đặt)
 	- [Dành cho Ubuntu, Debian và các distro tương tự](#ubuntu-debian-và-các-distro-tương-tự)
-	- [Dành cho Archlinux và các distro tương tự](#archlinux-và-các-distro-tương-tự)
+	- [Dành cho Arch Linux và các distro tương tự](#arch-linux-và-các-distro-tương-tự)
 	- [Cài đặt từ mã nguồn](https://github.com/BambooEngine/ibus-bamboo/wiki/H%C6%B0%E1%BB%9Bng-d%E1%BA%ABn-c%C3%A0i-%C4%91%E1%BA%B7t-t%E1%BB%AB-m%C3%A3-ngu%E1%BB%93n)
 - [Hướng dẫn sử dụng](#hướng-dẫn-sử-dụng)
 	- [Cài đặt biến môi trường để sử dụng ibus (nên đọc)](#cài-đặt-biến-môi-trường)
@@ -43,22 +43,15 @@ sudo apt-get install ibus-bamboo -y
 ibus restart
 ```
 
-### Archlinux và các distro tương tự
-Với Archlinux, cách cài đặt giống như trên AUR. Đầu tiên các bạn tải file PKGBUILD tương ứng về máy. Có 2 phiên bản để cài đặt, bản git là bản dùng mã nguồn mới nhất từ master, bản còn lại là release:
+### Arch Linux và các distro tương tự
+Với Arch Linux, bạn có thể cài đặt bằng cách chạy lệnh sau:
 ```sh
-mkdir ibus-bamboo
-cd ibus-bamboo
-
-# nếu muốn cài bản git
-wget https://raw.githubusercontent.com/BambooEngine/ibus-bamboo/master/archlinux/PKGBUILD-git -O PKGBUILD
-# nếu muốn cài bản release
-wget https://raw.githubusercontent.com/BambooEngine/ibus-bamboo/master/archlinux/PKGBUILD-release -O PKGBUILD
+wget https://raw.githubusercontent.com/BambooEngine/ibus-bamboo/master/archlinux/install.sh
+chmod +x install.sh
+./install.sh
 ```
 
-Cuối cùng build gói và cài đặt
-```sh
-makepkg -si
-```
+Sau đó script sẽ cài đặt `ibus-bamboo` cho bạn.
 
 ## Hướng dẫn sử dụng
 ### Cài đặt biến môi trường
