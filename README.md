@@ -12,13 +12,13 @@ IBus Bamboo - Bộ gõ tiếng Việt cho Linux
 * Nhiều kiểu gõ:
   * Telex, Telex 2, Telex 3, Telex + VNI + VIQR
   * VNI, VIQR, Microsoft layout
-* Nhiều chế độ gõ:
+* Nhiều tính năng hữu ích, dễ dàng tùy chỉnh:
   * Kiểm tra chính tả (sử dụng từ điển/luật ghép vần)
   * Dấu thanh chuẩn và dấu thanh kiểu mới
-  * Bỏ dấu tự do, Gõ tắt (macro),...
+  * Bỏ dấu tự do, Gõ tắt, Emoji,...
 * Sử dụng phím tắt `<Shift>`+`~` để loại trừ ứng dụng không dùng bộ gõ, chuyển qua lại giữa các chế độ gõ:
   	* Pre-edit (default)
-  	* Surrounding text, IBus Forward key event, XTestFakeKeyEvent
+  	* Surrounding text, IBus ForwardKeyEvent, XTestFakeKeyEvent,...
    ![ibus-bamboo](https://github.com/BambooEngine/ibus-bamboo/raw/gh-resources/demo.gif)
 
 ### Cài đặt (Ubuntu và Arch Linux)

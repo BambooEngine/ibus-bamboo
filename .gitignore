@@ -12,7 +12,6 @@
 *.out
 
 .idea/
-pkg/
 .ccls-cache/
 test-data/
 src/*/.git

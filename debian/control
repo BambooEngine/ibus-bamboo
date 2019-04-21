@@ -19,12 +19,17 @@ Source: ibus-bamboo
 Section: utils
 Priority: extra
 Maintainer: Luong Thanh Lam <ltlam93@gmail.com>
-Build-Depends: debhelper, golang, libx11-dev, libxt-dev, libxtst-dev
-Standards-Version: 0.4.5
+Build-Depends: debhelper, golang, libx11-dev, libxtst-dev
+Standards-Version: 0.4.6
 Homepage: https://github.com/BambooEngine/ibus-bamboo
 
 Package: ibus-bamboo
 Architecture: any
-Depends: ibus
+Depends: ibus, libx11-6, libxtst6
 Description: A Vietnamese IME for IBus using Bamboo Engine.
- Bộ gõ tiếng Việt cho IBus sử dụng Bamboo Engine.
+ Bộ gõ tiếng Việt mã nguồn mở hỗ trợ hầu hết các bảng mã thông dụng,
+ các kiểu gõ tiếng Việt phổ biến, bỏ dấu thông minh, kiểm tra chính tả, gõ tắt,...
+ .
+ Sử dụng phím tắt `<Shift>`+`~` để loại trừ ứng dụng không dùng bộ gõ, chuyển qua lại giữa các chế độ gõ:
+  	* Pre-edit (default)
+  	* Surrounding text, IBus ForwardKeyEvent, XTestFakeKeyEvent,...

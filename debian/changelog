@@ -1,3 +1,11 @@
+ibus-bamboo (0.4.6ubuntu) stable; urgency=medium
+
+  * Release 0.4.6
+    - Add mouse tracking using RECORD extension
+    - Fix wrong emoji lookuptable position
+
+ -- Luong Thanh Lam <ltlam93@gmail.com>  Sun, 21 Apr 2019 08:59:53 +0700
+
 ibus-bamboo (0.4.5ubuntu1) stable; urgency=medium
 
   * Release 0.4.5
