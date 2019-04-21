@@ -32,6 +32,8 @@ extern void x11ClipboardReset();
 extern void mouse_capture_init();
 extern void mouse_capture_exit();
 extern void mouse_capture_unlock();
+extern void mouse_recording_init();
+extern void mouse_recording_exit();
 extern void x11SendBackspace(int n, int timeout);
 extern void setXIgnoreErrorHandler();
 extern char* x11GetFocusWindowClass();
@@ -52,11 +54,21 @@ func mouse_move_handler() {
 
 var onMouseMove func()
 
+//export mouseCaptureInit
 func mouseCaptureInit() {
 	C.mouse_capture_init()
 }
 
 func mouseCaptureExit() {
+	C.mouse_capture_exit()
+}
+
+func mouseRecordingInit() {
+	C.mouse_recording_init()
+}
+
+func mouseRecordingExit() {
+	C.mouse_recording_exit()
 	C.mouse_capture_exit()
 }
 

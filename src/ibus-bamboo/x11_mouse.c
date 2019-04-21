@@ -118,7 +118,7 @@ static void* thread_mouse_capture(void* data)
         XSync(dpy, 1);
         pthread_mutex_lock(&mutex_mcap); // set mutex to lock status, so this thread will wait until next unlock (by update preedit string)
         if (mcap_running == 0)
-            return NULL;
+            break;
 
         if (event.type == MotionNotify) // mouse move
         {

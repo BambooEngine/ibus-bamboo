@@ -132,7 +132,7 @@ func (e *IBusBambooEngine) Reset() *dbus.Error {
 func (e *IBusBambooEngine) Enable() *dbus.Error {
 	fmt.Print("Enable.")
 	if e.config.IBflags&IBautoCommitWithMouseMovement != 0 {
-		mouseCaptureInit()
+		mouseRecordingInit()
 	}
 	if e.config.IBflags&IBmarcoEnabled != 0 {
 		e.macroTable.Enable(e.engineName)
@@ -143,7 +143,7 @@ func (e *IBusBambooEngine) Enable() *dbus.Error {
 func (e *IBusBambooEngine) Disable() *dbus.Error {
 	fmt.Print("Disable.")
 	x11ClipboardExit()
-	mouseCaptureExit()
+	mouseRecordingExit()
 	return nil
 }
 
@@ -299,10 +299,10 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	if propName == PropKeyAutoCommitWithMouseMovement {
 		if propState == ibus.PROP_STATE_CHECKED {
 			e.config.IBflags |= IBautoCommitWithMouseMovement
-			mouseCaptureInit()
+			mouseRecordingInit()
 		} else {
 			e.config.IBflags &= ^IBautoCommitWithMouseMovement
-			mouseCaptureExit()
+			mouseRecordingExit()
 		}
 	}
 	if propName == PropKeyAutoCommitWithDelay {

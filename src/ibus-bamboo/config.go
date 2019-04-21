@@ -34,7 +34,7 @@ const (
 	ComponentName = "org.freedesktop.IBus.bamboo"
 	EngineName    = "Bamboo"
 	HomePage      = "https://github.com/BambooEngine/ibus-bamboo"
-	VnConvertPage = "https://font.ssc.vn"
+	VnConvertPage = "https://tools.jcisio.com/vietuni/"
 
 	DictVietnameseCm = "data/vietnamese.cm.dict"
 	DictEmojiOne     = "data/emojione.json"

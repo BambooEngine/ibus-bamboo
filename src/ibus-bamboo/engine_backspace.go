@@ -192,11 +192,6 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 		}
 		sleep()
 	} else if e.inSurroundingTextList() {
-		if e.inBrowserList() {
-			time.Sleep(40 * time.Millisecond)
-		} else {
-			time.Sleep(20 * time.Millisecond)
-		}
 		fmt.Printf("Sendding %d backspace via SurroundingText\n", n)
 		e.DeleteSurroundingText(-int32(n), uint32(n))
 		time.Sleep(20 * time.Millisecond)
