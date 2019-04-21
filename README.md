@@ -4,7 +4,18 @@ IBus Bamboo - Bộ gõ tiếng Việt cho Linux
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://opensource.org/licenses/GPL-3.0)
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/BambooEngine/ibus-bamboo)
 
-### Sơ lược tính năng
+## Mục lục
+
+- [Sơ lược tính năng](#sơ-lược-tính-năng)
+- [Hướng dẫn cài đặt](#hướng-dẫn-cài-đặt)
+	- [Dành cho Ubuntu, Debian và các distro tương tự](#ubuntu-debian-và-các-distro-tương-tự)
+	- [Dành cho Arch Linux và các distro tương tự](#arch-linux-và-các-distro-tương-tự)
+	- [Cài đặt từ mã nguồn](https://github.com/BambooEngine/ibus-bamboo/wiki/H%C6%B0%E1%BB%9Bng-d%E1%BA%ABn-c%C3%A0i-%C4%91%E1%BA%B7t-t%E1%BB%AB-m%C3%A3-ngu%E1%BB%93n)
+- [Hướng dẫn sử dụng](#hướng-dẫn-sử-dụng)
+- [Báo lỗi](#báo-lỗi)
+- [Giấy phép](#giấy-phép)
+
+## Sơ lược tính năng
 * Hỗ trợ tất cả các bảng mã phổ biến:
   * Unicode, TCVN (ABC)
   * VIQR, VNI, VPS, VISCII, BK HCM1, BK HCM2,…
@@ -21,34 +32,41 @@ IBus Bamboo - Bộ gõ tiếng Việt cho Linux
   	* Surrounding text, IBus ForwardKeyEvent, XTestFakeKeyEvent,...
    ![ibus-bamboo](https://github.com/BambooEngine/ibus-bamboo/raw/gh-resources/demo.gif)
 
-### Cài đặt (Ubuntu và Arch Linux)
-Với Ubuntu
+## Hướng dẫn cài đặt
+### Ubuntu, Debian và các distro tương tự
+
 ```sh
 sudo add-apt-repository ppa:bamboo-engine/ibus-bamboo
 sudo apt-get update
 sudo apt-get install ibus-bamboo -y
 ibus restart
 ```
-Với Arch Linux, cách cài đặt giống như trên AUR. Đầu tiên các bạn tải file PKGBUILD tương ứng về máy. Có 2 phiên bản để cài đặt, bản git là bản dùng mã nguồn mới nhất từ master, bản còn lại là release:
-```sh
-mkdir ibus-bamboo
-cd ibus-bamboo
 
-# nếu muốn cài bản git 
-wget https://raw.githubusercontent.com/BambooEngine/ibus-bamboo/master/archlinux/PKGBUILD-git -O PKGBUILD
-# nếu muốn cài bản release 
-wget https://raw.githubusercontent.com/BambooEngine/ibus-bamboo/master/archlinux/PKGBUILD-release -O PKGBUILD
+### Arch Linux và các distro tương tự
+Với Arch Linux, bạn có thể cài đặt bằng cách chạy lệnh sau:
+```sh
+wget https://raw.githubusercontent.com/BambooEngine/ibus-bamboo/master/archlinux/install.sh
+chmod +x install.sh
+./install.sh
 ```
 
-Cuối cùng build gói và cài đặt 
-```sh
-makepkg -si
-```
+Sau đó script sẽ cài đặt `ibus-bamboo` cho bạn.
 
+## Hướng dẫn sử dụng
+Điểm khác biệt giữa `ibus-bamboo` và các bộ gõ khác là `ibus-bamboo` cung cấp nhiều chế độ gõ khác nhau. (Tránh nhầm lẫn **chế độ gõ** với **kiểu gõ**, các kiểu gõ bao gồm `telex`, `vni`, ...). Để chuyển đổi giữa các chế độ gõ, chỉ cần nhấn vào một khung nhập liệu (một cái hộp để nhập văn bản) nào đó, sau đó nhấn tổ hợp `Shift + ~`, một bảng với những chế độ gõ hiện có sẽ xuất hiện, bạn chỉ cần nhấn phím số tương ứng để lựa chọn.
 
-*Hướng dẫn cài đặt từ mã nguồn: [wiki](https://github.com/BambooEngine/ibus-bamboo/wiki/H%C6%B0%E1%BB%9Bng-d%E1%BA%ABn-c%C3%A0i-%C4%91%E1%BA%B7t-t%E1%BB%AB-m%C3%A3-ngu%E1%BB%93n)*
+**Một số lưu ý:**
+- Các chế độ gõ được lưu riêng biệt cho mỗi phần mềm (`firefox` có thể đang dùng chế độ 3, trong khi `libreoffice` thì lại dùng chế độ 2).
+- Nếu một phần mềm chưa được đặt chế độ gõ thì nó sẽ dùng chế độ gõ mặc định.
+- Bạn có thể dùng chế độ `thêm vào danh sách loại trừ` để không gõ tiếng Việt trong một chương trình nào đó.
+- Để gõ ký tự `~` hãy nhấn tổ hợp `Shift + ~` 2 lần.
 
-### Giấy phép
+## Báo lỗi
+Trước khi báo lỗi vui lòng đọc [những vấn đề thường gặp](https://github.com/BambooEngine/ibus-bamboo/wiki/C%C3%A1c-v%E1%BA%A5n-%C4%91%E1%BB%81-th%C6%B0%E1%BB%9Dng-g%E1%BA%B7p) và tìm vấn đề của mình ở trong đó.
+
+Nếu trang phía trên không giải quyết vấn đề của bạn, vui lòng [báo lỗi tại đây](https://github.com/BambooEngine/ibus-bamboo/issues)
+
+## Giấy phép
 ibus-bamboo là bộ gõ được fork từ dự án [ibus-teni](https://github.com/teni-ime/ibus-teni), sử dụng Bamboo Engine để xử lý tiếng Việt thay cho Teni Engine.
 
 ibus-bamboo là phần mềm tự do nguồn mở. Toàn bộ mã nguồn của ibus-bamboo được phát hành dưới các quy định ghi trong Giấy phép Công cộng GNU (GNU General Public License v3.0).
