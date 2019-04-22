@@ -76,7 +76,6 @@ static void* thread_mouse_recording (void* data)
   int major, minor;
   if (!XRecordQueryVersion (ctrl_disp, &major, &minor)) {
     fprintf (stderr, "RECORD extension is not supported on this X server!\n");
-    mouseCaptureInit();
     mouse_recording = 0;
     return NULL;
   }

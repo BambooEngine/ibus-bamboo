@@ -156,7 +156,6 @@ func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state u
 	}
 
 	e.sendBackspaceAndNewRunes(nBackSpace, newRunes[diffFrom:])
-	mouseCaptureUnlock()
 }
 
 func (e *IBusBambooEngine) sendBackspaceAndNewRunes(nBackSpace int, newRunes []rune) {

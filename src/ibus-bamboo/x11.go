@@ -54,20 +54,12 @@ func mouse_move_handler() {
 
 var onMouseMove func()
 
-//export mouseCaptureInit
-func mouseCaptureInit() {
-	C.mouse_capture_init()
-}
-
-func mouseCaptureExit() {
-	C.mouse_capture_exit()
-}
-
-func mouseRecordingInit() {
+func startMouseTracking() {
 	C.mouse_recording_init()
+	C.mouse_capture_init() // pre-edit only
 }
 
-func mouseRecordingExit() {
+func stopMouseTracking() {
 	C.mouse_recording_exit()
 	C.mouse_capture_exit()
 }

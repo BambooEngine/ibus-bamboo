@@ -26,7 +26,7 @@
 #include <unistd.h>
 #include <time.h>
 #include "_cgo_export.h"
-#define CAPTURE_MOUSE_MOVE_DELTA        50
+#define CAPTURE_MOUSE_MOVE_DELTA        70
 
 static pthread_t th_mcap;
 static pthread_mutex_t mutex_mcap;
