@@ -193,15 +193,17 @@ func (e *IBusBambooEngine) resetPreedit() {
 }
 
 func (e *IBusBambooEngine) commitPreedit() {
+	e.HidePreeditText()
 	e.commitText(e.getComposedString())
 	e.resetPreedit()
 }
 
 func (e *IBusBambooEngine) commitText(str string) {
+	e.CommitText(ibus.NewText(str))
+	return
 	for _, chr := range []rune(str) {
 		e.CommitText(ibus.NewText(e.encodeText(string(chr))))
 	}
-	//e.CommitText(ibus.NewText(str))
 }
 
 func (e *IBusBambooEngine) getVnSeq() string {
