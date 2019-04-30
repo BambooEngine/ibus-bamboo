@@ -35,7 +35,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 				time.Sleep(5 * time.Millisecond)
 			}
 		}
-		if !e.isValidState(state) || !e.canProcessKey(keyVal) {
+		if !e.isValidState(state) || !e.canProcessKey(keyVal, state) {
 			e.preeditor.Reset()
 			e.resetFakeBackspace()
 			sleep()
@@ -98,20 +98,30 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 		e.updatePreviousText(newRunes, oldRunes, state)
 		return
 	} else if bamboo.IsWordBreakSymbol(keyRune) {
-		// macro processing
-		var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode, true)
+		if keyVal == IBUS_Space && state&IBUS_SHIFT_MASK != 0 && !e.preeditor.IsLastWordUpper() {
+			// restore key strokes
+			oldRunes := []rune(e.getPreeditString())
+			e.preeditor.RestoreLastWord()
+			newRunes := []rune(e.getPreeditString())
+			e.updatePreviousText(newRunes, oldRunes, state)
+			return
+		}
+		var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode, false)
 		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
+			// macro processing
 			macText := e.macroTable.GetText(processedStr)
 			macText = macText + string(keyRune)
 			e.updatePreviousText([]rune(macText), []rune(processedStr), state)
 			e.preeditor.Reset()
 			return
-		} else if e.mustFallbackToEnglish() && !e.inXTestFakeKeyEventList() && !e.inSurroundingTextList() {
+		}
+		if e.mustFallbackToEnglish() {
 			oldRunes := []rune(e.getPreeditString())
+			e.preeditor.RestoreLastWord()
 			newRunes := []rune(e.getComposedString())
 			newRunes = append(newRunes, keyRune)
 			e.updatePreviousText(newRunes, oldRunes, state)
-			e.preeditor.Reset()
+			e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
 			return
 		}
 		e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
@@ -232,6 +242,9 @@ func (e *IBusBambooEngine) resetFakeBackspace() {
 }
 
 func (e *IBusBambooEngine) SendText(rs []rune) {
+	if len(rs) == 0 {
+		return
+	}
 	if e.inDirectForwardKeyList() {
 		log.Println("Forward as commit", string(rs))
 		for _, chr := range rs {

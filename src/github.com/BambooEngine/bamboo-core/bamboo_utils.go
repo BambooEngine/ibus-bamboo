@@ -352,6 +352,23 @@ func hasSuperWord(composition []*Transformation) bool {
 	return regUhOh.MatchString(str)
 }
 
+func extractLastWord(composition []*Transformation, effectiveKeys []rune) ([]*Transformation, []*Transformation) {
+	var previous, lastSyllable []*Transformation
+	if len(composition) > 0 {
+		var ls = getLastWord(composition, effectiveKeys)
+		if len(ls) > 0 {
+			var idx = findTransformationIndex(composition, ls[0])
+			if idx > 0 {
+				previous = composition[:idx]
+			}
+			lastSyllable = ls
+		} else {
+			previous = composition
+		}
+	}
+	return lastSyllable, previous
+}
+
 func extractLastSyllable(composition []*Transformation) ([]*Transformation, []*Transformation) {
 	var previous, lastSyllable []*Transformation
 	if len(composition) > 0 {
@@ -408,6 +425,15 @@ func generateTransformations(composition []*Transformation, applicableRules []Ru
 		transformations = append(transformations, createAppendingComposition(applicableRules, key, isUpperCase)...)
 	}
 	return transformations
+}
+
+func isCompositionUpper(composition []*Transformation) bool {
+	for _, trans := range composition {
+		if trans.Rule.EffectType == Appending && !trans.IsUpperCase {
+			return false
+		}
+	}
+	return true
 }
 
 /***** BEGIN SIDE-EFFECT METHODS ******/
@@ -493,6 +519,14 @@ func freeComposition(composition []*Transformation) []*Transformation {
 		if !trans.IsDeleted {
 			result = append(result, trans)
 		}
+	}
+	return result
+}
+
+func breakComposition(composition []*Transformation) []*Transformation {
+	var result []*Transformation
+	for _, trans := range composition {
+		result = append(result, createAppendingTrans(trans.Rule.Key, trans.IsUpperCase))
 	}
 	return result
 }
