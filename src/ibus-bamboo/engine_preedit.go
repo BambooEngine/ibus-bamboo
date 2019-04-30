@@ -23,6 +23,7 @@ import (
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
+	"log"
 	"strings"
 )
 
@@ -199,11 +200,8 @@ func (e *IBusBambooEngine) commitPreedit() {
 }
 
 func (e *IBusBambooEngine) commitText(str string) {
-	e.CommitText(ibus.NewText(str))
-	return
-	for _, chr := range []rune(str) {
-		e.CommitText(ibus.NewText(e.encodeText(string(chr))))
-	}
+	log.Println("Commit Text:", str)
+	e.CommitText(ibus.NewText(e.encodeText(str)))
 }
 
 func (e *IBusBambooEngine) getVnSeq() string {

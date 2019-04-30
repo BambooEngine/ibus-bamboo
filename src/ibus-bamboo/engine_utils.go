@@ -59,6 +59,8 @@ func GetIBusBambooEngine() func(conn *dbus.Conn, engineName string) dbus.ObjectP
 		keyPressHandler = engine.keyPressHandler
 
 		onMouseMove = func() {
+			engine.Lock()
+			defer engine.Unlock()
 			engine.ignorePreedit = false
 			x11ClipboardReset()
 			engine.resetFakeBackspace()
@@ -85,6 +87,9 @@ func keyPressCapturing() {
 }
 
 func (e *IBusBambooEngine) resetBuffer() {
+	if e.getRawKeyLen() == 0 {
+		return
+	}
 	if e.inPreeditList() || !e.inBackspaceWhiteList() {
 		e.commitPreedit()
 	} else {

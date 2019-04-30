@@ -40,7 +40,7 @@ License:        GPL-3.0
 Group:          System/Localization
 URL:            https://github.com/BambooEngine/ibus-bamboo
 Packager:       Luong Thanh Lam <ltlam93@gmail.com>
-BuildRequires:  go, libX11-devel, libxtst-devel
+BuildRequires:  go, libX11-devel, libXtst-devel
 Requires:       ibus, libX11, libXtst
 Provides:       locale(ibus:vi)
 Source0:        %{package_name}-%{version}.tar.gz
