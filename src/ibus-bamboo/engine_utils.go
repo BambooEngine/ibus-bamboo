@@ -205,6 +205,10 @@ func (e *IBusBambooEngine) isIgnoredKey(keyVal, state uint32) bool {
 		//Ignore key-up event
 		return true
 	}
+	if keyVal == IBUS_Caps_Lock ||
+		(!(state&IBUS_SHIFT_MASK != 0) && (keyVal == IBUS_Shift_L || keyVal == IBUS_Shift_R)) { // when press one shift key
+		return true
+	}
 	if e.inExceptedList() {
 		if e.inLookupTableControlKeys(keyVal) {
 			return false
@@ -226,8 +230,8 @@ func (e *IBusBambooEngine) isValidState(state uint32) bool {
 	return true
 }
 
-func (e *IBusBambooEngine) canProcessKey(keyVal uint32) bool {
-	if keyVal == IBUS_BackSpace {
+func (e *IBusBambooEngine) canProcessKey(keyVal, state uint32) bool {
+	if keyVal == IBUS_Space || keyVal == IBUS_BackSpace {
 		return true
 	}
 	var keyRune = rune(keyVal)

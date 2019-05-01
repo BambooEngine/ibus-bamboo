@@ -374,3 +374,28 @@ func TestProcesschoas(t *testing.T) {
 		t.Errorf("TestProcessToorr, got [%v] expected [uế]", ng.GetProcessedString(VietnameseMode, false))
 	}
 }
+
+func TestBambooEngine_RestoreLastWord(t *testing.T) {
+	ng := newStdEngine()
+	ng.ProcessString("duwongwj tooi", VietnameseMode)
+	ng.RestoreLastWord()
+	if ng.GetProcessedString(VietnameseMode, false) != "tooi" {
+		t.Errorf("TestProcessToorr, got [%v] expected [tooi]", ng.GetProcessedString(VietnameseMode, false))
+	}
+}
+
+func TestBambooEngine_RestoreLastWord_TCVN(t *testing.T) {
+	var im = ParseInputMethod(InputMethodDefinitions, "Microsoft layout")
+	ng := NewEngine(im, EstdFlags, nil)
+	ng.ProcessString("112", VietnameseMode)
+	ng.RestoreLastWord()
+	if ng.GetProcessedString(EnglishMode, false) != "12" {
+		t.Errorf("TestProcessToorr, got [%v] expected [12]", ng.GetProcessedString(EnglishMode, false))
+	}
+	ng.Reset()
+	ng.ProcessString("duwongwj t4i", VietnameseMode)
+	ng.RestoreLastWord()
+	if ng.GetProcessedString(VietnameseMode, false) != "t4i" {
+		t.Errorf("TestProcessToorr, got [%v] expected [t4i]", ng.GetProcessedString(VietnameseMode, false))
+	}
+}
