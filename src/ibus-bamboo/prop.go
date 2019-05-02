@@ -436,7 +436,7 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 			Name:      "IBusProperty",
 			Key:       PropKeyFakeBackspace,
 			Type:      ibus.PROP_TYPE_TOGGLE,
-			Label:     dbus.MakeVariant(ibus.NewText("Fix lỗi gạch chân")),
+			Label:     dbus.MakeVariant(ibus.NewText("Sửa lỗi gạch chân")),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("FakeBackspace")),
 			Sensitive: true,
 			Visible:   true,

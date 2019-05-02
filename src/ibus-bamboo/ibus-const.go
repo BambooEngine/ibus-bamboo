@@ -74,6 +74,7 @@ const (
 // http://ibus.github.io/docs/ibus-1.5/ibus-ibuskeysyms-compat.htm
 
 const (
+	IBUS_Tab              = 0xff09
 	IBUS_Colon            = 0x03a
 	IBUS_Left             = 0xFF51
 	IBUS_Up               = 0xFF52

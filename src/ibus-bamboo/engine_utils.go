@@ -101,21 +101,12 @@ func (e *IBusBambooEngine) getRawKeyLen() int {
 	return len(e.preeditor.GetRawString())
 }
 
-var lookupTableConfiguration = []string{
-	"Cấu hình mặc định (Pre-edit)",
-	"Fix gạch chân (Surrounding Text)",
-	"Fix gạch chân (Forward KeyEvent)",
-	"Fix gạch chân (XTestFakeKeyEvent)",
-	"Fix gạch chân (Forward as commit)",
-	"Thêm vào danh sách loại trừ",
-}
-
 func (e *IBusBambooEngine) inLookupTableControlKeys(keyVal uint32) bool {
 	if keyVal == IBUS_OpenLookupTable {
 		return true
 	}
 	if idx, err := strconv.Atoi(string(keyVal)); err == nil {
-		return idx < len(lookupTableConfiguration) && lookupTableConfiguration[idx] != ""
+		return idx <= 9 && idx >= 0
 	}
 	return false
 }
@@ -128,6 +119,20 @@ func (e *IBusBambooEngine) openLookupTable() {
 		e.config.X11ClipboardWhiteList,
 		e.config.DirectForwardKeyWhiteList,
 		e.config.ExceptedList,
+	}
+	var wmClasses = strings.Split(e.wmClasses, ":")
+	var wmClass = e.wmClasses
+	if len(wmClasses) == 2 {
+		wmClass = wmClasses[1]
+	}
+
+	var lookupTableConfiguration = []string{
+		"Cấu hình mặc định (Pre-edit)",
+		"Sửa lỗi gạch chân (Surrounding Text)",
+		"Sửa lỗi gạch chân (Forward KeyEvent)",
+		"Sửa lỗi gạch chân (XTestFakeKeyEvent)",
+		"Sửa lỗi gạch chân (Forward as commit)",
+		"Thêm vào danh sách loại trừ (" + wmClass + ")",
 	}
 
 	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (1/2/3/4/5/6) để lưu tùy chọn của bạn"), true)

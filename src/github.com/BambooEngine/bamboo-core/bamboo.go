@@ -207,7 +207,7 @@ func (e *BambooEngine) ProcessKey(key rune, mode Mode) {
 		// remove unused transformations
 		lastSyllable = freeComposition(lastSyllable)
 
-		if target, _ := e.findTargetFromKey(lastSyllable, lowerKey); target == nil {
+		if target, _ := e.findTargetFromKey(lastSyllable, lowerKey); target == nil && len(lastSyllable) > 0 {
 			if lowerKey == lastSyllable[len(lastSyllable)-1].Rule.Key {
 				// Double typing an effect key undoes it and its effects.
 				lastSyllable = undoesTransformations(lastSyllable, e.getApplicableRules(lowerKey))
