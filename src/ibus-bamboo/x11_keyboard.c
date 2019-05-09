@@ -40,6 +40,7 @@ static void delay(int sec, long msec) {
 void x11SendBackspace(int n, int timeout) {
     Display *display = XOpenDisplay(NULL);
     if (display) {
+        XSynchronize(display, 1);
         KeyCode modcode;
         modcode = XKeysymToKeycode(display, XStringToKeysym("BackSpace"));
         for (int i=0; i<n; i++) {
@@ -48,6 +49,7 @@ void x11SendBackspace(int n, int timeout) {
             XSync(display, 0);
             delay(0, timeout);
         }
+        XSynchronize(display, 0);
         XCloseDisplay(display);
     }
 }

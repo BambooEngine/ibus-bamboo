@@ -38,6 +38,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		if !e.isValidState(state) || !e.canProcessKey(keyVal, state) {
 			e.preeditor.Reset()
 			e.resetFakeBackspace()
+			e.firstTimeSendingBS = true
 			sleep()
 			return false, nil
 		}
@@ -61,6 +62,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 	if !e.isValidState(state) {
 		e.preeditor.Reset()
+		e.firstTimeSendingBS = true
 		e.ForwardKeyEvent(keyVal, keyCode, state)
 		return
 	}
@@ -191,13 +193,13 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 			}
 			time.Sleep(20 * time.Millisecond)
 		}
-		time.Sleep(20 * time.Millisecond)
 		fmt.Printf("Sendding %d backspace via XTestFakeKeyEvent\n", n)
+		time.Sleep(20 * time.Millisecond)
 		if e.inChromeFamily() { // workaround for chrome's address bar
 			x11SendBackspace(n, 0)
 			time.Sleep(time.Duration(n) * 20 * time.Millisecond)
 		} else {
-			x11SendBackspace(n, 10)
+			x11SendBackspace(n, 0)
 		}
 		sleep()
 	} else if e.inSurroundingTextList() {
