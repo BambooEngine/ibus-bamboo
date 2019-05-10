@@ -94,6 +94,7 @@ static int grabPointer(Display *dpy, Window w, unsigned int mask) {
 
 static void* thread_mouse_capture(void* data)
 {
+    pthread_mutex_lock(&mutex_mcap);
     XEvent event;
     int x_old, y_old, x_root_old, y_root_old, rt;
     unsigned int mask;
