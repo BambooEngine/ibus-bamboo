@@ -101,16 +101,6 @@ func (e *IBusBambooEngine) getRawKeyLen() int {
 	return len(e.preeditor.GetRawString())
 }
 
-func (e *IBusBambooEngine) inLookupTableControlKeys(keyVal uint32) bool {
-	if keyVal == IBUS_OpenLookupTable {
-		return true
-	}
-	if idx, err := strconv.Atoi(string(keyVal)); err == nil {
-		return idx <= 9 && idx >= 0
-	}
-	return false
-}
-
 func (e *IBusBambooEngine) openLookupTable() {
 	var whiteList = [][]string{
 		e.config.PreeditWhiteList,
@@ -140,9 +130,11 @@ func (e *IBusBambooEngine) openLookupTable() {
 	lt := ibus.NewLookupTable()
 	lt.PageSize = uint32(len(lookupTableConfiguration))
 	lt.Orientation = IBUS_ORIENTATION_VERTICAL
+	var cursorPos = 0
 	for i := 0; i < len(lookupTableConfiguration); i++ {
 		if inStringList(whiteList[i], e.wmClasses) {
 			lt.AppendLabel("*")
+			cursorPos = i
 		} else {
 			lt.AppendLabel(strconv.Itoa(i + 1))
 		}
@@ -150,20 +142,60 @@ func (e *IBusBambooEngine) openLookupTable() {
 	for _, ac := range lookupTableConfiguration {
 		lt.AppendCandidate(ac)
 	}
+	lt.SetCursorPos(uint32(cursorPos))
+	e.inputModeLookupTable = lt
 	e.UpdateLookupTable(lt, true)
 }
 
 func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
 	var wmClasses = x11GetFocusWindowClass()
-	e.HideLookupTable()
+	//e.HideLookupTable()
 	fmt.Printf("keyCode 0x%04x keyval 0x%04x | %c\n", keyCode, keyVal, rune(keyVal))
-	e.HideAuxiliaryText()
+	//e.HideAuxiliaryText()
 	if wmClasses == "" {
 		return true, nil
 	}
 	if keyVal == IBUS_OpenLookupTable {
+		e.closeInputModeCandidates()
 		return false, nil
 	}
+	var keyRune = rune(keyVal)
+	if keyVal == IBUS_Left || keyVal == IBUS_Up {
+		e.CursorUp()
+		return true, nil
+	} else if keyVal == IBUS_Right || keyVal == IBUS_Down {
+		e.CursorDown()
+		return true, nil
+	} else if keyVal == IBUS_Page_Up {
+		e.PageUp()
+		return true, nil
+	} else if keyVal == IBUS_Page_Down {
+		e.PageDown()
+		return true, nil
+	}
+	if keyVal == IBUS_Return || keyVal == IBUS_KP_Enter {
+		e.commitInputModeCandidate()
+		e.closeInputModeCandidates()
+		return true, nil
+	}
+	if keyRune >= '1' && keyRune <= '9' {
+		if pos, err := strconv.Atoi(string(keyRune)); err == nil {
+			if e.inputModeLookupTable.SetCursorPos(uint32(pos - 1)) {
+				e.commitInputModeCandidate()
+				e.closeInputModeCandidates()
+				return true, nil
+			} else {
+				e.closeInputModeCandidates()
+			}
+		}
+	}
+	e.closeInputModeCandidates()
+	return false, nil
+}
+
+func (e *IBusBambooEngine) commitInputModeCandidate() {
+	var wmClasses = x11GetFocusWindowClass()
+	var pos = e.inputModeLookupTable.CursorPos + 1
 	var reset = func() {
 		e.config.PreeditWhiteList = removeFromWhiteList(e.config.PreeditWhiteList, wmClasses)
 		e.config.X11ClipboardWhiteList = removeFromWhiteList(e.config.X11ClipboardWhiteList, wmClasses)
@@ -172,37 +204,39 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		e.config.DirectForwardKeyWhiteList = removeFromWhiteList(e.config.DirectForwardKeyWhiteList, wmClasses)
 		e.config.ExceptedList = removeFromWhiteList(e.config.ExceptedList, wmClasses)
 	}
-	switch keyVal {
-	case '1':
-		reset()
+	reset()
+	switch pos {
+	case 1:
 		e.config.PreeditWhiteList = addToWhiteList(e.config.PreeditWhiteList, wmClasses)
-		break
-	case '2':
-		reset()
+	case 2:
 		e.config.SurroundingTextWhiteList = addToWhiteList(e.config.SurroundingTextWhiteList, wmClasses)
-		break
-	case '3':
-		reset()
+	case 3:
 		e.config.ForwardKeyWhiteList = addToWhiteList(e.config.ForwardKeyWhiteList, wmClasses)
-		break
-	case '4':
-		reset()
+	case 4:
 		e.config.X11ClipboardWhiteList = addToWhiteList(e.config.X11ClipboardWhiteList, wmClasses)
-		break
-	case '5':
-		reset()
+	case 5:
 		e.config.DirectForwardKeyWhiteList = addToWhiteList(e.config.DirectForwardKeyWhiteList, wmClasses)
-		break
-	case '6':
-		reset()
+	case 6:
 		e.config.ExceptedList = addToWhiteList(e.config.ExceptedList, wmClasses)
-		break
 	}
 
 	SaveConfig(e.config, e.engineName)
 	e.propList = GetPropListByConfig(e.config)
 	e.RegisterProperties(e.propList)
-	return true, nil
+}
+
+func (e *IBusBambooEngine) closeInputModeCandidates() {
+	e.inputModeLookupTable = nil
+	e.UpdateLookupTable(ibus.NewLookupTable(), true) // workaround for issue #18
+	e.HidePreeditText()
+	e.HideLookupTable()
+	e.HideAuxiliaryText()
+	e.isInputModeLTOpened = false
+}
+
+func (e *IBusBambooEngine) updateInputModeLT() {
+	var visible = len(e.inputModeLookupTable.Candidates) > 0
+	e.UpdateLookupTable(e.inputModeLookupTable, visible)
 }
 
 func (e *IBusBambooEngine) isIgnoredKey(keyVal, state uint32) bool {
@@ -215,7 +249,7 @@ func (e *IBusBambooEngine) isIgnoredKey(keyVal, state uint32) bool {
 		return true
 	}
 	if e.inExceptedList() {
-		if e.inLookupTableControlKeys(keyVal) {
+		if e.isInputModeLTOpened || keyVal == IBUS_OpenLookupTable {
 			return false
 		}
 		return true
@@ -255,7 +289,8 @@ func (e *IBusBambooEngine) inPreeditList() bool {
 }
 
 func (e *IBusBambooEngine) inBackspaceWhiteList() bool {
-	return e.inForwardKeyList() || e.inXTestFakeKeyEventList() || e.inSurroundingTextList()
+	return e.inForwardKeyList() || e.inXTestFakeKeyEventList() ||
+		e.inSurroundingTextList() || e.inDirectForwardKeyList()
 }
 
 func (e *IBusBambooEngine) inSurroundingTextList() bool {

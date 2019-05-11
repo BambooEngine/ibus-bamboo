@@ -32,24 +32,25 @@ import (
 type IBusBambooEngine struct {
 	sync.Mutex
 	ibus.Engine
-	preeditor           bamboo.IEngine
-	zeroLocation        bool
-	engineName          string
-	config              *Config
-	propList            *ibus.PropList
-	mode                bamboo.Mode
-	ignorePreedit       bool
-	macroTable          *MacroTable
-	dictionary          map[string]bool
-	wmClasses           string
-	isLookupTableOpened bool
-	isEmojiTableOpened  bool
-	emojiLookupTable    *ibus.LookupTable
-	capabilities        uint32
-	nFakeBackSpace      int
-	firstTimeSendingBS  bool
-	isFocusOut          bool
-	emoji               *BambooEmoji
+	preeditor            bamboo.IEngine
+	zeroLocation         bool
+	engineName           string
+	config               *Config
+	propList             *ibus.PropList
+	mode                 bamboo.Mode
+	ignorePreedit        bool
+	macroTable           *MacroTable
+	dictionary           map[string]bool
+	wmClasses            string
+	isInputModeLTOpened  bool
+	isEmojiLTOpened      bool
+	emojiLookupTable     *ibus.LookupTable
+	inputModeLookupTable *ibus.LookupTable
+	capabilities         uint32
+	nFakeBackSpace       int
+	firstTimeSendingBS   bool
+	isFocusOut           bool
+	emoji                *BambooEmoji
 }
 
 /**
@@ -72,23 +73,22 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 		return false, nil
 	}
 	log.Printf("keyCode 0x%04x keyval 0x%04x | %c | %d\n", keyCode, keyVal, rune(keyVal), len(keyPressChan))
-	if keyVal == IBUS_OpenLookupTable && e.isLookupTableOpened == false {
+	if keyVal == IBUS_OpenLookupTable && e.isInputModeLTOpened == false {
 		e.resetBuffer()
-		e.isLookupTableOpened = true
+		e.isInputModeLTOpened = true
 		e.openLookupTable()
 		return true, nil
 	}
-	if e.config.IBflags&IBemojiDisabled == 0 && keyVal == IBUS_Colon && e.isEmojiTableOpened == false {
+	if e.config.IBflags&IBemojiDisabled == 0 && keyVal == IBUS_Colon && e.isEmojiLTOpened == false {
 		e.resetBuffer()
-		e.isEmojiTableOpened = true
+		e.isEmojiLTOpened = true
 		e.openEmojiList()
 		return true, nil
 	}
-	if e.isLookupTableOpened {
-		e.isLookupTableOpened = false
+	if e.isInputModeLTOpened {
 		return e.ltProcessKeyEvent(keyVal, keyCode, state)
 	}
-	if e.isEmojiTableOpened {
+	if e.isEmojiLTOpened {
 		return e.emojiProcessKeyEvent(keyVal, keyCode, state)
 	}
 	if e.inPreeditList() {
@@ -148,37 +148,53 @@ func (e *IBusBambooEngine) Disable() *dbus.Error {
 }
 
 func (e *IBusBambooEngine) PageUp() *dbus.Error {
-	if e.isEmojiTableOpened && e.emojiLookupTable.PageUp() {
-		e.emojiUpdateLookupTable()
+	if e.isEmojiLTOpened && e.emojiLookupTable.PageUp() {
+		e.updateEmojiLookupTable()
+	}
+	if e.isInputModeLTOpened && e.inputModeLookupTable.PageUp() {
+		e.updateInputModeLT()
 	}
 	return nil
 }
 
 func (e *IBusBambooEngine) PageDown() *dbus.Error {
-	if e.isEmojiTableOpened && e.emojiLookupTable.PageDown() {
-		e.emojiUpdateLookupTable()
+	if e.isEmojiLTOpened && e.emojiLookupTable.PageDown() {
+		e.updateEmojiLookupTable()
+	}
+	if e.isInputModeLTOpened && e.inputModeLookupTable.PageDown() {
+		e.updateInputModeLT()
 	}
 	return nil
 }
 
 func (e *IBusBambooEngine) CursorUp() *dbus.Error {
-	if e.isEmojiTableOpened && e.emojiLookupTable.CursorUp() {
-		e.emojiUpdateLookupTable()
+	if e.isEmojiLTOpened && e.emojiLookupTable.CursorUp() {
+		e.updateEmojiLookupTable()
+	}
+	if e.isInputModeLTOpened && e.inputModeLookupTable.CursorUp() {
+		e.updateInputModeLT()
 	}
 	return nil
 }
 
 func (e *IBusBambooEngine) CursorDown() *dbus.Error {
-	if e.isEmojiTableOpened && e.emojiLookupTable.CursorDown() {
-		e.emojiUpdateLookupTable()
+	if e.isEmojiLTOpened && e.emojiLookupTable.CursorDown() {
+		e.updateEmojiLookupTable()
+	}
+	if e.isInputModeLTOpened && e.inputModeLookupTable.CursorDown() {
+		e.updateInputModeLT()
 	}
 	return nil
 }
 
 func (e *IBusBambooEngine) CandidateClicked(index uint32, button uint32, state uint32) *dbus.Error {
-	if e.isEmojiTableOpened && e.emojiLookupTable.SetCursorPosInCurrentPage(index) {
+	if e.isEmojiLTOpened && e.emojiLookupTable.SetCursorPosInCurrentPage(index) {
 		e.commitEmojiCandidate()
 		e.closeEmojiCandidates()
+	}
+	if e.isInputModeLTOpened && e.inputModeLookupTable.SetCursorPos(index) {
+		e.commitInputModeCandidate()
+		e.closeInputModeCandidates()
 	}
 	return nil
 }

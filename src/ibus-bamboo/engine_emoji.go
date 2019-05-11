@@ -35,7 +35,7 @@ func (e *IBusBambooEngine) openEmojiList() {
 		lt.AppendCandidate(codePoint)
 	}
 	e.emojiLookupTable = lt
-	e.emojiUpdateLookupTable()
+	e.updateEmojiLookupTable()
 }
 
 func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
@@ -121,11 +121,11 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 		lt.AppendCandidate(codePoint)
 	}
 	e.emojiLookupTable = lt
-	e.emojiUpdateLookupTable()
+	e.updateEmojiLookupTable()
 	return true, nil
 }
 
-func (e *IBusBambooEngine) emojiUpdateLookupTable() {
+func (e *IBusBambooEngine) updateEmojiLookupTable() {
 	var visible = len(e.emojiLookupTable.Candidates) > 0
 	e.UpdateLookupTable(e.emojiLookupTable, visible)
 }
@@ -144,5 +144,5 @@ func (e *IBusBambooEngine) closeEmojiCandidates() {
 	e.HidePreeditText()
 	e.HideLookupTable()
 	e.HideAuxiliaryText()
-	e.isEmojiTableOpened = false
+	e.isEmojiLTOpened = false
 }
