@@ -30,6 +30,7 @@
 #include <X11/extensions/record.h>
 #include <X11/extensions/XTest.h>
 #include "_cgo_export.h"
+#define CAPTURE_MOUSE_MOVE_DELTA        100
 
 /* for this struct, refer to libxnee */
 typedef union {
