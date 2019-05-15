@@ -124,6 +124,7 @@ static void* thread_mouse_recording (void* data)
  
   XCloseDisplay (data_disp);
   XCloseDisplay (ctrl_disp);
+  mouse_recording = 0;
   return NULL;
 }
 
