@@ -49,6 +49,10 @@ typedef union {
 Display *data_disp = NULL;
 Display *ctrl_disp = NULL;
 
+XRecordRange  *rr = NULL;
+XRecordClientSpec  rcs;
+XRecordContext rc;
+
 /* recording flag */
 static int mouse_recording = 0;
 
@@ -81,10 +85,6 @@ static void* thread_mouse_recording (void* data)
   }
  
   printf ("RECORD extension for local server is version %d.%d\n", major, minor);
-
-  XRecordRange  *rr;
-  XRecordClientSpec  rcs;
-  XRecordContext rc;
 
   rr = XRecordAllocRange ();
   if (!rr) {
@@ -155,11 +155,11 @@ void event_callback(XPointer priv, XRecordInterceptData *hook)
     /** printf ("KeyRelease: \t%s\n", XKeysymToString(XKeycodeToKeysym(ctrl_disp, keycode, 0))); */
     break;
   case ButtonPress:
-    /* printf ("ButtonPress: /t%d, rootX=%d, rootY=%d", btncode, cur_x, cur_y); */
+    /** printf ("ButtonPress: /t%d, rootX=%d, rootY=%d, recording=%d", btncode, cur_x, cur_y, mouse_recording); */
     mouse_click_handler();
     break;
   case ButtonRelease:
-    /* printf ("ButtonRelease: /t%d, rootX=%d, rootY=%d", btncode, cur_x, cur_y); */
+    /** printf ("ButtonRelease: /t%d, rootX=%d, rootY=%d", btncode, cur_x, cur_y); */
     break;
   case MotionNotify:
     /* printf ("MouseMove: /trootX=%d, rootY=%d",rootx, rooty); */
@@ -193,6 +193,10 @@ void mouse_recording_init()
 
 void mouse_recording_exit()
 {
+    if (mouse_recording==0 || ctrl_disp == NULL) {
+        return;
+    }
+    XRecordDisableContext (ctrl_disp, rc);
     mouse_recording = 0;
 }
 
