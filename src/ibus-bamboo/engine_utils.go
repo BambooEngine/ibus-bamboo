@@ -67,6 +67,13 @@ func GetIBusBambooEngine() func(conn *dbus.Conn, engineName string) dbus.ObjectP
 			engine.resetBuffer()
 			engine.firstTimeSendingBS = true
 		}
+		onMouseClick = func() {
+			if engine.isEmojiLTOpened {
+				engine.refreshEmojiCandidate()
+			} else {
+				onMouseMove()
+			}
+		}
 		runtime.GC()
 		debug.FreeOSMemory()
 		return objectPath

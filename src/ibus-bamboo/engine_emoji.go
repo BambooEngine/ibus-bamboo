@@ -137,6 +137,14 @@ func (e *IBusBambooEngine) commitEmojiCandidate() {
 	}
 }
 
+func (e *IBusBambooEngine) refreshEmojiCandidate() {
+	var raw = e.emoji.GetRawString()
+	var rawTextLen = len([]rune(raw))
+	e.UpdatePreeditTextWithMode(ibus.NewText(raw), uint32(rawTextLen), true, ibus.IBUS_ENGINE_PREEDIT_COMMIT)
+	e.UpdateAuxiliaryText(ibus.NewText(raw), true)
+	e.updateEmojiLookupTable()
+}
+
 func (e *IBusBambooEngine) closeEmojiCandidates() {
 	e.emojiLookupTable = nil
 	e.emoji.Reset()

@@ -137,7 +137,7 @@ static void* thread_mouse_capture(void* data)
             }
         }
         else {
-              mouse_move_handler();
+              mouse_click_handler();
         }
     }
     mcap_running = 0;

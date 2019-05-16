@@ -156,7 +156,7 @@ void event_callback(XPointer priv, XRecordInterceptData *hook)
     break;
   case ButtonPress:
     /* printf ("ButtonPress: /t%d, rootX=%d, rootY=%d", btncode, cur_x, cur_y); */
-    mouse_move_handler();
+    mouse_click_handler();
     break;
   case ButtonRelease:
     /* printf ("ButtonRelease: /t%d, rootX=%d, rootY=%d", btncode, cur_x, cur_y); */

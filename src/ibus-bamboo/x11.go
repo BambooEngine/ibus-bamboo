@@ -52,7 +52,13 @@ func mouse_move_handler() {
 	onMouseMove()
 }
 
+//export mouse_click_handler
+func mouse_click_handler() {
+	onMouseClick()
+}
+
 var onMouseMove func()
+var onMouseClick func()
 
 func startMouseTracking() {
 	C.mouse_recording_init()
