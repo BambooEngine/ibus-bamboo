@@ -22,12 +22,12 @@ Format: 1.0
 Source: ibus-bamboo
 Binary: ibus-bamboo
 Architecture: any
-Version: 0.4.7-0
+Version: 0.4.8-0
 Maintainer: Luong Thanh Lam <ltlam93@gmail.com>
 Homepage: https://github.com/BambooEngine/ibus-bamboo
 Build-Depends: debhelper, golang, libx11-dev, libxt-dev, libxtst-dev
 Files:
- 0 0 ibus-bamboo-0.4.7.tar.gz
+ 0 0 ibus-bamboo-0.4.8.tar.gz
 
 -----BEGIN PGP SIGNATURE-----
 
