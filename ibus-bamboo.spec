@@ -64,7 +64,7 @@ make DESTDIR=%{buildroot} install
 
 %files
 %defattr(-,root,root)
-%doc README.md LICENSE MAINTAINERS
+%doc README.md LICENSE
 %dir %{ibus_dir}
 %dir %{ibus_cpn_dir}
 %dir %{engine_dir}
