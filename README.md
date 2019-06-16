@@ -40,7 +40,6 @@ IBus Bamboo - Bộ gõ tiếng Việt cho Linux
 sudo add-apt-repository ppa:bamboo-engine/ibus-bamboo
 sudo apt-get update
 sudo apt-get install ibus-bamboo -y
-ibus restart
 ```
 
 ### Arch Linux và các distro tương tự
