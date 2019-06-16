@@ -11,6 +11,7 @@ IBus Bamboo - Bộ gõ tiếng Việt cho Linux
 	- [Dành cho Ubuntu, Debian và các distro tương tự](#ubuntu-debian-và-các-distro-tương-tự)
 	- [Dành cho Arch Linux và các distro tương tự](#arch-linux-và-các-distro-tương-tự)
 	- [Void Linux](#void-linux)
+	- [Cài đặt từ OpenBuildService](https://software.opensuse.org//download.html?project=home%3Alamlng&package=ibus-bamboo)
 	- [Cài đặt từ mã nguồn](https://github.com/BambooEngine/ibus-bamboo/wiki/H%C6%B0%E1%BB%9Bng-d%E1%BA%ABn-c%C3%A0i-%C4%91%E1%BA%B7t-t%E1%BB%AB-m%C3%A3-ngu%E1%BB%93n)
 - [Hướng dẫn sử dụng](#hướng-dẫn-sử-dụng)
 - [Báo lỗi](#báo-lỗi)
