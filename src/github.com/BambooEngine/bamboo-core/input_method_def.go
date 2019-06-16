@@ -51,7 +51,7 @@ var InputMethodDefinitions = map[string]InputMethodDefinition{
 
 	"VIQR": {
 		"0":  "XoaDauThanh",
-		"'": "DauSac",
+		"'":  "DauSac",
 		"`":  "DauHuyen",
 		"?":  "DauHoi",
 		"~":  "DauNga",
@@ -145,7 +145,7 @@ var InputMethodDefinitions = map[string]InputMethodDefinition{
 		"7":  "UO_ƯƠ",
 		"8":  "A_Ă",
 		"9":  "D_Đ",
-		"'": "DauSac",
+		"'":  "DauSac",
 		"`":  "DauHuyen",
 		"?":  "DauHoi",
 		"~":  "DauNga",
@@ -160,7 +160,7 @@ var InputMethodDefinitions = map[string]InputMethodDefinition{
 		"&":  "XoaDauThanh",
 		"é":  "DauSac",
 		"\"": "DauHuyen",
-		"'": "DauHoi",
+		"'":  "DauHoi",
 		"(":  "DauNga",
 		"-":  "DauNang",
 		"è":  "AEO_ÂÊÔ",

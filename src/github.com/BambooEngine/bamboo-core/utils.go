@@ -19,6 +19,8 @@
  */
 package bamboo
 
+import "unicode"
+
 var Vowels = []rune("aàáảãạăằắẳẵặâầấẩẫậeèéẻẽẹêềếểễệiìíỉĩịoòóỏõọôồốổỗộơờớởỡợuùúủũụưừứửữựyỳýỷỹỵ")
 
 var WordBreakSymbols = []rune{
@@ -81,6 +83,18 @@ var marksMaps = map[rune]string{
 	'ư': "u__ư_",
 	'd': "d___đ",
 	'đ': "d___đ",
+}
+
+func getMarkFamily(chr rune) []rune {
+	var result []rune
+	if s, found := marksMaps[chr]; found {
+		for _, c := range []rune(s) {
+			if c != '_' {
+				result = append(result, c)
+			}
+		}
+	}
+	return result
 }
 
 func FindMarkPosition(chr rune) int {
@@ -175,4 +189,27 @@ func RemoveToneFromWord(word string) string {
 		}
 	}
 	return string(chars)
+}
+
+var vnIdenticalCharset = map[rune]bool{
+	'â': true,
+	'ă': true,
+	'ê': true,
+	'ô': true,
+	'ơ': true,
+	'ư': true,
+	'đ': true,
+}
+
+func HasVietnameseChar(word string) bool {
+	for _, chr := range []rune(word) {
+		var c = unicode.ToLower(chr)
+		if FindToneFromChar(c) != TONE_NONE {
+			return true
+		}
+		if _, found := vnIdenticalCharset[AddToneToChar(c, 0)]; found {
+			return true
+		}
+	}
+	return false
 }

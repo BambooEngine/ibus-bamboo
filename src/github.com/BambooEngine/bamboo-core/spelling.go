@@ -156,43 +156,6 @@ func generateCVC() []string {
 	return ret
 }
 
-func getLastWord(composition []*Transformation, effectiveKeys []rune) []*Transformation {
-	for i := len(composition) - 1; i >= 0; i-- {
-		var t = composition[i]
-		if t.Rule.EffectType == Appending && !unicode.IsLetter(t.Rule.EffectOn) && !inKeyList(effectiveKeys, t.Rule.EffectOn) {
-			if i == len(composition)-1 {
-				return nil
-			}
-			return composition[i+1:]
-		}
-	}
-	return composition
-}
-
-func getLastSyllable(composition []*Transformation) []*Transformation {
-	var ret []*Transformation
-	if len(composition) <= 1 {
-		return composition
-	}
-	for i, trans := range composition {
-		ret = append(ret, trans)
-		if i < len(composition)-1 && composition[i+1].Rule.EffectType != Appending {
-			continue
-		}
-		str := Flatten(ret, VietnameseMode|ToneLess|LowerCase)
-		if str == "" {
-			continue
-		}
-		if TestString(spellingTrie, []rune(str), false) == FindResultNotMatch {
-			if i == 0 {
-				return getLastSyllable(composition[1:])
-			}
-			return getLastSyllable(composition[i:])
-		}
-	}
-	return ret
-}
-
 var regGI = regexp.MustCompile(`^(qu|gi)(\p{L}+)`)
 
 func ParseSoundsFromWord(word string) []Sound {

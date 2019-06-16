@@ -50,10 +50,8 @@ const (
 
 type Transformation struct {
 	Rule        Rule
-	Target      *Transformation // For Tone/Mark transformation
+	Target      *Transformation
 	IsUpperCase bool
-	IsDeleted   bool
-	Dest        uint // For Appending, a pointer to the char in the flattened string made by this Trans
 }
 
 type IEngine interface {
@@ -64,12 +62,10 @@ type IEngine interface {
 	GetProcessedString(Mode, bool) string
 	GetSpellingMatchResult(Mode, bool) uint8
 	CanProcessKey(rune) bool
-	HasTone() bool
-	Reset()
 	RemoveLastChar()
 	RestoreLastWord()
-	IsLastWordUpper() bool
 	GetRawString() string
+	Reset()
 }
 
 type BambooEngine struct {
@@ -99,15 +95,6 @@ func (e *BambooEngine) SetFlag(flag uint) {
 
 func (e *BambooEngine) GetFlag(flag uint) uint {
 	return e.flags
-}
-
-func (e *BambooEngine) HasTone() bool {
-	for _, t := range getLastWord(e.composition, nil) {
-		if t.Rule.EffectType == ToneTransformation {
-			return true
-		}
-	}
-	return false
 }
 
 func (e *BambooEngine) isSuperKey(key rune) bool {
@@ -163,22 +150,13 @@ func (e *BambooEngine) getApplicableRules(key rune) []Rule {
 	return applicableRules
 }
 
-func (e *BambooEngine) findTargetFromKey(composition []*Transformation, key rune) (*Transformation, Rule) {
-	return findTargetFromKey(composition, e.getApplicableRules(key), e.flags)
+func (e *BambooEngine) findTargetByKey(composition []*Transformation, key rune) (*Transformation, Rule) {
+	return findTarget(composition, e.getApplicableRules(key), e.flags)
 }
 
 // Find all possible transformations this keypress can generate
-func (e *BambooEngine) getTransformations(composition []*Transformation, key rune, isUpperCase bool) []*Transformation {
-	return generateTransformations(composition, e.getApplicableRules(key), e.flags, key, isUpperCase)
-}
-
-func (e *BambooEngine) IsLastWordUpper() bool {
-	var effectiveKeys = e.inputMethod.Keys
-	var lastComb = getLastWord(e.composition, effectiveKeys)
-	if len(lastComb) == 0 {
-		return false
-	}
-	return isCompositionUpper(lastComb)
+func (e *BambooEngine) generateTransformations(composition []*Transformation, lowerKey rune, isUpperCase bool) []*Transformation {
+	return generateTransformations(composition, e.getApplicableRules(lowerKey), e.flags, lowerKey, isUpperCase)
 }
 
 func (e *BambooEngine) CanProcessKey(key rune) bool {
@@ -191,64 +169,45 @@ func (e *BambooEngine) ProcessKey(key rune, mode Mode) {
 	var lowerKey = unicode.ToLower(key)
 	var isUpperCase = unicode.IsUpper(key)
 	if mode&EnglishMode != 0 || !e.isSupportedKey(lowerKey) {
-		e.composition = append(e.composition, createAppendingTrans(lowerKey, isUpperCase))
+		e.composition = append(e.composition, newAppendingTrans(lowerKey, isUpperCase))
 		return
 	}
-	// Extract the last syllable from the composition
-	var lastSyllable, previousTransformations = extractLastSyllable(e.composition)
-	if lastSyllable == nil {
-		e.composition = append(e.composition, createAppendingComposition(e.inputMethod.Rules, lowerKey, isUpperCase)...)
-		return
-	}
-
-	// Implement the double typing an effective key
-	// TODO: check freeToneMaking
-	if e.isEffectiveKey(lowerKey) {
-		// remove unused transformations
-		lastSyllable = freeComposition(lastSyllable)
-
-		if target, _ := e.findTargetFromKey(lastSyllable, lowerKey); target == nil && len(lastSyllable) > 0 {
-			if lowerKey == lastSyllable[len(lastSyllable)-1].Rule.Key {
-				// Double typing an effect key undoes it and its effects.
-				lastSyllable = undoesTransformations(lastSyllable, e.getApplicableRules(lowerKey))
-				lastSyllable = append(lastSyllable, createAppendingTrans(lowerKey, isUpperCase))
-
-				e.composition = append(previousTransformations, lastSyllable...)
-				return
-			} else {
-				// Or an effect key may override other effect keys
-				lastSyllable = undoesTransformations(lastSyllable, e.getApplicableRules(lowerKey))
-			}
-		}
-	}
-
 	// Just process the key stroke on the last syllable
-	lastSyllable = append(lastSyllable, e.getTransformations(lastSyllable, lowerKey, isUpperCase)...)
+	var lastSyllable, previousTransformations = extractLastSyllable(e.composition)
 
-	// Implement the uow typing shortcut by creating a virtual
-	// Mark.HORN rule that targets 'u' or 'o'.
-	if e.flags&EautoCorrectEnabled != 0 && len(e.inputMethod.SuperKeys) > 0 && isTransformationForUoMissed(lastSyllable) {
-		if target, missingRule := e.findTargetFromKey(lastSyllable, e.inputMethod.SuperKeys[0]); target != nil {
+	lastSyllable = append(lastSyllable, e.generateTransformations(lastSyllable, lowerKey, isUpperCase)...)
+	lastSyllable = e.refreshLastToneTarget(e.applyUowShortcut(lastSyllable))
+	e.composition = append(previousTransformations, lastSyllable...)
+}
+
+// Implement the uow typing shortcut by creating a virtual
+// Mark.HORN rule that targets 'u' or 'o'.
+func (e *BambooEngine) applyUowShortcut(syllable []*Transformation) []*Transformation {
+	if e.flags&EautoCorrectEnabled != 0 && len(e.inputMethod.SuperKeys) > 0 && isTransformationForUoMissed(syllable) {
+		if target, missingRule := e.findTargetByKey(syllable, e.inputMethod.SuperKeys[0]); target != nil {
 			missingRule.Key = rune(0) // virtual rule should not appear in the raw string
 			virtualTrans := &Transformation{
 				Rule:   missingRule,
 				Target: target,
 			}
-			lastSyllable = append(lastSyllable, virtualTrans)
+			syllable = append(syllable, virtualTrans)
 		}
 	}
-	/**
-	* Sometimes, a tone's position in a previous state must be changed to fit the new state
-	*
-	* e.g.
-	* prev state: chuyr -> chuỷ
-	* this state: chuyrene -> chuyển
-	**/
-	if e.flags&EfreeToneMarking != 0 {
-		lastSyllable = refreshLastToneTarget(lastSyllable, e.flags&EstdToneStyle != 0)
-	}
+	return syllable
+}
 
-	e.composition = append(previousTransformations, lastSyllable...)
+/**
+* Sometimes, a tone's position in a previous state must be changed to fit the new state
+*
+* e.g.
+* prev state: chuyr -> chuỷ
+* this state: chuyrene -> chuyển
+**/
+func (e *BambooEngine) refreshLastToneTarget(syllable []*Transformation) []*Transformation {
+	if e.flags&EfreeToneMarking != 0 {
+		syllable = refreshLastToneTarget(syllable, e.flags&EstdToneStyle != 0)
+	}
+	return syllable
 }
 
 func (e *BambooEngine) ProcessString(str string, mode Mode) {
@@ -258,8 +217,6 @@ func (e *BambooEngine) ProcessString(str string, mode Mode) {
 }
 
 func (e *BambooEngine) RestoreLastWord() {
-	// quick and dirty workaround
-	e.composition = freeComposition(e.composition)
 	var lastComb, previous = extractLastWord(e.composition, e.inputMethod.Keys)
 	if len(lastComb) == 0 {
 		return

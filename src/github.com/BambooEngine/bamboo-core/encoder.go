@@ -19,8 +19,10 @@
  */
 package bamboo
 
+const UNICODE = "Unicode"
+
 func Encode(charsetName string, input string) string {
-	if charsetName == "Unicode" {
+	if charsetName == UNICODE {
 		return input
 	}
 	var output string
@@ -40,8 +42,8 @@ func Encode(charsetName string, input string) string {
 
 func GetCharsetNames() []string {
 	var names []string
-	names = append(names, "Unicode")
-	for cs, _ := range charsetDefinitions {
+	names = append(names, UNICODE)
+	for cs := range charsetDefinitions {
 		names = append(names, cs)
 	}
 	return names

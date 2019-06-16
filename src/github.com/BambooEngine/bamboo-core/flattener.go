@@ -20,114 +20,68 @@
 package bamboo
 
 import (
-	"log"
-	"strings"
 	"unicode"
 )
 
-type Flattener interface {
-	Flatten([]*Transformation, Mode) string
-}
-
-type BambooFlattener struct {
-}
-
 func Flatten(composition []*Transformation, mode Mode) string {
-	var flattener Flattener = new(BambooFlattener)
-	if mode&LowerCase != 0 {
-		return strings.ToLower(flattener.Flatten(composition, mode))
-	}
-	return flattener.Flatten(composition, mode)
+	return string(getCanvas(composition, mode))
 }
 
-func (f *BambooFlattener) Flatten(composition []*Transformation, mode Mode) string {
-	canvas := f.GetCanvas(composition, mode)
-	if mode&LowerCase != 0 {
-		return string(canvas)
-	}
-	return f.toUpper(composition, canvas, mode)
-}
-
-func (f *BambooFlattener) toUpper(composition []*Transformation, canvas []rune, mode Mode) string {
-	if mode&VietnameseMode != 0 {
-		for _, trans := range composition {
-			if trans.Rule.EffectType == Appending {
-				if int(trans.Dest) >= len(canvas) {
-					log.Println("Something is wrong with dest of trans")
-					continue
-				}
-				if trans.IsUpperCase {
-					canvas[trans.Dest] = unicode.ToUpper(canvas[trans.Dest])
-				}
-			}
-		}
-		return string(canvas)
-	}
-	for _, trans := range composition {
-		if int(trans.Dest) >= len(canvas) {
-			log.Println("Something is wrong with dest of trans")
-			continue
-		}
-		if trans.IsUpperCase {
-			canvas[trans.Dest] = unicode.ToUpper(canvas[trans.Dest])
-		}
-	}
-	return string(canvas)
-}
-
-func (f *BambooFlattener) GetCanvas(composition []*Transformation, mode Mode) []rune {
+func getCanvas(composition []*Transformation, mode Mode) []rune {
 	var canvas []rune
-	apply_effect := func(callback func(rune, uint8) rune, trans *Transformation) {
-		if trans.Target == nil || len(canvas) <= int(trans.Target.Dest) {
-			//log.Println("There's something wrong with canvas [nhoawfng]")
-			return
-		}
-		index := trans.Target.Dest
-		canvas[index] = callback(canvas[index], trans.Rule.Effect)
-	}
+	var appendingMap = map[*Transformation][]*Transformation{}
+	var appendingList []*Transformation
 	for _, trans := range composition {
-		trans.Dest = 0
-		if trans.IsDeleted {
-			continue
-		}
 		if mode&EnglishMode != 0 {
-			if trans.Rule.Key > 0 {
-				trans.Dest = uint(len(canvas))
-				canvas = append(canvas, trans.Rule.Key)
+			if trans.Rule.Key == 0 {
+				// ignore virtual key
+				continue
 			}
-			// ignore virtual key
-			continue
-		}
-		if trans.Rule.EffectType == Appending {
-			trans.Dest = uint(len(canvas))
-			var effectOn = trans.Rule.EffectOn
-			if mode&MarkLess != 0 && (effectOn < 'a' || effectOn > 'z') {
-				effectOn = RemoveMarkFromChar(effectOn)
-			}
-			canvas = append(canvas, effectOn)
+			appendingList = append(appendingList, trans)
+		} else if trans.Rule.EffectType == Appending {
+			appendingList = append(appendingList, trans)
+		} else if trans.Target != nil {
+			appendingMap[trans.Target] = append(appendingMap[trans.Target], trans)
 		}
 	}
-	if mode&EnglishMode != 0 || len(canvas) == 0 {
-		return canvas
-	}
-	for _, trans := range composition {
-		if trans.IsDeleted || trans.Target == nil {
-			continue
-		}
-		switch trans.Rule.EffectType {
-		case MarkTransformation:
-			if mode&MarkLess != 0 {
-				break
+	for _, appendingTrans := range appendingList {
+		var chr rune
+		var transList = appendingMap[appendingTrans]
+		if mode&EnglishMode != 0 {
+			chr = appendingTrans.Rule.Key
+		} else {
+			chr = appendingTrans.Rule.EffectOn
+			if mode&MarkLess != 0 && (chr < 'a' || chr > 'z') {
+				chr = RemoveMarkFromChar(chr)
 			}
-			apply_effect(AddMarkToChar, trans)
-			break
-		case ToneTransformation:
-			if mode&ToneLess != 0 {
-				break
+			for _, trans := range transList {
+				switch trans.Rule.EffectType {
+				case MarkTransformation:
+					if mode&MarkLess != 0 {
+						break
+					}
+					if trans.Rule.Effect == uint8(MARK_UNDO) {
+						chr = appendingTrans.Rule.Key
+					} else {
+						chr = AddMarkToChar(chr, trans.Rule.Effect)
+					}
+				case ToneTransformation:
+					if mode&ToneLess != 0 {
+						break
+					}
+					chr = AddToneToChar(chr, trans.Rule.Effect)
+				}
 			}
-			apply_effect(AddToneToChar, trans)
-			break
 		}
+		if mode&ToneLess != 0 {
+			chr = AddToneToChar(chr, 0)
+		}
+		if mode&LowerCase != 0 {
+			chr = unicode.ToLower(chr)
+		} else if appendingTrans.IsUpperCase {
+			chr = unicode.ToUpper(chr)
+		}
+		canvas = append(canvas, chr)
 	}
 	return canvas
 }
