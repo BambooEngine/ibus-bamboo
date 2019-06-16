@@ -20,6 +20,7 @@
 package main
 
 import (
+	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
 	"strconv"
@@ -104,8 +105,12 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 		}
 		return false, nil
 	} else if keyRune > ' ' && keyRune <= '~' {
+		var testStr = string(append(e.emoji.keys, keyRune))
+		if raw == ":" && e.emoji.TestString(testStr) == bamboo.FindResultNotMatch {
+			e.emoji.Reset()
+		}
 		e.emoji.ProcessKey(keyRune)
-	} else if keyRune < 128 && rawTextLen > 0 {
+	} else if rawTextLen > 0 {
 		reset()
 		e.CommitText(ibus.NewText(raw))
 		return false, nil

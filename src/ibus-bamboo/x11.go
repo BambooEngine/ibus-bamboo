@@ -35,6 +35,7 @@ extern void mouse_capture_unlock();
 extern void mouse_recording_init();
 extern void mouse_recording_exit();
 extern void x11SendBackspace(int n, int timeout);
+extern void x11SendShiftR();
 extern void setXIgnoreErrorHandler();
 extern char* x11GetFocusWindowClass();
 */
@@ -94,6 +95,10 @@ func x11ClipboardReset() {
 
 func x11Paste(n int) {
 	C.x11Paste(C.int(n))
+}
+
+func x11SendShiftR() {
+	C.x11SendShiftR()
 }
 
 func x11SendBackspace(n int, timeout int) {

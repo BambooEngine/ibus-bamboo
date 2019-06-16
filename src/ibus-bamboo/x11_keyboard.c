@@ -37,6 +37,15 @@ static void delay(int sec, long msec) {
         now = clock();
 }
 
+void x11SendShiftR() {
+    Display *display = XOpenDisplay(NULL);
+    if (display) {
+        KeyCode xk_shift_r = XKeysymToKeycode(display, XK_Shift_R);
+        XTestFakeKeyEvent(display, xk_shift_r, False, 0);
+        XCloseDisplay(display);
+    }
+}
+
 void x11SendBackspace(int n, int timeout) {
     Display *display = XOpenDisplay(NULL);
     if (display) {

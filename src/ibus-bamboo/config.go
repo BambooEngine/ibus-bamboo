@@ -72,6 +72,10 @@ var DefaultBrowserList = []string{
 	"chromium-browser:Chromium-browser",
 }
 
+var DefaultPreeditList = []string{
+	"google-chrome:Google-chrome",
+}
+
 type Config struct {
 	InputMethod               string
 	InputMethodDefinitions    map[string]bamboo.InputMethodDefinition
@@ -114,7 +118,7 @@ func LoadConfig(engineName string) *Config {
 		IBflags:                   IBstdFlags,
 		AutoCommitAfter:           3000,
 		ExceptedList:              nil,
-		PreeditWhiteList:          nil,
+		PreeditWhiteList:          DefaultPreeditList,
 		X11ClipboardWhiteList:     nil,
 		ForwardKeyWhiteList:       nil,
 		DirectForwardKeyWhiteList: nil,

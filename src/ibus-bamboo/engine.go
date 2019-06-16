@@ -26,6 +26,7 @@ import (
 	"github.com/godbus/dbus"
 	"log"
 	"os/exec"
+	"reflect"
 	"sync"
 )
 
@@ -51,6 +52,7 @@ type IBusBambooEngine struct {
 	firstTimeSendingBS   bool
 	isFocusOut           bool
 	emoji                *BambooEmoji
+	lastKeyWithShift     bool
 }
 
 /**
@@ -73,7 +75,7 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 		return false, nil
 	}
 	log.Printf("keyCode 0x%04x keyval 0x%04x | %c | %d\n", keyCode, keyVal, rune(keyVal), len(keyPressChan))
-	if keyVal == IBUS_OpenLookupTable && e.isInputModeLTOpened == false {
+	if keyVal == IBUS_OpenLookupTable && e.isInputModeLTOpened == false && e.wmClasses != "" {
 		e.resetBuffer()
 		e.isInputModeLTOpened = true
 		e.openLookupTable()
@@ -107,6 +109,7 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 	fmt.Printf("WM_CLASS=(%s)\n", e.wmClasses)
 
 	e.RegisterProperties(e.propList)
+	e.RequireSurroundingText()
 	e.isFocusOut = false
 	if oldWmClasses != e.wmClasses {
 		e.firstTimeSendingBS = true
@@ -134,8 +137,32 @@ func (e *IBusBambooEngine) Enable() *dbus.Error {
 	if e.config.IBflags&IBautoCommitWithMouseMovement != 0 {
 		startMouseTracking()
 	}
+	e.RequireSurroundingText()
 	if e.config.IBflags&IBmarcoEnabled != 0 {
 		e.macroTable.Enable(e.engineName)
+	}
+	return nil
+}
+
+//@method(in_signature="vuu")
+func (e *IBusBambooEngine) SetSurroundingText(text dbus.Variant, cursorPos uint32, anchorPos uint32) *dbus.Error {
+	if e.getRawKeyLen() > 0 {
+		return nil
+	}
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println(err)
+		}
+	}()
+	if !e.inPreeditList() && e.inBackspaceWhiteList() {
+		var str = reflect.ValueOf(reflect.ValueOf(text.Value()).Index(2).Interface()).String()
+		var s = []rune(str)
+		if len(s) < int(cursorPos) {
+			return nil
+		}
+		fmt.Println("Surrounding Text: ", string(s[:cursorPos]))
+		e.preeditor.Reset()
+		e.preeditor.ProcessString(string(s[:cursorPos]), bamboo.EnglishMode)
 	}
 	return nil
 }

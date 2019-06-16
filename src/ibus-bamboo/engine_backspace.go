@@ -28,8 +28,11 @@ import (
 )
 
 func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
+	if e.getRawKeyLen() == 0 {
+		e.RequireSurroundingText()
+	}
 	if e.inXTestFakeKeyEventList() || e.inSurroundingTextList() {
-		// we don't want to use ForwardKeyEvent Api in X11 XTestFakeKeyEvent and Surrounding Text mode
+		// we don't want to use ForwardKeyEvent api in X11 XTestFakeKeyEvent and Surrounding Text mode
 		var sleep = func() {
 			for len(keyPressChan) > 0 {
 				time.Sleep(5 * time.Millisecond)
@@ -60,6 +63,13 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 }
 
 func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
+	defer func() {
+		if e.canProcessKey(keyVal, state) {
+			e.lastKeyWithShift = state&IBUS_SHIFT_MASK != 0
+		} else {
+			e.lastKeyWithShift = false
+		}
+	}()
 	if !e.isValidState(state) {
 		e.preeditor.Reset()
 		e.firstTimeSendingBS = true
@@ -100,12 +110,18 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 		e.updatePreviousText(newRunes, oldRunes, state)
 		return
 	} else if bamboo.IsWordBreakSymbol(keyRune) {
-		if keyVal == IBUS_Space && state&IBUS_SHIFT_MASK != 0 && !e.preeditor.IsLastWordUpper() {
+		if !e.lastKeyWithShift && keyVal == IBUS_Space && state&IBUS_SHIFT_MASK != 0 {
 			// restore key strokes
-			oldRunes := []rune(e.getPreeditString())
-			e.preeditor.RestoreLastWord()
-			newRunes := []rune(e.getPreeditString())
-			e.updatePreviousText(newRunes, oldRunes, state)
+			var vnSeq = e.getPreeditString()
+			if bamboo.HasVietnameseChar(vnSeq) {
+				e.preeditor.RestoreLastWord()
+				newRunes := []rune(e.getPreeditString())
+				e.updatePreviousText(newRunes, []rune(vnSeq), state)
+				return
+			} else {
+				e.SendText([]rune{keyRune})
+				e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
+			}
 			return
 		}
 		var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode, false)
@@ -130,6 +146,7 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 		e.SendText([]rune{keyRune})
 		return
 	}
+	e.lastKeyWithShift = false
 	e.preeditor.Reset()
 	e.ForwardKeyEvent(keyVal, keyCode, state)
 }

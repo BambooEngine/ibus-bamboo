@@ -72,6 +72,8 @@ func GetIBusBambooEngine() func(conn *dbus.Conn, engineName string) dbus.ObjectP
 				engine.refreshEmojiCandidate()
 			} else {
 				onMouseMove()
+				engine.ForwardKeyEvent(IBUS_Shift_R, 0, IBUS_RELEASE_MASK)
+				x11SendShiftR()
 			}
 		}
 		runtime.GC()
