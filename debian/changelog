@@ -1,3 +1,9 @@
+ibus-bamboo (0.5.0ubuntu1) stable; urgency=medium
+
+  * New upstream release
+
+ -- Luong Thanh Lam <ltlam93@gmail.com>  Sun, 23 Jun 2019 11:14:16 +0700
+
 ibus-bamboo (0.4.9ubuntu0) stable; urgency=medium
 
   * Release 0.4.9
