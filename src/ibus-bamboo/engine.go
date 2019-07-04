@@ -75,7 +75,7 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 		return false, nil
 	}
 	log.Printf("keyCode 0x%04x keyval 0x%04x | %c | %d\n", keyCode, keyVal, rune(keyVal), len(keyPressChan))
-	if keyVal == IBUS_OpenLookupTable && e.isInputModeLTOpened == false && e.wmClasses != "" {
+	if e.config.IBflags&IBinputLookupTableDisabled != 0 && keyVal == IBUS_OpenLookupTable && e.isInputModeLTOpened == false && e.wmClasses != "" {
 		e.resetBuffer()
 		e.isInputModeLTOpened = true
 		e.openLookupTable()
@@ -281,6 +281,7 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 			e.config.IBflags |= IBemojiDisabled
 		}
 	}
+
 	if propName == PropKeyStdToneStyle {
 		if propState == ibus.PROP_STATE_CHECKED {
 			e.config.Flags |= bamboo.EstdToneStyle
@@ -381,6 +382,15 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 			e.config.IBflags &= ^IBfakeBackspaceEnabled
 		}
 	}
+
+	if propName == PropKeyDisableInputLookupTable {
+		if propState == ibus.PROP_STATE_CHECKED {
+			e.config.IBflags &= ^IBinputLookupTableDisabled
+		} else {
+			e.config.IBflags |= IBinputLookupTableDisabled
+		}
+	}
+
 	var charset, foundCs = getCharsetFromPropKey(propName)
 	if foundCs && isValidCharset(charset) && propState == ibus.PROP_STATE_CHECKED {
 		e.config.OutputCharset = charset
