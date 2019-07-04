@@ -44,6 +44,7 @@ const (
 	PropKeyEmojiEnabled                = "emoji_enabled"
 	PropKeyBambooConfiguration         = "bamboo_configuration"
 	PropKeyFakeBackspace               = "x11_fake_backspace"
+	PropKeyDisableInputLookupTable     = "disable_input_lookup_table"
 )
 
 var runMode = ""
@@ -371,6 +372,11 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 		emojiChecked = ibus.PROP_STATE_UNCHECKED
 	}
 
+	inputLookupTableChecked := ibus.PROP_STATE_CHECKED
+	if c.IBflags&IBinputLookupTableDisabled != 0 {
+		inputLookupTableChecked = ibus.PROP_STATE_UNCHECKED
+	}
+
 	return ibus.NewPropList(
 		&ibus.Property{
 			Name:      "IBusProperty",
@@ -441,6 +447,18 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 			Sensitive: true,
 			Visible:   true,
 			State:     x11FakeBackspaceChecked,
+			Symbol:    dbus.MakeVariant(ibus.NewText("X")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       PropKeyDisableInputLookupTable,
+			Type:      ibus.PROP_TYPE_TOGGLE,
+			Label:     dbus.MakeVariant(ibus.NewText("Tắt tổ hợp phím Shirt+~")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("DisableLookupTable")),
+			Sensitive: true,
+			Visible:   true,
+			State:     inputLookupTableChecked,
 			Symbol:    dbus.MakeVariant(ibus.NewText("X")),
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
