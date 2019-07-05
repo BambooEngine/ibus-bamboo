@@ -175,36 +175,23 @@ func getRightMostVowels(composition []*Transformation) []*Transformation {
 	return getCompositionBySound(composition, VowelSound)
 }
 
+func inComposition(composition []*Transformation, trans *Transformation) bool {
+	for _, t := range composition {
+		if t == trans {
+			return true
+		}
+	}
+	return false
+}
+
 func getRightMostVowelWithMarks(composition []*Transformation) []*Transformation {
 	var vowels = getRightMostVowels(composition)
-	return addMarksToComposition(composition, vowels)
-}
-
-func getMarkTransformationsTargetTo(composition []*Transformation, trans *Transformation) []*Transformation {
 	var result []*Transformation
 	for _, t := range composition {
-		if t.Target == trans && t.Rule.EffectType == MarkTransformation {
+		if inComposition(vowels, t) ||
+			(t.Rule.EffectType == MarkTransformation && inComposition(vowels, t.Target)) {
 			result = append(result, t)
 		}
-	}
-	return result
-}
-
-func getTransformationsTargetTo(composition []*Transformation, trans *Transformation) []*Transformation {
-	var result []*Transformation
-	for _, t := range composition {
-		if t.Target == trans {
-			result = append(result, t)
-		}
-	}
-	return result
-}
-
-func addMarksToComposition(composition []*Transformation, appendingComps []*Transformation) []*Transformation {
-	var result []*Transformation
-	result = append(result, appendingComps...)
-	for _, t := range appendingComps {
-		result = append(result, getMarkTransformationsTargetTo(composition, t)...)
 	}
 	return result
 }
@@ -324,6 +311,15 @@ func hasSuperWord(composition []*Transformation) bool {
 	return regUhOh.MatchString(str)
 }
 
+func hasAppending(composition []*Transformation) bool {
+	for _, t := range composition {
+		if t.Rule.EffectType == Appending {
+			return true
+		}
+	}
+	return false
+}
+
 func getLastWord(composition []*Transformation, effectiveKeys []rune) []*Transformation {
 	for i := len(composition) - 1; i >= 0; i-- {
 		var t = composition[i]
@@ -339,12 +335,12 @@ func getLastWord(composition []*Transformation, effectiveKeys []rune) []*Transfo
 
 func getLastSyllable(composition []*Transformation) []*Transformation {
 	var ret []*Transformation
-	if len(composition) <= 1 {
-		return composition
+	if !hasAppending(composition) {
+		return nil
 	}
 	for i, trans := range composition {
 		ret = append(ret, trans)
-		if i < len(composition)-1 && composition[i+1].Rule.EffectType != Appending {
+		if !hasAppending(ret) {
 			continue
 		}
 		str := Flatten(ret, VietnameseMode|ToneLess|LowerCase)
@@ -496,21 +492,21 @@ func generateUndoTransformations(composition []*Transformation, rules []Rule, fl
 /**
 * 1 | o + ff  ->  undo + append      -> of
 * 2 | o + fs  ->  override			 -> ó
-* 3 | o + fz  ->  override	     -> o
+* 3 | o + fz  ->  override	         -> o
 * 4 | o + z   ->  append			 -> oz
-* 5 | o + f   ->  tone_grave   -> ò
+* 5 | o + f   ->  tone_grave         -> ò
 * ...
 **/
 func generateTransformations(composition []*Transformation, applicableRules []Rule, flags uint, lowerKey rune, isUpperCase bool) []*Transformation {
 	var transformations []*Transformation
-	// Double typing an effect key undoes it and its effects, e.g. d + d -> d
+	// Double typing an effect key undoes it and its effects, e.g. w + w -> w (Telex 2)
 	if len(composition) > 0 {
 		var rule = composition[len(composition)-1].Rule
 		if rule.EffectType == Appending && rule.Key == lowerKey && rule.Key != rule.Result {
 			transformations = append(transformations, &Transformation{
 				Rule: Rule{
 					EffectType: MarkTransformation,
-					Effect:     uint8(MARK_UNDO),
+					Effect:     uint8(MARK_RAW),
 					Key:        0,
 				},
 				Target: composition[len(composition)-1],
@@ -518,7 +514,7 @@ func generateTransformations(composition []*Transformation, applicableRules []Ru
 			return transformations
 		}
 	}
-	// A target can be applied by many different transformations, e.g. o + o + w -> ơ
+	// A target may be applied by many different transformations, e.g. o + o + w -> ơ
 	if target, applicableRule := findTarget(composition, applicableRules, flags); target != nil {
 		transformations = append(transformations, &Transformation{
 			Rule:        applicableRule,
@@ -528,6 +524,28 @@ func generateTransformations(composition []*Transformation, applicableRules []Ru
 	} else {
 		// If an effect key can't find its target, it tries to undo its brothers, e.g. ươ + w -> uow
 		if undoTrans := generateUndoTransformations(composition, applicableRules, flags); len(undoTrans) > 0 {
+			var vowels = getRightMostVowelWithMarks(append(composition, undoTrans...))
+			var oVowels = getRightMostVowelWithMarks(composition)
+			// Exception: ươ + o -> uô
+			if Flatten(oVowels, VietnameseMode) == "ươ" && Flatten(vowels, VietnameseMode) == "ưo" {
+				var trans = &Transformation{
+					Target: vowels[0],
+					Rule: Rule{
+						EffectType: MarkTransformation,
+						Key:        0,
+						Effect:     uint8(MARK_NONE),
+					},
+				}
+				if target, applicableRule := findTarget(append(composition, trans), applicableRules, flags); target != nil {
+					transformations = append(transformations, trans)
+					transformations = append(transformations, &Transformation{
+						Rule:        applicableRule,
+						Target:      target,
+						IsUpperCase: isUpperCase,
+					})
+					return transformations
+				}
+			}
 			transformations = append(transformations, undoTrans...)
 			transformations = append(transformations, newAppendingTrans(lowerKey, isUpperCase))
 			return transformations

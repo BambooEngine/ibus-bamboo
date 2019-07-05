@@ -235,10 +235,20 @@ func (e *BambooEngine) RemoveLastChar() {
 	if lastAppending == nil {
 		return
 	}
-	var transformations = getTransformationsTargetTo(e.composition, lastAppending)
-	for _, trans := range append(transformations, lastAppending) {
-		e.composition = removeTrans(e.composition, trans)
+	if !e.CanProcessKey(lastAppending.Rule.Key) {
+		e.composition = e.composition[:len(e.composition)-1]
+		return
 	}
+	var lastComb, previous = extractLastWord(e.composition, e.inputMethod.Keys)
+	var newComb []*Transformation
+	for _, t := range lastComb {
+		if t.Target == lastAppending || t == lastAppending {
+			continue
+		}
+		newComb = append(newComb, t)
+	}
+	newComb = e.refreshLastToneTarget(newComb)
+	e.composition = append(previous, newComb...)
 }
 
 /***** END SIDE-EFFECT METHODS ******/

@@ -191,23 +191,13 @@ func RemoveToneFromWord(word string) string {
 	return string(chars)
 }
 
-var vnIdenticalCharset = map[rune]bool{
-	'â': true,
-	'ă': true,
-	'ê': true,
-	'ô': true,
-	'ơ': true,
-	'ư': true,
-	'đ': true,
-}
-
 func HasVietnameseChar(word string) bool {
 	for _, chr := range []rune(word) {
 		var c = unicode.ToLower(chr)
 		if FindToneFromChar(c) != TONE_NONE {
 			return true
 		}
-		if _, found := vnIdenticalCharset[AddToneToChar(c, 0)]; found {
+		if mark, found := FindMarkFromChar(AddToneToChar(c, 0)); found && mark != MARK_NONE {
 			return true
 		}
 	}

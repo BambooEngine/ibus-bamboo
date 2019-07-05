@@ -70,6 +70,26 @@ func TestProcessThuowString(t *testing.T) {
 	}
 }
 
+func TestBambooEngine_RemoveLastChar(t *testing.T) {
+	ng := newStdEngine()
+	ng.RemoveLastChar()
+	ng.ProcessString(" ", EnglishMode)
+	ng.RemoveLastChar()
+	ng.ProcessString("loanj", VietnameseMode)
+	if ng.GetProcessedString(VietnameseMode, false) != "loạn" {
+		t.Errorf("Process [loanj], got [%s] expected [loạn]", ng.GetProcessedString(VietnameseMode, false))
+	}
+	ng.RemoveLastChar()
+	if ng.GetProcessedString(VietnameseMode, false) != "lọa" {
+		t.Errorf("Process [loanj-1], got [%s] expected [lọa]", ng.GetProcessedString(VietnameseMode, false))
+	}
+	ng.ProcessString(":", EnglishMode)
+	ng.RemoveLastChar()
+	if ng.GetProcessedString(VietnameseMode, false) != "lọa" {
+		t.Errorf("Process [loanj-1], got [%s] expected [lọa]", ng.GetProcessedString(VietnameseMode, false))
+	}
+}
+
 func TestProcessUpperString(t *testing.T) {
 	ng := newStdEngine()
 	ng.ProcessString("VIEETJ", VietnameseMode)
@@ -467,5 +487,22 @@ func TestProcessVNWord(t *testing.T) {
 	ng.ProcessString(s, VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode, false) != "tôi" {
 		t.Errorf("Process tôifs, got [%v] expected [tôi]", ng.GetProcessedString(VietnameseMode, false))
+	}
+}
+
+func TestDoubleTyping(t *testing.T) {
+	var s = "linux"
+	ng := newStdEngine()
+	ng.ProcessString(s, VietnameseMode)
+	ng.ProcessString("x", VietnameseMode)
+	if ng.GetProcessedString(VietnameseMode, false) != "linux" {
+		t.Errorf("Process [linuxx], got [%v] expected [linux]", ng.GetProcessedString(VietnameseMode, false))
+	}
+	ng.Reset()
+	s = "buowc"
+	ng.ProcessString(s, VietnameseMode)
+	ng.ProcessString("o", VietnameseMode)
+	if ng.GetProcessedString(VietnameseMode, false) != "buôc" {
+		t.Errorf("Process [buowco], got [%s] expected [buôc]", ng.GetProcessedString(VietnameseMode, false))
 	}
 }

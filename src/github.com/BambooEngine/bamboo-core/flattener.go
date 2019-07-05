@@ -60,7 +60,7 @@ func getCanvas(composition []*Transformation, mode Mode) []rune {
 					if mode&MarkLess != 0 {
 						break
 					}
-					if trans.Rule.Effect == uint8(MARK_UNDO) {
+					if trans.Rule.Effect == uint8(MARK_RAW) {
 						chr = appendingTrans.Rule.Key
 					} else {
 						chr = AddMarkToChar(chr, trans.Rule.Effect)

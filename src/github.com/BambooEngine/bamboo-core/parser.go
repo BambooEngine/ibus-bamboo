@@ -51,7 +51,7 @@ const (
 	MARK_BREVE Mark = iota
 	MARK_HORN  Mark = iota
 	MARK_DASH  Mark = iota
-	MARK_UNDO  Mark = iota
+	MARK_RAW   Mark = iota
 )
 
 type Tone uint8
