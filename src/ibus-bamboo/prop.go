@@ -180,7 +180,7 @@ func GetCharsetPropListByConfig(c *Config) *ibus.PropList {
 		}
 		var imProp = &ibus.Property{
 			Name:      "IBusProperty",
-			Key:       "OutputCharset-" + charset,
+			Key:       "OutputCharset::" + charset,
 			Type:      ibus.PROP_TYPE_RADIO,
 			Label:     dbus.MakeVariant(ibus.NewText(charset)),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("OutputCharset: " + charset)),

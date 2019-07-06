@@ -84,7 +84,7 @@ func addToWhiteList(list []string, classes string) []string {
 }
 
 func getCharsetFromPropKey(str string) (string, bool) {
-	var arr = strings.Split(str, "-")
+	var arr = strings.Split(str, "::")
 	if len(arr) == 2 {
 		return arr[1], true
 	}
