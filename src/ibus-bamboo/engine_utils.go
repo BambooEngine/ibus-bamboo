@@ -33,55 +33,68 @@ import (
 
 func GetIBusBambooEngine() func(conn *dbus.Conn, engineName string) dbus.ObjectPath {
 	objectPath := dbus.ObjectPath(fmt.Sprintf("/org/freedesktop/IBus/Engine/bamboo/%d", time.Now().UnixNano()))
-	var dictionary, _ = loadDictionary(DictVietnameseCm)
-	var bambooEmoji = NewBambooEmoji(DictEmojiOne)
-	var mTable = NewMacroTable()
 	setupConfigDir()
 	go keyPressCapturing()
+	var engineName = strings.ToLower(EngineName)
+	var engine = new(IBusBambooEngine)
 
 	return func(conn *dbus.Conn, ngName string) dbus.ObjectPath {
-		var engineName = strings.ToLower(ngName)
 		var config = LoadConfig(engineName)
 		var inputMethod = bamboo.ParseInputMethod(config.InputMethodDefinitions, config.InputMethod)
-		var preeditor = bamboo.NewEngine(inputMethod, config.Flags, dictionary)
-		engine := &IBusBambooEngine{
-			Engine:     ibus.BaseEngine(conn, objectPath),
-			preeditor:  preeditor,
-			engineName: engineName,
-			config:     config,
-			propList:   GetPropListByConfig(config),
-			macroTable: mTable,
-			dictionary: dictionary,
-			emoji:      bambooEmoji,
-		}
+		engine.Engine = ibus.BaseEngine(conn, objectPath)
+		engine.engineName = engineName
+		engine.preeditor = bamboo.NewEngine(inputMethod, config.Flags)
+		engine.config = LoadConfig(engineName)
+		engine.propList = GetPropListByConfig(config)
 		ibus.PublishEngine(conn, objectPath, engine)
+		go engine.init()
 
-		keyPressHandler = engine.keyPressHandler
-
-		onMouseMove = func() {
-			engine.Lock()
-			defer engine.Unlock()
-			engine.ignorePreedit = false
-			x11ClipboardReset()
-			engine.resetFakeBackspace()
-			engine.resetBuffer()
-			engine.firstTimeSendingBS = true
-		}
-		onMouseClick = func() {
-			if engine.isEmojiLTOpened {
-				engine.refreshEmojiCandidate()
-			} else {
-				onMouseMove()
-				if engine.capabilities&IBUS_CAP_SURROUNDING_TEXT != 0 {
-					//engine.ForwardKeyEvent(IBUS_Shift_R, 0, IBUS_RELEASE_MASK)
-					x11SendShiftR()
-				}
-			}
-		}
-		runtime.GC()
-		debug.FreeOSMemory()
 		return objectPath
 	}
+}
+
+func (e *IBusBambooEngine) init() {
+	if e.dictionary == nil {
+		e.dictionary, _ = loadDictionary(DictVietnameseCm)
+		e.preeditor.SetDictionary(e.dictionary)
+	}
+	if e.emoji == nil {
+		e.emoji = NewBambooEmoji(DictEmojiOne)
+	}
+	if e.macroTable == nil {
+		e.macroTable = NewMacroTable()
+		if e.config.IBflags&IBmarcoEnabled != 0 {
+			e.macroTable.Enable(e.engineName)
+		}
+	}
+	keyPressHandler = e.keyPressHandler
+
+	if e.config.IBflags&IBautoCommitWithMouseMovement != 0 {
+		startMouseTracking()
+	}
+	onMouseMove = func() {
+		e.Lock()
+		defer e.Unlock()
+		e.ignorePreedit = false
+		x11ClipboardReset()
+		e.resetFakeBackspace()
+		e.resetBuffer()
+	}
+	onMouseClick = func() {
+		e.firstTimeSendingBS = true
+		if e.isEmojiLTOpened {
+			e.refreshEmojiCandidate()
+		} else {
+			onMouseMove()
+			if e.capabilities&IBUS_CAP_SURROUNDING_TEXT != 0 {
+				//engine.ForwardKeyEvent(IBUS_Shift_R, 0, IBUS_RELEASE_MASK)
+				x11SendShiftR()
+			}
+		}
+	}
+
+	runtime.GC()
+	debug.FreeOSMemory()
 }
 
 var keyPressHandler = func(keyVal, keyCode, state uint32) {}

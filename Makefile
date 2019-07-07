@@ -34,7 +34,7 @@ test:
 	GOPATH=$(CURDIR) go test ./src/ibus-$(engine_name)
 
 build:
-	GOPATH=$(CURDIR) go build -buildmode=pie -ldflags="-s -w" -o $(ibus_e_name) ./src/ibus-$(engine_name)
+	GOPATH=$(CURDIR) go build -ldflags="-s -w" -o $(ibus_e_name) ./src/ibus-$(engine_name)
 
 clean:
 	rm -f ibus-engine-* *_linux *_cover.html go_test_* go_build_* test *.gz test
