@@ -56,7 +56,7 @@ type Transformation struct {
 
 type IEngine interface {
 	SetFlag(uint)
-	SetDictionary(map[string]bool)
+	AddDictionary(map[string]bool)
 	GetInputMethod() InputMethod
 	ProcessKey(rune, Mode)
 	ProcessString(string, Mode)
@@ -83,7 +83,7 @@ func NewEngine(inputMethod InputMethod, flag uint) IEngine {
 	return &engine
 }
 
-func (e *BambooEngine) SetDictionary(dictionary map[string]bool) {
+func (e *BambooEngine) AddDictionary(dictionary map[string]bool) {
 	for word := range dictionary {
 		AddTrie(spellingTrie, []rune(RemoveToneFromWord(word)), false)
 	}

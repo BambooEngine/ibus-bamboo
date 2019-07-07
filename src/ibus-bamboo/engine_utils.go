@@ -46,6 +46,13 @@ func GetIBusBambooEngine() func(conn *dbus.Conn, engineName string) dbus.ObjectP
 		engine.preeditor = bamboo.NewEngine(inputMethod, config.Flags)
 		engine.config = LoadConfig(engineName)
 		engine.propList = GetPropListByConfig(config)
+		engine.nFakeBackSpace = 0
+		engine.lastKeyWithShift = false
+		engine.isInputModeLTOpened = false
+		engine.isFocusOut = false
+		engine.ignorePreedit = false
+		engine.isEmojiLTOpened = false
+		engine.firstTimeSendingBS = false
 		ibus.PublishEngine(conn, objectPath, engine)
 		go engine.init()
 
@@ -56,7 +63,7 @@ func GetIBusBambooEngine() func(conn *dbus.Conn, engineName string) dbus.ObjectP
 func (e *IBusBambooEngine) init() {
 	if e.dictionary == nil {
 		e.dictionary, _ = loadDictionary(DictVietnameseCm)
-		e.preeditor.SetDictionary(e.dictionary)
+		e.preeditor.AddDictionary(e.dictionary)
 	}
 	if e.emoji == nil {
 		e.emoji = NewBambooEmoji(DictEmojiOne)
