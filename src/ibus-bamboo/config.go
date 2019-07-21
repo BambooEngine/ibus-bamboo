@@ -64,7 +64,7 @@ const (
 	IBfakeBackspaceEnabled
 	IBinputLookupTableDisabled
 	IBstdFlags = IBspellChecking | IBspellCheckingWithRules | IBautoNonVnRestore | IBddFreeStyle |
-		IBpreeditInvisibility | IBautoCommitWithMouseMovement | IBemojiDisabled | IBinputLookupTableDisabled
+		IBpreeditInvisibility | IBautoCommitWithMouseMovement | IBemojiDisabled
 )
 
 var DefaultBrowserList = []string{

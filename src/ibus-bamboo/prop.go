@@ -454,7 +454,7 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 			Name:      "IBusProperty",
 			Key:       PropKeyDisableInputLookupTable,
 			Type:      ibus.PROP_TYPE_TOGGLE,
-			Label:     dbus.MakeVariant(ibus.NewText("Tắt tổ hợp phím Shirt+~")),
+			Label:     dbus.MakeVariant(ibus.NewText("Tắt tổ hợp phím Shift+~")),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("DisableLookupTable")),
 			Sensitive: true,
 			Visible:   true,
