@@ -22,6 +22,7 @@ package bamboo
 import (
 	"log"
 	"regexp"
+	"strings"
 	"unicode"
 )
 
@@ -527,7 +528,8 @@ func generateTransformations(composition []*Transformation, applicableRules []Ru
 			var vowels = getRightMostVowelWithMarks(append(composition, undoTrans...))
 			var oVowels = getRightMostVowelWithMarks(composition)
 			// Exception: ươ + o -> uô
-			if Flatten(oVowels, VietnameseMode) == "ươ" && Flatten(vowels, VietnameseMode) == "ưo" {
+			if strings.Contains(Flatten(oVowels, VietnameseMode), "ươ") &&
+				strings.Contains(Flatten(vowels, VietnameseMode), "ưo") {
 				var trans = &Transformation{
 					Target: vowels[0],
 					Rule: Rule{
