@@ -24,11 +24,30 @@ import (
 	"github.com/BambooEngine/bamboo-core"
 	"os"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
 	"unicode"
 )
+
+const (
+	VnCaseAllSmall uint8 = 1 << iota
+	VnCaseAllCapital
+	VnCaseNoChange
+)
+
+func determineMacroCase(str string) uint8 {
+	var chars = []rune(str)
+	if unicode.IsLower(chars[0]) {
+		return VnCaseAllSmall
+	} else {
+		for _, c := range chars[1:] {
+			if unicode.IsLower(c) {
+				return VnCaseNoChange
+			}
+		}
+	}
+	return VnCaseAllCapital
+}
 
 func toUpper(keyRune rune) rune {
 	var upperSpecialKeys = map[rune]rune{
@@ -47,17 +66,6 @@ func toUpper(keyRune rune) rune {
 func inStringList(list []string, str string) bool {
 	for _, s := range list {
 		if s == str {
-			return true
-		}
-	}
-	return false
-}
-
-func inWMList(list []string, str string) bool {
-	for _, s := range list {
-		if s == str {
-			return true
-		} else if re, err := regexp.Compile(s); err == nil && re.MatchString(str) {
 			return true
 		}
 	}

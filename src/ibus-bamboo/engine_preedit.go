@@ -78,7 +78,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		}
 		var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode, false)
 		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
-			processedStr = e.macroTable.GetText(processedStr)
+			processedStr = e.expandMacro(processedStr)
 			e.commitText(processedStr + string(keyRune))
 			e.resetPreedit()
 			return true, nil
@@ -89,6 +89,19 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	}
 	e.commitPreedit()
 	return false, nil
+}
+
+func (e *IBusBambooEngine) expandMacro(str string) string {
+	var macroText = e.macroTable.GetText(str)
+	if e.config.IBflags&IBautoCapitalizeMacro != 0 {
+		switch determineMacroCase(str) {
+		case VnCaseAllSmall:
+			return strings.ToLower(macroText)
+		case VnCaseAllCapital:
+			return strings.ToUpper(macroText)
+		}
+	}
+	return macroText
 }
 
 func (e *IBusBambooEngine) updatePreedit(processedStr string) {

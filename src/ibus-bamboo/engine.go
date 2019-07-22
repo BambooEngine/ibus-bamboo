@@ -384,6 +384,13 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 			e.config.IBflags |= IBinputLookupTableDisabled
 		}
 	}
+	if propName == PropKeyAutoCapitalizeMacro {
+		if propState == ibus.PROP_STATE_CHECKED {
+			e.config.IBflags |= IBautoCapitalizeMacro
+		} else {
+			e.config.IBflags &= ^IBautoCapitalizeMacro
+		}
+	}
 
 	var charset, foundCs = getCharsetFromPropKey(propName)
 	if foundCs && isValidCharset(charset) && propState == ibus.PROP_STATE_CHECKED {

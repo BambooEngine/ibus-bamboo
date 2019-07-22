@@ -45,6 +45,7 @@ const (
 	PropKeyBambooConfiguration         = "bamboo_configuration"
 	PropKeyFakeBackspace               = "x11_fake_backspace"
 	PropKeyDisableInputLookupTable     = "disable_input_lookup_table"
+	PropKeyAutoCapitalizeMacro         = "auto_capitalize_macro"
 )
 
 var runMode = ""
@@ -246,9 +247,13 @@ func GetIMPropListByConfig(c *Config) *ibus.PropList {
 
 func GetMacroPropListByConfig(c *Config) *ibus.PropList {
 	macroChecked := ibus.PROP_STATE_UNCHECKED
+	autoCapitalizeMacro := ibus.PROP_STATE_UNCHECKED
 
 	if c.IBflags&IBmarcoEnabled != 0 {
 		macroChecked = ibus.PROP_STATE_CHECKED
+	}
+	if c.IBflags&IBautoCapitalizeMacro != 0 {
+		autoCapitalizeMacro = ibus.PROP_STATE_CHECKED
 	}
 	return ibus.NewPropList(
 		&ibus.Property{
@@ -261,6 +266,18 @@ func GetMacroPropListByConfig(c *Config) *ibus.PropList {
 			Visible:   true,
 			State:     macroChecked,
 			Symbol:    dbus.MakeVariant(ibus.NewText("M")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       PropKeyAutoCapitalizeMacro,
+			Type:      ibus.PROP_TYPE_TOGGLE,
+			Label:     dbus.MakeVariant(ibus.NewText("Tự động viết hoa")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Auto capitalize macro")),
+			Sensitive: true,
+			Visible:   true,
+			State:     autoCapitalizeMacro,
+			Symbol:    dbus.MakeVariant(ibus.NewText("C")),
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
 		&ibus.Property{

@@ -42,7 +42,7 @@ func (e *MacroTable) LoadFromFile(macroFileName string) error {
 		}
 		var list = strings.Split(s, ":")
 		if len(list) == 2 {
-			e.mTable[list[0]] = list[1]
+			e.mTable[strings.ToLower(list[0])] = list[1]
 		}
 	}
 	return nil
@@ -50,12 +50,12 @@ func (e *MacroTable) LoadFromFile(macroFileName string) error {
 
 //---------------------------------------------------------------
 func (e *MacroTable) GetText(key string) string {
-	return e.mTable[key]
+	return e.mTable[strings.ToLower(key)]
 }
 
 //---------------------------------------------------------------
 func (e *MacroTable) HasKey(key string) bool {
-	return e.mTable[key] != ""
+	return e.mTable[strings.ToLower(key)] != ""
 }
 
 //---------------------------------------------------------------

@@ -63,6 +63,7 @@ const (
 	IBemojiDisabled
 	IBfakeBackspaceEnabled
 	IBinputLookupTableDisabled
+	IBautoCapitalizeMacro
 	IBstdFlags = IBspellChecking | IBspellCheckingWithRules | IBautoNonVnRestore | IBddFreeStyle |
 		IBpreeditInvisibility | IBautoCommitWithMouseMovement | IBemojiDisabled
 )
