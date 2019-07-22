@@ -23,10 +23,11 @@ Ví dụ: Gõ abc thì phải thấy abc chứ không phải xyz
 Nếu cần thiết, hãy [đính kèm hình ảnh](https://help.github.com/articles/file-attachments-on-issues-and-pull-requests/) hoặc gửi link youtube [quay lại màn hình](https://www.youtube.com/watch?v=N8M4zsqTkr4) tái hiện lỗi.
 
 **Môi trường**
- - OS và version: (ví dụ: Ubuntu 18.10)
+ - OS và version: (ví dụ: Ubuntu 19.04)
  - Desktop: (Xfce, KDE, Gnome,... hoặc **mặc định**)
- - Phiên bản ibus: (chạy command `ibus version` để xem phiên bản ibus)
- - Phiên bản ibus-bamboo: (bản mới nhất là v0.5.1)
+ - Phiên bản ibus-bamboo: (bản mới nhất là v0.5.2)
 
 **Thông tin thêm**
 Các nội dung khác có liên quan đến lỗi đang xảy ra.
+Ví dụ: Chương trình XYZ được cài đặt từ: (apt-get, snap, flatpak, download từ trang chủ,...)
+
