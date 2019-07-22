@@ -46,13 +46,6 @@ func GetIBusBambooEngine() func(conn *dbus.Conn, engineName string) dbus.ObjectP
 		engine.preeditor = bamboo.NewEngine(inputMethod, config.Flags)
 		engine.config = LoadConfig(engineName)
 		engine.propList = GetPropListByConfig(config)
-		engine.nFakeBackSpace = 0
-		engine.lastKeyWithShift = false
-		engine.isInputModeLTOpened = false
-		engine.isFocusOut = false
-		engine.ignorePreedit = false
-		engine.isEmojiLTOpened = false
-		engine.firstTimeSendingBS = false
 		ibus.PublishEngine(conn, objectPath, engine)
 		go engine.init()
 
