@@ -187,7 +187,7 @@ func (e *BambooEngine) ProcessKey(key rune, mode Mode) {
 // Implement the uow typing shortcut by creating a virtual
 // Mark.HORN rule that targets 'u' or 'o'.
 func (e *BambooEngine) applyUowShortcut(syllable []*Transformation) []*Transformation {
-	if e.flags&EautoCorrectEnabled != 0 && len(e.inputMethod.SuperKeys) > 0 && isTransformationForUoMissed(syllable) {
+	if len(e.inputMethod.SuperKeys) > 0 && isTransformationForUoMissed(syllable) {
 		if target, missingRule := e.findTargetByKey(syllable, e.inputMethod.SuperKeys[0]); target != nil {
 			missingRule.Key = rune(0) // virtual rule should not appear in the raw string
 			virtualTrans := &Transformation{
@@ -208,7 +208,7 @@ func (e *BambooEngine) applyUowShortcut(syllable []*Transformation) []*Transform
 * this state: chuyrene -> chuyển
 **/
 func (e *BambooEngine) refreshLastToneTarget(syllable []*Transformation) []*Transformation {
-	if e.flags&EfreeToneMarking != 0 {
+	if e.flags&EfreeToneMarking != 0 && getSpellingMatchResult(syllable, ToneLess, false) != FindResultNotMatch {
 		syllable = refreshLastToneTarget(syllable, e.flags&EstdToneStyle != 0)
 	}
 	return syllable

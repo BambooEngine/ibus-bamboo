@@ -36,9 +36,9 @@ func GetIBusBambooEngine() func(conn *dbus.Conn, engineName string) dbus.ObjectP
 	setupConfigDir()
 	go keyPressCapturing()
 	var engineName = strings.ToLower(EngineName)
-	var engine = new(IBusBambooEngine)
 
 	return func(conn *dbus.Conn, ngName string) dbus.ObjectPath {
+		var engine = new(IBusBambooEngine)
 		var config = LoadConfig(engineName)
 		var inputMethod = bamboo.ParseInputMethod(config.InputMethodDefinitions, config.InputMethod)
 		engine.Engine = ibus.BaseEngine(conn, objectPath)

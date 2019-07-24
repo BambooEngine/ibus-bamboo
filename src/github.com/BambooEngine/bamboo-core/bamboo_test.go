@@ -513,4 +513,11 @@ func TestDoubleTyping(t *testing.T) {
 	if ng.GetProcessedString(VietnameseMode, false) != "cuôi" {
 		t.Errorf("Process [cuoiw], got [%s] expected [cuôi]", ng.GetProcessedString(VietnameseMode, false))
 	}
+	ng.Reset()
+	s = "ach"
+	ng.ProcessString(s, VietnameseMode)
+	ng.ProcessString("a", VietnameseMode)
+	if ng.GetProcessedString(VietnameseMode, false) != "acha" {
+		t.Errorf("Process [acha], got [%s] expected [acha]", ng.GetProcessedString(VietnameseMode, false))
+	}
 }

@@ -97,25 +97,6 @@ func findRootTarget(target *Transformation) *Transformation {
 	}
 }
 
-func isMarkTargetValid(composition []*Transformation, trans *Transformation) bool {
-	var soundMap = GetSoundMap(composition)
-	targetSound, found := soundMap[trans.Target]
-	if !found {
-		return false
-	}
-	// the sound of target does not match the sound of the trans that effect on
-	if IsVowel(trans.Rule.EffectOn) && targetSound != VowelSound {
-		return false
-	}
-	if targetSound == VowelSound {
-		var vowels = getRightMostVowelWithMarks(append(composition, trans))
-		if getSpellingMatchResult(vowels, ToneLess, false) == FindResultNotMatch {
-			return false
-		}
-	}
-	return true
-}
-
 // only appending trans has sound
 func getCombinationWithSound(composition []*Transformation) ([]*Transformation, []Sound) {
 	var lastComb = getAppendingComposition(composition)
@@ -157,19 +138,6 @@ func getSpellingMatchResult(composition []*Transformation, mode Mode, deepSearch
 		return TestString(spellingTrie, chars, deepSearch)
 	}
 	return FindResultNotMatch
-}
-
-func GetSoundMap(composition []*Transformation) map[*Transformation]Sound {
-	var soundMap = map[*Transformation]Sound{}
-	var lastComb, sounds = getCombinationWithSound(composition)
-	if len(sounds) <= 0 || len(sounds) != len(lastComb) {
-		log.Println("Something is wrong with the length of sounds")
-		return soundMap
-	}
-	for i, trans := range lastComb {
-		soundMap[trans] = sounds[i]
-	}
-	return soundMap
 }
 
 func getRightMostVowels(composition []*Transformation) []*Transformation {
@@ -270,21 +238,6 @@ func isTransformationForUoMissed(composition []*Transformation) bool {
 	return len(composition) > 0 &&
 		hasSuperWord(composition) &&
 		getSpellingMatchResult(composition, ToneLess, false) == FindResultMatchPrefix
-}
-
-func refreshLastToneTarget(transformations []*Transformation, stdStyle bool) []*Transformation {
-	var composition []*Transformation
-	composition = append(composition, transformations...)
-	var rightmostVowels = getRightMostVowels(composition)
-	var lastToneTrans = getLastToneTransformation(composition)
-	if len(rightmostVowels) == 0 || lastToneTrans == nil {
-		return composition
-	}
-	var newToneTarget = findToneTarget(composition, stdStyle)
-	if lastToneTrans.Target != newToneTarget {
-		lastToneTrans.Target = newToneTarget
-	}
-	return composition
 }
 
 func isFree(composition []*Transformation, trans *Transformation, effectType EffectType) bool {
@@ -408,8 +361,8 @@ func findMarkTarget(composition []*Transformation, rules []Rule) (*Transformatio
 				if str == Flatten(append(composition, &Transformation{Target: target, Rule: rule}), VietnameseMode) {
 					continue
 				}
-				if isMarkTargetValid(composition, &Transformation{
-					Rule: rule, Target: target}) {
+				var tmp = append(composition, &Transformation{Rule: rule, Target: target})
+				if getSpellingMatchResult(tmp, ToneLess, false) != FindResultNotMatch {
 					return target, rule
 				}
 			}
@@ -570,16 +523,6 @@ func generateTransformations(composition []*Transformation, applicableRules []Ru
 	return transformations
 }
 
-func removeTrans(composition []*Transformation, trans *Transformation) []*Transformation {
-	var result []*Transformation
-	for _, t := range composition {
-		if t != trans {
-			result = append(result, t)
-		}
-	}
-	return result
-}
-
 func breakComposition(composition []*Transformation) []*Transformation {
 	var result []*Transformation
 	for _, trans := range composition {
@@ -589,4 +532,17 @@ func breakComposition(composition []*Transformation) []*Transformation {
 		result = append(result, newAppendingTrans(trans.Rule.Key, trans.IsUpperCase))
 	}
 	return result
+}
+
+func refreshLastToneTarget(composition []*Transformation, stdStyle bool) []*Transformation {
+	var rightmostVowels = getRightMostVowels(composition)
+	var lastToneTrans = getLastToneTransformation(composition)
+	if len(rightmostVowels) == 0 || lastToneTrans == nil {
+		return composition
+	}
+	var newToneTarget = findToneTarget(composition, stdStyle)
+	if lastToneTrans.Target != newToneTarget {
+		lastToneTrans.Target = newToneTarget
+	}
+	return composition
 }
