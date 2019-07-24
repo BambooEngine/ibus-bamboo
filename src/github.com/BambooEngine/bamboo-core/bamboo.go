@@ -60,8 +60,8 @@ type IEngine interface {
 	GetInputMethod() InputMethod
 	ProcessKey(rune, Mode)
 	ProcessString(string, Mode)
-	GetProcessedString(Mode, bool) string
-	GetSpellingMatchResult(Mode, bool) uint8
+	GetProcessedString(Mode) string
+	GetSpellingMatchResult(Mode) uint8
 	CanProcessKey(rune) bool
 	RemoveLastChar()
 	RestoreLastWord()
@@ -120,8 +120,8 @@ func (e *BambooEngine) isEffectiveKey(key rune) bool {
 	return inKeyList(e.GetInputMethod().Keys, key)
 }
 
-func (e *BambooEngine) GetSpellingMatchResult(mode Mode, deepSearch bool) uint8 {
-	return getSpellingMatchResult(getLastWord(e.composition, e.inputMethod.Keys), mode, deepSearch)
+func (e *BambooEngine) GetSpellingMatchResult(mode Mode) uint8 {
+	return getSpellingMatchResult(getLastWord(e.composition, e.inputMethod.Keys), mode, false)
 }
 
 func (e *BambooEngine) GetRawString() string {
@@ -132,11 +132,8 @@ func (e *BambooEngine) GetRawString() string {
 	return string(seq)
 }
 
-func (e *BambooEngine) GetProcessedString(mode Mode, letterOnly bool) string {
+func (e *BambooEngine) GetProcessedString(mode Mode) string {
 	var effectiveKeys = e.inputMethod.Keys
-	if letterOnly {
-		effectiveKeys = nil
-	}
 	var lastComb = getLastWord(e.composition, effectiveKeys)
 	if len(lastComb) > 0 {
 		return Flatten(lastComb, mode)

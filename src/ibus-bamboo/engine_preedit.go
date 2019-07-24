@@ -66,7 +66,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		e.ignorePreedit = false
 		if keyVal == IBUS_Space && state&IBUS_SHIFT_MASK != 0 && !e.lastKeyWithShift {
 			// restore key strokes
-			var vnSeq = e.preeditor.GetProcessedString(bamboo.VietnameseMode, false)
+			var vnSeq = e.preeditor.GetProcessedString(bamboo.VietnameseMode)
 			if bamboo.HasVietnameseChar(vnSeq) {
 				e.preeditor.RestoreLastWord()
 				e.updatePreedit(e.getPreeditString())
@@ -76,7 +76,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 			}
 			return true, nil
 		}
-		var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode, false)
+		var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode)
 		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
 			processedStr = e.expandMacro(processedStr)
 			e.commitText(processedStr + string(keyRune))
@@ -127,7 +127,7 @@ func (e *IBusBambooEngine) shouldFallbackToEnglish() bool {
 	if e.config.IBflags&IBautoNonVnRestore == 0 {
 		return false
 	}
-	var vnSeq = e.getProcessedString(bamboo.VietnameseMode|bamboo.LowerCase, false)
+	var vnSeq = e.getProcessedString(bamboo.VietnameseMode | bamboo.LowerCase)
 	var vnRunes = []rune(vnSeq)
 	if len(vnRunes) == 0 {
 		return false
@@ -151,7 +151,7 @@ func (e *IBusBambooEngine) shouldFallbackToEnglish() bool {
 }
 
 func (e *IBusBambooEngine) hasVietnameseChar() bool {
-	var vnSeq = e.getProcessedString(bamboo.VietnameseMode, false)
+	var vnSeq = e.getProcessedString(bamboo.VietnameseMode)
 	return bamboo.HasVietnameseChar(vnSeq)
 }
 
@@ -159,7 +159,7 @@ func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
 	if e.config.IBflags&IBautoNonVnRestore == 0 {
 		return false
 	}
-	var vnSeq = e.getProcessedString(bamboo.VietnameseMode|bamboo.LowerCase, false)
+	var vnSeq = e.getProcessedString(bamboo.VietnameseMode | bamboo.LowerCase)
 	var vnRunes = []rune(vnSeq)
 	if len(vnRunes) == 0 {
 		return false
@@ -187,36 +187,36 @@ func (e *IBusBambooEngine) isSpellingCorrect() bool {
 }
 
 func (e *IBusBambooEngine) getSpellingMatchResult(deepSearch bool) uint8 {
-	return e.preeditor.GetSpellingMatchResult(bamboo.ToneLess, deepSearch)
+	return e.preeditor.GetSpellingMatchResult(bamboo.ToneLess)
 }
 
 func (e *IBusBambooEngine) getComposedString() string {
 	if e.mustFallbackToEnglish() {
-		return e.getProcessedString(bamboo.EnglishMode, false)
+		return e.getProcessedString(bamboo.EnglishMode)
 	}
-	return e.getProcessedString(bamboo.VietnameseMode, false)
+	return e.getProcessedString(bamboo.VietnameseMode)
 }
 
 func (e *IBusBambooEngine) encodeText(text string) string {
 	return bamboo.Encode(e.config.OutputCharset, text)
 }
 
-func (e *IBusBambooEngine) getProcessedString(mode bamboo.Mode, letterOnly bool) string {
-	return e.preeditor.GetProcessedString(mode, letterOnly)
+func (e *IBusBambooEngine) getProcessedString(mode bamboo.Mode) string {
+	return e.preeditor.GetProcessedString(mode)
 }
 
 func (e *IBusBambooEngine) getPreeditString() string {
 	if e.shouldFallbackToEnglish() {
-		return e.getProcessedString(bamboo.EnglishMode, false)
+		return e.getProcessedString(bamboo.EnglishMode)
 	}
-	return e.getProcessedString(bamboo.VietnameseMode, false)
+	return e.getProcessedString(bamboo.VietnameseMode)
 }
 
 func (e *IBusBambooEngine) getMode() bamboo.Mode {
 	if e.config.IBflags&IBautoNonVnRestore == 0 {
 		return bamboo.VietnameseMode
 	}
-	var vnSeq = e.getProcessedString(bamboo.VietnameseMode|bamboo.LowerCase, false)
+	var vnSeq = e.getProcessedString(bamboo.VietnameseMode | bamboo.LowerCase)
 	var vnRunes = []rune(vnSeq)
 	if len(vnRunes) == 0 {
 		return bamboo.VietnameseMode
@@ -256,7 +256,7 @@ func (e *IBusBambooEngine) commitText(str string) {
 }
 
 func (e *IBusBambooEngine) getVnSeq() string {
-	return e.preeditor.GetProcessedString(bamboo.VietnameseMode, false)
+	return e.preeditor.GetProcessedString(bamboo.VietnameseMode)
 }
 
 func (e *IBusBambooEngine) hasMacroKey(key string) bool {

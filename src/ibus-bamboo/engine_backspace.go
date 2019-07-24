@@ -124,7 +124,7 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 			}
 			return
 		}
-		var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode, false)
+		var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode)
 		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
 			// macro processing
 			macText := e.expandMacro(processedStr)
