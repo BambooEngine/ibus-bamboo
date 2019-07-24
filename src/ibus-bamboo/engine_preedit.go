@@ -127,7 +127,7 @@ func (e *IBusBambooEngine) shouldFallbackToEnglish() bool {
 	if e.config.IBflags&IBautoNonVnRestore == 0 {
 		return false
 	}
-	var vnSeq = e.getProcessedString(bamboo.VietnameseMode, false)
+	var vnSeq = e.getProcessedString(bamboo.VietnameseMode|bamboo.LowerCase, false)
 	var vnRunes = []rune(vnSeq)
 	if len(vnRunes) == 0 {
 		return false
@@ -159,7 +159,7 @@ func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
 	if e.config.IBflags&IBautoNonVnRestore == 0 {
 		return false
 	}
-	var vnSeq = e.getProcessedString(bamboo.VietnameseMode, false)
+	var vnSeq = e.getProcessedString(bamboo.VietnameseMode|bamboo.LowerCase, false)
 	var vnRunes = []rune(vnSeq)
 	if len(vnRunes) == 0 {
 		return false
@@ -216,7 +216,7 @@ func (e *IBusBambooEngine) getMode() bamboo.Mode {
 	if e.config.IBflags&IBautoNonVnRestore == 0 {
 		return bamboo.VietnameseMode
 	}
-	var vnSeq = e.getProcessedString(bamboo.VietnameseMode, false)
+	var vnSeq = e.getProcessedString(bamboo.VietnameseMode|bamboo.LowerCase, false)
 	var vnRunes = []rune(vnSeq)
 	if len(vnRunes) == 0 {
 		return bamboo.VietnameseMode

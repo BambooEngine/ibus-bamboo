@@ -141,6 +141,12 @@ func TestProcessDD(t *testing.T) {
 	if ng.GetProcessedString(VietnameseMode, false) != "đ" {
 		t.Errorf("Process [dd], got [%s] expected [đ]", ng.GetProcessedString(EnglishMode, false))
 	}
+	ng.Reset()
+	ng.ProcessString("SD", VietnameseMode)
+	ng.ProcessString("D", VietnameseMode)
+	if ng.GetProcessedString(VietnameseMode, false) != "SĐ" {
+		t.Errorf("IsSpellingCorrect [SDD], got [%v] expected [SĐ]", ng.GetSpellingMatchResult(ToneLess, false) == FindResultNotMatch)
+	}
 }
 
 func TestTelex3(t *testing.T) {
