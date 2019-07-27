@@ -268,8 +268,7 @@ func (e *IBusBambooEngine) isIgnoredKey(keyVal, state uint32) bool {
 		//Ignore key-up event
 		return true
 	}
-	if keyVal == IBUS_Caps_Lock ||
-		(!(state&IBUS_SHIFT_MASK != 0) && (keyVal == IBUS_Shift_L || keyVal == IBUS_Shift_R)) { // when press one shift key
+	if keyVal == IBUS_Caps_Lock {
 		return true
 	}
 	if e.inExceptedList() {

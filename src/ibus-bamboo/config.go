@@ -64,6 +64,7 @@ const (
 	IBfakeBackspaceEnabled
 	IBinputLookupTableDisabled
 	IBautoCapitalizeMacro
+	IBImQuickSwitchEnabled
 	IBstdFlags = IBspellChecking | IBspellCheckingWithRules | IBautoNonVnRestore | IBddFreeStyle |
 		IBpreeditInvisibility | IBautoCommitWithMouseMovement | IBemojiDisabled
 )
@@ -113,9 +114,9 @@ func getConfigPath(engineName string) string {
 
 func LoadConfig(engineName string) *Config {
 	var c = Config{
-		InputMethod:               "Telex",
-		OutputCharset:             "Unicode",
-		InputMethodDefinitions:    bamboo.InputMethodDefinitions,
+		InputMethod:            "Telex",
+		OutputCharset:          "Unicode",
+		InputMethodDefinitions: bamboo.InputMethodDefinitions,
 		Flags:                     bamboo.EstdFlags,
 		IBflags:                   IBstdFlags,
 		AutoCommitAfter:           3000,

@@ -38,8 +38,8 @@ type IBusBambooEngine struct {
 	engineName           string
 	config               *Config
 	propList             *ibus.PropList
-	mode                 bamboo.Mode
 	ignorePreedit        bool
+	englishMode          bool
 	macroTable           *MacroTable
 	dictionary           map[string]bool
 	wmClasses            string
@@ -71,6 +71,17 @@ Return:
 This function gets called whenever a key is pressed.
 */
 func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
+	log.Println("SHIFTMARK", state&IBUS_SHIFT_MASK != 0, state&IBUS_RELEASE_MASK != 0)
+	log.Println("SHIFT_L", keyVal == IBUS_Shift_L, e.lastKeyWithShift)
+	if state&IBUS_SHIFT_MASK != 0 && (keyVal == IBUS_Shift_L || keyVal == IBUS_Shift_R) { // when press one Shift key
+		log.Println("=====SHIFTMARK22222", state&IBUS_SHIFT_MASK != 0)
+		if e.config.IBflags&IBImQuickSwitchEnabled != 0 && !e.lastKeyWithShift && state&IBUS_RELEASE_MASK != 0 {
+			e.englishMode = !e.englishMode
+			log.Println("MODE", e.englishMode)
+			return true, nil
+		}
+		return false, nil
+	}
 	if e.isIgnoredKey(keyVal, state) {
 		return false, nil
 	}
@@ -92,6 +103,16 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 	}
 	if e.isEmojiLTOpened {
 		return e.emojiProcessKeyEvent(keyVal, keyCode, state)
+	}
+	if e.englishMode {
+		defer func() {
+			if e.canProcessKey(keyVal, state) {
+				e.lastKeyWithShift = state&IBUS_SHIFT_MASK != 0
+			} else {
+				e.lastKeyWithShift = false
+			}
+		}()
+		return false, nil
 	}
 	if e.inPreeditList() {
 		return e.preeditProcessKeyEvent(keyVal, keyCode, state)
@@ -251,6 +272,16 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	if propName == PropKeyMacroTable {
 		OpenMactabFile(e.engineName)
 		return nil
+	}
+	if propName == PropKeyToggleModeVietnamese {
+		return nil
+	}
+	if propName == PropKeyIMQuickSwitchEnabled {
+		if propState == ibus.PROP_STATE_CHECKED {
+			e.config.IBflags |= IBImQuickSwitchEnabled
+		} else {
+			e.config.IBflags &= ^IBImQuickSwitchEnabled
+		}
 	}
 
 	turnSpellChecking := func(on bool) {

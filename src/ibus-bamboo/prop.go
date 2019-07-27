@@ -46,11 +46,18 @@ const (
 	PropKeyFakeBackspace               = "x11_fake_backspace"
 	PropKeyDisableInputLookupTable     = "disable_input_lookup_table"
 	PropKeyAutoCapitalizeMacro         = "auto_capitalize_macro"
+	PropKeyIMQuickSwitchEnabled        = "im_quick_switch"
+	PropKeyToggleModeVietnamese        = "toggle_mode_vietnamese"
 )
 
 var runMode = ""
 
 func GetPropListByConfig(c *Config) *ibus.PropList {
+	inputMode := "ENG"
+	inputModeFull := "ENG"
+	if c.IBflags&IBImQuickSwitchEnabled != 0 {
+		inputModeFull += " (Shift)"
+	}
 	return ibus.NewPropList(
 		&ibus.Property{
 			Name:      "IBusProperty",
@@ -73,6 +80,17 @@ func GetPropListByConfig(c *Config) *ibus.PropList {
 			Sensitive: true,
 			Visible:   true,
 			Symbol:    dbus.MakeVariant(ibus.NewText("")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       PropKeyToggleModeVietnamese,
+			Type:      ibus.PROP_TYPE_NORMAL,
+			Label:     dbus.MakeVariant(ibus.NewText(inputModeFull)),
+			Tooltip:   dbus.MakeVariant(ibus.NewText(inputMode)),
+			Sensitive: true,
+			Visible:   true,
+			Symbol:    dbus.MakeVariant(ibus.NewText(inputMode)),
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
 		&ibus.Property{
@@ -368,6 +386,7 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 	x11FakeBackspaceChecked := ibus.PROP_STATE_UNCHECKED
 	emojiChecked := ibus.PROP_STATE_CHECKED
 	mouseMovementChecked := ibus.PROP_STATE_UNCHECKED
+	imQuickSwitchChecked := ibus.PROP_STATE_UNCHECKED
 	if c.IBflags&IBautoCommitWithMouseMovement != 0 {
 		mouseMovementChecked = ibus.PROP_STATE_CHECKED
 	}
@@ -387,6 +406,10 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 
 	if c.IBflags&IBemojiDisabled != 0 {
 		emojiChecked = ibus.PROP_STATE_UNCHECKED
+	}
+
+	if c.IBflags&IBImQuickSwitchEnabled != 0 {
+		imQuickSwitchChecked = ibus.PROP_STATE_CHECKED
 	}
 
 	inputLookupTableChecked := ibus.PROP_STATE_CHECKED
@@ -476,6 +499,18 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 			Sensitive: true,
 			Visible:   true,
 			State:     inputLookupTableChecked,
+			Symbol:    dbus.MakeVariant(ibus.NewText("X")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       PropKeyIMQuickSwitchEnabled,
+			Type:      ibus.PROP_TYPE_TOGGLE,
+			Label:     dbus.MakeVariant(ibus.NewText("Chuyển nhanh VIE-ENG (Shift)")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("IM quick switch")),
+			Sensitive: true,
+			Visible:   true,
+			State:     imQuickSwitchChecked,
 			Symbol:    dbus.MakeVariant(ibus.NewText("X")),
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
