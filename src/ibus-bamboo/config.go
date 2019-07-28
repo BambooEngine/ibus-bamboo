@@ -62,11 +62,12 @@ const (
 	IBautoCommitWithMouseMovement
 	IBemojiDisabled
 	IBfakeBackspaceEnabled
-	IBinputLookupTableDisabled
+	IBinputModeLookupTableEnabled
 	IBautoCapitalizeMacro
-	IBImQuickSwitchEnabled
+	IBimQuickSwitchEnabled
+	IBrestoreKeyStrokesEnabled
 	IBstdFlags = IBspellChecking | IBspellCheckingWithRules | IBautoNonVnRestore | IBddFreeStyle |
-		IBpreeditInvisibility | IBautoCommitWithMouseMovement | IBemojiDisabled
+		IBpreeditInvisibility | IBautoCommitWithMouseMovement | IBemojiDisabled | IBinputModeLookupTableEnabled
 )
 
 var DefaultBrowserList = []string{
@@ -114,9 +115,9 @@ func getConfigPath(engineName string) string {
 
 func LoadConfig(engineName string) *Config {
 	var c = Config{
-		InputMethod:            "Telex",
-		OutputCharset:          "Unicode",
-		InputMethodDefinitions: bamboo.InputMethodDefinitions,
+		InputMethod:               "Telex",
+		OutputCharset:             "Unicode",
+		InputMethodDefinitions:    bamboo.InputMethodDefinitions,
 		Flags:                     bamboo.EstdFlags,
 		IBflags:                   IBstdFlags,
 		AutoCommitAfter:           3000,

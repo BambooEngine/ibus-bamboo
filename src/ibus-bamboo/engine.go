@@ -71,31 +71,25 @@ Return:
 This function gets called whenever a key is pressed.
 */
 func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
-	log.Println("SHIFTMARK", state&IBUS_SHIFT_MASK != 0, state&IBUS_RELEASE_MASK != 0)
-	log.Println("SHIFT_L", keyVal == IBUS_Shift_L, e.lastKeyWithShift)
-	if state&IBUS_SHIFT_MASK != 0 && (keyVal == IBUS_Shift_L || keyVal == IBUS_Shift_R) { // when press one Shift key
-		log.Println("=====SHIFTMARK22222", state&IBUS_SHIFT_MASK != 0)
-		if e.config.IBflags&IBImQuickSwitchEnabled != 0 && !e.lastKeyWithShift && state&IBUS_RELEASE_MASK != 0 {
-			e.englishMode = !e.englishMode
-			log.Println("MODE", e.englishMode)
-			return true, nil
-		}
-		return false, nil
+	if e.processShiftKey(keyVal, state) {
+		return true, nil
 	}
 	if e.isIgnoredKey(keyVal, state) {
 		return false, nil
 	}
 	log.Printf("keyCode 0x%04x keyval 0x%04x | %c | %d\n", keyCode, keyVal, rune(keyVal), len(keyPressChan))
-	if e.config.IBflags&IBinputLookupTableDisabled != 0 && keyVal == IBUS_OpenLookupTable && e.isInputModeLTOpened == false && e.wmClasses != "" {
+	if e.config.IBflags&IBinputModeLookupTableEnabled != 0 && keyVal == IBUS_OpenLookupTable && e.isInputModeLTOpened == false && e.wmClasses != "" {
 		e.resetBuffer()
 		e.isInputModeLTOpened = true
 		e.openLookupTable()
+		e.lastKeyWithShift = true
 		return true, nil
 	}
 	if e.config.IBflags&IBemojiDisabled == 0 && keyVal == IBUS_Colon && e.isEmojiLTOpened == false {
 		e.resetBuffer()
 		e.isEmojiLTOpened = true
 		e.openEmojiList()
+		e.lastKeyWithShift = true
 		return true, nil
 	}
 	if e.isInputModeLTOpened {
@@ -105,13 +99,7 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 		return e.emojiProcessKeyEvent(keyVal, keyCode, state)
 	}
 	if e.englishMode {
-		defer func() {
-			if e.canProcessKey(keyVal, state) {
-				e.lastKeyWithShift = state&IBUS_SHIFT_MASK != 0
-			} else {
-				e.lastKeyWithShift = false
-			}
-		}()
+		e.updateLastKeyWithShift(keyVal, state)
 		return false, nil
 	}
 	if e.inPreeditList() {
@@ -273,16 +261,6 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		OpenMactabFile(e.engineName)
 		return nil
 	}
-	if propName == PropKeyToggleModeVietnamese {
-		return nil
-	}
-	if propName == PropKeyIMQuickSwitchEnabled {
-		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBImQuickSwitchEnabled
-		} else {
-			e.config.IBflags &= ^IBImQuickSwitchEnabled
-		}
-	}
 
 	turnSpellChecking := func(on bool) {
 		if on {
@@ -407,13 +385,27 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 			e.config.IBflags &= ^IBfakeBackspaceEnabled
 		}
 	}
-
-	if propName == PropKeyDisableInputLookupTable {
+	if propName == PropKeyRestoreKeyStrokes {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags &= ^IBinputLookupTableDisabled
+			e.config.IBflags |= IBrestoreKeyStrokesEnabled
 		} else {
-			e.config.IBflags |= IBinputLookupTableDisabled
+			e.config.IBflags &= ^IBrestoreKeyStrokesEnabled
 		}
+	}
+	if propName == PropKeyInputModeLookupTable {
+		if propState == ibus.PROP_STATE_CHECKED {
+			e.config.IBflags |= IBinputModeLookupTableEnabled
+		} else {
+			e.config.IBflags &= ^IBinputModeLookupTableEnabled
+		}
+	}
+	if propName == PropKeyIMQuickSwitchEnabled {
+		if propState == ibus.PROP_STATE_CHECKED {
+			e.config.IBflags |= IBimQuickSwitchEnabled
+		} else {
+			e.config.IBflags &= ^IBimQuickSwitchEnabled
+		}
+		e.englishMode = false
 	}
 	if propName == PropKeyAutoCapitalizeMacro {
 		if propState == ibus.PROP_STATE_CHECKED {

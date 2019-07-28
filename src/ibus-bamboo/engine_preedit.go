@@ -28,13 +28,7 @@ import (
 )
 
 func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
-	defer func() {
-		if e.canProcessKey(keyVal, state) {
-			e.lastKeyWithShift = state&IBUS_SHIFT_MASK != 0
-		} else {
-			e.lastKeyWithShift = false
-		}
-	}()
+	defer e.updateLastKeyWithShift(keyVal, state)
 	var rawKeyLen = e.getRawKeyLen()
 	var keyRune = rune(keyVal)
 
@@ -64,7 +58,8 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		return true, nil
 	} else if bamboo.IsWordBreakSymbol(keyRune) {
 		e.ignorePreedit = false
-		if keyVal == IBUS_Space && state&IBUS_SHIFT_MASK != 0 && !e.lastKeyWithShift {
+		if keyVal == IBUS_Space && state&IBUS_SHIFT_MASK != 0 &&
+			e.config.IBflags&IBrestoreKeyStrokesEnabled != 0 && !e.lastKeyWithShift {
 			// restore key strokes
 			var vnSeq = e.preeditor.GetProcessedString(bamboo.VietnameseMode)
 			if bamboo.HasVietnameseChar(vnSeq) {
@@ -91,6 +86,13 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	return false, nil
 }
 
+func (e *IBusBambooEngine) updateLastKeyWithShift(keyVal, state uint32) {
+	if e.canProcessKey(keyVal, state) {
+		e.lastKeyWithShift = state&IBUS_SHIFT_MASK != 0
+	} else {
+		e.lastKeyWithShift = false
+	}
+}
 func (e *IBusBambooEngine) expandMacro(str string) string {
 	var macroText = e.macroTable.GetText(str)
 	if e.config.IBflags&IBautoCapitalizeMacro != 0 {

@@ -121,6 +121,18 @@ func (e *IBusBambooEngine) resetBuffer() {
 	}
 }
 
+func (e *IBusBambooEngine) processShiftKey(keyVal, state uint32) bool {
+	if keyVal == IBUS_Shift_L || keyVal == IBUS_Shift_R { // when press one Shift key
+		if state&IBUS_SHIFT_MASK != 0 && state&IBUS_RELEASE_MASK != 0 &&
+			!e.lastKeyWithShift && e.config.IBflags&IBimQuickSwitchEnabled != 0 {
+			e.englishMode = !e.englishMode
+			e.resetBuffer()
+		}
+		return true
+	}
+	return false
+}
+
 func (e *IBusBambooEngine) getRawKeyLen() int {
 	return len(e.preeditor.GetRawString())
 }

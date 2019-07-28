@@ -63,13 +63,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 }
 
 func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
-	defer func() {
-		if e.canProcessKey(keyVal, state) {
-			e.lastKeyWithShift = state&IBUS_SHIFT_MASK != 0
-		} else {
-			e.lastKeyWithShift = false
-		}
-	}()
+	defer e.updateLastKeyWithShift(keyVal, state)
 	if !e.isValidState(state) {
 		e.preeditor.Reset()
 		e.firstTimeSendingBS = true
@@ -110,7 +104,8 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 		e.updatePreviousText(newRunes, oldRunes, state)
 		return
 	} else if bamboo.IsWordBreakSymbol(keyRune) {
-		if !e.lastKeyWithShift && keyVal == IBUS_Space && state&IBUS_SHIFT_MASK != 0 {
+		if keyVal == IBUS_Space && state&IBUS_SHIFT_MASK != 0 &&
+			e.config.IBflags&IBrestoreKeyStrokesEnabled != 0 && !e.lastKeyWithShift {
 			// restore key strokes
 			var vnSeq = e.getPreeditString()
 			if bamboo.HasVietnameseChar(vnSeq) {

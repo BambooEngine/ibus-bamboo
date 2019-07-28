@@ -44,20 +44,15 @@ const (
 	PropKeyEmojiEnabled                = "emoji_enabled"
 	PropKeyBambooConfiguration         = "bamboo_configuration"
 	PropKeyFakeBackspace               = "x11_fake_backspace"
-	PropKeyDisableInputLookupTable     = "disable_input_lookup_table"
+	PropKeyInputModeLookupTable        = "input_mode_lookup_table"
 	PropKeyAutoCapitalizeMacro         = "auto_capitalize_macro"
 	PropKeyIMQuickSwitchEnabled        = "im_quick_switch"
-	PropKeyToggleModeVietnamese        = "toggle_mode_vietnamese"
+	PropKeyRestoreKeyStrokes           = "restore_key_strokes"
 )
 
 var runMode = ""
 
 func GetPropListByConfig(c *Config) *ibus.PropList {
-	inputMode := "ENG"
-	inputModeFull := "ENG"
-	if c.IBflags&IBImQuickSwitchEnabled != 0 {
-		inputModeFull += " (Shift)"
-	}
 	return ibus.NewPropList(
 		&ibus.Property{
 			Name:      "IBusProperty",
@@ -80,17 +75,6 @@ func GetPropListByConfig(c *Config) *ibus.PropList {
 			Sensitive: true,
 			Visible:   true,
 			Symbol:    dbus.MakeVariant(ibus.NewText("")),
-			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
-		},
-		&ibus.Property{
-			Name:      "IBusProperty",
-			Key:       PropKeyToggleModeVietnamese,
-			Type:      ibus.PROP_TYPE_NORMAL,
-			Label:     dbus.MakeVariant(ibus.NewText(inputModeFull)),
-			Tooltip:   dbus.MakeVariant(ibus.NewText(inputMode)),
-			Sensitive: true,
-			Visible:   true,
-			Symbol:    dbus.MakeVariant(ibus.NewText(inputMode)),
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
 		&ibus.Property{
@@ -145,13 +129,13 @@ func GetPropListByConfig(c *Config) *ibus.PropList {
 			Name:      "IBusProperty",
 			Key:       "-",
 			Type:      ibus.PROP_TYPE_MENU,
-			Label:     dbus.MakeVariant(ibus.NewText("Tự động kết thúc từ")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("Tự động kết thúc từ")),
-			Sensitive: false,
-			Visible:   false,
+			Label:     dbus.MakeVariant(ibus.NewText("Phím tắt")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Shortcut Keys")),
+			Sensitive: true,
+			Visible:   true,
 			Icon:      "appointment",
 			Symbol:    dbus.MakeVariant(ibus.NewText("")),
-			SubProps:  dbus.MakeVariant(GetAutoCommitPropListByConfig(c)),
+			SubProps:  dbus.MakeVariant(GetHotKeyPropListByConfig(c)),
 		},
 		&ibus.Property{
 			Name:      "IBusProperty",
@@ -384,9 +368,7 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 	toneFreeMarkingChecked := ibus.PROP_STATE_UNCHECKED
 	preeditInvisibilityChecked := ibus.PROP_STATE_UNCHECKED
 	x11FakeBackspaceChecked := ibus.PROP_STATE_UNCHECKED
-	emojiChecked := ibus.PROP_STATE_CHECKED
 	mouseMovementChecked := ibus.PROP_STATE_UNCHECKED
-	imQuickSwitchChecked := ibus.PROP_STATE_UNCHECKED
 	if c.IBflags&IBautoCommitWithMouseMovement != 0 {
 		mouseMovementChecked = ibus.PROP_STATE_CHECKED
 	}
@@ -402,19 +384,6 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 	}
 	if c.IBflags&IBfakeBackspaceEnabled != 0 {
 		x11FakeBackspaceChecked = ibus.PROP_STATE_CHECKED
-	}
-
-	if c.IBflags&IBemojiDisabled != 0 {
-		emojiChecked = ibus.PROP_STATE_UNCHECKED
-	}
-
-	if c.IBflags&IBImQuickSwitchEnabled != 0 {
-		imQuickSwitchChecked = ibus.PROP_STATE_CHECKED
-	}
-
-	inputLookupTableChecked := ibus.PROP_STATE_CHECKED
-	if c.IBflags&IBinputLookupTableDisabled != 0 {
-		inputLookupTableChecked = ibus.PROP_STATE_UNCHECKED
 	}
 
 	return ibus.NewPropList(
@@ -440,18 +409,6 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 			Visible:   true,
 			State:     toneStdChecked,
 			Symbol:    dbus.MakeVariant(ibus.NewText("M")),
-			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
-		},
-		&ibus.Property{
-			Name:      "IBusProperty",
-			Key:       PropKeyEmojiEnabled,
-			Type:      ibus.PROP_TYPE_TOGGLE,
-			Label:     dbus.MakeVariant(ibus.NewText("Emoji")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("Emoji")),
-			Sensitive: true,
-			Visible:   true,
-			State:     emojiChecked,
-			Symbol:    dbus.MakeVariant(ibus.NewText(":)")),
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
 		&ibus.Property{
@@ -490,99 +447,74 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 			Symbol:    dbus.MakeVariant(ibus.NewText("X")),
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
-		&ibus.Property{
-			Name:      "IBusProperty",
-			Key:       PropKeyDisableInputLookupTable,
-			Type:      ibus.PROP_TYPE_TOGGLE,
-			Label:     dbus.MakeVariant(ibus.NewText("Tắt tổ hợp phím Shift+~")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("DisableLookupTable")),
-			Sensitive: true,
-			Visible:   true,
-			State:     inputLookupTableChecked,
-			Symbol:    dbus.MakeVariant(ibus.NewText("X")),
-			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
-		},
-		&ibus.Property{
-			Name:      "IBusProperty",
-			Key:       PropKeyIMQuickSwitchEnabled,
-			Type:      ibus.PROP_TYPE_TOGGLE,
-			Label:     dbus.MakeVariant(ibus.NewText("Chuyển nhanh VIE-ENG (Shift)")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("IM quick switch")),
-			Sensitive: true,
-			Visible:   true,
-			State:     imQuickSwitchChecked,
-			Symbol:    dbus.MakeVariant(ibus.NewText("X")),
-			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
-		},
 	)
 }
 
-func GetAutoCommitPropListByConfig(c *Config) *ibus.PropList {
-	vnFullMatchChecked := ibus.PROP_STATE_UNCHECKED
-	vnWordBreakChecked := ibus.PROP_STATE_UNCHECKED
-	vnNotMatchChecked := ibus.PROP_STATE_UNCHECKED
-	delayChecked := ibus.PROP_STATE_UNCHECKED
-
-	if c.IBflags&IBautoCommitWithVnFullMatch != 0 {
-		vnFullMatchChecked = ibus.PROP_STATE_CHECKED
+func GetHotKeyPropListByConfig(c *Config) *ibus.PropList {
+	imQuickSwitchChecked := ibus.PROP_STATE_UNCHECKED
+	if c.IBflags&IBimQuickSwitchEnabled != 0 {
+		imQuickSwitchChecked = ibus.PROP_STATE_CHECKED
 	}
-	if c.IBflags&IBautoCommitWithVnNotMatch != 0 {
-		vnNotMatchChecked = ibus.PROP_STATE_CHECKED
+	inputLookupTableChecked := ibus.PROP_STATE_UNCHECKED
+	if c.IBflags&IBinputModeLookupTableEnabled != 0 {
+		inputLookupTableChecked = ibus.PROP_STATE_CHECKED
 	}
-	if c.IBflags&IBautoCommitWithVnWordBreak != 0 {
-		vnWordBreakChecked = ibus.PROP_STATE_CHECKED
+	restoreKeyStrokesChecked := ibus.PROP_STATE_UNCHECKED
+	if c.IBflags&IBrestoreKeyStrokesEnabled != 0 {
+		restoreKeyStrokesChecked = ibus.PROP_STATE_CHECKED
 	}
-	if c.IBflags&IBautoCommitWithDelay != 0 {
-		delayChecked = ibus.PROP_STATE_CHECKED
+	emojiChecked := ibus.PROP_STATE_CHECKED
+	if c.IBflags&IBemojiDisabled != 0 {
+		emojiChecked = ibus.PROP_STATE_UNCHECKED
 	}
 
 	return ibus.NewPropList(
 		&ibus.Property{
 			Name:      "IBusProperty",
-			Key:       PropKeyAutoCommitWithVnNotMatch,
+			Key:       PropKeyIMQuickSwitchEnabled,
 			Type:      ibus.PROP_TYPE_TOGGLE,
-			Label:     dbus.MakeVariant(ibus.NewText("Sai chính tả")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("Invalid words")),
+			Label:     dbus.MakeVariant(ibus.NewText("Chuyển nhanh Vi-En <Shift>")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("IM quick switch")),
 			Sensitive: true,
 			Visible:   true,
-			State:     vnNotMatchChecked,
-			Symbol:    dbus.MakeVariant(ibus.NewText("M")),
+			State:     imQuickSwitchChecked,
+			Symbol:    dbus.MakeVariant(ibus.NewText("")),
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
 		&ibus.Property{
 			Name:      "IBusProperty",
-			Key:       PropKeyAutoCommitWithVnFullMatch,
+			Key:       PropKeyInputModeLookupTable,
 			Type:      ibus.PROP_TYPE_TOGGLE,
-			Label:     dbus.MakeVariant(ibus.NewText("Hoàn thành một từ")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("Finish a word")),
-			Sensitive: false,
-			Visible:   false,
-			State:     vnFullMatchChecked,
-			Symbol:    dbus.MakeVariant(ibus.NewText("M")),
-			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
-		},
-		&ibus.Property{
-			Name:      "IBusProperty",
-			Key:       PropKeyAutoCommitWithVnWordBreak,
-			Type:      ibus.PROP_TYPE_TOGGLE,
-			Label:     dbus.MakeVariant(ibus.NewText("Phụ âm đầu")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("first consonants")),
-			Sensitive: true,
-			Visible:   false,
-			State:     vnWordBreakChecked,
-			Symbol:    dbus.MakeVariant(ibus.NewText("P")),
-			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
-		},
-		&ibus.Property{
-			Name:      "IBusProperty",
-			Key:       PropKeyAutoCommitWithDelay,
-			Type:      ibus.PROP_TYPE_TOGGLE,
-			Label:     dbus.MakeVariant(ibus.NewText("Sau 3 giây")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("After 3s of inactive")),
+			Label:     dbus.MakeVariant(ibus.NewText("Chuyển chế độ gõ <Shift>~")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Open Input Mode LookupTable")),
 			Sensitive: true,
 			Visible:   true,
-			State:     delayChecked,
-			Symbol:    dbus.MakeVariant(ibus.NewText("F")),
+			State:     inputLookupTableChecked,
+			Symbol:    dbus.MakeVariant(ibus.NewText("")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       PropKeyRestoreKeyStrokes,
+			Type:      ibus.PROP_TYPE_TOGGLE,
+			Label:     dbus.MakeVariant(ibus.NewText("Khôi phục phím <Shift><Space>")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Restore key strokes")),
+			Sensitive: true,
+			Visible:   true,
+			State:     restoreKeyStrokesChecked,
+			Symbol:    dbus.MakeVariant(ibus.NewText("")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       PropKeyEmojiEnabled,
+			Type:      ibus.PROP_TYPE_TOGGLE,
+			Label:     dbus.MakeVariant(ibus.NewText("Emoji <Shift>:")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Emoji")),
+			Sensitive: true,
+			Visible:   true,
+			State:     emojiChecked,
+			Symbol:    dbus.MakeVariant(ibus.NewText(":)")),
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
 	)
