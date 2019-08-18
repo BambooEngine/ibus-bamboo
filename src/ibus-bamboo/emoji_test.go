@@ -41,7 +41,8 @@ func TestLoadEmojiData(t *testing.T) {
 }
 
 func TestEmojiFindResult(t *testing.T) {
-	var be = NewEmojiEngine("../../" + DictEmojiOne)
+	emojiMap, _ = loadEmojiOne("../../" + DictEmojiOne)
+	var be = NewEmojiEngine()
 	if be.TestString(":'") != bamboo.FindResultMatchPrefix {
 		t.Errorf("Finding result for emoji :', expected %d, got %d", bamboo.FindResultMatchPrefix, be.TestString(":'"))
 	}
@@ -57,7 +58,8 @@ func TestEmojiFindResult(t *testing.T) {
 }
 
 func TestFilterEmoji(t *testing.T) {
-	var be = NewEmojiEngine("../../" + DictEmojiOne)
+	emojiMap, _ = loadEmojiOne("../../" + DictEmojiOne)
+	var be = NewEmojiEngine()
 	var grinnings = be.Filter(":')")
 	if !inStringList(grinnings, "😂") {
 		t.Errorf("Filtering emojo :'), expected %v, got %v", true, inStringList(grinnings, "😂"))
