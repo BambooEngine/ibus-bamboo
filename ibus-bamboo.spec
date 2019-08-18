@@ -1,79 +1,47 @@
-#
-# Bamboo - A Vietnamese Input method editor
-# Copyright (C) 2018 Luong Thanh Lam <ltlam93@gmail.com>
-#
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-#
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
+%define engine_name bamboo
+%define engine_dir   /usr/share/ibus-%{engine_name}
+%define ibus_comp_dir /usr/share/ibus/component
 
-#release info -----------------------------------------------------------------
+Name: ibus-bamboo
+Version: 0.5.3
+Release: 1%{?dist}
+Summary: A Vietnamese input method for IBus
 
+License: GPLv3+
+URL: https://github.com/BambooEngine/ibus-bamboo
+Source0: %{name}-%{version}.tar.gz
 
-%define engine_name  bamboo
-%define package_name ibus-%{engine_name}
-%define version      0.5.2
-
-
-#install directories ----------------------------------------------------------
-%define engine_dir   /usr/share/%{package_name}
-%define ibus_dir     /usr/share/ibus
-%define ibus_cpn_dir /usr/share/ibus/component
-%define usr_lib_dir  /usr/lib
-
-
-#package info -----------------------------------------------------------------
-Name:           ibus-%{engine_name}
-Version:        %{version}
-Release:        1
-Summary:        A Vietnamese IME for IBus
-License:        GPL-3.0
-Group:          System/Localization
-URL:            https://github.com/BambooEngine/ibus-bamboo
-Packager:       Luong Thanh Lam <ltlam93@gmail.com>
-BuildRequires:  go, libX11-devel, libXtst-devel
-Requires:       ibus, libX11, libXtst
-Provides:       locale(ibus:vi)
-Source0:        %{package_name}-%{version}.tar.gz
+BuildRequires: go, libX11-devel, libXtst-devel
+Requires: ibus, libX11, libXtst
 
 %description
-A Vietnamese IME for IBus using BambooEngine
-Bộ gõ tiếng Việt cho IBus sử dụng BambooEngine
+A Vietnamese IME for IBus using Bamboo Engine.
+Bộ gõ tiếng Việt mã nguồn mở hỗ trợ hầu hết các bảng mã thông dụng, các kiểu gõ tiếng Việt phổ biến, bỏ dấu thông minh, kiểm tra chính tả, gõ tắt,...
 
-%global debug_package %{nil}
 %prep
-%setup
-
+%setup -q -n
 
 %build
 make build
 
-
 %install
-make DESTDIR=%{buildroot} install
-
+make install DESTDIR=${buildroot}
 
 %files
-%defattr(-,root,root)
-%doc README.md LICENSE
+%doc README.md
+%license LICENSE
 %dir %{ibus_dir}
-%dir %{ibus_cpn_dir}
+%dir %{ibus_comp_dir}
 %dir %{engine_dir}
 %{engine_dir}/*
-%{ibus_dir}/component/%{engine_name}.xml
-%{usr_lib_dir}/ibus-engine-%{engine_name}
-
+%{ibus_comp_dir}/%{engine_name}.xml
+/usr/lib/ibus-engine-%{engine_name}
 
 %clean
 cd ..
-rm -rf %{package_name}-%{version}
+rm -rf ibus-%{engine_name}-%{version}
 rm -rf %{buildroot}
+
+%changelog
+* Wed Aug 14 2019 LuongThanhLam <ltlam93@gmail.com> 0.5.3
+- Initial RPM release

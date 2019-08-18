@@ -7,7 +7,7 @@ before_install:
 
 install:
   - make build
-  - bash deploy.bash
-  
+  - bash osc.bash
+
 script:
   - echo END

@@ -34,14 +34,12 @@ type IBusBambooEngine struct {
 	sync.Mutex
 	ibus.Engine
 	preeditor            bamboo.IEngine
-	zeroLocation         bool
 	engineName           string
 	config               *Config
 	propList             *ibus.PropList
 	ignorePreedit        bool
 	englishMode          bool
 	macroTable           *MacroTable
-	dictionary           map[string]bool
 	wmClasses            string
 	isInputModeLTOpened  bool
 	isEmojiLTOpened      bool
@@ -51,7 +49,7 @@ type IBusBambooEngine struct {
 	nFakeBackSpace       int
 	firstTimeSendingBS   bool
 	isFocusOut           bool
-	emoji                *BambooEmoji
+	emoji                *EmojiEngine
 	lastKeyWithShift     bool
 }
 
@@ -235,7 +233,6 @@ func (e *IBusBambooEngine) SetCapabilities(cap uint32) *dbus.Error {
 }
 
 func (e *IBusBambooEngine) SetCursorLocation(x int32, y int32, w int32, h int32) *dbus.Error {
-	e.zeroLocation = x == 0 && y == 0 && w == 0 && h == 0
 	return nil
 }
 
@@ -250,7 +247,7 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		return nil
 	}
 	if propName == PropKeyVnConvert {
-		exec.Command("xdg-open", VnConvertPage).Start()
+		exec.Command("xdg-open", CharsetConvertPage).Start()
 		return nil
 	}
 	if propName == PropKeyBambooConfiguration {

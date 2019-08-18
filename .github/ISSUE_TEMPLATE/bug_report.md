@@ -1,6 +1,6 @@
 ---
 name: Báo lỗi
-about: Tạo một báo lỗi
+about: Vui lòng click vào đây để tạo một báo lỗi
 
 ---
 
@@ -31,3 +31,8 @@ Nếu cần thiết, hãy [đính kèm hình ảnh](https://help.github.com/arti
 Các nội dung khác có liên quan đến lỗi đang xảy ra.
 Ví dụ: Chương trình XYZ được cài đặt từ: (apt-get, snap, flatpak, download từ trang chủ,...)
 
+**Lưu ý**
+Trước khi gửi issue lên github, xin bạn hãy đọc lại Hướng dẫn sử dụng và Các vấn đề thường
+gặp trên trang chủ ít nhất một lần nữa. Sau khi đọc kỹ hướng dẫn sử dụng và thử mọi cách rồi
+mà không được, thì hãy đặt câu hỏi lên đây. Khi gửi câu hỏi xin bạn hãy mô tả chi tiết các
+bước bạn đã làm, và chi tiết kết quả bạn nhận được.

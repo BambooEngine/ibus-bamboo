@@ -209,7 +209,7 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 		time.Sleep(20 * time.Millisecond)
 		if e.inChromeFamily() { // workaround for chrome's address bar
 			x11SendBackspace(n, 0)
-			time.Sleep(time.Duration(n) * 20 * time.Millisecond)
+			time.Sleep(time.Duration(n) * 40 * time.Millisecond)
 		} else {
 			x11SendBackspace(n, 0)
 		}
@@ -237,7 +237,7 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 				e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, IBUS_RELEASE_MASK)
 			}
 			time.Sleep(time.Duration(n) * 20 * time.Millisecond)
-			time.Sleep(20 * time.Millisecond)
+			time.Sleep(40 * time.Millisecond)
 		} else {
 			for i := 0; i < n; i++ {
 				e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, 0)

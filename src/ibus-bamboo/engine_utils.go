@@ -31,7 +31,7 @@ import (
 	"time"
 )
 
-func GetIBusBambooEngine() func(conn *dbus.Conn, engineName string) dbus.ObjectPath {
+func GetBambooEngineCreator() func(conn *dbus.Conn, engineName string) dbus.ObjectPath {
 	objectPath := dbus.ObjectPath(fmt.Sprintf("/org/freedesktop/IBus/Engine/bamboo/%d", time.Now().UnixNano()))
 	setupConfigDir()
 	go keyPressCapturing()
@@ -54,12 +54,8 @@ func GetIBusBambooEngine() func(conn *dbus.Conn, engineName string) dbus.ObjectP
 }
 
 func (e *IBusBambooEngine) init() {
-	if e.dictionary == nil {
-		e.dictionary, _ = loadDictionary(DictVietnameseCm)
-		e.preeditor.AddDictionary(e.dictionary)
-	}
 	if e.emoji == nil {
-		e.emoji = NewBambooEmoji(DictEmojiOne)
+		e.emoji = NewEmojiEngine()
 	}
 	if e.macroTable == nil {
 		e.macroTable = NewMacroTable()
@@ -126,6 +122,7 @@ func (e *IBusBambooEngine) processShiftKey(keyVal, state uint32) bool {
 		if state&IBUS_SHIFT_MASK != 0 && state&IBUS_RELEASE_MASK != 0 &&
 			!e.lastKeyWithShift && e.config.IBflags&IBimQuickSwitchEnabled != 0 {
 			e.englishMode = !e.englishMode
+			notify(e.englishMode)
 			e.resetBuffer()
 		}
 		return true
@@ -209,7 +206,7 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		e.PageDown()
 		return true, nil
 	}
-	if keyVal == IBUS_Return || keyVal == IBUS_KP_Enter {
+	if keyVal == IBUS_Return {
 		e.commitInputModeCandidate()
 		e.closeInputModeCandidates()
 		return true, nil
@@ -354,4 +351,24 @@ func (e *IBusBambooEngine) inChromeFamily() bool {
 		"chromium-browser:Chromium-browser",
 	}
 	return inStringList(list, e.wmClasses)
+}
+
+func notify(enMode bool) {
+	var title = "Vietnamese"
+	var msg = "Press Shift to switch to English"
+	if enMode {
+		title = "English"
+		msg = "Press Shift to switch to Vietnamese"
+	}
+	conn, err := dbus.SessionBus()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	obj := conn.Object("org.freedesktop.Notifications", "/org/freedesktop/Notifications")
+	call := obj.Call("org.freedesktop.Notifications.Notify", 0, "", uint32(281025),
+		"", title, msg, []string{}, map[string]dbus.Variant{}, int32(3000))
+	if call.Err != nil {
+		fmt.Println(call.Err)
+	}
 }

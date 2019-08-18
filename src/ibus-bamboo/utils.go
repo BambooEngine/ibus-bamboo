@@ -21,8 +21,13 @@ package main
 
 import (
 	"bufio"
+	"encoding/json"
+	"fmt"
 	"github.com/BambooEngine/bamboo-core"
+	"io/ioutil"
+	"log"
 	"os"
+	"os/user"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -34,6 +39,134 @@ const (
 	VnCaseAllCapital
 	VnCaseNoChange
 )
+const (
+	HomePage           = "https://github.com/BambooEngine/ibus-bamboo"
+	CharsetConvertPage = "https://tools.jcisio.com/vietuni/"
+
+	DataDir          = "/usr/share/ibus-bamboo"
+	DictVietnameseCm = "data/vietnamese.cm.dict"
+	DictEmojiOne     = "data/emojione.json"
+)
+
+const (
+	configDir        = "%s/.config/ibus-bamboo"
+	configFile       = "%s/ibus-%s.config.json"
+	mactabFile       = "%s/ibus-%s.macro.text"
+	sampleMactabFile = "data/macro.tpl.txt"
+)
+
+const (
+	IBautoCommitWithVnNotMatch uint = 1 << iota
+	IBmarcoEnabled
+	IBautoCommitWithVnFullMatch
+	IBautoCommitWithVnWordBreak
+	IBspellChecking
+	IBautoNonVnRestore
+	IBddFreeStyle
+	IBpreeditInvisibility
+	IBspellCheckingWithRules
+	IBspellCheckingWithDicts
+	IBautoCommitWithDelay
+	IBautoCommitWithMouseMovement
+	IBemojiDisabled
+	IBfakeBackspaceEnabled
+	IBinputModeLookupTableEnabled
+	IBautoCapitalizeMacro
+	IBimQuickSwitchEnabled
+	IBrestoreKeyStrokesEnabled
+	IBstdFlags = IBspellChecking | IBspellCheckingWithRules | IBautoNonVnRestore | IBddFreeStyle |
+		IBpreeditInvisibility | IBautoCommitWithMouseMovement | IBemojiDisabled | IBinputModeLookupTableEnabled
+)
+
+var DefaultBrowserList = []string{
+	"Navigator:Firefox",
+	"google-chrome:Google-chrome",
+	"chromium-browser:Chromium-browser",
+}
+
+var DefaultPreeditList = []string{
+	"google-chrome:Google-chrome",
+}
+
+type Config struct {
+	InputMethod               string
+	InputMethodDefinitions    map[string]bamboo.InputMethodDefinition
+	OutputCharset             string
+	Flags                     uint
+	IBflags                   uint
+	AutoCommitAfter           int64
+	ExceptedList              []string
+	PreeditWhiteList          []string
+	X11ClipboardWhiteList     []string
+	ForwardKeyWhiteList       []string
+	DirectForwardKeyWhiteList []string
+	SurroundingTextWhiteList  []string
+}
+
+func getConfigDir() string {
+	u, err := user.Current()
+	if err == nil {
+		return fmt.Sprintf(configDir, u.HomeDir)
+	}
+	return fmt.Sprintf(configDir, "~")
+}
+
+func setupConfigDir() {
+	if sta, err := os.Stat(getConfigDir()); err != nil || !sta.IsDir() {
+		os.Mkdir(getConfigDir(), 0777)
+	}
+}
+
+func getConfigPath(engineName string) string {
+	return fmt.Sprintf(configFile, getConfigDir(), engineName)
+}
+
+func LoadConfig(engineName string) *Config {
+	var c = Config{
+		InputMethod:               "Telex",
+		OutputCharset:             "Unicode",
+		InputMethodDefinitions:    bamboo.InputMethodDefinitions,
+		Flags:                     bamboo.EstdFlags,
+		IBflags:                   IBstdFlags,
+		AutoCommitAfter:           3000,
+		ExceptedList:              nil,
+		PreeditWhiteList:          DefaultPreeditList,
+		X11ClipboardWhiteList:     nil,
+		ForwardKeyWhiteList:       nil,
+		DirectForwardKeyWhiteList: nil,
+		SurroundingTextWhiteList:  nil,
+	}
+
+	data, err := ioutil.ReadFile(getConfigPath(engineName))
+	if err == nil {
+		json.Unmarshal(data, &c)
+	}
+
+	return &c
+}
+
+func SaveConfig(c *Config, engineName string) {
+	data, err := json.MarshalIndent(c, "", "  ")
+	if err != nil {
+		return
+	}
+
+	err = ioutil.WriteFile(fmt.Sprintf(configFile, getConfigDir(), engineName), data, 0644)
+	if err != nil {
+		log.Println(err)
+	}
+
+}
+
+func getEngineSubFile(fileName string) string {
+	if _, err := os.Stat(fileName); err == nil {
+		if absPath, err := filepath.Abs(fileName); err == nil {
+			return absPath
+		}
+	}
+
+	return filepath.Join(filepath.Dir(os.Args[0]), fileName)
+}
 
 func determineMacroCase(str string) uint8 {
 	var chars = []rune(str)
@@ -127,17 +260,9 @@ func sortStrings(list []string) []string {
 	return strList
 }
 
-func fileExist(p string) bool {
-	sta, err := os.Stat(p)
-	return err == nil && !sta.IsDir()
-}
-
 func loadDictionary(dataFiles ...string) (map[string]bool, error) {
 	var dictionary = map[string]bool{}
 	for _, dataFile := range dataFiles {
-		if !fileExist(dataFile) && !filepath.IsAbs(dataFile) {
-			dataFile = filepath.Join(filepath.Dir(os.Args[0]), dataFile)
-		}
 		f, err := os.Open(dataFile)
 		if err != nil {
 			return nil, err
@@ -151,7 +276,7 @@ func loadDictionary(dataFiles ...string) (map[string]bool, error) {
 			if len(line) == 0 {
 				continue
 			}
-			dictionary[string(line)] = true
+			dictionary[strings.ToLower(string(line))] = true
 			//bamboo.AddTrie(rootWordTrie, []rune(string(line)), false)
 		}
 		f.Close()

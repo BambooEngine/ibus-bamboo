@@ -175,11 +175,11 @@ func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
 	if !bamboo.HasVietnameseChar(vnSeq) {
 		return false
 	}
-	if e.config.IBflags&IBspellCheckingWithDicts != 0 {
-		return !e.dictionary[strings.ToLower(vnSeq)]
-	}
-	if e.getSpellingMatchResult(false) == bamboo.FindResultMatchFull {
+	if e.preeditor.GetSpellingMatchResult(bamboo.LowerCase, true) == bamboo.FindResultMatchFull {
 		return false
+	}
+	if e.config.IBflags&IBspellCheckingWithDicts == 0 {
+		return e.getSpellingMatchResult(false) != bamboo.FindResultMatchFull
 	}
 	return true
 }
@@ -188,8 +188,8 @@ func (e *IBusBambooEngine) isSpellingCorrect() bool {
 	return e.getSpellingMatchResult(false) == bamboo.FindResultMatchFull
 }
 
-func (e *IBusBambooEngine) getSpellingMatchResult(deepSearch bool) uint8 {
-	return e.preeditor.GetSpellingMatchResult(bamboo.ToneLess)
+func (e *IBusBambooEngine) getSpellingMatchResult(dictionary bool) uint8 {
+	return e.preeditor.GetSpellingMatchResult(bamboo.ToneLess, dictionary)
 }
 
 func (e *IBusBambooEngine) getComposedString() string {

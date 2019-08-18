@@ -2,18 +2,6 @@
  * Bamboo - A Vietnamese Input method editor
  * Copyright (C) Luong Thanh Lam <ltlam93@gmail.com>
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  * This software is licensed under the MIT license. For more information,
  * see <https://github.com/BambooEngine/bamboo-core/blob/master/LISENCE>.
  */
@@ -59,7 +47,7 @@ var vcMatrix = [6][]uint{
 	{1, 2},
 }
 
-var spellingTrie = &W{F: false}
+var spellingTrie = &Node{Full: false}
 
 func buildCV(consonants []string, vowels []string) []string {
 	var ret []string
@@ -105,7 +93,13 @@ func buildCVC(cs1 []string, vs1 []string, cs2 []string) []string {
 
 func init() {
 	for _, word := range GenerateDictionary() {
-		AddTrie(spellingTrie, []rune(word), false)
+		AddTrie(spellingTrie, []rune(word), false, false)
+	}
+}
+
+func AddDictionaryToSpellingTrie(dictionary map[string]bool) {
+	for word := range dictionary {
+		AddTrie(spellingTrie, []rune(word), true, false)
 	}
 }
 

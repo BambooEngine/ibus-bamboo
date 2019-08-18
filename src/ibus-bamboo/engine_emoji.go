@@ -49,7 +49,7 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 		reset()
 		return false, nil
 	}
-	if keyVal == IBUS_Return || keyVal == IBUS_KP_Enter {
+	if keyVal == IBUS_Return {
 		if rawTextLen > 0 {
 			if len(e.emojiLookupTable.Candidates) > 0 {
 				e.commitEmojiCandidate()

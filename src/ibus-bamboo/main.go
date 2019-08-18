@@ -20,18 +20,40 @@
 package main
 
 import (
+	"flag"
+	"fmt"
+	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
 	"log"
 	"os"
 )
 
+const (
+	ComponentName = "org.freedesktop.IBus.bamboo"
+	EngineName    = "Bamboo"
+)
+
+var embedded = flag.Bool("ibus", false, "Run the embedded ibus component")
+var version = flag.Bool("version", false, "Show version")
+
+func init() {
+	flag.Parse()
+	if *embedded {
+		os.Chdir(DataDir)
+	}
+	go func() {
+		emojiMap, _ = loadEmojiOne(DictEmojiOne)
+		var dictionary, _ = loadDictionary(DictVietnameseCm)
+		bamboo.AddDictionaryToSpellingTrie(dictionary)
+	}()
+}
+
 func main() {
-	if isIBusDaemonChild() {
-		if len(os.Args) == 3 && os.Args[1] == "cd" {
-			os.Chdir(os.Args[2])
-		}
-		engine := GetIBusBambooEngine()
+	if *version {
+		fmt.Println(Version)
+	} else if *embedded {
+		engine := GetBambooEngineCreator()
 		bus := ibus.NewBus()
 		bus.RequestName(ComponentName, 0)
 
@@ -40,19 +62,24 @@ func main() {
 
 		select {}
 	} else {
-		log.Println("Running debug mode")
-		runMode = " (debug)"
-
 		log.SetFlags(log.LstdFlags | log.Lmicroseconds)
-
 		bus := ibus.NewBus()
-		bus.RegisterComponent(makeDebugComponent())
+		log.Println("Got Bus, Running Standalone")
+		component := &ibus.Component{
+			Name:          "IBusComponent",
+			ComponentName: ComponentName + "Standalone",
+		}
+		engine := &ibus.EngineDesc{
+			Name:       "IBusEngineDesc",
+			EngineName: EngineName + "Standalone",
+		}
+		component.AddEngine(engine)
+		bus.RegisterComponent(component)
 
 		conn := bus.GetDbusConn()
-		ibus.NewFactory(conn, GetIBusBambooEngine())
+		ibus.NewFactory(conn, GetBambooEngineCreator())
 
-		log.Println("Setting Global Engine to", DebugEngineName)
-		bus.CallMethod("SetGlobalEngine", 0, DebugEngineName)
+		bus.CallMethod("SetGlobalEngine", 0, EngineName+"Standalone")
 
 		c := make(chan *dbus.Signal, 10)
 		conn.Signal(c)

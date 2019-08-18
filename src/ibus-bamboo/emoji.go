@@ -22,8 +22,6 @@ import (
 	"encoding/json"
 	"github.com/BambooEngine/bamboo-core"
 	"io/ioutil"
-	"os"
-	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -36,35 +34,31 @@ type EmojiOne struct {
 	Ascii     []string
 }
 
+var emojiMap map[string]EmojiOne
+
 func loadEmojiOne(dataFile string) (map[string]EmojiOne, error) {
 	var c = map[string]EmojiOne{}
-	if !fileExist(dataFile) && !filepath.IsAbs(dataFile) {
-		dataFile = filepath.Join(filepath.Dir(os.Args[0]), dataFile)
-	}
 	if data, err := ioutil.ReadFile(dataFile); err == nil {
 		json.Unmarshal(data, &c)
 	}
 	return c, nil
 }
 
-type BambooEmoji struct {
+type EmojiEngine struct {
 	nameTable      map[string]string
 	shortNameTable map[string]string
 	asciiTable     map[string]string
-	emojiTrie      *bamboo.W
+	emojiTrie      *bamboo.Node
 	keys           []rune
 }
 
-func NewBambooEmoji(emojiDictPath string) *BambooEmoji {
-	var be = &BambooEmoji{
+func NewEmojiEngine() *EmojiEngine {
+	var be = &EmojiEngine{
 		shortNameTable: map[string]string{},
 		asciiTable:     map[string]string{},
-		emojiTrie:      &bamboo.W{},
+		emojiTrie:      &bamboo.Node{},
 	}
-	var data, err = loadEmojiOne(emojiDictPath)
-	if err != nil {
-		return be
-	}
+	var data = emojiMap
 	for k, v := range data {
 		var codePointStr string
 		for _, codePoint := range strings.Split(k, "-") {
@@ -76,18 +70,18 @@ func NewBambooEmoji(emojiDictPath string) *BambooEmoji {
 		be.shortNameTable[shortName] = codePointStr
 		for _, ascii := range v.Ascii {
 			be.asciiTable[ascii] = codePointStr
-			bamboo.AddTrie(be.emojiTrie, []rune(ascii), false)
+			bamboo.AddTrie(be.emojiTrie, []rune(ascii), false, false)
 		}
-		bamboo.AddTrie(be.emojiTrie, []rune(shortName), false)
+		bamboo.AddTrie(be.emojiTrie, []rune(shortName), false, false)
 	}
 	return be
 }
 
-func (be *BambooEmoji) TestString(s string) uint8 {
+func (be *EmojiEngine) TestString(s string) uint8 {
 	return bamboo.TestString(be.emojiTrie, []rune(s), false)
 }
 
-func (be *BambooEmoji) Filter(s string) []string {
+func (be *EmojiEngine) Filter(s string) []string {
 	var codePoints []string
 	var names = byString(bamboo.FindWords(be.emojiTrie, s))
 	sort.Sort(names)
@@ -101,23 +95,23 @@ func (be *BambooEmoji) Filter(s string) []string {
 	return codePoints
 }
 
-func (be *BambooEmoji) ProcessKey(key rune) {
+func (be *EmojiEngine) ProcessKey(key rune) {
 	be.keys = append(be.keys, key)
 }
 
-func (be *BambooEmoji) GetRawString() string {
+func (be *EmojiEngine) GetRawString() string {
 	return string(be.keys)
 }
 
-func (be *BambooEmoji) Reset() {
+func (be *EmojiEngine) Reset() {
 	be.keys = nil
 }
 
-func (be *BambooEmoji) Query() []string {
+func (be *EmojiEngine) Query() []string {
 	return be.Filter(string(be.keys))
 }
 
-func (be *BambooEmoji) RemoveLastKey() {
+func (be *EmojiEngine) RemoveLastKey() {
 	if len(be.keys) <= 0 {
 		return
 	}

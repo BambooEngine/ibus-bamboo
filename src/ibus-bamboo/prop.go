@@ -50,15 +50,17 @@ const (
 	PropKeyRestoreKeyStrokes           = "restore_key_strokes"
 )
 
-var runMode = ""
-
 func GetPropListByConfig(c *Config) *ibus.PropList {
+	var aboutText = "IBus " + EngineName + " " + Version
+	if !*embedded {
+		aboutText += " (Debug)"
+	}
 	return ibus.NewPropList(
 		&ibus.Property{
 			Name:      "IBusProperty",
 			Key:       PropKeyAbout,
 			Type:      ibus.PROP_TYPE_NORMAL,
-			Label:     dbus.MakeVariant(ibus.NewText("IBus " + EngineName + " " + Version + runMode)),
+			Label:     dbus.MakeVariant(ibus.NewText(aboutText)),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("Mở trang chủ")),
 			Sensitive: true,
 			Visible:   true,
@@ -471,14 +473,14 @@ func GetHotKeyPropListByConfig(c *Config) *ibus.PropList {
 	return ibus.NewPropList(
 		&ibus.Property{
 			Name:      "IBusProperty",
-			Key:       PropKeyIMQuickSwitchEnabled,
+			Key:       PropKeyEmojiEnabled,
 			Type:      ibus.PROP_TYPE_TOGGLE,
-			Label:     dbus.MakeVariant(ibus.NewText("Chuyển nhanh Vi-En <Shift>")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("IM quick switch")),
+			Label:     dbus.MakeVariant(ibus.NewText("Emoji <Shift>:")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Emoji")),
 			Sensitive: true,
 			Visible:   true,
-			State:     imQuickSwitchChecked,
-			Symbol:    dbus.MakeVariant(ibus.NewText("")),
+			State:     emojiChecked,
+			Symbol:    dbus.MakeVariant(ibus.NewText(":)")),
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
 		&ibus.Property{
@@ -495,6 +497,18 @@ func GetHotKeyPropListByConfig(c *Config) *ibus.PropList {
 		},
 		&ibus.Property{
 			Name:      "IBusProperty",
+			Key:       PropKeyIMQuickSwitchEnabled,
+			Type:      ibus.PROP_TYPE_TOGGLE,
+			Label:     dbus.MakeVariant(ibus.NewText("Chuyển nhanh Vi-En <Shift>")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("IM quick switch")),
+			Sensitive: true,
+			Visible:   true,
+			State:     imQuickSwitchChecked,
+			Symbol:    dbus.MakeVariant(ibus.NewText("")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
 			Key:       PropKeyRestoreKeyStrokes,
 			Type:      ibus.PROP_TYPE_TOGGLE,
 			Label:     dbus.MakeVariant(ibus.NewText("Khôi phục phím <Shift><Space>")),
@@ -503,18 +517,6 @@ func GetHotKeyPropListByConfig(c *Config) *ibus.PropList {
 			Visible:   true,
 			State:     restoreKeyStrokesChecked,
 			Symbol:    dbus.MakeVariant(ibus.NewText("")),
-			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
-		},
-		&ibus.Property{
-			Name:      "IBusProperty",
-			Key:       PropKeyEmojiEnabled,
-			Type:      ibus.PROP_TYPE_TOGGLE,
-			Label:     dbus.MakeVariant(ibus.NewText("Emoji <Shift>:")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("Emoji")),
-			Sensitive: true,
-			Visible:   true,
-			State:     emojiChecked,
-			Symbol:    dbus.MakeVariant(ibus.NewText(":)")),
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
 	)

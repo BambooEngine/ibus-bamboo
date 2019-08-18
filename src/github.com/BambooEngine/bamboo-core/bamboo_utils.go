@@ -2,18 +2,6 @@
  * Bamboo - A Vietnamese Input method editor
  * Copyright (C) Luong Thanh Lam <ltlam93@gmail.com>
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
  * This software is licensed under the MIT license. For more information,
  * see <https://github.com/BambooEngine/bamboo-core/blob/master/LISENCE>.
  */
@@ -22,7 +10,6 @@ package bamboo
 import (
 	"log"
 	"regexp"
-	"strings"
 	"unicode"
 )
 
@@ -125,19 +112,16 @@ func getCompositionBySound(composition []*Transformation, sound Sound) []*Transf
 	return ret
 }
 
-func getSpellingMatchResult(composition []*Transformation, mode Mode, deepSearch bool) uint8 {
+func getSpellingMatchResult(composition []*Transformation, mode Mode, dictionary bool) uint8 {
 	if len(composition) <= 0 {
 		return FindResultMatchFull
 	}
-	if mode&ToneLess != 0 {
-		str := Flatten(composition, ToneLess|LowerCase)
-		var chars = []rune(str)
-		if len(chars) <= 1 {
-			return FindResultMatchFull
-		}
-		return TestString(spellingTrie, chars, deepSearch)
+	var str = Flatten(composition, mode)
+	var chars = []rune(str)
+	if len(chars) <= 1 {
+		return FindResultMatchFull
 	}
-	return FindResultNotMatch
+	return TestString(spellingTrie, chars, dictionary)
 }
 
 func getRightMostVowels(composition []*Transformation) []*Transformation {
@@ -234,12 +218,6 @@ func getLastToneTransformation(composition []*Transformation) *Transformation {
 	return nil
 }
 
-func isTransformationForUoMissed(composition []*Transformation) bool {
-	return len(composition) > 0 &&
-		hasSuperWord(composition) &&
-		getSpellingMatchResult(composition, ToneLess, false) == FindResultMatchPrefix
-}
-
 func isFree(composition []*Transformation, trans *Transformation, effectType EffectType) bool {
 	for _, t := range composition {
 		if t.Target == trans && t.Rule.EffectType == effectType {
@@ -256,13 +234,6 @@ func findTransformationIndex(composition []*Transformation, trans *Transformatio
 		}
 	}
 	return -1
-}
-
-var regUhOh = regexp.MustCompile(`\p{L}*(uơ|ưo)\p{L}*`)
-
-func hasSuperWord(composition []*Transformation) bool {
-	str := Flatten(composition, ToneLess|LowerCase)
-	return regUhOh.MatchString(str)
 }
 
 func hasAppending(composition []*Transformation) bool {
@@ -355,14 +326,11 @@ func findMarkTarget(composition []*Transformation, rules []Rule) (*Transformatio
 			}
 			if trans.Rule.Result == rule.EffectOn && rule.Effect > 0 {
 				var target = findRootTarget(trans)
-				if !isFree(composition, target, MarkTransformation) {
-					//continue
-				}
 				if str == Flatten(append(composition, &Transformation{Target: target, Rule: rule}), VietnameseMode) {
 					continue
 				}
 				var tmp = append(composition, &Transformation{Rule: rule, Target: target})
-				if getSpellingMatchResult(tmp, ToneLess, false) != FindResultNotMatch {
+				if getSpellingMatchResult(tmp, ToneLess|LowerCase, false) != FindResultNotMatch {
 					return target, rule
 				}
 			}
@@ -401,6 +369,7 @@ func findTarget(composition []*Transformation, applicableRules []Rule, flags uin
 
 func generateUndoTransformations(composition []*Transformation, rules []Rule, flags uint) []*Transformation {
 	var transformations []*Transformation
+	var str = Flatten(composition, VietnameseMode|ToneLess|LowerCase)
 	for _, rule := range rules {
 		if rule.EffectType == ToneTransformation {
 			var lastAppending = findLastAppendingTrans(composition)
@@ -435,6 +404,9 @@ func generateUndoTransformations(composition []*Transformation, rules []Rule, fl
 						EffectType: MarkTransformation,
 						Effect:     0,
 					}
+					if str == Flatten(append(composition, trans), VietnameseMode|ToneLess|LowerCase) {
+						continue
+					}
 					transformations = append(transformations, trans)
 				}
 			}
@@ -442,6 +414,10 @@ func generateUndoTransformations(composition []*Transformation, rules []Rule, fl
 	}
 	return transformations
 }
+
+var regUOh_UhO_Tail = regexp.MustCompile(`\p{L}*(uơ|ưo)\p{L}+`)
+var regUOh_UhO = regexp.MustCompile(`\p{L}*(uơ|ưo)\p{L}*`)
+var regUhO_UhOh = regexp.MustCompile(`\p{L}*(ưo|ươ)\p{L}*`)
 
 /**
 * 1 | o + ff  ->  undo + append      -> of
@@ -475,50 +451,64 @@ func generateTransformations(composition []*Transformation, applicableRules []Ru
 			Target:      target,
 			IsUpperCase: isUpperCase,
 		})
-	} else {
-		// If an effect key can't find its target, it tries to undo its brothers, e.g. ươ + w -> uow
-		if undoTrans := generateUndoTransformations(composition, applicableRules, flags); len(undoTrans) > 0 {
-			var vowels = getRightMostVowelWithMarks(append(composition, undoTrans...))
-			var oVowels = getRightMostVowelWithMarks(composition)
-			// Exception: ươ + o -> uô
-			if strings.Contains(Flatten(oVowels, VietnameseMode), "ươ") &&
-				strings.Contains(Flatten(vowels, VietnameseMode), "ưo") {
-				var trans = &Transformation{
-					Target: vowels[0],
-					Rule: Rule{
-						EffectType: MarkTransformation,
-						Key:        0,
-						Effect:     uint8(MARK_NONE),
-					},
-				}
-				if target, applicableRule := findTarget(append(composition, trans), applicableRules, flags); target != nil {
-					transformations = append(transformations, trans)
-					transformations = append(transformations, &Transformation{
-						Rule:        applicableRule,
-						Target:      target,
-						IsUpperCase: isUpperCase,
-					})
-					return transformations
-				}
+		var newComp = append(composition, transformations...)
+		var newStr = Flatten(newComp, VietnameseMode|ToneLess|LowerCase)
+		if applicableRule.EffectType == MarkTransformation && regUOh_UhO.MatchString(newStr) &&
+			getSpellingMatchResult(newComp, ToneLess|LowerCase, false) == FindResultMatchPrefix {
+			// Implement the uow typing shortcut by creating a virtual
+			// Mark_HORN rule that targets 'u' or 'o'.
+			if target, virtualRule := findTarget(newComp, applicableRules, flags); target != nil {
+				virtualRule.Key = 0
+				transformations = append(transformations, &Transformation{
+					Rule:   virtualRule,
+					Target: target,
+				})
 			}
+		}
+	} else {
+		// Implement ươ/ưo + o -> uô
+		if regUhO_UhOh.MatchString(Flatten(composition, VietnameseMode|ToneLess|LowerCase)) {
+			var vowels = getRightMostVowelWithMarks(composition)
+			var trans = &Transformation{
+				Target: vowels[0],
+				Rule: Rule{
+					EffectType: MarkTransformation,
+					Key:        0,
+					Effect:     uint8(MARK_NONE),
+				},
+			}
+			if target, applicableRule := findTarget(append(composition, trans), applicableRules, flags); target != nil && target != vowels[0] {
+				transformations = append(transformations, trans)
+				transformations = append(transformations, &Transformation{
+					Rule:        applicableRule,
+					Target:      target,
+					IsUpperCase: isUpperCase,
+				})
+				return transformations
+			}
+		}
+		if undoTrans := generateUndoTransformations(composition, applicableRules, flags); len(undoTrans) > 0 {
+			// If an effect key can't find its target, it tries to undo its brothers, e.g. ươ + w -> uow
 			transformations = append(transformations, undoTrans...)
 			transformations = append(transformations, newAppendingTrans(lowerKey, isUpperCase))
-			return transformations
 		}
-		// If none of the applicable_rules can actually be applied then this new
-		// transformation fall-backs to an APPENDING one.
-		var trans = generateAppendingTrans(applicableRules, lowerKey, isUpperCase)
-		transformations = append(transformations, trans)
-		for _, appendedRule := range trans.Rule.AppendedRules {
-			var _isUpperCase = isUpperCase || unicode.IsUpper(appendedRule.EffectOn)
-			appendedRule.Key = 0 // this is a virtual key
-			appendedRule.EffectOn = unicode.ToLower(appendedRule.EffectOn)
-			appendedRule.Result = appendedRule.EffectOn
-			transformations = append(transformations, &Transformation{
-				Rule:        appendedRule,
-				IsUpperCase: _isUpperCase,
-			})
-		}
+	}
+	return transformations
+}
+
+func generateFallbackTransformations(applicableRules []Rule, lowerKey rune, isUpperCase bool) []*Transformation {
+	var transformations []*Transformation
+	var trans = generateAppendingTrans(applicableRules, lowerKey, isUpperCase)
+	transformations = append(transformations, trans)
+	for _, appendedRule := range trans.Rule.AppendedRules {
+		var _isUpperCase = isUpperCase || unicode.IsUpper(appendedRule.EffectOn)
+		appendedRule.Key = 0 // this is a virtual key
+		appendedRule.EffectOn = unicode.ToLower(appendedRule.EffectOn)
+		appendedRule.Result = appendedRule.EffectOn
+		transformations = append(transformations, &Transformation{
+			Rule:        appendedRule,
+			IsUpperCase: _isUpperCase,
+		})
 	}
 	return transformations
 }
@@ -535,14 +525,29 @@ func breakComposition(composition []*Transformation) []*Transformation {
 }
 
 func refreshLastToneTarget(composition []*Transformation, stdStyle bool) []*Transformation {
+	var transformations []*Transformation
 	var rightmostVowels = getRightMostVowels(composition)
 	var lastToneTrans = getLastToneTransformation(composition)
 	if len(rightmostVowels) == 0 || lastToneTrans == nil {
-		return composition
+		return nil
 	}
 	var newToneTarget = findToneTarget(composition, stdStyle)
 	if lastToneTrans.Target != newToneTarget {
 		lastToneTrans.Target = newToneTarget
+		transformations = append(transformations, &Transformation{
+			Target: lastToneTrans.Target,
+			Rule: Rule{
+				Key:        0,
+				EffectType: ToneTransformation,
+				Effect:     uint8(TONE_NONE),
+			},
+		})
+		var overrideRule = lastToneTrans.Rule
+		overrideRule.Key = 0
+		transformations = append(transformations, &Transformation{
+			Target: newToneTarget,
+			Rule:   overrideRule,
+		})
 	}
-	return composition
+	return transformations
 }
