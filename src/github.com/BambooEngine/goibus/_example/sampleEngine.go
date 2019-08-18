@@ -49,7 +49,7 @@ var eid = 0
 func GittuEngineCreator(conn *dbus.Conn, engineName string) dbus.ObjectPath {
 	eid++
 	fmt.Println("Creating Gittu Engine #", eid)
-	objectPath := dbus.ObjectPath(fmt.Sprintf("/org/freedesktop/IBus/Engine/bamboo/%d", eid))
+	objectPath := dbus.ObjectPath(fmt.Sprintf("/org/freedesktop/IBus/Engine/GittuGo/%d", eid))
 
 	propp := ibus.NewProperty(
 		"setup",

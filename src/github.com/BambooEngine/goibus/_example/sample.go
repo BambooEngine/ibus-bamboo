@@ -15,7 +15,7 @@ var generatexml = flag.String("xml", "", "Write xml representation of component 
 func makeComponent() *ibus.Component {
 
 	component := ibus.NewComponent(
-		"org.freedesktop.IBus.bamboo",
+		"org.freedesktop.IBus.Gittu",
 		"Gittu Sample",
 		"2.0",
 		"MPL 1.1",
@@ -73,7 +73,7 @@ func main() {
 
 		conn := bus.GetDbusConn()
 		ibus.NewFactory(conn, GittuEngineCreator)
-		bus.RequestName("org.freedesktop.IBus.bamboo", 0)
+		bus.RequestName("org.freedesktop.IBus.Gittu", 0)
 		select {}
 	} else if *standalone {
 		bus := ibus.NewBus()
