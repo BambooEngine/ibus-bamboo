@@ -71,8 +71,8 @@ static void* thread_mouse_recording (void* data)
     return NULL;
   }
 
-  /* 
-   * we must set the ctrl_disp to sync mode, or, when we the enalbe 
+  /*
+   * we must set the ctrl_disp to sync mode, or, when we the enalbe
    * context in data_disp, there will be a fatal X error !!!
    */
   XSynchronize(ctrl_disp,True);
@@ -83,7 +83,7 @@ static void* thread_mouse_recording (void* data)
     mouse_recording = 0;
     return NULL;
   }
- 
+
   printf ("RECORD extension for local server is version %d.%d\n", major, minor);
 
   rr = XRecordAllocRange ();
@@ -101,7 +101,7 @@ static void* thread_mouse_recording (void* data)
     fprintf (stderr, "Could not create a record context!\n");
     return NULL;
   }
- 
+
   if (!XRecordEnableContext (data_disp, rc, event_callback, NULL)) {
     fprintf (stderr, "Cound not enable the record context!\n");
     return NULL;
@@ -121,7 +121,7 @@ static void* thread_mouse_recording (void* data)
   XRecordDisableContext (ctrl_disp, rc);
   XRecordFreeContext (ctrl_disp, rc);
   XFree (rr);
- 
+
   XCloseDisplay (data_disp);
   XCloseDisplay (ctrl_disp);
   mouse_recording = 0;
@@ -166,7 +166,7 @@ void event_callback(XPointer priv, XRecordInterceptData *hook)
     if ((abs(root_x - cur_x) >= CAPTURE_MOUSE_MOVE_DELTA) ||
         (abs(root_y - cur_y) >= CAPTURE_MOUSE_MOVE_DELTA)) // mouse move at least CAPTURE_MOUSE_MOVE_DELTA
     {
-        /** mouse_move_handler(); */
+        mouse_move_handler();
         cur_x = root_x;
         cur_y = root_y;
     }
