@@ -95,6 +95,7 @@ type Config struct {
 	PreeditWhiteList          []string
 	X11ClipboardWhiteList     []string
 	ForwardKeyWhiteList       []string
+	SLForwardKeyWhiteList     []string
 	DirectForwardKeyWhiteList []string
 	SurroundingTextWhiteList  []string
 	X11ShiftLeftWhiteList     []string
@@ -130,6 +131,7 @@ func LoadConfig(engineName string) *Config {
 		PreeditWhiteList:          nil,
 		X11ClipboardWhiteList:     nil,
 		ForwardKeyWhiteList:       nil,
+		SLForwardKeyWhiteList:     nil,
 		DirectForwardKeyWhiteList: nil,
 		SurroundingTextWhiteList:  nil,
 	}

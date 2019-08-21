@@ -148,6 +148,13 @@ func (e *IBusBambooEngine) Enable() *dbus.Error {
 	return nil
 }
 
+func (e *IBusBambooEngine) Disable() *dbus.Error {
+	fmt.Print("Disable.")
+	x11ClipboardExit()
+	stopMouseTracking()
+	return nil
+}
+
 //@method(in_signature="vuu")
 func (e *IBusBambooEngine) SetSurroundingText(text dbus.Variant, cursorPos uint32, anchorPos uint32) *dbus.Error {
 	if e.getRawKeyLen() > 0 {
@@ -168,13 +175,6 @@ func (e *IBusBambooEngine) SetSurroundingText(text dbus.Variant, cursorPos uint3
 		e.preeditor.Reset()
 		e.preeditor.ProcessString(string(s[:cursorPos]), bamboo.EnglishMode)
 	}
-	return nil
-}
-
-func (e *IBusBambooEngine) Disable() *dbus.Error {
-	fmt.Print("Disable.")
-	x11ClipboardExit()
-	stopMouseTracking()
 	return nil
 }
 

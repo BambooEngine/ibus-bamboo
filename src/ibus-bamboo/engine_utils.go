@@ -162,7 +162,7 @@ func (e *IBusBambooEngine) openLookupTable() {
 		e.config.PreeditWhiteList,
 		e.config.SurroundingTextWhiteList,
 		e.config.ForwardKeyWhiteList,
-		e.config.X11ShiftLeftWhiteList,
+		e.config.SLForwardKeyWhiteList,
 		e.config.X11ClipboardWhiteList,
 		e.config.DirectForwardKeyWhiteList,
 		e.config.ExceptedList,
@@ -176,9 +176,9 @@ func (e *IBusBambooEngine) openLookupTable() {
 	var lookupTableConfiguration = []string{
 		"Cấu hình mặc định (Pre-edit)",
 		"Sửa lỗi gạch chân (Surrounding Text)",
-		"Sửa lỗi gạch chân (Forward KeyEvent)",
-		"Sửa lỗi gạch chân (XTestFakeKeyEvent 1)",
-		"Sửa lỗi gạch chân (XTestFakeKeyEvent 2)",
+		"Sửa lỗi gạch chân (ForwardKeyEvent I)",
+		"Sửa lỗi gạch chân (ForwardKeyEvent II)",
+		"Sửa lỗi gạch chân (XTestFakeKeyEvent)",
 		"Sửa lỗi gạch chân (Forward as commit)",
 		"Thêm vào danh sách loại trừ (" + wmClass + ")",
 	}
@@ -257,7 +257,7 @@ func (e *IBusBambooEngine) commitInputModeCandidate() {
 	var reset = func() {
 		e.config.PreeditWhiteList = removeFromWhiteList(e.config.PreeditWhiteList, wmClasses)
 		e.config.X11ClipboardWhiteList = removeFromWhiteList(e.config.X11ClipboardWhiteList, wmClasses)
-		e.config.X11ShiftLeftWhiteList = removeFromWhiteList(e.config.X11ShiftLeftWhiteList, wmClasses)
+		e.config.SLForwardKeyWhiteList = removeFromWhiteList(e.config.SLForwardKeyWhiteList, wmClasses)
 		e.config.ForwardKeyWhiteList = removeFromWhiteList(e.config.ForwardKeyWhiteList, wmClasses)
 		e.config.SurroundingTextWhiteList = removeFromWhiteList(e.config.SurroundingTextWhiteList, wmClasses)
 		e.config.DirectForwardKeyWhiteList = removeFromWhiteList(e.config.DirectForwardKeyWhiteList, wmClasses)
@@ -272,7 +272,7 @@ func (e *IBusBambooEngine) commitInputModeCandidate() {
 	case 3:
 		e.config.ForwardKeyWhiteList = addToWhiteList(e.config.ForwardKeyWhiteList, wmClasses)
 	case 4:
-		e.config.X11ShiftLeftWhiteList = addToWhiteList(e.config.X11ShiftLeftWhiteList, wmClasses)
+		e.config.SLForwardKeyWhiteList = addToWhiteList(e.config.SLForwardKeyWhiteList, wmClasses)
 	case 5:
 		e.config.X11ClipboardWhiteList = addToWhiteList(e.config.X11ClipboardWhiteList, wmClasses)
 	case 6:
@@ -333,11 +333,15 @@ func (e *IBusBambooEngine) inPreeditList() bool {
 
 func (e *IBusBambooEngine) inBackspaceWhiteList() bool {
 	return e.inForwardKeyList() || e.inXTestFakeKeyEventList() ||
-		e.inSurroundingTextList() || e.inDirectForwardKeyList() || e.inX11ShiftLeftList()
+		e.inSurroundingTextList() || e.inDirectForwardKeyList() || e.inSLForwardKeyList()
 }
 
 func (e *IBusBambooEngine) inSurroundingTextList() bool {
 	return inStringList(e.config.SurroundingTextWhiteList, e.wmClasses)
+}
+
+func (e *IBusBambooEngine) inSLForwardKeyList() bool {
+	return inStringList(e.config.SLForwardKeyWhiteList, e.wmClasses)
 }
 
 func (e *IBusBambooEngine) inDirectForwardKeyList() bool {

@@ -78,7 +78,7 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 	}
 	var keyRune = rune(keyVal)
 	if keyVal == IBUS_BackSpace {
-		if e.config.IBflags&IBautoNonVnRestore == 0 {
+		if e.config.IBflags&IBautoNonVnRestore == 0 || e.inSLForwardKeyList() {
 			if e.getRawKeyLen() > 0 {
 				e.preeditor.RemoveLastChar()
 			}
@@ -173,7 +173,8 @@ func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state u
 
 	nBackSpace := 0
 	// workaround for chrome and firefox's address bar
-	if e.firstTimeSendingBS && diffFrom < newLen && diffFrom < oldLen && e.inBrowserList() && !e.inX11ShiftLeftList() {
+	if e.firstTimeSendingBS && diffFrom < newLen && diffFrom < oldLen && e.inBrowserList() &&
+		!e.inX11ShiftLeftList() && !e.inSLForwardKeyList() {
 		fmt.Println("Append a deadkey")
 		e.SendText([]rune(" "))
 		nBackSpace += 1
@@ -243,6 +244,15 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 			time.Sleep(5 * time.Millisecond)
 		}
 		time.Sleep(20 * time.Millisecond)
+	} else if e.inSLForwardKeyList() {
+		time.Sleep(30 * time.Millisecond)
+		log.Printf("Sendding %d Shift+Left via ForwardKeyEvent\n", n)
+
+		for i := 0; i < n; i++ {
+			e.ForwardKeyEvent(IBUS_Left, XK_Left-8, IBUS_SHIFT_MASK)
+			//e.ForwardKeyEvent(IBUS_Left, XK_Left-8, IBUS_RELEASE_MASK)
+		}
+		time.Sleep(time.Duration(n) * 30 * time.Millisecond)
 	} else if e.inForwardKeyList() {
 		time.Sleep(10 * time.Millisecond)
 		log.Printf("Sendding %d backspace via ForwardKeyEvent\n", n)
