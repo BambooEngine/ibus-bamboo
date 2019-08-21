@@ -51,6 +51,8 @@ type IBusBambooEngine struct {
 	isFocusOut           bool
 	emoji                *EmojiEngine
 	lastKeyWithShift     bool
+	shiftRightIsPressing bool
+	nFakeShiftLeft       int
 }
 
 /**
@@ -121,7 +123,8 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 	if oldWmClasses != e.wmClasses {
 		e.firstTimeSendingBS = true
 		e.resetBuffer()
-		x11ClipboardReset()
+		e.resetFakeBackspace()
+		// x11ClipboardReset()
 	}
 
 	return nil

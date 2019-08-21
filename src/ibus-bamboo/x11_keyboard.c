@@ -46,6 +46,39 @@ void x11SendShiftR() {
     }
 }
 
+void x11SendShiftLeft(int n, int r, int timeout) {
+    Display *display = XOpenDisplay(NULL);
+    if (display) {
+        XSynchronize(display, 1);
+        KeyCode modcode;
+        KeyCode xk_shift_l = XKeysymToKeycode(display, XK_Shift_L);
+        KeyCode xk_shift_r = XKeysymToKeycode(display, XK_Shift_R);
+        modcode = XKeysymToKeycode(display, XStringToKeysym("Left"));
+        for (int i=0; i<n; i++) {
+            switch (r) {
+            case 1:
+                XTestFakeKeyEvent(display, xk_shift_l, True, 0);
+                XTestFakeKeyEvent(display, modcode, True, 0);
+                XTestFakeKeyEvent(display, modcode, False, 0);
+                XTestFakeKeyEvent(display, xk_shift_l, False, 0);
+                XSync(display, 0);
+                delay(0, timeout);
+                break;
+            default:
+                XTestFakeKeyEvent(display, xk_shift_r, True, 0);
+                XTestFakeKeyEvent(display, modcode, True, 0);
+                XTestFakeKeyEvent(display, modcode, False, 0);
+                XTestFakeKeyEvent(display, xk_shift_r, False, 0);
+                XSync(display, 0);
+                delay(0, timeout);
+                break;
+            }
+        }
+        XSynchronize(display, 0);
+        XCloseDisplay(display);
+    }
+}
+
 void x11SendBackspace(int n, int timeout) {
     Display *display = XOpenDisplay(NULL);
     if (display) {

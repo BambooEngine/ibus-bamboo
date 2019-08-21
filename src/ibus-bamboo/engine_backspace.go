@@ -31,12 +31,18 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 	if e.getRawKeyLen() == 0 {
 		e.RequireSurroundingText()
 	}
-	if e.inXTestFakeKeyEventList() || e.inSurroundingTextList() {
+	if e.inXTestFakeKeyEventList() || e.inX11ShiftLeftList() || e.inSurroundingTextList() {
 		// we don't want to use ForwardKeyEvent api in X11 XTestFakeKeyEvent and Surrounding Text mode
 		var sleep = func() {
 			for len(keyPressChan) > 0 {
 				time.Sleep(5 * time.Millisecond)
 			}
+		}
+		if keyVal == IBUS_Left && state&IBUS_SHIFT_MASK != 0 {
+			if e.nFakeShiftLeft > 0 {
+				e.nFakeShiftLeft--
+			}
+			return false, nil
 		}
 		if !e.isValidState(state) || !e.canProcessKey(keyVal, state) {
 			e.preeditor.Reset()
@@ -167,7 +173,7 @@ func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state u
 
 	nBackSpace := 0
 	// workaround for chrome and firefox's address bar
-	if e.firstTimeSendingBS && diffFrom < newLen && diffFrom < oldLen && e.inBrowserList() {
+	if e.firstTimeSendingBS && diffFrom < newLen && diffFrom < oldLen && e.inBrowserList() && !e.inX11ShiftLeftList() {
 		fmt.Println("Append a deadkey")
 		e.SendText([]rune(" "))
 		nBackSpace += 1
@@ -186,6 +192,8 @@ func (e *IBusBambooEngine) sendBackspaceAndNewRunes(nBackSpace int, newRunes []r
 	if nBackSpace > 0 {
 		if e.inXTestFakeKeyEventList() {
 			e.nFakeBackSpace = nBackSpace
+		} else if e.inX11ShiftLeftList() {
+			e.nFakeShiftLeft = nBackSpace
 		}
 		e.SendBackSpace(nBackSpace)
 	}
@@ -207,12 +215,20 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 		}
 		fmt.Printf("Sendding %d backspace via XTestFakeKeyEvent\n", n)
 		time.Sleep(20 * time.Millisecond)
-		if e.inChromeFamily() { // workaround for chrome's address bar
-			x11SendBackspace(n, 0)
-			time.Sleep(time.Duration(n) * 40 * time.Millisecond)
-		} else {
-			x11SendBackspace(n, 0)
+		x11SendBackspace(n, 0)
+		sleep()
+	} else if e.inX11ShiftLeftList() {
+		var sleep = func() {
+			var count = 0
+			for e.nFakeShiftLeft > 0 && count < 5 {
+				time.Sleep(5 * time.Millisecond)
+				count++
+			}
 		}
+		fmt.Printf("Sendding %d Shift+Left via XTestFakeKeyEvent\n", n)
+		time.Sleep(20 * time.Millisecond)
+		x11SendShiftLeft(n, e.shiftRightIsPressing, 0)
+		time.Sleep(time.Duration(n) * 20 * time.Millisecond)
 		sleep()
 	} else if e.inSurroundingTextList() {
 		fmt.Printf("Sendding %d backspace via SurroundingText\n", n)
@@ -222,8 +238,8 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 		time.Sleep(10 * time.Millisecond)
 		fmt.Printf("Sendding %d backspace via D_ForwardKeyEvent\n", n)
 		for i := 0; i < n; i++ {
-			e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, 0)
-			e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, IBUS_RELEASE_MASK)
+			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, 0)
+			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, IBUS_RELEASE_MASK)
 			time.Sleep(5 * time.Millisecond)
 		}
 		time.Sleep(10 * time.Millisecond)
@@ -231,21 +247,12 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 		time.Sleep(10 * time.Millisecond)
 		log.Printf("Sendding %d backspace via ForwardKeyEvent\n", n)
 
-		if e.inChromeFamily() { // workaround for chrome's address bar
-			for i := 0; i < n; i++ {
-				e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, 0)
-				e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, IBUS_RELEASE_MASK)
-			}
-			time.Sleep(time.Duration(n) * 20 * time.Millisecond)
-			time.Sleep(40 * time.Millisecond)
-		} else {
-			for i := 0; i < n; i++ {
-				e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, 0)
-				e.ForwardKeyEvent(IBUS_BackSpace, 0x16-8, IBUS_RELEASE_MASK)
-				time.Sleep(5 * time.Millisecond)
-			}
-			time.Sleep(10 * time.Millisecond)
+		for i := 0; i < n; i++ {
+			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, 0)
+			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, IBUS_RELEASE_MASK)
+			time.Sleep(5 * time.Millisecond)
 		}
+		time.Sleep(10 * time.Millisecond)
 	} else {
 		fmt.Println("There's something wrong with wmClasses")
 	}
@@ -253,6 +260,7 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 
 func (e *IBusBambooEngine) resetFakeBackspace() {
 	e.nFakeBackSpace = 0
+	e.nFakeShiftLeft = 0
 }
 
 func (e *IBusBambooEngine) SendText(rs []rune) {

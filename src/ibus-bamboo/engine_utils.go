@@ -118,12 +118,35 @@ func (e *IBusBambooEngine) resetBuffer() {
 }
 
 func (e *IBusBambooEngine) processShiftKey(keyVal, state uint32) bool {
-	if keyVal == IBUS_Shift_L || keyVal == IBUS_Shift_R { // when press one Shift key
+	if keyVal == IBUS_Shift_L || keyVal == IBUS_Shift_R {
+		// when press one Shift key
 		if state&IBUS_SHIFT_MASK != 0 && state&IBUS_RELEASE_MASK != 0 &&
 			!e.lastKeyWithShift && e.config.IBflags&IBimQuickSwitchEnabled != 0 {
 			e.englishMode = !e.englishMode
 			notify(e.englishMode)
 			e.resetBuffer()
+		}
+		// else
+		if state&IBUS_SHIFT_MASK == 0 && state&IBUS_RELEASE_MASK == 0 &&
+			e.nFakeShiftLeft == 0 {
+			e.shiftRightIsPressing = keyVal == IBUS_Shift_R
+		}
+		return true
+	}
+	return false
+}
+
+func (e *IBusBambooEngine) isIgnoredKey(keyVal, state uint32) bool {
+	if state&IBUS_RELEASE_MASK != 0 {
+		//Ignore key-up event
+		return true
+	}
+	if keyVal == IBUS_Caps_Lock {
+		return true
+	}
+	if e.inExceptedList() {
+		if e.isInputModeLTOpened || keyVal == IBUS_OpenLookupTable {
+			return false
 		}
 		return true
 	}
@@ -139,6 +162,7 @@ func (e *IBusBambooEngine) openLookupTable() {
 		e.config.PreeditWhiteList,
 		e.config.SurroundingTextWhiteList,
 		e.config.ForwardKeyWhiteList,
+		e.config.X11ShiftLeftWhiteList,
 		e.config.X11ClipboardWhiteList,
 		e.config.DirectForwardKeyWhiteList,
 		e.config.ExceptedList,
@@ -153,12 +177,13 @@ func (e *IBusBambooEngine) openLookupTable() {
 		"Cấu hình mặc định (Pre-edit)",
 		"Sửa lỗi gạch chân (Surrounding Text)",
 		"Sửa lỗi gạch chân (Forward KeyEvent)",
-		"Sửa lỗi gạch chân (XTestFakeKeyEvent)",
+		"Sửa lỗi gạch chân (XTestFakeKeyEvent 1)",
+		"Sửa lỗi gạch chân (XTestFakeKeyEvent 2)",
 		"Sửa lỗi gạch chân (Forward as commit)",
 		"Thêm vào danh sách loại trừ (" + wmClass + ")",
 	}
 
-	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (1/2/3/4/5/6) để lưu tùy chọn của bạn"), true)
+	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (1/2/3/4/5/6/7) để lưu tùy chọn của bạn"), true)
 
 	lt := ibus.NewLookupTable()
 	lt.PageSize = uint32(len(lookupTableConfiguration))
@@ -232,6 +257,7 @@ func (e *IBusBambooEngine) commitInputModeCandidate() {
 	var reset = func() {
 		e.config.PreeditWhiteList = removeFromWhiteList(e.config.PreeditWhiteList, wmClasses)
 		e.config.X11ClipboardWhiteList = removeFromWhiteList(e.config.X11ClipboardWhiteList, wmClasses)
+		e.config.X11ShiftLeftWhiteList = removeFromWhiteList(e.config.X11ShiftLeftWhiteList, wmClasses)
 		e.config.ForwardKeyWhiteList = removeFromWhiteList(e.config.ForwardKeyWhiteList, wmClasses)
 		e.config.SurroundingTextWhiteList = removeFromWhiteList(e.config.SurroundingTextWhiteList, wmClasses)
 		e.config.DirectForwardKeyWhiteList = removeFromWhiteList(e.config.DirectForwardKeyWhiteList, wmClasses)
@@ -246,10 +272,12 @@ func (e *IBusBambooEngine) commitInputModeCandidate() {
 	case 3:
 		e.config.ForwardKeyWhiteList = addToWhiteList(e.config.ForwardKeyWhiteList, wmClasses)
 	case 4:
-		e.config.X11ClipboardWhiteList = addToWhiteList(e.config.X11ClipboardWhiteList, wmClasses)
+		e.config.X11ShiftLeftWhiteList = addToWhiteList(e.config.X11ShiftLeftWhiteList, wmClasses)
 	case 5:
-		e.config.DirectForwardKeyWhiteList = addToWhiteList(e.config.DirectForwardKeyWhiteList, wmClasses)
+		e.config.X11ClipboardWhiteList = addToWhiteList(e.config.X11ClipboardWhiteList, wmClasses)
 	case 6:
+		e.config.DirectForwardKeyWhiteList = addToWhiteList(e.config.DirectForwardKeyWhiteList, wmClasses)
+	case 7:
 		e.config.ExceptedList = addToWhiteList(e.config.ExceptedList, wmClasses)
 	}
 
@@ -270,23 +298,6 @@ func (e *IBusBambooEngine) closeInputModeCandidates() {
 func (e *IBusBambooEngine) updateInputModeLT() {
 	var visible = len(e.inputModeLookupTable.Candidates) > 0
 	e.UpdateLookupTable(e.inputModeLookupTable, visible)
-}
-
-func (e *IBusBambooEngine) isIgnoredKey(keyVal, state uint32) bool {
-	if state&IBUS_RELEASE_MASK != 0 {
-		//Ignore key-up event
-		return true
-	}
-	if keyVal == IBUS_Caps_Lock {
-		return true
-	}
-	if e.inExceptedList() {
-		if e.isInputModeLTOpened || keyVal == IBUS_OpenLookupTable {
-			return false
-		}
-		return true
-	}
-	return false
 }
 
 func (e *IBusBambooEngine) isValidState(state uint32) bool {
@@ -322,7 +333,7 @@ func (e *IBusBambooEngine) inPreeditList() bool {
 
 func (e *IBusBambooEngine) inBackspaceWhiteList() bool {
 	return e.inForwardKeyList() || e.inXTestFakeKeyEventList() ||
-		e.inSurroundingTextList() || e.inDirectForwardKeyList()
+		e.inSurroundingTextList() || e.inDirectForwardKeyList() || e.inX11ShiftLeftList()
 }
 
 func (e *IBusBambooEngine) inSurroundingTextList() bool {
@@ -337,20 +348,16 @@ func (e *IBusBambooEngine) inForwardKeyList() bool {
 	return e.config.IBflags&IBfakeBackspaceEnabled != 0 || inStringList(e.config.ForwardKeyWhiteList, e.wmClasses)
 }
 
+func (e *IBusBambooEngine) inX11ShiftLeftList() bool {
+	return inStringList(e.config.X11ShiftLeftWhiteList, e.wmClasses)
+}
+
 func (e *IBusBambooEngine) inXTestFakeKeyEventList() bool {
 	return inStringList(e.config.X11ClipboardWhiteList, e.wmClasses)
 }
 
 func (e *IBusBambooEngine) inBrowserList() bool {
 	return inStringList(DefaultBrowserList, e.wmClasses)
-}
-
-func (e *IBusBambooEngine) inChromeFamily() bool {
-	var list = []string{
-		"google-chrome:Google-chrome",
-		"chromium-browser:Chromium-browser",
-	}
-	return inStringList(list, e.wmClasses)
 }
 
 func notify(enMode bool) {

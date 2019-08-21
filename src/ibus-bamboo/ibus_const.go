@@ -62,6 +62,10 @@ const (
 	IBUS_CAP_SURROUNDING_TEXT = 1 << 5 //Client can provide surround text, or IME can handle surround text.
 )
 const (
+	XK_BackSpace = 0x16
+	XK_Left      = 0x71
+)
+const (
 	IBUS_Colon            = 0x03a
 	IBUS_Left             = 0xFF51
 	IBUS_Up               = 0xFF52

@@ -36,6 +36,7 @@ extern void mouse_recording_init();
 extern void mouse_recording_exit();
 extern void x11SendBackspace(int n, int timeout);
 extern void x11SendShiftR();
+extern void x11SendShiftLeft(int n, int r, int timeout);
 extern void setXIgnoreErrorHandler();
 extern char* x11GetFocusWindowClass();
 */
@@ -99,6 +100,14 @@ func x11Paste(n int) {
 
 func x11SendShiftR() {
 	C.x11SendShiftR()
+}
+
+func x11SendShiftLeft(n int, shiftRightIsPressing bool, timeout int) {
+	var r = 0
+	if shiftRightIsPressing {
+		r = 1
+	}
+	C.x11SendShiftLeft(C.int(n), C.int(r), C.int(timeout))
 }
 
 func x11SendBackspace(n int, timeout int) {
