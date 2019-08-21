@@ -211,11 +211,11 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 				time.Sleep(5 * time.Millisecond)
 				count++
 			}
-			time.Sleep(20 * time.Millisecond)
 		}
 		fmt.Printf("Sendding %d backspace via XTestFakeKeyEvent\n", n)
 		time.Sleep(20 * time.Millisecond)
 		x11SendBackspace(n, 0)
+		time.Sleep(time.Duration(n) * 20 * time.Millisecond)
 		sleep()
 	} else if e.inX11ShiftLeftList() {
 		var sleep = func() {
@@ -226,9 +226,9 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 			}
 		}
 		fmt.Printf("Sendding %d Shift+Left via XTestFakeKeyEvent\n", n)
-		time.Sleep(20 * time.Millisecond)
+		time.Sleep(30 * time.Millisecond)
 		x11SendShiftLeft(n, e.shiftRightIsPressing, 0)
-		time.Sleep(time.Duration(n) * 20 * time.Millisecond)
+		time.Sleep(time.Duration(n) * 30 * time.Millisecond)
 		sleep()
 	} else if e.inSurroundingTextList() {
 		fmt.Printf("Sendding %d backspace via SurroundingText\n", n)
@@ -242,7 +242,7 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, IBUS_RELEASE_MASK)
 			time.Sleep(5 * time.Millisecond)
 		}
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(20 * time.Millisecond)
 	} else if e.inForwardKeyList() {
 		time.Sleep(10 * time.Millisecond)
 		log.Printf("Sendding %d backspace via ForwardKeyEvent\n", n)
@@ -252,7 +252,7 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, IBUS_RELEASE_MASK)
 			time.Sleep(5 * time.Millisecond)
 		}
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(20 * time.Millisecond)
 	} else {
 		fmt.Println("There's something wrong with wmClasses")
 	}

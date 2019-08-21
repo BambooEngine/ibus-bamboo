@@ -22,7 +22,7 @@
     <name>org.freedesktop.IBus.bamboo</name>
     <description>Vietnamese input engine for IBus</description>
     <exec>/usr/lib/ibus-engine-bamboo --ibus</exec>
-    <version>0.5.3</version>
+    <version>0.5.4</version>
 	<author>Luong Thanh Lam &lt;ltlam93@gmail.com&gt;</author>
     <license>GPLv3</license>
     <homepage>https://github.com/BambooEngine/ibus-bamboo/</homepage>
