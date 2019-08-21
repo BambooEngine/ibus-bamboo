@@ -40,7 +40,7 @@ IBus Bamboo - Bộ gõ tiếng Việt cho Linux
 ```sh
 sudo add-apt-repository ppa:bamboo-engine/ibus-bamboo
 sudo apt-get update
-sudo apt-get install ibus-bamboo -y
+sudo apt-get install ibus-bamboo
 ibus restart
 ```
 
@@ -63,6 +63,8 @@ sudo xbps-install -S ibus-bamboo
 
 ## Hướng dẫn sử dụng
 Điểm khác biệt giữa `ibus-bamboo` và các bộ gõ khác là `ibus-bamboo` cung cấp nhiều chế độ gõ khác nhau (1 chế độ gõ có gạch chân và 5 chế độ gõ không gạch chân; tránh nhầm lẫn **chế độ gõ** với **kiểu gõ**, các kiểu gõ bao gồm `telex`, `vni`, ...).
+Một số ứng dụng có thể hoạt động tốt với chế độ gõ này trong khi không hoạt động tốt với chế độ gõ khác.
+
 Để chuyển đổi giữa các chế độ gõ, chỉ cần nhấn vào một khung nhập liệu (một cái hộp để nhập văn bản) nào đó, sau đó nhấn tổ hợp <kbd>Shift</kbd>+<kbd>~</kbd>, một bảng với những chế độ gõ hiện có sẽ xuất hiện, bạn chỉ cần nhấn phím số tương ứng để lựa chọn.
 
 **Một số lưu ý:**
