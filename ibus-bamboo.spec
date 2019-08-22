@@ -1,4 +1,5 @@
 %define engine_name bamboo
+%define ibus_dir     /usr/share/ibus
 %define engine_dir   /usr/share/ibus-%{engine_name}
 %define ibus_comp_dir /usr/share/ibus/component
 
@@ -18,16 +19,18 @@ Requires: ibus, libX11, libXtst
 A Vietnamese IME for IBus using Bamboo Engine.
 Bộ gõ tiếng Việt mã nguồn mở hỗ trợ hầu hết các bảng mã thông dụng, các kiểu gõ tiếng Việt phổ biến, bỏ dấu thông minh, kiểm tra chính tả, gõ tắt,...
 
+%global debug_package %{nil}
 %prep
-%setup -q -n
+%setup
 
 %build
 make build
 
 %install
-make install DESTDIR=${buildroot}
+make DESTDIR=%{buildroot} install
 
 %files
+%defattr(-,root,root)
 %doc README.md
 %license LICENSE
 %dir %{ibus_dir}
