@@ -45,14 +45,20 @@ ibus restart
 ```
 
 ### Arch Linux và các distro tương tự
-Với Arch Linux, bạn có thể cài đặt bằng cách chạy lệnh sau:
+Với Arch Linux, bạn có thể build từ AUR bằng yay:
 ```sh
-wget https://raw.githubusercontent.com/BambooEngine/ibus-bamboo/master/archlinux/install.sh
-chmod +x install.sh
-./install.sh
+yay -S ibus-bamboo
 ```
-
-Sau đó script sẽ cài đặt `ibus-bamboo` cho bạn.
+Hoặc bằng pamac:
+```sh
+pamac build ibus-bamboo
+```
+Hoặc build build từ file PKGBUILD:
+```sh
+git clone https://aur.archlinux.org/ibus-bamboo.git
+cd ibus-bamboo
+makepkg -si
+```
 
 ### Void Linux
 `ibus-bamboo` đã có mặt trên repo chính của Void Linux. Các bạn có thể cài đặt trực tiếp.
