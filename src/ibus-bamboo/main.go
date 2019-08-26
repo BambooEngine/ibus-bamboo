@@ -43,7 +43,7 @@ func init() {
 		os.Chdir(DataDir)
 	}
 	go func() {
-		emojiMap, _ = loadEmojiOne(DictEmojiOne)
+		loadEmojiOne(DictEmojiOne)
 		var dictionary, _ = loadDictionary(DictVietnameseCm)
 		bamboo.AddDictionaryToSpellingTrie(dictionary)
 	}()

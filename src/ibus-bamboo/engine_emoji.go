@@ -90,7 +90,7 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 		}
 	} else if (keyRune >= 'a' && keyRune <= 'z') || (keyRune >= 'A' && keyRune <= 'Z') {
 		var testStr = string(append(e.emoji.keys, keyRune))
-		if raw == ":" && e.emoji.TestString(testStr) == bamboo.FindResultNotMatch {
+		if raw == ":" && e.emoji.MatchString(testStr) == false {
 			e.emoji.Reset()
 		}
 		e.emoji.ProcessKey(keyRune)
@@ -107,7 +107,7 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 		return false, nil
 	} else if (keyRune > ' ' && keyRune <= '~') || bamboo.IsWordBreakSymbol(keyRune) {
 		var testStr = string(append(e.emoji.keys, keyRune))
-		if raw == ":" && e.emoji.TestString(testStr) == bamboo.FindResultNotMatch {
+		if raw == ":" && e.emoji.MatchString(testStr) == false {
 			e.emoji.Reset()
 		}
 		e.emoji.ProcessKey(keyRune)
