@@ -69,22 +69,21 @@ func (e *IBusBambooEngine) init() {
 		startMouseTracking()
 	}
 	onMouseMove = func() {
-		e.Lock()
-		defer e.Unlock()
-		e.ignorePreedit = false
-		x11ClipboardReset()
-		e.resetFakeBackspace()
-		e.resetBuffer()
+		if e.inPreeditList() || !e.inBackspaceWhiteList() {
+			e.commitPreedit(e.getPreeditString())
+		}
 	}
 	onMouseClick = func() {
-		e.firstTimeSendingBS = true
+		e.isFirstTimeSendingBS = true
 		if e.isEmojiLTOpened {
 			e.refreshEmojiCandidate()
 		} else {
-			onMouseMove()
+			e.resetFakeBackspace()
+			e.resetBuffer()
 			if e.capabilities&IBUS_CAP_SURROUNDING_TEXT != 0 {
 				//engine.ForwardKeyEvent(IBUS_Shift_R, 0, IBUS_RELEASE_MASK)
 				x11SendShiftR()
+				e.isSurroundingTextReady = true
 			}
 		}
 	}
@@ -111,7 +110,7 @@ func (e *IBusBambooEngine) resetBuffer() {
 		return
 	}
 	if e.inPreeditList() || !e.inBackspaceWhiteList() {
-		e.commitPreedit()
+		e.commitPreedit(e.getPreeditString())
 	} else {
 		e.preeditor.Reset()
 	}
@@ -121,15 +120,10 @@ func (e *IBusBambooEngine) processShiftKey(keyVal, state uint32) bool {
 	if keyVal == IBUS_Shift_L || keyVal == IBUS_Shift_R {
 		// when press one Shift key
 		if state&IBUS_SHIFT_MASK != 0 && state&IBUS_RELEASE_MASK != 0 &&
-			!e.lastKeyWithShift && e.config.IBflags&IBimQuickSwitchEnabled != 0 {
+			e.config.IBflags&IBimQuickSwitchEnabled != 0 {
 			e.englishMode = !e.englishMode
 			notify(e.englishMode)
 			e.resetBuffer()
-		}
-		// else
-		if state&IBUS_SHIFT_MASK == 0 && state&IBUS_RELEASE_MASK == 0 &&
-			e.nFakeShiftLeft == 0 {
-			e.shiftRightIsPressing = keyVal == IBUS_Shift_R
 		}
 		return true
 	}
@@ -317,7 +311,7 @@ func (e *IBusBambooEngine) canProcessKey(keyVal, state uint32) bool {
 		return true
 	}
 	var keyRune = rune(keyVal)
-	if bamboo.IsWordBreakSymbol(keyRune) {
+	if bamboo.IsWordBreakSymbol(keyRune) || ('0' <= keyVal && keyVal <= '9') {
 		return true
 	}
 	return e.preeditor.CanProcessKey(keyRune)
@@ -350,10 +344,6 @@ func (e *IBusBambooEngine) inDirectForwardKeyList() bool {
 
 func (e *IBusBambooEngine) inForwardKeyList() bool {
 	return e.config.IBflags&IBfakeBackspaceEnabled != 0 || inStringList(e.config.ForwardKeyWhiteList, e.wmClasses)
-}
-
-func (e *IBusBambooEngine) inX11ShiftLeftList() bool {
-	return inStringList(e.config.X11ShiftLeftWhiteList, e.wmClasses)
 }
 
 func (e *IBusBambooEngine) inXTestFakeKeyEventList() bool {

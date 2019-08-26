@@ -33,26 +33,22 @@ import (
 type IBusBambooEngine struct {
 	sync.Mutex
 	ibus.Engine
-	preeditor            bamboo.IEngine
-	engineName           string
-	config               *Config
-	propList             *ibus.PropList
-	ignorePreedit        bool
-	englishMode          bool
-	macroTable           *MacroTable
-	wmClasses            string
-	isInputModeLTOpened  bool
-	isEmojiLTOpened      bool
-	emojiLookupTable     *ibus.LookupTable
-	inputModeLookupTable *ibus.LookupTable
-	capabilities         uint32
-	nFakeBackSpace       int
-	firstTimeSendingBS   bool
-	isFocusOut           bool
-	emoji                *EmojiEngine
-	lastKeyWithShift     bool
-	shiftRightIsPressing bool
-	nFakeShiftLeft       int
+	preeditor              bamboo.IEngine
+	engineName             string
+	config                 *Config
+	propList               *ibus.PropList
+	englishMode            bool
+	macroTable             *MacroTable
+	wmClasses              string
+	isInputModeLTOpened    bool
+	isEmojiLTOpened        bool
+	emojiLookupTable       *ibus.LookupTable
+	inputModeLookupTable   *ibus.LookupTable
+	capabilities           uint32
+	nFakeBackSpace         int
+	isFirstTimeSendingBS   bool
+	emoji                  *EmojiEngine
+	isSurroundingTextReady bool
 }
 
 /**
@@ -82,14 +78,12 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 		e.resetBuffer()
 		e.isInputModeLTOpened = true
 		e.openLookupTable()
-		e.lastKeyWithShift = true
 		return true, nil
 	}
 	if e.config.IBflags&IBemojiDisabled == 0 && keyVal == IBUS_Colon && e.isEmojiLTOpened == false {
 		e.resetBuffer()
 		e.isEmojiLTOpened = true
 		e.openEmojiList()
-		e.lastKeyWithShift = true
 		return true, nil
 	}
 	if e.isInputModeLTOpened {
@@ -99,7 +93,6 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 		return e.emojiProcessKeyEvent(keyVal, keyCode, state)
 	}
 	if e.englishMode {
-		e.updateLastKeyWithShift(keyVal, state)
 		return false, nil
 	}
 	if e.inPreeditList() {
@@ -119,9 +112,8 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 
 	e.RegisterProperties(e.propList)
 	e.RequireSurroundingText()
-	e.isFocusOut = false
 	if oldWmClasses != e.wmClasses {
-		e.firstTimeSendingBS = true
+		e.isFirstTimeSendingBS = true
 		e.resetBuffer()
 		e.resetFakeBackspace()
 		// x11ClipboardReset()
@@ -132,7 +124,6 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 
 func (e *IBusBambooEngine) FocusOut() *dbus.Error {
 	log.Print("FocusOut.")
-	e.isFocusOut = true
 	//e.wmClasses = ""
 	return nil
 }
@@ -157,10 +148,12 @@ func (e *IBusBambooEngine) Disable() *dbus.Error {
 
 //@method(in_signature="vuu")
 func (e *IBusBambooEngine) SetSurroundingText(text dbus.Variant, cursorPos uint32, anchorPos uint32) *dbus.Error {
-	if e.getRawKeyLen() > 0 {
+	if !e.isSurroundingTextReady {
+		//fmt.Println("Surrounding Text is not ready yet.")
 		return nil
 	}
 	defer func() {
+		e.isSurroundingTextReady = false
 		if err := recover(); err != nil {
 			fmt.Println(err)
 		}

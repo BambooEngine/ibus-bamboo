@@ -28,10 +28,13 @@ import (
 )
 
 func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
-	if e.getRawKeyLen() == 0 {
-		e.RequireSurroundingText()
+	if isMovementKey(keyVal) {
+		e.preeditor.Reset()
+		e.resetFakeBackspace()
+		e.isSurroundingTextReady = true
+		return false, nil
 	}
-	if e.inXTestFakeKeyEventList() || e.inX11ShiftLeftList() || e.inSurroundingTextList() {
+	if e.inXTestFakeKeyEventList() || e.inSurroundingTextList() {
 		// we don't want to use ForwardKeyEvent api in X11 XTestFakeKeyEvent and Surrounding Text mode
 		var sleep = func() {
 			for len(keyPressChan) > 0 {
@@ -39,15 +42,12 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 			}
 		}
 		if keyVal == IBUS_Left && state&IBUS_SHIFT_MASK != 0 {
-			if e.nFakeShiftLeft > 0 {
-				e.nFakeShiftLeft--
-			}
 			return false, nil
 		}
 		if !e.isValidState(state) || !e.canProcessKey(keyVal, state) {
 			e.preeditor.Reset()
 			e.resetFakeBackspace()
-			e.firstTimeSendingBS = true
+			e.isFirstTimeSendingBS = true
 			sleep()
 			return false, nil
 		}
@@ -56,7 +56,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 				e.nFakeBackSpace--
 				return false, nil
 			} else {
-				e.preeditor.RemoveLastChar()
+				e.preeditor.RemoveLastChar(false)
 			}
 			sleep()
 			return false, nil
@@ -69,10 +69,9 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 }
 
 func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
-	defer e.updateLastKeyWithShift(keyVal, state)
 	if !e.isValidState(state) {
 		e.preeditor.Reset()
-		e.firstTimeSendingBS = true
+		e.isFirstTimeSendingBS = true
 		e.ForwardKeyEvent(keyVal, keyCode, state)
 		return
 	}
@@ -80,20 +79,19 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 	if keyVal == IBUS_BackSpace {
 		if e.config.IBflags&IBautoNonVnRestore == 0 || e.inSLForwardKeyList() {
 			if e.getRawKeyLen() > 0 {
-				e.preeditor.RemoveLastChar()
+				e.preeditor.RemoveLastChar(false)
 			}
 			e.ForwardKeyEvent(keyVal, keyCode, state)
 			return
 		}
 		if e.getRawKeyLen() > 0 {
-			oldRunes := []rune(e.getPreeditString())
-			e.preeditor.RemoveLastChar()
-			newRunes := []rune(e.getPreeditString())
-			if len(oldRunes) == 0 {
+			oldText := e.getPreeditString()
+			e.preeditor.RemoveLastChar(true)
+			if oldText == "" {
 				e.ForwardKeyEvent(keyVal, keyCode, state)
 				return
 			}
-			e.updatePreviousText(newRunes, oldRunes, state)
+			e.updatePreviousText(e.getPreeditString(), oldText)
 			return
 		}
 		e.ForwardKeyEvent(keyVal, keyCode, state)
@@ -104,20 +102,31 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 		if state&IBUS_LOCK_MASK != 0 {
 			keyRune = toUpper(keyRune)
 		}
-		oldRunes := []rune(e.getPreeditString())
-		e.preeditor.ProcessKey(keyRune, e.getMode())
-		newRunes := []rune(e.getPreeditString())
-		e.updatePreviousText(newRunes, oldRunes, state)
+		var oMode = bamboo.VietnameseMode
+		if e.shouldFallbackToEnglish() {
+			oMode = bamboo.EnglishMode
+		}
+		oldText := e.preeditor.GetProcessedString(oMode | bamboo.WithEffectKeys)
+		e.preeditor.ProcessKey(keyRune, e.getInputMode())
+		var vnSeq = e.preeditor.GetProcessedString(oMode | bamboo.WithEffectKeys)
+		if len(vnSeq) > 0 && rune(vnSeq[len(vnSeq)-1]) == keyRune && bamboo.IsWordBreakSymbol(keyRune) {
+			e.updatePreviousText(vnSeq, oldText)
+			e.preeditor.Reset()
+		} else {
+			if e.shouldFallbackToEnglish() {
+				e.preeditor.RestoreLastWord()
+			}
+			e.updatePreviousText(e.getPreeditString(), oldText)
+		}
 		return
-	} else if bamboo.IsWordBreakSymbol(keyRune) {
+	} else if bamboo.IsWordBreakSymbol(keyRune) || ('0' <= keyVal && keyVal <= '9') {
 		if keyVal == IBUS_Space && state&IBUS_SHIFT_MASK != 0 &&
-			e.config.IBflags&IBrestoreKeyStrokesEnabled != 0 && !e.lastKeyWithShift {
+			e.config.IBflags&IBrestoreKeyStrokesEnabled != 0 {
 			// restore key strokes
 			var vnSeq = e.getPreeditString()
 			if bamboo.HasVietnameseChar(vnSeq) {
 				e.preeditor.RestoreLastWord()
-				newRunes := []rune(e.getPreeditString())
-				e.updatePreviousText(newRunes, []rune(vnSeq), state)
+				e.updatePreviousText(e.getPreeditString(), vnSeq)
 				return
 			} else {
 				e.SendText([]rune{keyRune})
@@ -130,16 +139,15 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 			// macro processing
 			macText := e.expandMacro(processedStr)
 			macText = macText + string(keyRune)
-			e.updatePreviousText([]rune(macText), []rune(processedStr), state)
+			e.updatePreviousText(macText, processedStr)
 			e.preeditor.Reset()
 			return
 		}
 		if e.mustFallbackToEnglish() {
-			oldRunes := []rune(e.getPreeditString())
+			oldText := e.getPreeditString()
 			e.preeditor.RestoreLastWord()
-			newRunes := []rune(e.getComposedString())
-			newRunes = append(newRunes, keyRune)
-			e.updatePreviousText(newRunes, oldRunes, state)
+			newText := e.getComposedString() + string(keyRune)
+			e.updatePreviousText(newText, oldText)
 			e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
 			return
 		}
@@ -147,12 +155,13 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 		e.SendText([]rune{keyRune})
 		return
 	}
-	e.lastKeyWithShift = false
 	e.preeditor.Reset()
 	e.ForwardKeyEvent(keyVal, keyCode, state)
 }
 
-func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state uint32) {
+func (e *IBusBambooEngine) updatePreviousText(newText, oldText string) {
+	var oldRunes = []rune(oldText)
+	var newRunes = []rune(newText)
 	oldLen := len(oldRunes)
 	newLen := len(newRunes)
 	minLen := oldLen
@@ -173,13 +182,13 @@ func (e *IBusBambooEngine) updatePreviousText(newRunes, oldRunes []rune, state u
 
 	nBackSpace := 0
 	// workaround for chrome and firefox's address bar
-	if e.firstTimeSendingBS && diffFrom < newLen && diffFrom < oldLen && e.inBrowserList() &&
-		!e.inX11ShiftLeftList() && !e.inSLForwardKeyList() {
+	if e.isFirstTimeSendingBS && diffFrom < newLen && diffFrom < oldLen && e.inBrowserList() &&
+		!e.inSLForwardKeyList() {
 		fmt.Println("Append a deadkey")
 		e.SendText([]rune(" "))
 		nBackSpace += 1
 		time.Sleep(10 * time.Millisecond)
-		e.firstTimeSendingBS = false
+		e.isFirstTimeSendingBS = false
 	}
 
 	if diffFrom < oldLen {
@@ -193,8 +202,6 @@ func (e *IBusBambooEngine) sendBackspaceAndNewRunes(nBackSpace int, newRunes []r
 	if nBackSpace > 0 {
 		if e.inXTestFakeKeyEventList() {
 			e.nFakeBackSpace = nBackSpace
-		} else if e.inX11ShiftLeftList() {
-			e.nFakeShiftLeft = nBackSpace
 		}
 		e.SendBackSpace(nBackSpace)
 	}
@@ -218,26 +225,13 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 		x11SendBackspace(n, 0)
 		time.Sleep(time.Duration(n) * 20 * time.Millisecond)
 		sleep()
-	} else if e.inX11ShiftLeftList() {
-		var sleep = func() {
-			var count = 0
-			for e.nFakeShiftLeft > 0 && count < 5 {
-				time.Sleep(5 * time.Millisecond)
-				count++
-			}
-		}
-		fmt.Printf("Sendding %d Shift+Left via XTestFakeKeyEvent\n", n)
-		time.Sleep(30 * time.Millisecond)
-		x11SendShiftLeft(n, e.shiftRightIsPressing, 0)
-		time.Sleep(time.Duration(n) * 30 * time.Millisecond)
-		sleep()
 	} else if e.inSurroundingTextList() {
 		fmt.Printf("Sendding %d backspace via SurroundingText\n", n)
 		e.DeleteSurroundingText(-int32(n), uint32(n))
 		time.Sleep(20 * time.Millisecond)
 	} else if e.inDirectForwardKeyList() {
 		time.Sleep(10 * time.Millisecond)
-		fmt.Printf("Sendding %d backspace via D_ForwardKeyEvent\n", n)
+		fmt.Printf("Sendding %d backspace via ForwardKeyEvent III\n", n)
 		for i := 0; i < n; i++ {
 			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, 0)
 			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, IBUS_RELEASE_MASK)
@@ -246,7 +240,7 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 		time.Sleep(20 * time.Millisecond)
 	} else if e.inSLForwardKeyList() {
 		time.Sleep(30 * time.Millisecond)
-		log.Printf("Sendding %d Shift+Left via ForwardKeyEvent\n", n)
+		log.Printf("Sendding %d Shift+Left via ForwardKeyEvent II\n", n)
 
 		for i := 0; i < n; i++ {
 			e.ForwardKeyEvent(IBUS_Left, XK_Left-8, IBUS_SHIFT_MASK)
@@ -255,7 +249,7 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 		time.Sleep(time.Duration(n) * 30 * time.Millisecond)
 	} else if e.inForwardKeyList() {
 		time.Sleep(10 * time.Millisecond)
-		log.Printf("Sendding %d backspace via ForwardKeyEvent\n", n)
+		log.Printf("Sendding %d backspace via ForwardKeyEvent I\n", n)
 
 		for i := 0; i < n; i++ {
 			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, 0)
@@ -270,7 +264,6 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 
 func (e *IBusBambooEngine) resetFakeBackspace() {
 	e.nFakeBackSpace = 0
-	e.nFakeShiftLeft = 0
 }
 
 func (e *IBusBambooEngine) SendText(rs []rune) {

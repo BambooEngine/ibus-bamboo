@@ -98,7 +98,6 @@ type Config struct {
 	SLForwardKeyWhiteList     []string
 	DirectForwardKeyWhiteList []string
 	SurroundingTextWhiteList  []string
-	X11ShiftLeftWhiteList     []string
 }
 
 func getConfigDir() string {
@@ -281,6 +280,17 @@ func loadDictionary(dataFiles ...string) (map[string]bool, error) {
 		f.Close()
 	}
 	return dictionary, nil
+}
+
+func isMovementKey(keyVal uint32) bool {
+	var list = []uint32{IBUS_Left, IBUS_Right, IBUS_Up, IBUS_Down, IBUS_Page_Down, IBUS_Page_Up, IBUS_End, IBUS_KP_Down,
+		IBUS_KP_End, IBUS_KP_Left, IBUS_KP_Next, IBUS_KP_Page_Down, IBUS_KP_Page_Up, IBUS_KP_Right, IBUS_KP_Up}
+	for _, item := range list {
+		if item == keyVal {
+			return true
+		}
+	}
+	return false
 }
 
 var vnSymMapping = map[rune]uint32{

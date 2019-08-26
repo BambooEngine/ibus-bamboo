@@ -19,11 +19,17 @@ var WordBreakSymbols = []rune{
 }
 
 func IsWordBreakSymbol(key rune) bool {
-	if key >= '0' && key <= '9' {
-		return true
-	}
 	for _, c := range WordBreakSymbols {
 		if c == key {
+			return true
+		}
+	}
+	return false
+}
+
+func ContainWordBreakSymbol(s string) bool {
+	for _, c := range s {
+		if IsWordBreakSymbol(c) {
 			return true
 		}
 	}
