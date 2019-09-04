@@ -4,7 +4,7 @@
 %define ibus_comp_dir /usr/share/ibus/component
 
 Name: ibus-bamboo
-Version: 0.5.5
+Version: 0.5.6
 Release: 1%{?dist}
 Summary: A Vietnamese input method for IBus
 
