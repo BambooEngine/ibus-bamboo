@@ -35,7 +35,7 @@ func TestEmojiFindResult(t *testing.T) {
 		t.Errorf("Finding result for emoji gri, expected true, got %v", be.MatchString("gri"))
 	}
 	if be.MatchString("grin") != true {
-		t.Errorf("Finding result for emoji grinning, expected true, got %v", be.MatchString("grinning"))
+		t.Errorf("Finding result for emoji grin, expected true, got %v", be.MatchString("grinning"))
 	}
 }
 
@@ -52,6 +52,6 @@ func TestFilterEmoji(t *testing.T) {
 	}
 	var grinnings3 = be.Filter("grin")
 	if !inStringList(grinnings3, "😀") {
-		t.Errorf("Filtering emojo `grinning`, expected %v, got %v", true, inStringList(grinnings3, "😀"))
+		t.Errorf("Filtering emojo `grin`, expected %v, got %v", true, inStringList(grinnings3, "😀"))
 	}
 }
