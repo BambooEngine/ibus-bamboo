@@ -125,7 +125,7 @@ func getSpellingMatchResult(composition []*Transformation, mode Mode) uint8 {
 				break
 			}
 		}
-		if !haveValidTone(composition, lastTone) {
+		if !hasValidTone(composition, lastTone) {
 			return FindResultNotMatch
 		}
 	}
@@ -192,7 +192,7 @@ func findToneTarget(composition []*Transformation, stdStyle bool) *Transformatio
 		if _, found := findNextAppendingTransformation(composition, vowels[1]); found {
 			target = vowels[1]
 		} else {
-			var str = Flatten(getRightMostVowels(composition), EnglishMode|LowerCase)
+			var str = Flatten(getRightMostVowels(composition), EnglishMode|LowerCase|ToneLess|MarkLess)
 			if str == "oa" || str == "oe" || str == "uy" || str == "ue" || str == "uo" {
 				target = vowels[1]
 			} else {
@@ -200,7 +200,7 @@ func findToneTarget(composition []*Transformation, stdStyle bool) *Transformatio
 			}
 		}
 	} else if len(vowels) == 3 {
-		if Flatten(vowels, EnglishMode|LowerCase) == "uye" {
+		if Flatten(vowels, EnglishMode|LowerCase|ToneLess|MarkLess) == "uye" {
 			target = vowels[2]
 		} else {
 			target = vowels[1]
@@ -209,7 +209,7 @@ func findToneTarget(composition []*Transformation, stdStyle bool) *Transformatio
 	return target
 }
 
-func haveValidTone(composition []*Transformation, tone Tone) bool {
+func hasValidTone(composition []*Transformation, tone Tone) bool {
 	if tone == TONE_NONE || tone == TONE_ACUTE || tone == TONE_DOT {
 		return true
 	}
@@ -368,7 +368,7 @@ func findTarget(composition []*Transformation, applicableRules []Rule, flags uin
 		}
 		var target *Transformation = nil
 		if flags&EfreeToneMarking != 0 {
-			if haveValidTone(composition, Tone(applicableRule.Effect)) {
+			if hasValidTone(composition, Tone(applicableRule.Effect)) {
 				target = findToneTarget(composition, flags&EstdToneStyle != 0)
 			}
 		} else if lastAppending != nil && IsVowel(lastAppending.Rule.EffectOn) {
@@ -394,7 +394,7 @@ func generateUndoTransformations(composition []*Transformation, rules []Rule, fl
 			var lastAppending = findLastAppendingTrans(composition)
 			var target *Transformation
 			if flags&EfreeToneMarking != 0 {
-				if haveValidTone(composition, Tone(rule.Effect)) {
+				if hasValidTone(composition, Tone(rule.Effect)) {
 					target = findToneTarget(composition, flags&EstdToneStyle != 0)
 				}
 			} else if lastAppending != nil && IsVowel(lastAppending.Rule.EffectOn) {

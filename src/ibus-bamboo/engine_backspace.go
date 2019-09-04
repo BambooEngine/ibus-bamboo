@@ -76,6 +76,7 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 		return
 	}
 	var keyRune = rune(keyVal)
+	oldText := e.preeditor.GetProcessedString(bamboo.VietnameseMode | bamboo.WithEffectKeys)
 	if keyVal == IBUS_BackSpace {
 		if e.config.IBflags&IBautoNonVnRestore == 0 || e.inSLForwardKeyList() {
 			if e.getRawKeyLen() > 0 {
@@ -85,13 +86,12 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 			return
 		}
 		if e.getRawKeyLen() > 0 {
-			oldText := e.getPreeditString()
 			e.preeditor.RemoveLastChar(true)
 			if oldText == "" {
 				e.ForwardKeyEvent(keyVal, keyCode, state)
 				return
 			}
-			e.updatePreviousText(e.getPreeditString(), oldText)
+			e.updatePreviousText(e.preeditor.GetProcessedString(bamboo.VietnameseMode|bamboo.WithEffectKeys), oldText)
 			return
 		}
 		e.ForwardKeyEvent(keyVal, keyCode, state)
@@ -102,31 +102,22 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 		if state&IBUS_LOCK_MASK != 0 {
 			keyRune = toUpper(keyRune)
 		}
-		var oMode = bamboo.VietnameseMode
-		if e.shouldFallbackToEnglish() {
-			oMode = bamboo.EnglishMode
-		}
-		oldText := e.preeditor.GetProcessedString(oMode | bamboo.WithEffectKeys)
 		e.preeditor.ProcessKey(keyRune, e.getInputMode())
-		var vnSeq = e.preeditor.GetProcessedString(oMode | bamboo.WithEffectKeys)
+		var vnSeq = e.preeditor.GetProcessedString(bamboo.VietnameseMode | bamboo.WithEffectKeys)
 		if len(vnSeq) > 0 && rune(vnSeq[len(vnSeq)-1]) == keyRune && bamboo.IsWordBreakSymbol(keyRune) {
 			e.updatePreviousText(vnSeq, oldText)
 			e.preeditor.Reset()
 		} else {
-			if e.shouldFallbackToEnglish() {
-				e.preeditor.RestoreLastWord()
-			}
-			e.updatePreviousText(e.getPreeditString(), oldText)
+			e.updatePreviousText(vnSeq, oldText)
 		}
 		return
 	} else if bamboo.IsWordBreakSymbol(keyRune) || ('0' <= keyVal && keyVal <= '9') {
 		if keyVal == IBUS_Space && state&IBUS_SHIFT_MASK != 0 &&
 			e.config.IBflags&IBrestoreKeyStrokesEnabled != 0 {
 			// restore key strokes
-			var vnSeq = e.getPreeditString()
-			if bamboo.HasVietnameseChar(vnSeq) {
+			if bamboo.HasAnyVietnameseRune(oldText) {
 				e.preeditor.RestoreLastWord()
-				e.updatePreviousText(e.getPreeditString(), vnSeq)
+				e.updatePreviousText(e.getPreeditString(), oldText)
 				return
 			} else {
 				e.SendText([]rune{keyRune})
@@ -134,19 +125,17 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 			}
 			return
 		}
-		var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode)
-		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
+		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(oldText) {
 			// macro processing
-			macText := e.expandMacro(processedStr)
+			macText := e.expandMacro(oldText)
 			macText = macText + string(keyRune)
-			e.updatePreviousText(macText, processedStr)
+			e.updatePreviousText(macText, oldText)
 			e.preeditor.Reset()
 			return
 		}
 		if e.mustFallbackToEnglish() {
-			oldText := e.getPreeditString()
 			e.preeditor.RestoreLastWord()
-			newText := e.getComposedString() + string(keyRune)
+			newText := e.preeditor.GetProcessedString(bamboo.EnglishMode|bamboo.WithEffectKeys) + string(keyRune)
 			e.updatePreviousText(newText, oldText)
 			e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
 			return

@@ -54,6 +54,14 @@ func TestAddToneToChar(t *testing.T) {
 	if c_ạ != 'ạ' {
 		t.Errorf("Test add a dot to char. Got %c, expected %c", c_ạ, 'ạ')
 	}
+	c_y := AddToneToChar('y', 0)
+	if c_y != 'y' {
+		t.Errorf("Add TONE_NONE to char y, got %c expected y", c_y)
+	}
+	c_y = AddMarkToChar('y', 0)
+	if c_y != 'y' {
+		t.Errorf("Add MARK_NONE to char y, got %c expected y", c_y)
+	}
 }
 
 func TestAddMarkToChar(t *testing.T) {

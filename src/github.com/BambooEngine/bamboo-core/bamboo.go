@@ -48,7 +48,6 @@ type IEngine interface {
 	SetFlag(uint)
 	GetInputMethod() InputMethod
 	ProcessKey(rune, Mode)
-	TestKey(rune, Mode) rune
 	ProcessString(string, Mode)
 	GetProcessedString(Mode) string
 	GetSpellingMatchResult(Mode) uint8
@@ -143,24 +142,6 @@ func (e *BambooEngine) findTargetByKey(composition []*Transformation, key rune) 
 
 func (e *BambooEngine) CanProcessKey(key rune) bool {
 	return e.isSupportedKey(key)
-}
-
-func (e *BambooEngine) TestKey(key rune, mode Mode) rune {
-	var tmp = e.composition
-	var lowerKey = unicode.ToLower(key)
-	var isUpperCase = unicode.IsUpper(key)
-	if mode&EnglishMode != 0 || !e.isSupportedKey(lowerKey) {
-		tmp = append(tmp, newAppendingTrans(lowerKey, isUpperCase))
-	} else {
-		var lastSyllable, previousTransformations = extractLastSyllable(tmp)
-		lastSyllable = append(lastSyllable, e.generateTransformations(lastSyllable, lowerKey, isUpperCase)...)
-		tmp = append(previousTransformations, lastSyllable...)
-	}
-	var last = getCanvas(getLastSequence(tmp), mode)
-	if last != nil {
-		return last[len(last)-1]
-	}
-	return 0
 }
 
 func (e *BambooEngine) generateTransformations(composition []*Transformation, lowerKey rune, isUpperCase bool) []*Transformation {

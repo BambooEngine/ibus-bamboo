@@ -27,7 +27,7 @@ func IsWordBreakSymbol(key rune) bool {
 	return false
 }
 
-func ContainWordBreakSymbol(s string) bool {
+func ContainsWordBreakSymbol(s string) bool {
 	for _, c := range s {
 		if IsWordBreakSymbol(c) {
 			return true
@@ -46,7 +46,7 @@ func IsVowel(chr rune) bool {
 	return isVowel
 }
 
-func HasVowel(seq []rune) bool {
+func HasAnyVowel(seq []rune) bool {
 	for _, s := range seq {
 		if IsVowel(s) {
 			return true
@@ -124,6 +124,7 @@ func AddMarkToChar(chr rune, mark uint8) rune {
 	var result rune
 	tone := FindToneFromChar(chr)
 	chr = AddToneToChar(chr, 0)
+	result = chr
 	if str, found := marksMaps[chr]; found {
 		marks := []rune(str)
 		if marks[mark] != '_' {
@@ -175,17 +176,7 @@ func AddToneToChar(chr rune, tone uint8) rune {
 	}
 }
 
-func RemoveToneFromWord(word string) string {
-	var chars = []rune(word)
-	for i, c := range chars {
-		if IsVowel(c) {
-			chars[i] = AddToneToChar(c, 0)
-		}
-	}
-	return string(chars)
-}
-
-func HasVietnameseChar(word string) bool {
+func HasAnyVietnameseRune(word string) bool {
 	for _, chr := range []rune(word) {
 		var c = unicode.ToLower(chr)
 		if FindToneFromChar(c) != TONE_NONE {

@@ -66,7 +66,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 			e.config.IBflags&IBrestoreKeyStrokesEnabled != 0 {
 			// restore key strokes
 			var vnSeq = e.preeditor.GetProcessedString(bamboo.VietnameseMode)
-			if bamboo.HasVietnameseChar(vnSeq) {
+			if bamboo.HasAnyVietnameseRune(vnSeq) {
 				e.preeditor.RestoreLastWord()
 				e.updatePreedit(e.getPreeditString())
 			} else {
@@ -133,11 +133,11 @@ func (e *IBusBambooEngine) shouldFallbackToEnglish() bool {
 	}
 	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation
 	if e.config.IBflags&IBddFreeStyle != 0 && (vnRunes[len(vnRunes)-1] == 'd' || strings.ContainsRune(vnSeq, 'đ')) {
-		if !bamboo.HasVowel(vnRunes) {
+		if !bamboo.HasAnyVowel(vnRunes) {
 			return false
 		}
 	}
-	if !bamboo.HasVietnameseChar(vnSeq) {
+	if !bamboo.HasAnyVietnameseRune(vnSeq) {
 		return false
 	}
 	if e.preeditor.GetSpellingMatchResult(0) != bamboo.FindResultNotMatch {
@@ -148,7 +148,7 @@ func (e *IBusBambooEngine) shouldFallbackToEnglish() bool {
 
 func (e *IBusBambooEngine) hasVietnameseChar() bool {
 	var vnSeq = e.getProcessedString(bamboo.VietnameseMode)
-	return bamboo.HasVietnameseChar(vnSeq)
+	return bamboo.HasAnyVietnameseRune(vnSeq)
 }
 
 func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
@@ -162,11 +162,11 @@ func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
 	}
 	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation
 	if e.config.IBflags&IBddFreeStyle != 0 && strings.ContainsRune(vnSeq, 'đ') {
-		if !bamboo.HasVowel(vnRunes) {
+		if !bamboo.HasAnyVowel(vnRunes) {
 			return false
 		}
 	}
-	if !bamboo.HasVietnameseChar(vnSeq) {
+	if !bamboo.HasAnyVietnameseRune(vnSeq) {
 		return false
 	}
 	if e.preeditor.GetSpellingMatchResult(bamboo.WithDictionary) == bamboo.FindResultMatchFull {
@@ -211,7 +211,7 @@ func (e *IBusBambooEngine) getInputMode() bamboo.Mode {
 	}
 	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation
 	if e.config.IBflags&IBddFreeStyle != 0 && (vnRunes[len(vnRunes)-1] == 'd' || strings.ContainsRune(vnSeq, 'đ')) {
-		if !bamboo.HasVowel(vnRunes) {
+		if !bamboo.HasAnyVowel(vnRunes) {
 			return bamboo.VietnameseMode
 		}
 	}

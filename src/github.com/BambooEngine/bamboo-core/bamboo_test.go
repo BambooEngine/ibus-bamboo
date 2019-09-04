@@ -66,7 +66,7 @@ func TestProcessThuowString(t *testing.T) {
 	if ng.GetProcessedString(VietnameseMode) != "Thuơ" {
 		t.Errorf("Process [Thuow], got [%s] expected [%s]", ng.GetProcessedString(VietnameseMode), "Thuơ")
 	}
-	ng.RemoveLastChar()
+	ng.RemoveLastChar(true)
 	if ng.GetProcessedString(VietnameseMode) != "Thu" {
 		t.Errorf("Process [Thuow] and remove last char, got [%s] expected [%s]", ng.GetProcessedString(VietnameseMode), "Thu")
 	}
@@ -74,19 +74,19 @@ func TestProcessThuowString(t *testing.T) {
 
 func TestBambooEngine_RemoveLastChar(t *testing.T) {
 	ng := newStdEngine()
-	ng.RemoveLastChar()
+	ng.RemoveLastChar(true)
 	ng.ProcessString(" ", EnglishMode)
-	ng.RemoveLastChar()
+	ng.RemoveLastChar(true)
 	ng.ProcessString("loanj", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode) != "loạn" {
 		t.Errorf("Process [loanj], got [%s] expected [loạn]", ng.GetProcessedString(VietnameseMode))
 	}
-	ng.RemoveLastChar()
+	ng.RemoveLastChar(true)
 	if ng.GetProcessedString(VietnameseMode) != "lọa" {
 		t.Errorf("Process [loanj-1], got [%s] expected [lọa]", ng.GetProcessedString(VietnameseMode))
 	}
 	ng.ProcessString(":", EnglishMode)
-	ng.RemoveLastChar()
+	ng.RemoveLastChar(true)
 	if ng.GetProcessedString(VietnameseMode) != "lọa" {
 		t.Errorf("Process [loanj-1], got [%s] expected [lọa]", ng.GetProcessedString(VietnameseMode))
 	}
@@ -98,7 +98,7 @@ func TestProcessUpperString(t *testing.T) {
 	if ng.GetProcessedString(VietnameseMode) != "VIỆT" {
 		t.Errorf("Process [VIEETJ], got [%s] expected [VIỆT]", ng.GetProcessedString(VietnameseMode))
 	}
-	ng.RemoveLastChar()
+	ng.RemoveLastChar(true)
 	if ng.GetProcessedString(VietnameseMode) != "VIỆ" {
 		t.Errorf("Process remove last char of upper string, got [%s] expected [VIỆ]", ng.GetProcessedString(VietnameseMode))
 	}
@@ -176,7 +176,7 @@ func TestProcessNguwowfiString(t *testing.T) {
 func TestRemoveLastChar(t *testing.T) {
 	ng := newStdEngine()
 	ng.ProcessString("hanhj", VietnameseMode)
-	ng.RemoveLastChar()
+	ng.RemoveLastChar(true)
 	if ng.GetProcessedString(VietnameseMode) != "hạn" {
 		t.Errorf("Process [hanhj], got [%s] expected [%s]", ng.GetProcessedString(VietnameseMode), "hạn")
 	}
@@ -279,7 +279,7 @@ func TestProcessRefresh(t *testing.T) {
 func TestProcessRefresh2(t *testing.T) {
 	ng := newStdEngine()
 	ng.ProcessString("reff", VietnameseMode)
-	ng.RemoveLastChar()
+	ng.RemoveLastChar(true)
 	ng.ProcessKey('f', VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode) != "rè" {
 		t.Errorf("Process reff-1+f, got [%v] expected [rè]", ng.GetProcessedString(VietnameseMode))
@@ -470,7 +470,7 @@ func TestRestoreLastWord(t *testing.T) {
 	s := "afq"
 	ng.ProcessString(s, VietnameseMode)
 	ng.RestoreLastWord()
-	ng.RemoveLastChar()
+	ng.RemoveLastChar(true)
 	ng.ProcessKey('f', VietnameseMode)
 	t.Logf("LOGGING Process [%s] got [%v], en=[%s]", s, ng.GetProcessedString(VietnameseMode), ng.GetProcessedString(EnglishMode))
 }
@@ -593,10 +593,16 @@ func TestDoubleTyping(t *testing.T) {
 	}
 	ng.Reset()
 	ng.ProcessString("turyn", VietnameseMode)
-	ng.RemoveLastChar()
-	ng.RemoveLastChar()
+	ng.RemoveLastChar(true)
+	ng.RemoveLastChar(true)
 	// ng.ProcessString("r", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode) != "tủ" {
 		t.Errorf("Process turyen,BS,BS,BS,r, got [%s] expected [tủ]", ng.GetProcessedString(VietnameseMode))
+	}
+	ng.Reset()
+	ng.ProcessString("chuyển", VietnameseMode)
+	ng.ProcessString("z", VietnameseMode)
+	if ng.GetProcessedString(VietnameseMode) != "chuyên" {
+		t.Errorf("Process [chuyểnz], got %s expected chuyên", ng.GetProcessedString(VietnameseMode))
 	}
 }

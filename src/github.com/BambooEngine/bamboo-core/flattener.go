@@ -64,6 +64,9 @@ func getCanvas(composition []*Transformation, mode Mode) []rune {
 		if mode&ToneLess != 0 {
 			chr = AddToneToChar(chr, 0)
 		}
+		if mode&MarkLess != 0 {
+			chr = AddMarkToChar(chr, 0)
+		}
 		if mode&LowerCase != 0 {
 			chr = unicode.ToLower(chr)
 		} else if appendingTrans.IsUpperCase {
