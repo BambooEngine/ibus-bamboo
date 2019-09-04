@@ -37,7 +37,7 @@ const (
 var embedded = flag.Bool("ibus", false, "Run the embedded ibus component")
 var version = flag.Bool("version", false, "Show version")
 
-func init() {
+func initMain() {
 	flag.Parse()
 	if *embedded {
 		os.Chdir(DataDir)
@@ -50,6 +50,7 @@ func init() {
 }
 
 func main() {
+	initMain()
 	if *version {
 		fmt.Println(Version)
 	} else if *embedded {
