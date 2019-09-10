@@ -70,6 +70,9 @@ func (e *IBusBambooEngine) init() {
 	}
 	onMouseMove = func() {
 		if e.inPreeditList() || !e.inBackspaceWhiteList() {
+			if e.getRawKeyLen() == 0 {
+				return
+			}
 			e.commitPreedit(e.getPreeditString())
 		}
 	}

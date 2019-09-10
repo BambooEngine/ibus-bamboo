@@ -105,6 +105,7 @@ func (e *IBusBambooEngine) updatePreedit(processedStr string) {
 	var preeditLen = uint32(len([]rune(encodedStr)))
 	if preeditLen == 0 {
 		e.HidePreeditText()
+		e.CommitText(ibus.NewText(""))
 		return
 	}
 	var ibusText = ibus.NewText(encodedStr)
@@ -233,9 +234,6 @@ func (e *IBusBambooEngine) commitPreedit(s string) {
 }
 
 func (e *IBusBambooEngine) commitText(str string) {
-	if str == "" {
-		return
-	}
 	log.Println("Commit Text", str)
 	e.CommitText(ibus.NewText(e.encodeText(str)))
 }
