@@ -69,6 +69,8 @@ func (e *IBusBambooEngine) init() {
 		startMouseTracking()
 	}
 	onMouseMove = func() {
+		e.Lock()
+		defer e.Unlock()
 		if e.inPreeditList() || !e.inBackspaceWhiteList() {
 			if e.getRawKeyLen() == 0 {
 				return
@@ -77,6 +79,8 @@ func (e *IBusBambooEngine) init() {
 		}
 	}
 	onMouseClick = func() {
+		e.Lock()
+		defer e.Unlock()
 		e.isFirstTimeSendingBS = true
 		if e.isEmojiLTOpened {
 			e.refreshEmojiCandidate()
