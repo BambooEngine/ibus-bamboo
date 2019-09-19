@@ -75,7 +75,7 @@ const (
 	IBimQuickSwitchEnabled
 	IBrestoreKeyStrokesEnabled
 	IBstdFlags = IBspellChecking | IBspellCheckingWithRules | IBautoNonVnRestore | IBddFreeStyle |
-		IBpreeditInvisibility | IBautoCommitWithMouseMovement | IBemojiDisabled | IBinputModeLookupTableEnabled
+		IBautoCommitWithMouseMovement | IBemojiDisabled | IBinputModeLookupTableEnabled
 )
 
 var DefaultBrowserList = []string{

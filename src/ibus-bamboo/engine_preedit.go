@@ -30,6 +30,7 @@ import (
 func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
 	var rawKeyLen = e.getRawKeyLen()
 	var keyRune = rune(keyVal)
+	defer e.updateLastKeyWithShift(keyVal, state)
 
 	if !e.isValidState(state) {
 		e.commitPreedit(e.getPreeditString())
@@ -63,7 +64,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		return true, nil
 	} else if bamboo.IsWordBreakSymbol(keyRune) || ('0' <= keyVal && keyVal <= '9') {
 		if keyVal == IBUS_Space && state&IBUS_SHIFT_MASK != 0 &&
-			e.config.IBflags&IBrestoreKeyStrokesEnabled != 0 {
+			e.config.IBflags&IBrestoreKeyStrokesEnabled != 0 && !e.lastKeyWithShift {
 			// restore key strokes
 			var vnSeq = e.preeditor.GetProcessedString(bamboo.VietnameseMode)
 			if bamboo.HasAnyVietnameseRune(vnSeq) {
@@ -234,6 +235,9 @@ func (e *IBusBambooEngine) commitPreedit(s string) {
 }
 
 func (e *IBusBambooEngine) commitText(str string) {
+	if str == "" {
+		return
+	}
 	log.Println("Commit Text", str)
 	e.CommitText(ibus.NewText(e.encodeText(str)))
 }

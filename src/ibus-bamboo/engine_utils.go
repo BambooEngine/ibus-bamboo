@@ -127,7 +127,7 @@ func (e *IBusBambooEngine) processShiftKey(keyVal, state uint32) bool {
 	if keyVal == IBUS_Shift_L || keyVal == IBUS_Shift_R {
 		// when press one Shift key
 		if state&IBUS_SHIFT_MASK != 0 && state&IBUS_RELEASE_MASK != 0 &&
-			e.config.IBflags&IBimQuickSwitchEnabled != 0 {
+			e.config.IBflags&IBimQuickSwitchEnabled != 0 && !e.lastKeyWithShift {
 			e.englishMode = !e.englishMode
 			notify(e.englishMode)
 			e.resetBuffer()
@@ -135,6 +135,14 @@ func (e *IBusBambooEngine) processShiftKey(keyVal, state uint32) bool {
 		return true
 	}
 	return false
+}
+
+func (e *IBusBambooEngine) updateLastKeyWithShift(keyVal, state uint32) {
+	if e.canProcessKey(keyVal, state) {
+		e.lastKeyWithShift = state&IBUS_SHIFT_MASK != 0
+	} else {
+		e.lastKeyWithShift = false
+	}
 }
 
 func (e *IBusBambooEngine) isIgnoredKey(keyVal, state uint32) bool {
@@ -168,6 +176,7 @@ func (e *IBusBambooEngine) openLookupTable() {
 		e.config.DirectForwardKeyWhiteList,
 		e.config.ExceptedList,
 	}
+	fmt.Println("x22 forcus", x11GetFocusWindowClass())
 	var wmClasses = strings.Split(e.wmClasses, ":")
 	var wmClass = e.wmClasses
 	if len(wmClasses) == 2 {
@@ -338,23 +347,23 @@ func (e *IBusBambooEngine) inBackspaceWhiteList() bool {
 }
 
 func (e *IBusBambooEngine) inSurroundingTextList() bool {
-	return inStringList(e.config.SurroundingTextWhiteList, e.wmClasses)
+	return e.wmClasses != "" && inStringList(e.config.SurroundingTextWhiteList, e.wmClasses)
 }
 
 func (e *IBusBambooEngine) inSLForwardKeyList() bool {
-	return inStringList(e.config.SLForwardKeyWhiteList, e.wmClasses)
+	return e.wmClasses != "" && inStringList(e.config.SLForwardKeyWhiteList, e.wmClasses)
 }
 
 func (e *IBusBambooEngine) inDirectForwardKeyList() bool {
-	return inStringList(e.config.DirectForwardKeyWhiteList, e.wmClasses)
+	return e.wmClasses != "" && inStringList(e.config.DirectForwardKeyWhiteList, e.wmClasses)
 }
 
 func (e *IBusBambooEngine) inForwardKeyList() bool {
-	return e.config.IBflags&IBfakeBackspaceEnabled != 0 || inStringList(e.config.ForwardKeyWhiteList, e.wmClasses)
+	return e.wmClasses != "" && e.config.IBflags&IBfakeBackspaceEnabled != 0 || inStringList(e.config.ForwardKeyWhiteList, e.wmClasses)
 }
 
 func (e *IBusBambooEngine) inXTestFakeKeyEventList() bool {
-	return inStringList(e.config.X11ClipboardWhiteList, e.wmClasses)
+	return e.wmClasses != "" && inStringList(e.config.X11ClipboardWhiteList, e.wmClasses)
 }
 
 func (e *IBusBambooEngine) inBrowserList() bool {

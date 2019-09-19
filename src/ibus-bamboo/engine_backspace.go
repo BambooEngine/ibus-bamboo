@@ -69,6 +69,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 }
 
 func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
+	defer e.updateLastKeyWithShift(keyVal, state)
 	if !e.isValidState(state) {
 		e.preeditor.Reset()
 		e.isFirstTimeSendingBS = true
@@ -113,7 +114,7 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 		return
 	} else if bamboo.IsWordBreakSymbol(keyRune) || ('0' <= keyVal && keyVal <= '9') {
 		if keyVal == IBUS_Space && state&IBUS_SHIFT_MASK != 0 &&
-			e.config.IBflags&IBrestoreKeyStrokesEnabled != 0 {
+			e.config.IBflags&IBrestoreKeyStrokesEnabled != 0 && !e.lastKeyWithShift {
 			// restore key strokes
 			if bamboo.HasAnyVietnameseRune(oldText) {
 				e.preeditor.RestoreLastWord()

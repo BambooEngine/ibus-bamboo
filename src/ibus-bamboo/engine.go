@@ -49,6 +49,7 @@ type IBusBambooEngine struct {
 	isFirstTimeSendingBS   bool
 	emoji                  *EmojiEngine
 	isSurroundingTextReady bool
+	lastKeyWithShift       bool
 }
 
 /**
@@ -125,6 +126,8 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 func (e *IBusBambooEngine) FocusOut() *dbus.Error {
 	log.Print("FocusOut.")
 	//e.wmClasses = ""
+	mouseCaptureExit()
+	mouseCaptureUnlock()
 	return nil
 }
 
