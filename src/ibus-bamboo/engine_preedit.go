@@ -32,8 +32,11 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	var keyRune = rune(keyVal)
 	defer e.updateLastKeyWithShift(keyVal, state)
 
-	if !e.isValidState(state) {
-		e.commitPreedit(e.getPreeditString())
+	if !e.isValidState(state) || !e.canProcessKey(keyVal, state) {
+		// workaround for chrome's address bar, #5
+		e.HidePreeditText()
+		e.commitText(e.getPreeditString())
+		e.preeditor.Reset()
 		return false, nil
 	}
 
@@ -229,8 +232,8 @@ func (e *IBusBambooEngine) resetPreedit() {
 }
 
 func (e *IBusBambooEngine) commitPreedit(s string) {
-	e.HidePreeditText()
 	e.commitText(s)
+	e.HidePreeditText()
 	e.preeditor.Reset()
 }
 
