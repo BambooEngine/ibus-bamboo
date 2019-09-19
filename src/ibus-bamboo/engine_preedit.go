@@ -118,7 +118,7 @@ func (e *IBusBambooEngine) updatePreedit(processedStr string) {
 	}
 	e.UpdatePreeditTextWithMode(ibusText, preeditLen, true, ibus.IBUS_ENGINE_PREEDIT_COMMIT)
 
-	mouseCaptureUnlock()
+	mouseCaptureStartOrUnlock()
 }
 
 func (e *IBusBambooEngine) shouldFallbackToEnglish() bool {

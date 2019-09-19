@@ -166,7 +166,7 @@ void event_callback(XPointer priv, XRecordInterceptData *hook)
     if ((abs(root_x - cur_x) >= CAPTURE_MOUSE_MOVE_DELTA) ||
         (abs(root_y - cur_y) >= CAPTURE_MOUSE_MOVE_DELTA)) // mouse move at least CAPTURE_MOUSE_MOVE_DELTA
     {
-        mouse_move_handler();
+        // mouse_move_handler();
         cur_x = root_x;
         cur_y = root_y;
     }
