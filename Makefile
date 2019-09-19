@@ -18,7 +18,7 @@
 engine_name=bamboo
 ibus_e_name=ibus-engine-$(engine_name)
 pkg_name=ibus-$(engine_name)
-version=0.5.6
+version=0.5.7
 
 engine_dir=/usr/share/$(pkg_name)
 ibus_dir=/usr/share/ibus
