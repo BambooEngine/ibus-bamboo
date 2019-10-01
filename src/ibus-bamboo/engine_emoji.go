@@ -51,7 +51,9 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 	}
 	if keyVal == IBUS_Return {
 		if rawTextLen > 0 {
-			if len(e.emojiLookupTable.Candidates) > 0 {
+			if raw == ":" {
+				e.CommitText(ibus.NewText(":"))
+			} else if len(e.emojiLookupTable.Candidates) > 0 {
 				e.commitEmojiCandidate()
 			} else {
 				e.CommitText(ibus.NewText(raw))
@@ -125,7 +127,12 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 	raw = e.emoji.GetRawString()
 	rawTextLen = len([]rune(raw))
 	cps = e.emoji.Query()
-	e.UpdatePreeditTextWithMode(ibus.NewText(raw), uint32(rawTextLen), true, ibus.IBUS_ENGINE_PREEDIT_COMMIT)
+	if cps != nil {
+		codePoint0 := cps[0]
+		e.UpdatePreeditTextWithMode(ibus.NewText(codePoint0), uint32(len(codePoint0)), true, ibus.IBUS_ENGINE_PREEDIT_COMMIT)
+	} else {
+		e.UpdatePreeditTextWithMode(ibus.NewText(raw), uint32(rawTextLen), true, ibus.IBUS_ENGINE_PREEDIT_COMMIT)
+	}
 	e.UpdateAuxiliaryText(ibus.NewText(raw), true)
 	lt := ibus.NewLookupTable()
 	lt.Orientation = IBUS_ORIENTATION_HORIZONTAL

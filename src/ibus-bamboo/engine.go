@@ -150,7 +150,7 @@ func (e *IBusBambooEngine) Disable() *dbus.Error {
 		if e.config.IBflags&IBpreeditInvisibility != 0 {
 			stopMouseTracking()
 		} else {
-			startMouseRecording()
+			stopMouseRecording()
 		}
 	}
 	return nil
