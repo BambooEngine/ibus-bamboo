@@ -363,7 +363,7 @@ func (e *IBusBambooEngine) inDirectForwardKeyList() bool {
 }
 
 func (e *IBusBambooEngine) inForwardKeyList() bool {
-	return e.wmClasses != "" && e.config.IBflags&IBfakeBackspaceEnabled != 0 || inStringList(e.config.ForwardKeyWhiteList, e.wmClasses)
+	return e.wmClasses != "" && inStringList(e.config.ForwardKeyWhiteList, e.wmClasses)
 }
 
 func (e *IBusBambooEngine) inXTestFakeKeyEventList() bool {
