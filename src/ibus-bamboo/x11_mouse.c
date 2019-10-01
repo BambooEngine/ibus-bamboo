@@ -176,6 +176,7 @@ void mouse_capture_unlock()
     // unlock capture thread (start capture)
     pthread_mutex_unlock(&mutex_mcap);
 }
+
 void mouse_capture_start_or_unlock()
 {
     if (mcap_running==0) {

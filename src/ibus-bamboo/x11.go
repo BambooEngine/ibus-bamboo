@@ -63,13 +63,19 @@ func mouse_click_handler() {
 var onMouseMove func()
 var onMouseClick func()
 
-func startMouseTracking() {
+func startMouseRecording() {
 	C.mouse_recording_init()
-	// C.mouse_capture_init() // pre-edit only
+}
+
+func stopMouseRecording() {
+	C.mouse_recording_exit()
+}
+
+func startMouseTracking() {
+	C.mouse_capture_init()
 }
 
 func stopMouseTracking() {
-	C.mouse_recording_exit()
 	C.mouse_capture_exit()
 }
 
@@ -79,10 +85,6 @@ func mouseCaptureStartOrUnlock() {
 
 func mouseCaptureUnlock() {
 	C.mouse_capture_unlock()
-}
-
-func mouseCaptureExit() {
-	C.mouse_capture_exit()
 }
 
 func x11Copy(str string) {

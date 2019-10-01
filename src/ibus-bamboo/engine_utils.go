@@ -66,7 +66,11 @@ func (e *IBusBambooEngine) init() {
 	keyPressHandler = e.keyPressHandler
 
 	if e.config.IBflags&IBautoCommitWithMouseMovement != 0 {
-		startMouseTracking()
+		if e.config.IBflags&IBpreeditInvisibility != 0 {
+			startMouseTracking()
+		} else {
+			startMouseRecording()
+		}
 	}
 	onMouseMove = func() {
 		e.Lock()

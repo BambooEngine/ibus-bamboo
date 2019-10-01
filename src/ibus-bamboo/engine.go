@@ -126,8 +126,9 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 func (e *IBusBambooEngine) FocusOut() *dbus.Error {
 	log.Print("FocusOut.")
 	//e.wmClasses = ""
-	mouseCaptureExit()
-	mouseCaptureUnlock()
+	if e.config.IBflags&IBautoCommitWithMouseMovement != 0 && e.config.IBflags&IBpreeditInvisibility != 0 {
+		stopMouseTracking()
+	}
 	return nil
 }
 
@@ -145,7 +146,13 @@ func (e *IBusBambooEngine) Enable() *dbus.Error {
 func (e *IBusBambooEngine) Disable() *dbus.Error {
 	fmt.Print("Disable.")
 	x11ClipboardExit()
-	stopMouseTracking()
+	if e.config.IBflags&IBautoCommitWithMouseMovement != 0 {
+		if e.config.IBflags&IBpreeditInvisibility != 0 {
+			stopMouseTracking()
+		} else {
+			startMouseRecording()
+		}
+	}
 	return nil
 }
 
@@ -342,10 +349,18 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	if propName == PropKeyAutoCommitWithMouseMovement {
 		if propState == ibus.PROP_STATE_CHECKED {
 			e.config.IBflags |= IBautoCommitWithMouseMovement
-			startMouseTracking()
+			if e.config.IBflags&IBpreeditInvisibility != 0 {
+				startMouseTracking()
+			} else {
+				startMouseRecording()
+			}
 		} else {
 			e.config.IBflags &= ^IBautoCommitWithMouseMovement
-			stopMouseTracking()
+			if e.config.IBflags&IBpreeditInvisibility != 0 {
+				stopMouseTracking()
+			} else {
+				stopMouseRecording()
+			}
 		}
 	}
 	if propName == PropKeyAutoCommitWithDelay {
