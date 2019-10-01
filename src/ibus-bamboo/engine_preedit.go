@@ -33,7 +33,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	defer e.updateLastKeyWithShift(keyVal, state)
 
 	if !e.isValidState(state) || !e.canProcessKey(keyVal, state) {
-		// workaround for chrome's address bar, #5
+		// workaround for chrome's address bar, ibus-bamboo#5
 		e.HidePreeditText()
 		e.commitText(e.getPreeditString())
 		e.preeditor.Reset()
@@ -122,7 +122,7 @@ func (e *IBusBambooEngine) updatePreedit(processedStr string) {
 	e.UpdatePreeditTextWithMode(ibusText, preeditLen, true, ibus.IBUS_ENGINE_PREEDIT_COMMIT)
 
 	if e.config.IBflags&IBautoCommitWithMouseMovement != 0 && e.config.IBflags&IBpreeditInvisibility != 0 {
-		mouseCaptureStartOrUnlock()
+		mouseCaptureUnlock()
 	}
 }
 

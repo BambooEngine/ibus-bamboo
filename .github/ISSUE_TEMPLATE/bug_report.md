@@ -25,7 +25,7 @@ Nếu cần thiết, hãy [đính kèm hình ảnh](https://help.github.com/arti
 **Môi trường**
  - OS và version: (ví dụ: Ubuntu 19.04)
  - Desktop: (Xfce, KDE, Gnome,... hoặc **mặc định**)
- - Phiên bản ibus-bamboo: (bản mới nhất là v0.5.7)
+ - Phiên bản ibus-bamboo: (bản mới nhất là v0.5.8)
 
 **Thông tin thêm**
 Các nội dung khác có liên quan đến lỗi đang xảy ra.

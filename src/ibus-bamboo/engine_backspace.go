@@ -186,6 +186,9 @@ func (e *IBusBambooEngine) updatePreviousText(newText, oldText string) {
 	}
 
 	e.sendBackspaceAndNewRunes(nBackSpace, newRunes[diffFrom:])
+	if e.config.IBflags&IBautoCommitWithMouseMovement != 0 && e.config.IBflags&IBpreeditInvisibility != 0 {
+		mouseCaptureUnlock()
+	}
 }
 
 func (e *IBusBambooEngine) sendBackspaceAndNewRunes(nBackSpace int, newRunes []rune) {

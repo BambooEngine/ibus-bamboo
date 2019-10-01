@@ -116,9 +116,10 @@ static void* thread_mouse_capture(void* data)
         }
         XUngrabPointer(dpy, CurrentTime);
         XSync(dpy, 1);
+        pthread_mutex_trylock(&mutex_mcap); // set mutex to lock status, so this thread will wait until next unlock (by update preedit string)
+
         if (mcap_running == 0)
             break;
-
         if (event.type == MotionNotify) // mouse move
         {
             if ((abs(event.xmotion.x_root - x_root_old) >= CAPTURE_MOUSE_MOVE_DELTA) ||
@@ -134,9 +135,10 @@ static void* thread_mouse_capture(void* data)
             }
         }
         else {
-              mouse_click_handler();
+            fprintf(stderr, "MotionNotify: click\n");
+            mouse_click_handler();
         }
-        pthread_mutex_lock(&mutex_mcap); // set mutex to lock status, so this thread will wait until next unlock (by update preedit string)
+        pthread_mutex_lock(&mutex_mcap);
     }
     mcap_running = 0;
     XCloseDisplay(dpy);

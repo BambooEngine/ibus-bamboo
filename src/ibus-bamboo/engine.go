@@ -119,16 +119,12 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 		e.resetFakeBackspace()
 		// x11ClipboardReset()
 	}
-
 	return nil
 }
 
 func (e *IBusBambooEngine) FocusOut() *dbus.Error {
 	log.Print("FocusOut.")
 	//e.wmClasses = ""
-	if e.config.IBflags&IBautoCommitWithMouseMovement != 0 && e.config.IBflags&IBpreeditInvisibility != 0 {
-		stopMouseTracking()
-	}
 	return nil
 }
 
@@ -275,8 +271,6 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		} else {
 			e.config.IBflags &= ^IBspellChecking
 			e.config.IBflags &= ^IBautoNonVnRestore
-			e.config.IBflags &= ^IBautoCommitWithVnNotMatch
-			e.config.IBflags &= ^IBautoCommitWithVnFullMatch
 		}
 	}
 
@@ -325,27 +319,6 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 			e.config.IBflags &= ^IBspellCheckingWithDicts
 		}
 	}
-	if propName == PropKeyAutoCommitWithVnNotMatch {
-		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBautoCommitWithVnNotMatch
-		} else {
-			e.config.IBflags &= ^IBautoCommitWithVnNotMatch
-		}
-	}
-	if propName == PropKeyAutoCommitWithVnFullMatch {
-		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBautoCommitWithVnFullMatch
-		} else {
-			e.config.IBflags &= ^IBautoCommitWithVnFullMatch
-		}
-	}
-	if propName == PropKeyAutoCommitWithVnWordBreak {
-		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBautoCommitWithVnWordBreak
-		} else {
-			e.config.IBflags &= ^IBautoCommitWithVnWordBreak
-		}
-	}
 	if propName == PropKeyAutoCommitWithMouseMovement {
 		if propState == ibus.PROP_STATE_CHECKED {
 			e.config.IBflags |= IBautoCommitWithMouseMovement
@@ -363,19 +336,9 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 			}
 		}
 	}
-	if propName == PropKeyAutoCommitWithDelay {
-		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBautoCommitWithDelay
-		} else {
-			e.config.IBflags &= ^IBautoCommitWithDelay
-		}
-	}
 	if propName == PropKeyMacroEnabled {
 		if propState == ibus.PROP_STATE_CHECKED {
 			e.config.IBflags |= IBmarcoEnabled
-			e.config.IBflags &= ^IBautoCommitWithVnNotMatch
-			e.config.IBflags &= ^IBautoCommitWithVnFullMatch
-			e.config.IBflags &= ^IBautoCommitWithVnWordBreak
 			e.macroTable.Enable(e.engineName)
 		} else {
 			e.config.IBflags &= ^IBmarcoEnabled
@@ -385,8 +348,12 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	if propName == PropKeyInvisibilityPreedit {
 		if propState == ibus.PROP_STATE_CHECKED {
 			e.config.IBflags |= IBpreeditInvisibility
+			stopMouseRecording()
+			startMouseTracking()
 		} else {
 			e.config.IBflags &= ^IBpreeditInvisibility
+			stopMouseTracking()
+			startMouseRecording()
 		}
 	}
 	if propName == PropKeyFakeBackspace {
