@@ -186,9 +186,6 @@ func (e *IBusBambooEngine) updatePreviousText(newText, oldText string) {
 	}
 
 	e.sendBackspaceAndNewRunes(nBackSpace, newRunes[diffFrom:])
-	if e.config.IBflags&IBautoCommitWithMouseMovement != 0 && e.config.IBflags&IBpreeditInvisibility != 0 {
-		mouseCaptureUnlock()
-	}
 }
 
 func (e *IBusBambooEngine) sendBackspaceAndNewRunes(nBackSpace int, newRunes []rune) {
@@ -247,9 +244,9 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 		for i := 0; i < n; i++ {
 			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, 0)
 			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, IBUS_RELEASE_MASK)
-			time.Sleep(5 * time.Millisecond)
+			time.Sleep(15 * time.Millisecond)
 		}
-		time.Sleep(20 * time.Millisecond)
+		time.Sleep(25 * time.Millisecond)
 	} else {
 		fmt.Println("There's something wrong with wmClasses")
 	}

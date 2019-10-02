@@ -74,8 +74,9 @@ const (
 	IBautoCapitalizeMacro
 	IBimQuickSwitchEnabled
 	IBrestoreKeyStrokesEnabled
+	IBmouseCapturing
 	IBstdFlags = IBspellChecking | IBspellCheckingWithRules | IBautoNonVnRestore | IBddFreeStyle |
-		IBautoCommitWithMouseMovement | IBemojiDisabled | IBinputModeLookupTableEnabled
+		IBemojiDisabled | IBinputModeLookupTableEnabled
 )
 
 var DefaultBrowserList = []string{

@@ -142,12 +142,9 @@ func (e *IBusBambooEngine) Enable() *dbus.Error {
 func (e *IBusBambooEngine) Disable() *dbus.Error {
 	fmt.Print("Disable.")
 	x11ClipboardExit()
-	if e.config.IBflags&IBautoCommitWithMouseMovement != 0 {
-		if e.config.IBflags&IBpreeditInvisibility != 0 {
-			stopMouseTracking()
-		} else {
-			stopMouseRecording()
-		}
+	stopMouseRecording()
+	if e.config.IBflags&IBmouseCapturing != 0 {
+		stopMouseCapturing()
 	}
 	return nil
 }
@@ -319,21 +316,13 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 			e.config.IBflags &= ^IBspellCheckingWithDicts
 		}
 	}
-	if propName == PropKeyAutoCommitWithMouseMovement {
+	if propName == PropKeyMouseCapturing {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBautoCommitWithMouseMovement
-			if e.config.IBflags&IBpreeditInvisibility != 0 {
-				startMouseTracking()
-			} else {
-				startMouseRecording()
-			}
+			e.config.IBflags |= IBmouseCapturing
+			startMouseCapturing()
 		} else {
-			e.config.IBflags &= ^IBautoCommitWithMouseMovement
-			if e.config.IBflags&IBpreeditInvisibility != 0 {
-				stopMouseTracking()
-			} else {
-				stopMouseRecording()
-			}
+			e.config.IBflags &= ^IBmouseCapturing
+			stopMouseCapturing()
 		}
 	}
 	if propName == PropKeyMacroEnabled {
@@ -345,15 +334,11 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 			e.macroTable.Disable()
 		}
 	}
-	if propName == PropKeyInvisibilityPreedit {
+	if propName == PropKeyPreeditInvisibility {
 		if propState == ibus.PROP_STATE_CHECKED {
 			e.config.IBflags |= IBpreeditInvisibility
-			stopMouseRecording()
-			startMouseTracking()
 		} else {
 			e.config.IBflags &= ^IBpreeditInvisibility
-			stopMouseTracking()
-			startMouseRecording()
 		}
 	}
 	if propName == PropKeyFakeBackspace {

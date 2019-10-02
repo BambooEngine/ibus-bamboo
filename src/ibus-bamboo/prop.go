@@ -26,28 +26,24 @@ import (
 )
 
 const (
-	PropKeyAbout                       = "about"
-	PropKeyStdToneStyle                = "tone_std_style"
-	PropKeyFreeToneMarking             = "tone_free_marking"
-	PropKeySpellingChecking            = "spelling_checking"
-	PropKeySpellCheckingByRules        = "spelling_checking_by_rules"
-	PropKeySpellCheckingByDicts        = "spelling_checking_by_dicts"
-	PropKeyInvisibilityPreedit         = "invisibility_preedit"
-	PropKeyVnConvert                   = "vn_convert"
-	PropKeyAutoCommitWithVnNotMatch    = "AutoCommitWithSpellChecking"
-	PropKeyAutoCommitWithVnFullMatch   = "AutoCommitWithVnFullMatch"
-	PropKeyAutoCommitWithVnWordBreak   = "AutoCommitWithVnFC"
-	PropKeyAutoCommitWithMouseMovement = "AutoCommitWithMouseMovement"
-	PropKeyAutoCommitWithDelay         = "AutoCommitWithDelay"
-	PropKeyMacroEnabled                = "macro_enabled"
-	PropKeyMacroTable                  = "open_macro_table"
-	PropKeyEmojiEnabled                = "emoji_enabled"
-	PropKeyBambooConfiguration         = "bamboo_configuration"
-	PropKeyFakeBackspace               = "x11_fake_backspace"
-	PropKeyInputModeLookupTable        = "input_mode_lookup_table"
-	PropKeyAutoCapitalizeMacro         = "auto_capitalize_macro"
-	PropKeyIMQuickSwitchEnabled        = "im_quick_switch"
-	PropKeyRestoreKeyStrokes           = "restore_key_strokes"
+	PropKeyAbout                = "about"
+	PropKeyStdToneStyle         = "tone_std_style"
+	PropKeyFreeToneMarking      = "tone_free_marking"
+	PropKeySpellingChecking     = "spelling_checking"
+	PropKeySpellCheckingByRules = "spelling_checking_by_rules"
+	PropKeySpellCheckingByDicts = "spelling_checking_by_dicts"
+	PropKeyPreeditInvisibility  = "invisibility_preedit"
+	PropKeyVnConvert            = "vn_convert"
+	PropKeyMouseCapturing       = "MouseCapturing"
+	PropKeyMacroEnabled         = "macro_enabled"
+	PropKeyMacroTable           = "open_macro_table"
+	PropKeyEmojiEnabled         = "emoji_enabled"
+	PropKeyBambooConfiguration  = "bamboo_configuration"
+	PropKeyFakeBackspace        = "x11_fake_backspace"
+	PropKeyInputModeLookupTable = "input_mode_lookup_table"
+	PropKeyAutoCapitalizeMacro  = "auto_capitalize_macro"
+	PropKeyIMQuickSwitchEnabled = "im_quick_switch"
+	PropKeyRestoreKeyStrokes    = "restore_key_strokes"
 )
 
 func GetPropListByConfig(c *Config) *ibus.PropList {
@@ -370,9 +366,9 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 	toneFreeMarkingChecked := ibus.PROP_STATE_UNCHECKED
 	preeditInvisibilityChecked := ibus.PROP_STATE_UNCHECKED
 	x11FakeBackspaceChecked := ibus.PROP_STATE_UNCHECKED
-	mouseMovementChecked := ibus.PROP_STATE_UNCHECKED
-	if c.IBflags&IBautoCommitWithMouseMovement != 0 {
-		mouseMovementChecked = ibus.PROP_STATE_CHECKED
+	mouseCapturingChecked := ibus.PROP_STATE_UNCHECKED
+	if c.IBflags&IBmouseCapturing != 0 {
+		mouseCapturingChecked = ibus.PROP_STATE_CHECKED
 	}
 
 	if c.Flags&bamboo.EstdToneStyle != 0 {
@@ -415,22 +411,10 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 		},
 		&ibus.Property{
 			Name:      "IBusProperty",
-			Key:       PropKeyAutoCommitWithMouseMovement,
-			Type:      ibus.PROP_TYPE_TOGGLE,
-			Label:     dbus.MakeVariant(ibus.NewText("Theo dõi chuột")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("mouse tracking")),
-			Sensitive: true,
-			Visible:   true,
-			State:     mouseMovementChecked,
-			Symbol:    dbus.MakeVariant(ibus.NewText("F")),
-			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
-		},
-		&ibus.Property{
-			Name:      "IBusProperty",
-			Key:       PropKeyInvisibilityPreedit,
+			Key:       PropKeyPreeditInvisibility,
 			Type:      ibus.PROP_TYPE_TOGGLE,
 			Label:     dbus.MakeVariant(ibus.NewText("Ẩn gạch chân")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("Ẩn gạch chân")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Hide underline")),
 			Sensitive: true,
 			Visible:   true,
 			State:     preeditInvisibilityChecked,
@@ -439,10 +423,22 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 		},
 		&ibus.Property{
 			Name:      "IBusProperty",
+			Key:       PropKeyMouseCapturing,
+			Type:      ibus.PROP_TYPE_TOGGLE,
+			Label:     dbus.MakeVariant(ibus.NewText("Capture mouse events")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Mouse capturing")),
+			Sensitive: true,
+			Visible:   true,
+			State:     mouseCapturingChecked,
+			Symbol:    dbus.MakeVariant(ibus.NewText("F")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
 			Key:       PropKeyFakeBackspace,
 			Type:      ibus.PROP_TYPE_TOGGLE,
-			Label:     dbus.MakeVariant(ibus.NewText("Sửa lỗi gạch chân ⚠")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("FakeBackspace")),
+			Label:     dbus.MakeVariant(ibus.NewText("Send key via ForwardKeyEvent")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Send key via ForwardKeyEvent")),
 			Sensitive: false,
 			Visible:   false,
 			State:     x11FakeBackspaceChecked,

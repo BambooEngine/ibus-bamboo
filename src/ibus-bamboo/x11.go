@@ -71,11 +71,11 @@ func stopMouseRecording() {
 	C.mouse_recording_exit()
 }
 
-func startMouseTracking() {
+func startMouseCapturing() {
 	C.mouse_capture_init()
 }
 
-func stopMouseTracking() {
+func stopMouseCapturing() {
 	C.mouse_capture_exit()
 }
 

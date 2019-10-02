@@ -121,7 +121,7 @@ func (e *IBusBambooEngine) updatePreedit(processedStr string) {
 	}
 	e.UpdatePreeditTextWithMode(ibusText, preeditLen, true, ibus.IBUS_ENGINE_PREEDIT_COMMIT)
 
-	if e.config.IBflags&IBautoCommitWithMouseMovement != 0 && e.config.IBflags&IBpreeditInvisibility != 0 {
+	if e.config.IBflags&IBmouseCapturing != 0 {
 		mouseCaptureUnlock()
 	}
 }
