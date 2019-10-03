@@ -53,6 +53,8 @@ func GetBambooEngineCreator() func(conn *dbus.Conn, engineName string) dbus.Obje
 	}
 }
 
+const KEYPRESS_DELAY_MS = 10
+
 func (e *IBusBambooEngine) init() {
 	if e.emoji == nil {
 		e.emoji = NewEmojiEngine()
@@ -88,10 +90,12 @@ func (e *IBusBambooEngine) init() {
 		} else {
 			e.resetFakeBackspace()
 			e.resetBuffer()
+			e.keyPressDelay = KEYPRESS_DELAY_MS
 			if e.capabilities&IBUS_CAP_SURROUNDING_TEXT != 0 {
 				//engine.ForwardKeyEvent(IBUS_Shift_R, 0, IBUS_RELEASE_MASK)
 				x11SendShiftR()
 				e.isSurroundingTextReady = true
+				e.keyPressDelay = KEYPRESS_DELAY_MS * 10
 			}
 		}
 	}

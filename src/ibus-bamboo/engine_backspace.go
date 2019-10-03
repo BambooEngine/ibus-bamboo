@@ -70,6 +70,10 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 
 func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 	defer e.updateLastKeyWithShift(keyVal, state)
+	if e.keyPressDelay > 0 {
+		time.Sleep(time.Duration(e.keyPressDelay) * time.Millisecond)
+		e.keyPressDelay = 0
+	}
 	if !e.isValidState(state) {
 		e.preeditor.Reset()
 		e.isFirstTimeSendingBS = true

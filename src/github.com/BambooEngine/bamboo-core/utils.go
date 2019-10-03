@@ -176,13 +176,20 @@ func AddToneToChar(chr rune, tone uint8) rune {
 	}
 }
 
+func IsVietnameseRune(chr rune) bool {
+	var c = unicode.ToLower(chr)
+	if FindToneFromChar(c) != TONE_NONE {
+		return true
+	}
+	if mark, found := FindMarkFromChar(AddToneToChar(c, 0)); found && mark != MARK_NONE {
+		return true
+	}
+	return false
+}
+
 func HasAnyVietnameseRune(word string) bool {
 	for _, chr := range []rune(word) {
-		var c = unicode.ToLower(chr)
-		if FindToneFromChar(c) != TONE_NONE {
-			return true
-		}
-		if mark, found := FindMarkFromChar(AddToneToChar(c, 0)); found && mark != MARK_NONE {
+		if IsVietnameseRune(chr) {
 			return true
 		}
 	}

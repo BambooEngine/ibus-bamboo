@@ -20,6 +20,7 @@ const (
 	LowerCase
 	WithEffectKeys
 	WithDictionary
+	InReverseOrder
 )
 
 type Sound uint
@@ -89,10 +90,10 @@ func (e *BambooEngine) isSuperKey(key rune) bool {
 }
 
 func (e *BambooEngine) isSupportedKey(key rune) bool {
-	if IsAlpha(key) {
+	if IsAlpha(key) || inKeyList(e.GetInputMethod().Keys, key) {
 		return true
 	}
-	return inKeyList(e.GetInputMethod().Keys, key)
+	return IsVietnameseRune(key)
 }
 
 func (e *BambooEngine) isToneKey(key rune) bool {
@@ -203,6 +204,10 @@ func (e *BambooEngine) ProcessKey(key rune, mode Mode) {
 	var lowerKey = unicode.ToLower(key)
 	var isUpperCase = unicode.IsUpper(key)
 	if mode&EnglishMode != 0 || !e.isSupportedKey(lowerKey) {
+		if mode&InReverseOrder != 0 {
+			e.composition = append([]*Transformation{newAppendingTrans(lowerKey, isUpperCase)}, e.composition...)
+			return
+		}
 		e.composition = append(e.composition, newAppendingTrans(lowerKey, isUpperCase))
 		return
 	}
@@ -235,7 +240,7 @@ func (e *BambooEngine) RemoveLastChar(refreshLastToneTarget bool) {
 	if lastAppending == nil {
 		return
 	}
-	if IsWordBreakSymbol(lastAppending.Rule.Key) {
+	if !e.CanProcessKey(lastAppending.Rule.Key) {
 		e.composition = e.composition[:len(e.composition)-1]
 		return
 	}

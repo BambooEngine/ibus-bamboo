@@ -45,6 +45,7 @@ type IBusBambooEngine struct {
 	emojiLookupTable       *ibus.LookupTable
 	inputModeLookupTable   *ibus.LookupTable
 	capabilities           uint32
+	keyPressDelay          int
 	nFakeBackSpace         int
 	isFirstTimeSendingBS   bool
 	emoji                  *EmojiEngine
@@ -167,9 +168,12 @@ func (e *IBusBambooEngine) SetSurroundingText(text dbus.Variant, cursorPos uint3
 		if len(s) < int(cursorPos) {
 			return nil
 		}
-		fmt.Println("Surrounding Text: ", string(s[:cursorPos]))
+		var cs = s[:cursorPos]
+		fmt.Println("Surrounding Text: ", string(cs))
 		e.preeditor.Reset()
-		e.preeditor.ProcessString(string(s[:cursorPos]), bamboo.EnglishMode)
+		for i := len(cs) - 1; i >= 0; i-- {
+			e.preeditor.ProcessKey(cs[i], bamboo.EnglishMode|bamboo.InReverseOrder)
+		}
 	}
 	return nil
 }
