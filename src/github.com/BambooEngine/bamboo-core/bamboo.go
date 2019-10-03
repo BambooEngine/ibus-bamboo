@@ -235,7 +235,7 @@ func (e *BambooEngine) RemoveLastChar(refreshLastToneTarget bool) {
 	if lastAppending == nil {
 		return
 	}
-	if !e.CanProcessKey(lastAppending.Rule.Key) {
+	if IsWordBreakSymbol(lastAppending.Rule.Key) {
 		e.composition = e.composition[:len(e.composition)-1]
 		return
 	}
