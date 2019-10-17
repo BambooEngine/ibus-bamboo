@@ -91,7 +91,6 @@ type Config struct {
 	OutputCharset             string
 	Flags                     uint
 	IBflags                   uint
-	AutoCommitAfter           int64
 	ExceptedList              []string
 	PreeditWhiteList          []string
 	X11ClipboardWhiteList     []string
@@ -126,7 +125,6 @@ func LoadConfig(engineName string) *Config {
 		InputMethodDefinitions:    bamboo.InputMethodDefinitions,
 		Flags:                     bamboo.EstdFlags,
 		IBflags:                   IBstdFlags,
-		AutoCommitAfter:           3000,
 		ExceptedList:              nil,
 		PreeditWhiteList:          nil,
 		X11ClipboardWhiteList:     nil,
