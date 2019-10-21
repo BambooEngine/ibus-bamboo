@@ -118,7 +118,6 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 		e.isFirstTimeSendingBS = true
 		e.resetBuffer()
 		e.resetFakeBackspace()
-		// x11ClipboardReset()
 	}
 	return nil
 }
