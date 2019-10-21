@@ -7,194 +7,151 @@
  */
 package bamboo
 
-import (
-	"regexp"
-	"strings"
-	"unicode"
-)
+// import "log"
 
-var firstConsonantSeq = [3]string{
+var firstConsonantSeqs = []string{
 	"b d đ g gh m n nh p ph r s t tr v z",
 	"c h k kh qu th",
 	"ch gi l ng ngh x",
+	"đ l",
 }
 
-var vowelSeq = [6]string{
+var vowelSeqs = []string{
 	"ê i ua uê uy y",
 	"a iê oa uyê yê",
 	"â ă e o oo ô ơ oe u ư uâ uô ươ",
 	"oă",
 	"uơ",
 	"ai ao au âu ay ây eo êu ia iêu iu oai oao oay oeo oi ôi ơi ưa uây ui ưi uôi ươi ươu ưu uya uyu yêu",
+	"ă",
 }
 
-var lastConsonantSeq = [3]string{
+var lastConsonantSeqs = []string{
 	"ch nh",
 	"c ng",
 	"m n p t",
+	"k",
 }
 
-var cvMatrix = [3][]uint{
+var cvMatrix = [4][]int{
 	{0, 1, 2, 5},
 	{0, 1, 2, 3, 4, 5},
 	{0, 1, 2, 3, 5},
+	{6},
 }
 
-var vcMatrix = [6][]uint{
+var vcMatrix = [7][]int{
 	{0, 2},
 	{0, 1, 2},
 	{1, 2},
 	{1, 2},
+	{},
+	{},
+	{3},
 }
 
-var spellingTrie = &Node{Full: false}
-
-func buildCV(consonants []string, vowels []string) []string {
-	var ret []string
-	for _, c := range consonants {
-		for _, v := range vowels {
-			ret = append(ret, c+v)
-		}
-	}
-	return ret
-}
-
-func generateVowels() []string {
-	var ret []string
-	for _, vRow := range vowelSeq {
-		for _, v := range strings.Split(vRow, " ") {
-			ret = append(ret, v)
-		}
-	}
-	return ret
-}
-
-func buildVC(vowels []string, consonants []string) []string {
-	var ret []string
-	for _, v := range vowels {
-		for _, c := range consonants {
-			ret = append(ret, v+c)
-		}
-	}
-	return ret
-}
-
-func buildCVC(cs1 []string, vs1 []string, cs2 []string) []string {
-	var ret []string
-	for _, c1 := range cs1 {
-		for _, v := range vs1 {
-			for _, c2 := range cs2 {
-				ret = append(ret, c1+v+c2)
+func lookup(seq []string, input string, inputIsFull, inputIsComplete bool) []int {
+	var ret []int
+	var inputLen = len([]rune(input))
+	for i, row := range seq {
+		var canvas []rune
+		var rowLen = len([]rune(row))
+		for ii, char := range []rune(row) {
+			if char != ' ' {
+				canvas = append(canvas, char)
+				if ii < rowLen-1 {
+					continue
+				}
+			}
+			var canvasLen = len(canvas)
+			if canvasLen < inputLen || (inputIsFull && canvasLen > inputLen) {
+				canvas = nil
+				continue
+			}
+			var isMatch = true
+			for j, ic := range []rune(input) {
+				if ic != canvas[j] && !(!inputIsComplete && AddMarkToTonelessChar(canvas[j], 0) == ic) {
+					isMatch = false
+				}
+			}
+			canvas = nil
+			if isMatch {
+				ret = append(ret, i)
+				break
 			}
 		}
 	}
 	return ret
 }
 
-func init() {
-	for _, word := range GenerateDictionary() {
-		AddTrie(spellingTrie, []rune(word), false, false)
-	}
-}
-
-func AddDictionaryToSpellingTrie(dictionary map[string]bool) {
-	for word := range dictionary {
-		AddTrie(spellingTrie, []rune(word), true, false)
-	}
-}
-
-func GenerateDictionary() []string {
-	var words = generateVowels()
-	words = append(words, generateCV()...)
-	words = append(words, generateVC()...)
-	words = append(words, generateCVC()...)
-	return words
-}
-
-func generateCV() []string {
-	var ret []string
-	for cRow, vRows := range cvMatrix {
-		for _, vRow := range vRows {
-			var consonants = strings.Split(firstConsonantSeq[cRow], " ")
-			var vowels = strings.Split(vowelSeq[vRow], " ")
-			ret = append(ret, buildCV(consonants, vowels)...)
+func isValidCVC(fc, vo, lc string, inputIsFullComplete bool) bool {
+	// log.Printf("fc=%s vo=%s lc=%s", fc, vo, lc)
+	var fcIndexes, voIndexes, lcIndexes []int
+	if fc != "" {
+		if fcIndexes = lookup(firstConsonantSeqs, fc, inputIsFullComplete || vo != "", true); fcIndexes == nil {
+			return false
 		}
 	}
-	return ret
-}
-
-func generateVC() []string {
-	var ret []string
-	for vRow, cRows := range vcMatrix {
-		for _, cRow := range cRows {
-			var vowels = strings.Split(vowelSeq[vRow], " ")
-			var consonants = strings.Split(lastConsonantSeq[cRow], " ")
-			ret = append(ret, buildVC(vowels, consonants)...)
+	if vo != "" {
+		if voIndexes = lookup(vowelSeqs, vo, inputIsFullComplete || lc != "", inputIsFullComplete); voIndexes == nil {
+			return false
 		}
 	}
-	return ret
-}
-
-func generateCVC() []string {
-	var ret []string
-	for c1Row, vRows := range cvMatrix {
-		for _, vRow := range vRows {
-			for _, c2Row := range vcMatrix[vRow] {
-				var cs1 = strings.Split(firstConsonantSeq[c1Row], " ")
-				var vowels = strings.Split(vowelSeq[vRow], " ")
-				var cs2 = strings.Split(lastConsonantSeq[c2Row], " ")
-				ret = append(ret, buildCVC(cs1, vowels, cs2)...)
+	if lc != "" {
+		if lcIndexes = lookup(lastConsonantSeqs, lc, inputIsFullComplete, true); lcIndexes == nil {
+			return false
+		}
+	}
+	var ret bool
+	// first consonant only
+	if voIndexes == nil {
+		return fcIndexes != nil
+	}
+	// first consonant + vowel
+	if fcIndexes != nil {
+		for _, fci := range fcIndexes {
+			for _, voi := range voIndexes {
+				if isValidCV(fci, voi) {
+					ret = true
+				}
 			}
 		}
+		if ret == false || lcIndexes == nil {
+			return ret
+		}
 	}
-	return ret
-}
-
-var regGI = regexp.MustCompile(`^(qu|gi)(\p{L}+)`)
-
-func ParseSoundsFromWord(word string) []Sound {
-	var sounds []Sound
-	var chars = []rune(word)
-	if len(chars) == 0 {
-		return nil
-	}
-	var suffix string
-	if regGI.MatchString(word) {
-		subs := regGI.FindStringSubmatch(word)
-		if len(subs) == 3 {
-			var seq = []rune(subs[2])
-			if IsVowel(seq[0]) {
-				sounds = append(sounds, FirstConsonantSound)
-				sounds = append(sounds, FirstConsonantSound)
-				suffix = subs[2]
-				sounds = append(sounds, ParseDumpSoundsFromWord(suffix)...)
-				return sounds
-			} else {
-				return ParseDumpSoundsFromWord(word)
+	// vowel + last consonant
+	//log.Print("ret", fcIndexes, voIndexes, lcIndexes)
+	if lcIndexes != nil {
+		ret = false
+		for _, voi := range voIndexes {
+			for _, lci := range lcIndexes {
+				if isValidVC(voi, lci) {
+					ret = true
+				}
 			}
 		}
 	} else {
-		sounds = ParseDumpSoundsFromWord(word)
+		// vowel only
+		ret = true
 	}
-	return sounds
+	return ret
 }
 
-func ParseDumpSoundsFromWord(word string) []Sound {
-	var sounds []Sound
-	var hadVowel bool
-	for _, c := range []rune(word) {
-		if IsVowel(c) {
-			sounds = append(sounds, VowelSound)
-			hadVowel = true
-		} else if unicode.IsLetter(c) {
-			if hadVowel {
-				sounds = append(sounds, LastConsonantSound)
-			} else {
-				sounds = append(sounds, FirstConsonantSound)
-			}
-		} else {
-			sounds = append(sounds, NoSound)
+func isValidCV(fc, vo int) bool {
+	for _, v := range cvMatrix[fc] {
+		if v == vo {
+			return true
 		}
 	}
-	return sounds
+	return false
+}
+
+func isValidVC(vo, lc int) bool {
+	for _, t := range vcMatrix[vo] {
+		if t == lc {
+			return true
+		}
+	}
+	return false
 }

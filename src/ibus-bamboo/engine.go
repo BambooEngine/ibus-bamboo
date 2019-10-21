@@ -75,7 +75,7 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 	if e.isIgnoredKey(keyVal, state) {
 		return false, nil
 	}
-	log.Printf("keyCode 0x%04x keyval 0x%04x | %c | %d\n", keyCode, keyVal, rune(keyVal), len(keyPressChan))
+	log.Printf("ProcessKeyEvent >  %c | keyCode 0x%04x keyVal 0x%04x | %d\n", rune(keyVal), keyCode, keyVal, len(keyPressChan))
 	if e.config.IBflags&IBinputModeLookupTableEnabled != 0 && keyVal == IBUS_OpenLookupTable && e.isInputModeLTOpened == false && e.wmClasses != "" {
 		e.resetBuffer()
 		e.isInputModeLTOpened = true
@@ -156,7 +156,9 @@ func (e *IBusBambooEngine) SetSurroundingText(text dbus.Variant, cursorPos uint3
 		//fmt.Println("Surrounding Text is not ready yet.")
 		return nil
 	}
+	e.Lock()
 	defer func() {
+		e.Unlock()
 		e.isSurroundingTextReady = false
 		if err := recover(); err != nil {
 			fmt.Println(err)
@@ -172,6 +174,9 @@ func (e *IBusBambooEngine) SetSurroundingText(text dbus.Variant, cursorPos uint3
 		fmt.Println("Surrounding Text: ", string(cs))
 		e.preeditor.Reset()
 		for i := len(cs) - 1; i >= 0; i-- {
+			if bamboo.IsPunctuationMark(cs[i]) && e.preeditor.CanProcessKey(cs[i]) {
+				cs[i] = ' '
+			}
 			e.preeditor.ProcessKey(cs[i], bamboo.EnglishMode|bamboo.InReverseOrder)
 		}
 	}

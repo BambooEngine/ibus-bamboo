@@ -140,14 +140,12 @@ func (e *IBusBambooEngine) shouldFallbackToEnglish() bool {
 	}
 	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation
 	if e.config.IBflags&IBddFreeStyle != 0 && (vnRunes[len(vnRunes)-1] == 'd' || strings.ContainsRune(vnSeq, 'đ')) {
-		if !bamboo.HasAnyVowel(vnRunes) {
-			return false
-		}
+		return false
 	}
 	if !bamboo.HasAnyVietnameseRune(vnSeq) {
 		return false
 	}
-	if e.preeditor.GetSpellingMatchResult(0) != bamboo.FindResultNotMatch {
+	if e.preeditor.IsValid(false) {
 		return false
 	}
 	return true
@@ -169,18 +167,13 @@ func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
 	}
 	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation
 	if e.config.IBflags&IBddFreeStyle != 0 && strings.ContainsRune(vnSeq, 'đ') {
-		if !bamboo.HasAnyVowel(vnRunes) {
-			return false
-		}
+		return false
 	}
 	if !bamboo.HasAnyVietnameseRune(vnSeq) {
 		return false
 	}
-	if e.preeditor.GetSpellingMatchResult(bamboo.WithDictionary) == bamboo.FindResultMatchFull {
-		return false
-	}
 	if e.config.IBflags&IBspellCheckingWithDicts == 0 {
-		return e.preeditor.GetSpellingMatchResult(0) != bamboo.FindResultMatchFull
+		return !e.preeditor.IsValid(true)
 	}
 	return true
 }
@@ -218,11 +211,9 @@ func (e *IBusBambooEngine) getInputMode() bamboo.Mode {
 	}
 	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation
 	if e.config.IBflags&IBddFreeStyle != 0 && (vnRunes[len(vnRunes)-1] == 'd' || strings.ContainsRune(vnSeq, 'đ')) {
-		if !bamboo.HasAnyVowel(vnRunes) {
-			return bamboo.VietnameseMode
-		}
+		return bamboo.VietnameseMode
 	}
-	if e.preeditor.GetSpellingMatchResult(0) != bamboo.FindResultNotMatch {
+	if e.preeditor.IsValid(false) {
 		return bamboo.VietnameseMode
 	}
 	return bamboo.EnglishMode

@@ -8,7 +8,9 @@
 
 package bamboo
 
-import "unicode"
+import (
+	"unicode"
+)
 
 type Mode uint
 
@@ -21,15 +23,6 @@ const (
 	WithEffectKeys
 	WithDictionary
 	InReverseOrder
-)
-
-type Sound uint
-
-const (
-	NoSound             Sound = iota << 0
-	FirstConsonantSound Sound = iota
-	VowelSound          Sound = iota
-	LastConsonantSound  Sound = iota
 )
 
 const (
@@ -51,7 +44,7 @@ type IEngine interface {
 	ProcessKey(rune, Mode)
 	ProcessString(string, Mode)
 	GetProcessedString(Mode) string
-	GetSpellingMatchResult(Mode) uint8
+	IsValid(bool) bool
 	CanProcessKey(rune) bool
 	RemoveLastChar(bool)
 	RestoreLastWord()
@@ -104,9 +97,9 @@ func (e *BambooEngine) isEffectiveKey(key rune) bool {
 	return inKeyList(e.GetInputMethod().Keys, key)
 }
 
-func (e *BambooEngine) GetSpellingMatchResult(mode Mode) uint8 {
+func (e *BambooEngine) IsValid(inputIsFullComplete bool) bool {
 	var last = getLastWord(getLastSequence(e.composition), e.inputMethod.Keys)
-	return getSpellingMatchResult(last, mode)
+	return isValid(last, inputIsFullComplete)
 }
 
 func (e *BambooEngine) GetRawString() string {
@@ -153,7 +146,7 @@ func (e *BambooEngine) generateTransformations(composition []*Transformation, lo
 		transformations = generateFallbackTransformations(composition, e.getApplicableRules(lowerKey), lowerKey, isUpperCase)
 		var newComposition = append(composition, transformations...)
 
-		// Implement the uow typing shortcut by creating a virtual
+		// Implement the uwo+ typing shortcut by creating a virtual
 		// Mark.HORN rule that targets 'u' or 'o'.
 		if virtualTrans := e.applyUowShortcut(newComposition); virtualTrans != nil {
 			transformations = append(transformations, virtualTrans)
@@ -186,7 +179,7 @@ func (e *BambooEngine) applyUowShortcut(syllable []*Transformation) *Transformat
 }
 
 func (e *BambooEngine) refreshLastToneTarget(syllable []*Transformation) []*Transformation {
-	if e.flags&EfreeToneMarking != 0 && getSpellingMatchResult(syllable, ToneLess) != FindResultNotMatch {
+	if e.flags&EfreeToneMarking != 0 && isValid(syllable, false) {
 		return refreshLastToneTarget(syllable, e.flags&EstdToneStyle != 0)
 	}
 	return nil

@@ -22,7 +22,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
 	"log"
@@ -43,9 +42,10 @@ func initMain() {
 		os.Chdir(DataDir)
 	}
 	go func() {
-		loadEmojiOne(DictEmojiOne)
-		var dictionary, _ = loadDictionary(DictVietnameseCm)
-		bamboo.AddDictionaryToSpellingTrie(dictionary)
+		emojiTrie = NewTrie()
+		//loadEmojiOne(DictEmojiOne)
+		//var dictionary, _ = loadDictionary(DictVietnameseCm)
+		//bamboo.AddDictionaryToSpellingTrie(dictionary)
 	}()
 }
 

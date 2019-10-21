@@ -39,24 +39,15 @@ func getCanvas(composition []*Transformation, mode Mode) []rune {
 			chr = appendingTrans.Rule.Key
 		} else {
 			chr = appendingTrans.Rule.EffectOn
-			if mode&MarkLess != 0 && (chr < 'a' || chr > 'z') {
-				chr = RemoveMarkFromChar(chr)
-			}
 			for _, trans := range transList {
 				switch trans.Rule.EffectType {
 				case MarkTransformation:
-					if mode&MarkLess != 0 {
-						break
-					}
 					if trans.Rule.Effect == uint8(MARK_RAW) {
 						chr = appendingTrans.Rule.Key
 					} else {
 						chr = AddMarkToChar(chr, trans.Rule.Effect)
 					}
 				case ToneTransformation:
-					if mode&ToneLess != 0 {
-						break
-					}
 					chr = AddToneToChar(chr, trans.Rule.Effect)
 				}
 			}
