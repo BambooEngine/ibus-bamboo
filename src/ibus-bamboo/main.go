@@ -36,21 +36,11 @@ const (
 var embedded = flag.Bool("ibus", false, "Run the embedded ibus component")
 var version = flag.Bool("version", false, "Show version")
 
-func initMain() {
+func main() {
 	flag.Parse()
 	if *embedded {
 		os.Chdir(DataDir)
 	}
-	go func() {
-		emojiTrie = NewTrie()
-		//loadEmojiOne(DictEmojiOne)
-		//var dictionary, _ = loadDictionary(DictVietnameseCm)
-		//bamboo.AddDictionaryToSpellingTrie(dictionary)
-	}()
-}
-
-func main() {
-	initMain()
 	if *version {
 		fmt.Println(Version)
 	} else if *embedded {

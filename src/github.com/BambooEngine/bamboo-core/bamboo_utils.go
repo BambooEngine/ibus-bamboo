@@ -270,7 +270,7 @@ func extractCvcAppendingTrans(composition []*Transformation) ([]*Transformation,
 	//     ['q', 'ua', ''] -> ['qu', 'a', '']
 	// except:
 	//     ['g', 'ie', 'ng'] -> ['g', 'ie', 'ng']
-	if len(firstConsonant) > 0 && len(vowel) > 0 && ((firstConsonant[0].Rule.Result == 'g' && vowel[0].Rule.Result == 'i' && len(vowel) > 1 &&
+	if len(firstConsonant) == 1 && len(vowel) > 0 && ((firstConsonant[0].Rule.Result == 'g' && vowel[0].Rule.Result == 'i' && len(vowel) > 1 &&
 		!(vowel[1].Rule.Result == 'e' && len(lastConsonant) > 0)) ||
 		(firstConsonant[0].Rule.Result == 'q' && vowel[0].Rule.Result == 'u')) {
 		firstConsonant = append(firstConsonant, vowel[0])

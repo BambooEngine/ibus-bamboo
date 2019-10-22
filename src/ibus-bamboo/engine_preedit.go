@@ -54,7 +54,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 			keyRune = toUpper(keyRune)
 		}
 		var oMode = bamboo.VietnameseMode
-		if e.shouldFallbackToEnglish() {
+		if e.shouldFallbackToEnglish(true) {
 			oMode = bamboo.EnglishMode
 		}
 		e.preeditor.ProcessKey(keyRune, e.getInputMode())
@@ -126,7 +126,14 @@ func (e *IBusBambooEngine) updatePreedit(processedStr string) {
 	}
 }
 
-func (e *IBusBambooEngine) shouldFallbackToEnglish() bool {
+func (e *IBusBambooEngine) getInputMode() bamboo.Mode {
+	if e.shouldFallbackToEnglish(false) {
+		return bamboo.EnglishMode
+	}
+	return bamboo.VietnameseMode
+}
+
+func (e *IBusBambooEngine) shouldFallbackToEnglish(checkVnRune bool) bool {
 	if e.config.IBflags&IBautoNonVnRestore == 0 {
 		return false
 	}
@@ -142,18 +149,10 @@ func (e *IBusBambooEngine) shouldFallbackToEnglish() bool {
 	if e.config.IBflags&IBddFreeStyle != 0 && (vnRunes[len(vnRunes)-1] == 'd' || strings.ContainsRune(vnSeq, 'đ')) {
 		return false
 	}
-	if !bamboo.HasAnyVietnameseRune(vnSeq) {
+	if checkVnRune && !bamboo.HasAnyVietnameseRune(vnSeq) {
 		return false
 	}
-	if e.preeditor.IsValid(false) {
-		return false
-	}
-	return true
-}
-
-func (e *IBusBambooEngine) hasVietnameseChar() bool {
-	var vnSeq = e.getProcessedString(bamboo.VietnameseMode)
-	return bamboo.HasAnyVietnameseRune(vnSeq)
+	return !e.preeditor.IsValid(false)
 }
 
 func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
@@ -172,10 +171,10 @@ func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
 	if !bamboo.HasAnyVietnameseRune(vnSeq) {
 		return false
 	}
-	if e.config.IBflags&IBspellCheckingWithDicts == 0 {
-		return !e.preeditor.IsValid(true)
+	if e.config.IBflags&IBspellCheckingWithDicts != 0 {
+		return !dictionary[vnSeq]
 	}
-	return true
+	return !e.preeditor.IsValid(true)
 }
 
 func (e *IBusBambooEngine) getComposedString() string {
@@ -194,29 +193,10 @@ func (e *IBusBambooEngine) getProcessedString(mode bamboo.Mode) string {
 }
 
 func (e *IBusBambooEngine) getPreeditString() string {
-	if e.shouldFallbackToEnglish() {
+	if e.shouldFallbackToEnglish(true) {
 		return e.getProcessedString(bamboo.EnglishMode | bamboo.WithEffectKeys)
 	}
 	return e.getProcessedString(bamboo.VietnameseMode | bamboo.WithEffectKeys)
-}
-
-func (e *IBusBambooEngine) getInputMode() bamboo.Mode {
-	if e.config.IBflags&IBautoNonVnRestore == 0 {
-		return bamboo.VietnameseMode
-	}
-	var vnSeq = e.getProcessedString(bamboo.VietnameseMode | bamboo.LowerCase)
-	var vnRunes = []rune(vnSeq)
-	if len(vnRunes) == 0 {
-		return bamboo.VietnameseMode
-	}
-	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation
-	if e.config.IBflags&IBddFreeStyle != 0 && (vnRunes[len(vnRunes)-1] == 'd' || strings.ContainsRune(vnSeq, 'đ')) {
-		return bamboo.VietnameseMode
-	}
-	if e.preeditor.IsValid(false) {
-		return bamboo.VietnameseMode
-	}
-	return bamboo.EnglishMode
 }
 
 func (e *IBusBambooEngine) resetPreedit() {

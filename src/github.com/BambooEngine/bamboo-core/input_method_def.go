@@ -9,7 +9,6 @@ package bamboo
 
 type InputMethodDefinition map[string]string
 
-// todo: move to input_method.json
 var InputMethodDefinitions = map[string]InputMethodDefinition{
 	"Telex": {
 		"z": "XoaDauThanh",

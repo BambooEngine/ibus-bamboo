@@ -97,9 +97,6 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 	if e.englishMode {
 		return false, nil
 	}
-	if e.inPreeditList() {
-		return e.preeditProcessKeyEvent(keyVal, keyCode, state)
-	}
 	if e.inBackspaceWhiteList() {
 		return e.bsProcessKeyEvent(keyVal, keyCode, state)
 	}
@@ -163,7 +160,7 @@ func (e *IBusBambooEngine) SetSurroundingText(text dbus.Variant, cursorPos uint3
 			fmt.Println(err)
 		}
 	}()
-	if !e.inPreeditList() && e.inBackspaceWhiteList() {
+	if e.inBackspaceWhiteList() {
 		var str = reflect.ValueOf(reflect.ValueOf(text.Value()).Index(2).Interface()).String()
 		var s = []rune(str)
 		if len(s) < int(cursorPos) {
@@ -173,6 +170,7 @@ func (e *IBusBambooEngine) SetSurroundingText(text dbus.Variant, cursorPos uint3
 		fmt.Println("Surrounding Text: ", string(cs))
 		e.preeditor.Reset()
 		for i := len(cs) - 1; i >= 0; i-- {
+			// workaround for spell checking
 			if bamboo.IsPunctuationMark(cs[i]) && e.preeditor.CanProcessKey(cs[i]) {
 				cs[i] = ' '
 			}
@@ -282,6 +280,7 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	if propName == PropKeyEmojiEnabled {
 		if propState == ibus.PROP_STATE_CHECKED {
 			e.config.IBflags &= ^IBemojiDisabled
+			loadEmojiOne(DictEmojiOne)
 		} else {
 			e.config.IBflags |= IBemojiDisabled
 		}
@@ -320,6 +319,7 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		if propState == ibus.PROP_STATE_CHECKED {
 			e.config.IBflags |= IBspellCheckingWithDicts
 			turnSpellChecking(true)
+			dictionary, _ = loadDictionary(DictVietnameseCm)
 		} else {
 			e.config.IBflags &= ^IBspellCheckingWithDicts
 		}

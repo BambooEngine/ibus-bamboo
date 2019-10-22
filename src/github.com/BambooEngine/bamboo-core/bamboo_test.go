@@ -615,9 +615,21 @@ func TestDoubleTyping(t *testing.T) {
 	}
 	//eechs
 	ng.Reset()
-	log.Print("===============end buwow")
 	ng.ProcessString("quawcj", VietnameseMode)
 	if ng.GetProcessedString(VietnameseMode) != "quặc" {
 		t.Errorf("Process quawcj, got %s valid=%v expected quặc", ng.GetProcessedString(VietnameseMode), ng.IsValid(false))
+	}
+	ng = newStdEngine()
+	ng.Reset()
+	log.Print("===============end")
+	ng.ProcessString("t ]", EnglishMode)
+	ng.ProcessString("a", VietnameseMode)
+	if ng.GetProcessedString(VietnameseMode) != "a" || !ng.IsValid(false) {
+		t.Errorf("Process ]aa, got %s valid=%v expected true", ng.GetProcessedString(VietnameseMode), ng.IsValid(true))
+	}
+	ng.Reset()
+	ng.ProcessString("]]a", VietnameseMode)
+	if ng.GetProcessedString(VietnameseMode) != "a" || !ng.IsValid(false) {
+		t.Errorf("Process ]aa, got %s valid=%v expected true", ng.GetProcessedString(VietnameseMode), ng.IsValid(true))
 	}
 }

@@ -7,7 +7,7 @@
  */
 package bamboo
 
-// import "log"
+import "log"
 
 var firstConsonantSeqs = []string{
 	"b d đ g gh m n nh p ph r s t tr v z",
@@ -85,7 +85,11 @@ func lookup(seq []string, input string, inputIsFull, inputIsComplete bool) []int
 }
 
 func isValidCVC(fc, vo, lc string, inputIsFullComplete bool) bool {
-	// log.Printf("fc=%s vo=%s lc=%s", fc, vo, lc)
+	var ret bool
+	defer func() {
+		return
+		log.Printf("fc=%s vo=%s lc=%s ret=%v", fc, vo, lc, ret)
+	}()
 	var fcIndexes, voIndexes, lcIndexes []int
 	if fc != "" {
 		if fcIndexes = lookup(firstConsonantSeqs, fc, inputIsFullComplete || vo != "", true); fcIndexes == nil {
@@ -102,7 +106,6 @@ func isValidCVC(fc, vo, lc string, inputIsFullComplete bool) bool {
 			return false
 		}
 	}
-	var ret bool
 	// first consonant only
 	if voIndexes == nil {
 		return fcIndexes != nil
@@ -121,7 +124,6 @@ func isValidCVC(fc, vo, lc string, inputIsFullComplete bool) bool {
 		}
 	}
 	// vowel + last consonant
-	//log.Print("ret", fcIndexes, voIndexes, lcIndexes)
 	if lcIndexes != nil {
 		ret = false
 		for _, voi := range voIndexes {

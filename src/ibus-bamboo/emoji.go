@@ -33,8 +33,6 @@ type EmojiOne struct {
 	Ascii     []string
 }
 
-var emojiTrie *TrieNode
-
 func loadEmojiOne(dataFile string) {
 	emojiTrie = NewTrie()
 	var c = map[string]EmojiOne{}

@@ -273,7 +273,8 @@ func loadDictionary(dataFiles ...string) (map[string]bool, error) {
 			if len(line) == 0 {
 				continue
 			}
-			dictionary[strings.ToLower(string(line))] = true
+			var tmp = []byte(strings.ToLower(string(line)))
+			dictionary[string(tmp)] = true
 			//bamboo.AddTrie(rootWordTrie, []rune(string(line)), false)
 		}
 		f.Close()
