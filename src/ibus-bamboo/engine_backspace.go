@@ -34,7 +34,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		e.isSurroundingTextReady = true
 		return false, nil
 	}
-	if e.inXTestFakeKeyEventList() || e.inSurroundingTextList() {
+	if e.checkInputMode(xTestFakeKeyEventIM) || e.checkInputMode(surroundingTextIM) {
 		// we don't want to use ForwardKeyEvent api in X11 XTestFakeKeyEvent and Surrounding Text mode
 		var sleep = func() {
 			for len(keyPressChan) > 0 {
@@ -83,7 +83,7 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 	var keyRune = rune(keyVal)
 	oldText := e.preeditor.GetProcessedString(bamboo.VietnameseMode | bamboo.WithEffectKeys)
 	if keyVal == IBUS_BackSpace {
-		if e.config.IBflags&IBautoNonVnRestore == 0 || e.inSLForwardKeyList() {
+		if e.config.IBflags&IBautoNonVnRestore == 0 || e.checkInputMode(shiftLeftForwardingIM) {
 			if e.getRawKeyLen() > 0 {
 				e.preeditor.RemoveLastChar(false)
 			}
@@ -107,7 +107,7 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 		if state&IBUS_LOCK_MASK != 0 {
 			keyRune = toUpper(keyRune)
 		}
-		e.preeditor.ProcessKey(keyRune, e.getInputMode())
+		e.preeditor.ProcessKey(keyRune, e.getInputMethod())
 		var vnSeq = e.preeditor.GetProcessedString(bamboo.VietnameseMode | bamboo.WithEffectKeys)
 		if len(vnSeq) > 0 && rune(vnSeq[len(vnSeq)-1]) == keyRune && bamboo.IsWordBreakSymbol(keyRune) {
 			e.updatePreviousText(vnSeq, oldText)
@@ -177,7 +177,7 @@ func (e *IBusBambooEngine) updatePreviousText(newText, oldText string) {
 	nBackSpace := 0
 	// workaround for chrome and firefox's address bar
 	if e.isFirstTimeSendingBS && diffFrom < newLen && diffFrom < oldLen && e.inBrowserList() &&
-		!e.inSLForwardKeyList() {
+		!e.checkInputMode(shiftLeftForwardingIM) {
 		fmt.Println("Append a deadkey")
 		e.SendText([]rune(" "))
 		nBackSpace += 1
@@ -194,7 +194,7 @@ func (e *IBusBambooEngine) updatePreviousText(newText, oldText string) {
 
 func (e *IBusBambooEngine) sendBackspaceAndNewRunes(nBackSpace int, newRunes []rune) {
 	if nBackSpace > 0 {
-		if e.inXTestFakeKeyEventList() {
+		if e.checkInputMode(xTestFakeKeyEventIM) {
 			e.nFakeBackSpace = nBackSpace
 		}
 		e.SendBackSpace(nBackSpace)
@@ -206,7 +206,7 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 	// Gtk/Qt apps have a serious sync issue with fake backspaces
 	// and normal string committing, so we'll not commit right now
 	// but delay until all the sent backspaces got processed.
-	if e.inXTestFakeKeyEventList() {
+	if e.checkInputMode(xTestFakeKeyEventIM) {
 		var sleep = func() {
 			var count = 0
 			for e.nFakeBackSpace > 0 && count < 5 {
@@ -219,38 +219,38 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 		x11SendBackspace(n, 0)
 		time.Sleep(time.Duration(n) * 20 * time.Millisecond)
 		sleep()
-	} else if e.inSurroundingTextList() {
+	} else if e.checkInputMode(surroundingTextIM) {
 		fmt.Printf("Sendding %d backspace via SurroundingText\n", n)
 		e.DeleteSurroundingText(-int32(n), uint32(n))
 		time.Sleep(20 * time.Millisecond)
-	} else if e.inDirectForwardKeyList() {
+	} else if e.checkInputMode(forwardAsCommitIM) {
 		time.Sleep(10 * time.Millisecond)
-		fmt.Printf("Sendding %d backspace via ForwardKeyEvent III\n", n)
+		fmt.Printf("Sendding %d backspace via forwardAsCommitIM\n", n)
 		for i := 0; i < n; i++ {
 			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, 0)
-			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, IBUS_RELEASE_MASK)
+			// e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, IBUS_RELEASE_MASK)
 			time.Sleep(5 * time.Millisecond)
 		}
 		time.Sleep(20 * time.Millisecond)
-	} else if e.inSLForwardKeyList() {
+	} else if e.checkInputMode(shiftLeftForwardingIM) {
 		time.Sleep(30 * time.Millisecond)
-		log.Printf("Sendding %d Shift+Left via ForwardKeyEvent II\n", n)
+		log.Printf("Sendding %d Shift+Left via shiftLeftForwardingIM\n", n)
 
 		for i := 0; i < n; i++ {
 			e.ForwardKeyEvent(IBUS_Left, XK_Left-8, IBUS_SHIFT_MASK)
 			//e.ForwardKeyEvent(IBUS_Left, XK_Left-8, IBUS_RELEASE_MASK)
 		}
 		time.Sleep(time.Duration(n) * 30 * time.Millisecond)
-	} else if e.inForwardKeyList() {
+	} else if e.checkInputMode(backspaceForwardingIM) {
 		time.Sleep(10 * time.Millisecond)
-		log.Printf("Sendding %d backspace via ForwardKeyEvent I\n", n)
+		log.Printf("Sendding %d backspace via backspaceForwardingIM\n", n)
 
 		for i := 0; i < n; i++ {
 			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, 0)
 			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, IBUS_RELEASE_MASK)
 			time.Sleep(15 * time.Millisecond)
 		}
-		time.Sleep(25 * time.Millisecond)
+		time.Sleep(time.Duration(n) * 10 * time.Millisecond)
 	} else {
 		fmt.Println("There's something wrong with wmClasses")
 	}
@@ -264,7 +264,7 @@ func (e *IBusBambooEngine) SendText(rs []rune) {
 	if len(rs) == 0 {
 		return
 	}
-	if e.inDirectForwardKeyList() {
+	if e.checkInputMode(forwardAsCommitIM) {
 		log.Println("Forward as commit", string(rs))
 		for _, chr := range rs {
 			var keyVal = vnSymMapping[chr]

@@ -33,12 +33,12 @@ type EmojiOne struct {
 	Ascii     []string
 }
 
-func loadEmojiOne(dataFile string) {
-	emojiTrie = NewTrie()
+func loadEmojiOne(dataFile string) (*TrieNode, error) {
+	var trie = NewTrie()
 	var c = map[string]EmojiOne{}
 	var data, err = ioutil.ReadFile(dataFile)
 	if err != nil {
-		return
+		return nil, err
 	}
 	json.Unmarshal(data, &c)
 	for k, v := range c {
@@ -49,12 +49,13 @@ func loadEmojiOne(dataFile string) {
 			}
 		}
 		for _, ascii := range v.Ascii {
-			InsertTrie(emojiTrie, ascii, codePointStr)
+			InsertTrie(trie, ascii, codePointStr)
 		}
 		for _, keyword := range v.Keywords {
-			InsertTrie(emojiTrie, keyword, codePointStr)
+			InsertTrie(trie, keyword, codePointStr)
 		}
 	}
+	return trie, nil
 }
 
 type EmojiEngine struct {

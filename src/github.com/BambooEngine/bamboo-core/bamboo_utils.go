@@ -188,9 +188,10 @@ func findTransformationIndex(composition []*Transformation, trans *Transformatio
 }
 
 func getLastSequence(composition []*Transformation) []*Transformation {
-	for i := len(composition) - 1; i >= 0; i-- {
+	var cl = len(composition)
+	for i := cl - 1; i >= 0; i-- {
 		if composition[i].Rule.EffectType == Appending && composition[i].Rule.Key == ' ' {
-			if i < len(composition)-1 {
+			if i < cl-1 {
 				return composition[i+1:]
 			} else {
 				return nil

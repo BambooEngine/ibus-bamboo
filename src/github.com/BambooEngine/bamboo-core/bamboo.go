@@ -115,9 +115,9 @@ func (e *BambooEngine) GetRawString() string {
 
 func (e *BambooEngine) GetProcessedString(mode Mode) string {
 	if mode&WithEffectKeys != 0 {
-		return Flatten(getLastWord(e.composition, e.inputMethod.Keys), mode)
+		return Flatten(getLastWord(getLastSequence(e.composition), e.inputMethod.Keys), mode)
 	}
-	return Flatten(getLastWord(e.composition, nil), mode)
+	return Flatten(getLastWord(getLastSequence(e.composition), nil), mode)
 }
 
 func (e *BambooEngine) getApplicableRules(key rune) []Rule {

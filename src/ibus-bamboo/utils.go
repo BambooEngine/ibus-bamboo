@@ -56,6 +56,16 @@ const (
 )
 
 const (
+	preeditIM = iota + 1
+	surroundingTextIM
+	backspaceForwardingIM
+	shiftLeftForwardingIM
+	xTestFakeKeyEventIM
+	forwardAsCommitIM
+	usIM
+)
+
+const (
 	IBautoCommitWithVnNotMatch uint = 1 << iota
 	IBmarcoEnabled
 	IBautoCommitWithVnFullMatch
@@ -91,6 +101,7 @@ type Config struct {
 	OutputCharset             string
 	Flags                     uint
 	IBflags                   uint
+	DefaultInputMode          int
 	ExceptedList              []string
 	PreeditWhiteList          []string
 	X11ClipboardWhiteList     []string
@@ -125,6 +136,7 @@ func LoadConfig(engineName string) *Config {
 		InputMethodDefinitions:    bamboo.InputMethodDefinitions,
 		Flags:                     bamboo.EstdFlags,
 		IBflags:                   IBstdFlags,
+		DefaultInputMode:          preeditIM,
 		ExceptedList:              nil,
 		PreeditWhiteList:          nil,
 		X11ClipboardWhiteList:     nil,
@@ -258,7 +270,7 @@ func sortStrings(list []string) []string {
 }
 
 func loadDictionary(dataFiles ...string) (map[string]bool, error) {
-	var dictionary = map[string]bool{}
+	var data = map[string]bool{}
 	for _, dataFile := range dataFiles {
 		f, err := os.Open(dataFile)
 		if err != nil {
@@ -274,12 +286,12 @@ func loadDictionary(dataFiles ...string) (map[string]bool, error) {
 				continue
 			}
 			var tmp = []byte(strings.ToLower(string(line)))
-			dictionary[string(tmp)] = true
+			data[string(tmp)] = true
 			//bamboo.AddTrie(rootWordTrie, []rune(string(line)), false)
 		}
 		f.Close()
 	}
-	return dictionary, nil
+	return data, nil
 }
 
 func isMovementKey(keyVal uint32) bool {

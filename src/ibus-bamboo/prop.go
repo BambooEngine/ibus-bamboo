@@ -495,7 +495,7 @@ func GetHotKeyPropListByConfig(c *Config) *ibus.PropList {
 			Name:      "IBusProperty",
 			Key:       PropKeyIMQuickSwitchEnabled,
 			Type:      ibus.PROP_TYPE_TOGGLE,
-			Label:     dbus.MakeVariant(ibus.NewText("Chuyển nhanh Vi-En  Shift")),
+			Label:     dbus.MakeVariant(ibus.NewText("Chuyển nhanh vi-en  Shift")),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("IM quick switch")),
 			Sensitive: true,
 			Visible:   true,

@@ -57,7 +57,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		if e.shouldFallbackToEnglish(true) {
 			oMode = bamboo.EnglishMode
 		}
-		e.preeditor.ProcessKey(keyRune, e.getInputMode())
+		e.preeditor.ProcessKey(keyRune, e.getInputMethod())
 		var newSeq = e.preeditor.GetProcessedString(oMode | bamboo.WithEffectKeys)
 		if len(newSeq) > 0 && rune(newSeq[len(newSeq)-1]) == keyRune && bamboo.IsWordBreakSymbol(keyRune) {
 			e.commitPreedit(newSeq)
@@ -126,7 +126,19 @@ func (e *IBusBambooEngine) updatePreedit(processedStr string) {
 	}
 }
 
-func (e *IBusBambooEngine) getInputMode() bamboo.Mode {
+func (e *IBusBambooEngine) getWhiteList() [][]string {
+	return [][]string{
+		e.config.PreeditWhiteList,
+		e.config.SurroundingTextWhiteList,
+		e.config.ForwardKeyWhiteList,
+		e.config.SLForwardKeyWhiteList,
+		e.config.X11ClipboardWhiteList,
+		e.config.DirectForwardKeyWhiteList,
+		e.config.ExceptedList,
+	}
+}
+
+func (e *IBusBambooEngine) getInputMethod() bamboo.Mode {
 	if e.shouldFallbackToEnglish(false) {
 		return bamboo.EnglishMode
 	}

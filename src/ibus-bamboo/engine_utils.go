@@ -38,8 +38,6 @@ func GetBambooEngineCreator() func(conn *dbus.Conn, engineName string) dbus.Obje
 	objectPath := dbus.ObjectPath(fmt.Sprintf("/org/freedesktop/IBus/Engine/bamboo/%d", time.Now().UnixNano()))
 	setupConfigDir()
 	go keyPressCapturing()
-	dictionary = map[string]bool{}
-	emojiTrie = NewTrie()
 	var engineName = strings.ToLower(EngineName)
 
 	return func(conn *dbus.Conn, ngName string) dbus.ObjectPath {
@@ -61,20 +59,18 @@ func GetBambooEngineCreator() func(conn *dbus.Conn, engineName string) dbus.Obje
 const KEYPRESS_DELAY_MS = 10
 
 func (e *IBusBambooEngine) init() {
-	if e.emoji == nil {
-		e.emoji = NewEmojiEngine()
-	}
+	e.emoji = NewEmojiEngine()
 	if e.macroTable == nil {
 		e.macroTable = NewMacroTable()
 		if e.config.IBflags&IBmarcoEnabled != 0 {
 			e.macroTable.Enable(e.engineName)
 		}
 	}
-	if e.config.IBflags&IBspellCheckingWithDicts != 0 {
+	if e.config.IBflags&IBspellCheckingWithDicts != 0 && dictionary == nil {
 		dictionary, _ = loadDictionary(DictVietnameseCm)
 	}
-	if e.config.IBflags&IBemojiDisabled == 0 {
-		loadEmojiOne(DictEmojiOne)
+	if e.config.IBflags&IBemojiDisabled == 0 && emojiTrie == nil {
+		emojiTrie, _ = loadEmojiOne(DictEmojiOne)
 	}
 	keyPressHandler = e.keyPressHandler
 
@@ -85,7 +81,7 @@ func (e *IBusBambooEngine) init() {
 	onMouseMove = func() {
 		e.Lock()
 		defer e.Unlock()
-		if e.inPreeditList() || !e.inBackspaceWhiteList() {
+		if e.checkInputMode(preeditIM) {
 			if e.getRawKeyLen() == 0 {
 				return
 			}
@@ -132,7 +128,7 @@ func (e *IBusBambooEngine) resetBuffer() {
 	if e.getRawKeyLen() == 0 {
 		return
 	}
-	if e.inPreeditList() || !e.inBackspaceWhiteList() {
+	if e.checkInputMode(preeditIM) {
 		e.commitPreedit(e.getPreeditString())
 	} else {
 		e.preeditor.Reset()
@@ -169,7 +165,7 @@ func (e *IBusBambooEngine) isIgnoredKey(keyVal, state uint32) bool {
 	if keyVal == IBUS_Caps_Lock {
 		return true
 	}
-	if e.inExceptedList() {
+	if e.checkInputMode(usIM) {
 		if e.isInputModeLTOpened || keyVal == IBUS_OpenLookupTable {
 			return false
 		}
@@ -182,31 +178,37 @@ func (e *IBusBambooEngine) getRawKeyLen() int {
 	return len(e.preeditor.GetRawString())
 }
 
-func (e *IBusBambooEngine) openLookupTable() {
-	var whiteList = [][]string{
-		e.config.PreeditWhiteList,
-		e.config.SurroundingTextWhiteList,
-		e.config.ForwardKeyWhiteList,
-		e.config.SLForwardKeyWhiteList,
-		e.config.X11ClipboardWhiteList,
-		e.config.DirectForwardKeyWhiteList,
-		e.config.ExceptedList,
+func (e *IBusBambooEngine) getInputMode() int {
+	if e.wmClasses == "" {
+		return preeditIM
 	}
-	fmt.Println("x22 forcus", x11GetFocusWindowClass())
+	var whiteList = e.getWhiteList()
+	for i, list := range whiteList {
+		if inStringList(list, e.wmClasses) {
+			return i + 1
+		}
+	}
+	if e.config.DefaultInputMode > 0 && e.config.DefaultInputMode <= len(whiteList) {
+		return e.config.DefaultInputMode
+	}
+	return preeditIM
+}
+
+func (e *IBusBambooEngine) openLookupTable() {
 	var wmClasses = strings.Split(e.wmClasses, ":")
 	var wmClass = e.wmClasses
 	if len(wmClasses) == 2 {
 		wmClass = wmClasses[1]
 	}
 
-	var lookupTableConfiguration = []string{
-		"Cấu hình mặc định (Pre-edit)",
-		"Sửa lỗi gạch chân (Surrounding Text)",
-		"Sửa lỗi gạch chân (ForwardKeyEvent I)",
-		"Sửa lỗi gạch chân (ForwardKeyEvent II)",
-		"Sửa lỗi gạch chân (XTestFakeKeyEvent)",
-		"Sửa lỗi gạch chân (Forward as commit)",
-		"Thêm vào danh sách loại trừ (" + wmClass + ")",
+	var lookupTableConfiguration = map[int]string{
+		preeditIM:             "Cấu hình mặc định (Pre-edit)",
+		surroundingTextIM:     "Sửa lỗi gạch chân (Surrounding Text)",
+		backspaceForwardingIM: "Sửa lỗi gạch chân (ForwardKeyEvent I)",
+		shiftLeftForwardingIM: "Sửa lỗi gạch chân (ForwardKeyEvent II)",
+		xTestFakeKeyEventIM:   "Sửa lỗi gạch chân (XTestFakeKeyEvent)",
+		forwardAsCommitIM:     "Sửa lỗi gạch chân (Forward as commit)",
+		usIM:                  "Thêm vào danh sách loại trừ (" + wmClass + ")",
 	}
 
 	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (1/2/3/4/5/6/7) để lưu tùy chọn của bạn"), true)
@@ -216,15 +218,14 @@ func (e *IBusBambooEngine) openLookupTable() {
 	lt.Orientation = IBUS_ORIENTATION_VERTICAL
 	var cursorPos = 0
 	for i := 0; i < len(lookupTableConfiguration); i++ {
-		if inStringList(whiteList[i], e.wmClasses) {
+		var im = i + 1
+		if e.inputMode == im {
 			lt.AppendLabel("*")
 			cursorPos = i
 		} else {
-			lt.AppendLabel(strconv.Itoa(i + 1))
+			lt.AppendLabel(strconv.Itoa(im))
 		}
-	}
-	for _, ac := range lookupTableConfiguration {
-		lt.AppendCandidate(ac)
+		lt.AppendCandidate(lookupTableConfiguration[im])
 	}
 	lt.SetCursorPos(uint32(cursorPos))
 	e.inputModeLookupTable = lt
@@ -310,6 +311,7 @@ func (e *IBusBambooEngine) commitInputModeCandidate() {
 	SaveConfig(e.config, e.engineName)
 	e.propList = GetPropListByConfig(e.config)
 	e.RegisterProperties(e.propList)
+	e.inputMode = e.getInputMode()
 }
 
 func (e *IBusBambooEngine) closeInputModeCandidates() {
@@ -349,41 +351,16 @@ func (e *IBusBambooEngine) canProcessKey(keyVal, state uint32) bool {
 	return e.preeditor.CanProcessKey(keyRune)
 }
 
-func (e *IBusBambooEngine) inExceptedList() bool {
-	return inStringList(e.config.ExceptedList, e.wmClasses)
-}
-
-func (e *IBusBambooEngine) inPreeditList() bool {
-	return inStringList(e.config.PreeditWhiteList, e.wmClasses)
-}
-
 func (e *IBusBambooEngine) inBackspaceWhiteList() bool {
-	return e.inForwardKeyList() || e.inXTestFakeKeyEventList() ||
-		e.inSurroundingTextList() || e.inDirectForwardKeyList() || e.inSLForwardKeyList()
-}
-
-func (e *IBusBambooEngine) inSurroundingTextList() bool {
-	return e.wmClasses != "" && inStringList(e.config.SurroundingTextWhiteList, e.wmClasses)
-}
-
-func (e *IBusBambooEngine) inSLForwardKeyList() bool {
-	return e.wmClasses != "" && inStringList(e.config.SLForwardKeyWhiteList, e.wmClasses)
-}
-
-func (e *IBusBambooEngine) inDirectForwardKeyList() bool {
-	return e.wmClasses != "" && inStringList(e.config.DirectForwardKeyWhiteList, e.wmClasses)
-}
-
-func (e *IBusBambooEngine) inForwardKeyList() bool {
-	return e.wmClasses != "" && inStringList(e.config.ForwardKeyWhiteList, e.wmClasses)
-}
-
-func (e *IBusBambooEngine) inXTestFakeKeyEventList() bool {
-	return e.wmClasses != "" && inStringList(e.config.X11ClipboardWhiteList, e.wmClasses)
+	return e.inputMode > preeditIM && e.inputMode < usIM
 }
 
 func (e *IBusBambooEngine) inBrowserList() bool {
 	return inStringList(DefaultBrowserList, e.wmClasses)
+}
+
+func (e *IBusBambooEngine) checkInputMode(im int) bool {
+	return e.inputMode == im
 }
 
 func notify(enMode bool) {
