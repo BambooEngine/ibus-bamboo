@@ -155,7 +155,7 @@ void event_callback(XPointer priv, XRecordInterceptData *hook)
     /** printf ("KeyRelease: \t%s\n", XKeysymToString(XKeycodeToKeysym(ctrl_disp, keycode, 0))); */
     break;
   case ButtonPress:
-    printf("ButtonPress: /t%d, rootX=%d, rootY=%d, recording=%d", btncode, cur_x, cur_y, mouse_recording);
+    /*printf("ButtonPress: /t%d, rootX=%d, rootY=%d, recording=%d", btncode, cur_x, cur_y, mouse_recording);*/
     mouse_click_handler();
     break;
   case ButtonRelease:
