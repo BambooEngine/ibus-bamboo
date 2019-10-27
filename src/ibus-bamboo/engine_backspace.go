@@ -172,7 +172,7 @@ func (e *IBusBambooEngine) updatePreviousText(newText, oldText string) {
 		}
 	}
 	diffFrom := sameTo + 1
-	log.Println("Updating Previous Text", string(oldRunes), string(newRunes), diffFrom)
+	log.Printf("Updating Previous Text %s ---> %s\n", string(oldRunes), string(newRunes))
 
 	nBackSpace := 0
 	// workaround for chrome and firefox's address bar
@@ -215,42 +215,41 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 			}
 		}
 		fmt.Printf("Sendding %d backspace via XTestFakeKeyEvent\n", n)
-		time.Sleep(20 * time.Millisecond)
+		time.Sleep(30 * time.Millisecond)
 		x11SendBackspace(n, 0)
-		time.Sleep(time.Duration(n) * 20 * time.Millisecond)
 		sleep()
+		time.Sleep(time.Duration(n) * 30 * time.Millisecond)
 	} else if e.checkInputMode(surroundingTextIM) {
+		time.Sleep(20 * time.Millisecond)
 		fmt.Printf("Sendding %d backspace via SurroundingText\n", n)
 		e.DeleteSurroundingText(-int32(n), uint32(n))
 		time.Sleep(20 * time.Millisecond)
 	} else if e.checkInputMode(forwardAsCommitIM) {
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(20 * time.Millisecond)
 		fmt.Printf("Sendding %d backspace via forwardAsCommitIM\n", n)
 		for i := 0; i < n; i++ {
 			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, 0)
-			// e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, IBUS_RELEASE_MASK)
-			time.Sleep(5 * time.Millisecond)
+			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, IBUS_RELEASE_MASK)
 		}
-		time.Sleep(20 * time.Millisecond)
+		time.Sleep(time.Duration(n) * 30 * time.Millisecond)
 	} else if e.checkInputMode(shiftLeftForwardingIM) {
 		time.Sleep(30 * time.Millisecond)
 		log.Printf("Sendding %d Shift+Left via shiftLeftForwardingIM\n", n)
 
 		for i := 0; i < n; i++ {
 			e.ForwardKeyEvent(IBUS_Left, XK_Left-8, IBUS_SHIFT_MASK)
-			//e.ForwardKeyEvent(IBUS_Left, XK_Left-8, IBUS_RELEASE_MASK)
+			e.ForwardKeyEvent(IBUS_Left, XK_Left-8, IBUS_RELEASE_MASK)
 		}
 		time.Sleep(time.Duration(n) * 30 * time.Millisecond)
 	} else if e.checkInputMode(backspaceForwardingIM) {
-		time.Sleep(10 * time.Millisecond)
+		time.Sleep(30 * time.Millisecond)
 		log.Printf("Sendding %d backspace via backspaceForwardingIM\n", n)
 
 		for i := 0; i < n; i++ {
 			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, 0)
 			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, IBUS_RELEASE_MASK)
-			time.Sleep(15 * time.Millisecond)
 		}
-		time.Sleep(time.Duration(n) * 10 * time.Millisecond)
+		time.Sleep(time.Duration(n) * 30 * time.Millisecond)
 	} else {
 		fmt.Println("There's something wrong with wmClasses")
 	}
@@ -277,6 +276,5 @@ func (e *IBusBambooEngine) SendText(rs []rune) {
 		}
 		return
 	}
-	log.Println("Sending text", string(rs))
 	e.commitText(string(rs))
 }

@@ -282,7 +282,7 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	if propName == PropKeyEmojiEnabled {
 		if propState == ibus.PROP_STATE_CHECKED {
 			e.config.IBflags &= ^IBemojiDisabled
-			loadEmojiOne(DictEmojiOne)
+			emojiTrie, _ = loadEmojiOne(DictEmojiOne)
 		} else {
 			e.config.IBflags |= IBemojiDisabled
 		}
@@ -396,7 +396,9 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	if _, found := e.config.InputMethodDefinitions[propName]; found && propState == ibus.PROP_STATE_CHECKED {
 		e.config.InputMethod = propName
 	}
-	SaveConfig(e.config, e.engineName)
+	if propName != "-" {
+		SaveConfig(e.config, e.engineName)
+	}
 	e.propList = GetPropListByConfig(e.config)
 
 	var inputMethod = bamboo.ParseInputMethod(e.config.InputMethodDefinitions, e.config.InputMethod)

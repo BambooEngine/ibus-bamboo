@@ -226,7 +226,7 @@ func (e *IBusBambooEngine) commitText(str string) {
 	if str == "" {
 		return
 	}
-	log.Println("Commit Text", str)
+	log.Printf("Commit Text [%s]\n", str)
 	e.CommitText(ibus.NewText(e.encodeText(str)))
 }
 

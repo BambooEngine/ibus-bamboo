@@ -169,3 +169,11 @@ var InputMethodDefinitions = map[string]InputMethodDefinition{
 		"d": "D_Đ",
 	},
 }
+
+func GetInputMethodDefinitions() map[string]InputMethodDefinition {
+	var t = make(map[string]InputMethodDefinition)
+	for k, v := range InputMethodDefinitions {
+		t[k] = v
+	}
+	return t
+}

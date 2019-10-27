@@ -34,11 +34,13 @@ import (
 var dictionary map[string]bool
 var emojiTrie *TrieNode
 
-func GetBambooEngineCreator() func(conn *dbus.Conn, engineName string) dbus.ObjectPath {
+func GetBambooEngineCreator() func(*dbus.Conn, string) dbus.ObjectPath {
 	objectPath := dbus.ObjectPath(fmt.Sprintf("/org/freedesktop/IBus/Engine/bamboo/%d", time.Now().UnixNano()))
 	setupConfigDir()
 	go keyPressCapturing()
-	var engineName = strings.ToLower(EngineName)
+	engineName := strings.ToLower(EngineName)
+	dictionary = map[string]bool{}
+	emojiTrie = NewTrie()
 
 	return func(conn *dbus.Conn, ngName string) dbus.ObjectPath {
 		var engine = new(IBusBambooEngine)
@@ -66,10 +68,10 @@ func (e *IBusBambooEngine) init() {
 			e.macroTable.Enable(e.engineName)
 		}
 	}
-	if e.config.IBflags&IBspellCheckingWithDicts != 0 && dictionary == nil {
+	if e.config.IBflags&IBspellCheckingWithDicts != 0 && len(dictionary) == 0 {
 		dictionary, _ = loadDictionary(DictVietnameseCm)
 	}
-	if e.config.IBflags&IBemojiDisabled == 0 && emojiTrie == nil {
+	if e.config.IBflags&IBemojiDisabled == 0 && emojiTrie != nil && len(emojiTrie.Children) == 0 {
 		emojiTrie, _ = loadEmojiOne(DictEmojiOne)
 	}
 	keyPressHandler = e.keyPressHandler

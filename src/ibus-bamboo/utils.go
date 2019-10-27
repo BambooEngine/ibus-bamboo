@@ -133,7 +133,7 @@ func LoadConfig(engineName string) *Config {
 	var c = Config{
 		InputMethod:               "Telex",
 		OutputCharset:             "Unicode",
-		InputMethodDefinitions:    bamboo.InputMethodDefinitions,
+		InputMethodDefinitions:    bamboo.GetInputMethodDefinitions(),
 		Flags:                     bamboo.EstdFlags,
 		IBflags:                   IBstdFlags,
 		DefaultInputMode:          preeditIM,
