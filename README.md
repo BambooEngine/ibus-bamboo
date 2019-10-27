@@ -8,10 +8,10 @@ IBus Bamboo - Bộ gõ tiếng Việt cho Linux
 
 - [Sơ lược tính năng](#sơ-lược-tính-năng)
 - [Hướng dẫn cài đặt](#hướng-dẫn-cài-đặt)
-	- [Dành cho Ubuntu, Debian và các distro tương tự](#ubuntu-debian-và-các-distro-tương-tự)
+	- [Dành cho Ubuntu, Mint và các distro tương tự](#ubuntu-và-các-distro-tương-tự)
 	- [Dành cho Arch Linux và các distro tương tự](#arch-linux-và-các-distro-tương-tự)
 	- [Void Linux](#void-linux)
-	- [Cài đặt từ OpenBuildService](https://software.opensuse.org//download.html?project=home%3Alamlng&package=ibus-bamboo)
+	- [Cài đặt từ OpenBuildService](#cài-đặt-từ-openbuildservice)
 	- [Cài đặt từ mã nguồn](https://github.com/BambooEngine/ibus-bamboo/wiki/H%C6%B0%E1%BB%9Bng-d%E1%BA%ABn-c%C3%A0i-%C4%91%E1%BA%B7t-t%E1%BB%AB-m%C3%A3-ngu%E1%BB%93n)
 - [Hướng dẫn sử dụng](#hướng-dẫn-sử-dụng)
 - [Báo lỗi](#báo-lỗi)
@@ -35,7 +35,7 @@ IBus Bamboo - Bộ gõ tiếng Việt cho Linux
    ![ibus-bamboo](https://github.com/BambooEngine/ibus-bamboo/raw/gh-resources/demo.gif)
 
 ## Hướng dẫn cài đặt
-### Ubuntu, Debian và các distro tương tự
+### Ubuntu và các distro tương tự
 
 ```sh
 sudo add-apt-repository ppa:bamboo-engine/ibus-bamboo
@@ -67,6 +67,9 @@ makepkg -si
 sudo xbps-install -S ibus-bamboo
 ```
 
+### Cài đặt từ OpenBuildService
+[![OpenBuildService](https://github.com/BambooEngine/ibus-bamboo/raw/gh-resources/obs.png)](https://software.opensuse.org//download.html?project=home%3Alamlng&package=ibus-bamboo)
+
 ## Hướng dẫn sử dụng
 Điểm khác biệt giữa `ibus-bamboo` và các bộ gõ khác là `ibus-bamboo` cung cấp nhiều chế độ gõ khác nhau (1 chế độ gõ có gạch chân và 5 chế độ gõ không gạch chân; tránh nhầm lẫn **chế độ gõ** với **kiểu gõ**, các kiểu gõ bao gồm `telex`, `vni`, ...).
 
@@ -75,7 +78,6 @@ sudo xbps-install -S ibus-bamboo
 **Một số lưu ý:**
 - Một ứng dụng có thể hoạt động tốt với chế độ gõ này trong khi không hoạt động tốt với chế độ gõ khác.
 - Các chế độ gõ được lưu riêng biệt cho mỗi phần mềm (`firefox` có thể đang dùng chế độ 3, trong khi `libreoffice` thì lại dùng chế độ 2).
-- Nếu một phần mềm chưa được đặt chế độ gõ thì nó sẽ dùng chế độ gõ mặc định.
 - Bạn có thể dùng chế độ `thêm vào danh sách loại trừ` để không gõ tiếng Việt trong một chương trình nào đó.
 - Để gõ ký tự `~` hãy nhấn tổ hợp <kbd>Shift</kbd>+<kbd>~</kbd> 2 lần.
 
