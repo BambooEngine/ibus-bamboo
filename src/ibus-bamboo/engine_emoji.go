@@ -99,7 +99,7 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 		e.emoji.ProcessKey(keyRune)
 	} else if keyRune >= '1' && keyRune <= '9' {
 		if pos, err := strconv.Atoi(string(keyRune)); err == nil {
-			if e.setCursorPosInEmojiTable(uint32(pos - 1)) {
+			if e.updateCursorPosInEmojiTable(uint32(pos - 1)) {
 				e.commitEmojiCandidate()
 				reset()
 				return true, nil
@@ -145,7 +145,7 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 	return true, nil
 }
 
-func (e *IBusBambooEngine) setCursorPosInEmojiTable(idx uint32) bool {
+func (e *IBusBambooEngine) updateCursorPosInEmojiTable(idx uint32) bool {
 	pageSize := e.emojiLookupTable.PageSize
 	if idx > pageSize {
 		return false
