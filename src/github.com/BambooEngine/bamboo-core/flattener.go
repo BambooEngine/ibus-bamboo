@@ -3,7 +3,7 @@
  * Copyright (C) Luong Thanh Lam <ltlam93@gmail.com>
  *
  * This software is licensed under the MIT license. For more information,
- * see <https://github.com/BambooEngine/bamboo-core/blob/master/LICENCE>.
+ * see <https://github.com/BambooEngine/bamboo-core/blob/master/LICENSE>.
  */
 package bamboo
 
@@ -27,6 +27,10 @@ func getCanvas(composition []*Transformation, mode Mode) []rune {
 			}
 			appendingList = append(appendingList, trans)
 		} else if trans.Rule.EffectType == Appending {
+			if trans.Rule.Key == 0 {
+				// ignore virtual key
+				continue
+			}
 			appendingList = append(appendingList, trans)
 		} else if trans.Target != nil {
 			appendingMap[trans.Target] = append(appendingMap[trans.Target], trans)

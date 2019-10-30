@@ -3,7 +3,7 @@
  * Copyright (C) Luong Thanh Lam <ltlam93@gmail.com>
  *
  * This software is licensed under the MIT license. For more information,
- * see <https://github.com/BambooEngine/bamboo-core/blob/master/LICENCE>.
+ * see <https://github.com/BambooEngine/bamboo-core/blob/master/LICENSE>.
  */
 
 package bamboo
@@ -98,7 +98,7 @@ func (e *BambooEngine) isEffectiveKey(key rune) bool {
 }
 
 func (e *BambooEngine) IsValid(inputIsFullComplete bool) bool {
-	var last = getLastWord(getLastSequence(e.composition), e.inputMethod.Keys)
+	var _, last = extractLastWord(e.composition, e.inputMethod.Keys)
 	return isValid(last, inputIsFullComplete)
 }
 
@@ -114,10 +114,13 @@ func (e *BambooEngine) GetRawString() string {
 }
 
 func (e *BambooEngine) GetProcessedString(mode Mode) string {
+	var last []*Transformation
 	if mode&WithEffectKeys != 0 {
-		return Flatten(getLastWord(getLastSequence(e.composition), e.inputMethod.Keys), mode)
+		_, last = extractLastWord(e.composition, e.inputMethod.Keys)
+	} else {
+		_, last = extractLastWord(e.composition, nil)
 	}
-	return Flatten(getLastWord(getLastSequence(e.composition), nil), mode)
+	return Flatten(last, mode)
 }
 
 func (e *BambooEngine) getApplicableRules(key rune) []Rule {
@@ -205,7 +208,7 @@ func (e *BambooEngine) ProcessKey(key rune, mode Mode) {
 		return
 	}
 	// Just process the key stroke on the last syllable
-	var lastSyllable, previousTransformations = extractLastSyllable(e.composition)
+	var previousTransformations, lastSyllable = extractLastSyllable(e.composition)
 
 	// Find all possible transformations this keypress can generate
 	lastSyllable = append(lastSyllable, e.generateTransformations(lastSyllable, lowerKey, isUpperCase)...)
@@ -215,7 +218,7 @@ func (e *BambooEngine) ProcessKey(key rune, mode Mode) {
 }
 
 func (e *BambooEngine) RestoreLastWord() {
-	var lastComb, previous = extractLastWord(e.composition, e.inputMethod.Keys)
+	var previous, lastComb = extractLastWord(e.composition, e.inputMethod.Keys)
 	if len(lastComb) == 0 {
 		return
 	}
@@ -237,7 +240,7 @@ func (e *BambooEngine) RemoveLastChar(refreshLastToneTarget bool) {
 		e.composition = e.composition[:len(e.composition)-1]
 		return
 	}
-	var lastComb, previous = extractLastWord(e.composition, e.inputMethod.Keys)
+	var previous, lastComb = extractLastWord(e.composition, e.inputMethod.Keys)
 	var newComb []*Transformation
 	for _, t := range lastComb {
 		if t.Target == lastAppending || t == lastAppending {

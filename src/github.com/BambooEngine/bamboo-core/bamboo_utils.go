@@ -3,7 +3,7 @@
  * Copyright (C) Luong Thanh Lam <ltlam93@gmail.com>
  *
  * This software is licensed under the MIT license. For more information,
- * see <https://github.com/BambooEngine/bamboo-core/blob/master/LICENCE>.
+ * see <https://github.com/BambooEngine/bamboo-core/blob/master/LICENSE>.
  */
 package bamboo
 
@@ -178,69 +178,6 @@ func isFree(composition []*Transformation, trans *Transformation, effectType Eff
 	return true
 }
 
-func findTransformationIndex(composition []*Transformation, trans *Transformation) int {
-	for i, t := range composition {
-		if t == trans {
-			return i
-		}
-	}
-	return -1
-}
-
-func getLastSequence(composition []*Transformation) []*Transformation {
-	var cl = len(composition)
-	for i := cl - 1; i >= 0; i-- {
-		if composition[i].Rule.EffectType == Appending && composition[i].Rule.Key == ' ' {
-			if i < cl-1 {
-				return composition[i+1:]
-			} else {
-				return nil
-			}
-		}
-	}
-	return composition
-}
-
-func getLastWord(composition []*Transformation, effectKeys []rune) []*Transformation {
-	var ret []*Transformation
-	for _, trans := range composition {
-		ret = append(ret, trans)
-		var canvas = getCanvas(ret, VietnameseMode)
-		if len(canvas) == 0 {
-			continue
-		}
-		var key = canvas[len(canvas)-1]
-		if IsWordBreakSymbol(key) && !inKeyList(effectKeys, key) {
-			ret = nil
-			continue
-		}
-	}
-	return ret
-}
-
-func getLastSyllable(composition []*Transformation) []*Transformation {
-	var ret []*Transformation
-	if isValid(composition, false) {
-		return composition
-	}
-	for _, trans := range composition {
-		ret = append(ret, trans)
-		var canvas = getCanvas(ret, VietnameseMode)
-		if len(canvas) == 0 {
-			continue
-		}
-		var key = canvas[len(canvas)-1]
-		if IsWordBreakSymbol(key) {
-			ret = nil
-			continue
-		}
-		if !isValid(ret, false) {
-			ret = []*Transformation{trans}
-		}
-	}
-	return ret
-}
-
 func extractAtomicTrans(composition, last []*Transformation, lastIsVowel bool) ([]*Transformation, []*Transformation) {
 	if len(composition) == 0 {
 		return composition, last
@@ -253,8 +190,8 @@ func extractAtomicTrans(composition, last []*Transformation, lastIsVowel bool) (
 }
 
 /*
-	Separate a string into smaller parts: first consonant (or head), vowel,
-	last consonant (if any).
+   Separate a string into smaller parts: first consonant (or head), vowel,
+   last consonant (if any).
 */
 func extractCvcAppendingTrans(composition []*Transformation) ([]*Transformation, []*Transformation, []*Transformation) {
 	head, lastConsonant := extractAtomicTrans(composition, nil, false)
@@ -304,37 +241,34 @@ func extractCvcTrans(composition []*Transformation) ([]*Transformation, []*Trans
 }
 
 func extractLastWord(composition []*Transformation, effectKeys []rune) ([]*Transformation, []*Transformation) {
-	var previous, lastSyllable []*Transformation
-	if len(composition) > 0 {
-		var ls = getLastWord(getLastSequence(composition), effectKeys)
-		if len(ls) > 0 {
-			var idx = findTransformationIndex(composition, ls[0])
-			if idx > 0 {
-				previous = composition[:idx]
+	for i := len(composition) - 1; i >= 0; i-- {
+		var canvas = getCanvas(composition[i:], VietnameseMode)
+		if len(canvas) == 0 {
+			continue
+		}
+		var key = canvas[0]
+		if IsWordBreakSymbol(key) && !inKeyList(effectKeys, key) {
+			if i == len(composition)-1 {
+				return composition, nil
 			}
-			lastSyllable = ls
-		} else {
-			previous = composition
+			return composition[:i+1], composition[i+1:]
 		}
 	}
-	return lastSyllable, previous
+	return nil, composition
 }
 
 func extractLastSyllable(composition []*Transformation) ([]*Transformation, []*Transformation) {
-	var previous, lastSyllable []*Transformation
-	if len(composition) > 0 {
-		var ls = getLastSyllable(getLastSequence(composition))
-		if len(ls) > 0 {
-			var idx = findTransformationIndex(composition, ls[0])
-			if idx > 0 {
-				previous = composition[:idx]
-			}
-			lastSyllable = ls
-		} else {
-			previous = composition
+	var previous, last = extractLastWord(composition, nil)
+	var anchor = 0
+	for i, _ := range last {
+		if !isValid(last[anchor:i+1], false) {
+			anchor = i
 		}
 	}
-	return lastSyllable, previous
+	if anchor > 0 {
+		previous = append(previous, last[:anchor]...)
+	}
+	return previous, last[anchor:]
 }
 
 func findMarkTarget(composition []*Transformation, rules []Rule) (*Transformation, Rule) {
@@ -437,15 +371,16 @@ func generateUndoTransformations(composition []*Transformation, rules []Rule, fl
 }
 
 var regUOh_UhO_Tail = regexp.MustCompile(`(uơ|ưo)\p{L}+`)
-var regUOh_UhO = regexp.MustCompile(`(\p{L}*)(uơ|ưo)(\p{L}*)`)
 var regUhO_UhOh = regexp.MustCompile(`(ưo|ươ)`)
 
 /**
-* 1 | o + ff  ->  undo + append      -> of
-* 2 | o + fs  ->  override			 -> ó
-* 3 | o + fz  ->  override	         -> o
-* 4 | o + z   ->  append			 -> oz
-* 5 | o + f   ->  tone_grave         -> ò
+* 1 | o + ff     ->  undo + append       -> of
+* 2 | o + fs     ->  override			 -> ó
+* 3 | o + fz     ->  override	         -> o
+* 4 | o + z      ->  append	     		 -> oz
+* 5 | o + f      ->  tone_grave          -> ò
+* 6 | w + w      ->  raw                 -> w
+* 7 | (u)wo + w  ->  undo + append       -> uow
 * ...
 **/
 func generateTransformations(composition []*Transformation, applicableRules []Rule, flags uint, lowerKey rune, isUpperCase bool) []*Transformation {
@@ -472,25 +407,21 @@ func generateTransformations(composition []*Transformation, applicableRules []Ru
 			Target:      target,
 			IsUpperCase: isUpperCase,
 		})
+		if applicableRule.EffectType != MarkTransformation {
+			return transformations
+		}
 		var newComp = append(composition, transformations...)
-		var newStr = Flatten(newComp, VietnameseMode|ToneLess|LowerCase)
-		if applicableRule.EffectType == MarkTransformation && regUOh_UhO.MatchString(newStr) {
-			var subs = regUOh_UhO.FindStringSubmatch(newStr)
-			var lcIndexes = lookup(firstConsonantSeqs, subs[1], false, true)
-			if (len(lcIndexes) == 1 && lcIndexes[0] != 1) || subs[3] != "" {
-				// Implement the uow typing shortcut by creating a virtual
-				// Mark_HORN rule that targets 'u' or 'o'.
-				if target, virtualRule := findTarget(newComp, applicableRules, flags); target != nil {
-					virtualRule.Key = 0
-					transformations = append(transformations, &Transformation{
-						Rule:   virtualRule,
-						Target: target,
-					})
-				}
-			}
+		if isValid(newComp, true) {
+			return transformations
+		}
+		// Implement the uow typing shortcut by creating a virtual
+		// Mark_HORN rule that targets 'u' or 'o'.
+		if target, virtualRule := findTarget(newComp, applicableRules, flags); target != nil {
+			virtualRule.Key = 0
+			return append(transformations, &Transformation{virtualRule, target, false})
 		}
 	} else {
-		// Implement ươ/ưo + o -> uô
+		// Implement ươ/ưo(i/c/ng) + o -> uô
 		if regUhO_UhOh.MatchString(Flatten(composition, VietnameseMode|ToneLess|LowerCase)) {
 			var vowels = filterAppendingComposition(getRightMostVowels(composition))
 			var trans = &Transformation{

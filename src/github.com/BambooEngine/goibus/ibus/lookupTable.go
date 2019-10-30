@@ -100,10 +100,10 @@ func (lt *LookupTable) PageUp() bool {
 			lt.CursorPos += maxPage * lt.PageSize
 			if lt.CursorPos > nrCandidates-1 {
 				lt.CursorPos = nrCandidates - 1
-				return true
-			} else {
-				return false
 			}
+			return true
+		} else {
+			return false
 		}
 	}
 	lt.CursorPos -= lt.PageSize

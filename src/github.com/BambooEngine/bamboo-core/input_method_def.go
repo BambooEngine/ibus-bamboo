@@ -3,7 +3,7 @@
  * Copyright (C) Luong Thanh Lam <ltlam93@gmail.com>
  *
  * This software is licensed under the MIT license. For more information,
- * see <https://github.com/BambooEngine/bamboo-core/blob/master/LICENCE>.
+ * see <https://github.com/BambooEngine/bamboo-core/blob/master/LICENSE>.
  */
 package bamboo
 
@@ -35,7 +35,6 @@ var InputMethodDefinitions = map[string]InputMethodDefinition{
 		"8": "A_Ă",
 		"9": "D_Đ",
 	},
-
 	"VIQR": {
 		"0":  "XoaDauThanh",
 		"'":  "DauSac",
