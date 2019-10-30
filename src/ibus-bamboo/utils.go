@@ -86,7 +86,7 @@ const (
 	IBrestoreKeyStrokesEnabled
 	IBmouseCapturing
 	IBstdFlags = IBspellChecking | IBspellCheckingWithRules | IBautoNonVnRestore | IBddFreeStyle |
-		IBemojiDisabled | IBinputModeLookupTableEnabled
+		IBemojiDisabled | IBinputModeLookupTableEnabled | IBmouseCapturing
 )
 
 var DefaultBrowserList = []string{

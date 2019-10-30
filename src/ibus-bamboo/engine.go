@@ -80,12 +80,14 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 	if e.config.IBflags&IBinputModeLookupTableEnabled != 0 && keyVal == IBUS_OpenLookupTable && e.isInputModeLTOpened == false && e.wmClasses != "" {
 		e.resetBuffer()
 		e.isInputModeLTOpened = true
+		e.lastKeyWithShift = true
 		e.openLookupTable()
 		return true, nil
 	}
 	if e.config.IBflags&IBemojiDisabled == 0 && keyVal == IBUS_Colon && e.isEmojiLTOpened == false {
 		e.resetBuffer()
 		e.isEmojiLTOpened = true
+		e.lastKeyWithShift = true
 		e.openEmojiList()
 		return true, nil
 	}
@@ -96,6 +98,7 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 		return e.emojiProcessKeyEvent(keyVal, keyCode, state)
 	}
 	if e.englishMode {
+		e.updateLastKeyWithShift(keyVal, state)
 		return false, nil
 	}
 	if e.inBackspaceWhiteList() {
@@ -141,9 +144,10 @@ func (e *IBusBambooEngine) Enable() *dbus.Error {
 func (e *IBusBambooEngine) Disable() *dbus.Error {
 	fmt.Print("Disable.")
 	x11ClipboardExit()
-	stopMouseRecording()
 	if e.config.IBflags&IBmouseCapturing != 0 {
 		stopMouseCapturing()
+	} else {
+		stopMouseRecording()
 	}
 	return nil
 }
@@ -223,7 +227,7 @@ func (e *IBusBambooEngine) CursorDown() *dbus.Error {
 }
 
 func (e *IBusBambooEngine) CandidateClicked(index uint32, button uint32, state uint32) *dbus.Error {
-	if e.isEmojiLTOpened && e.emojiLookupTable.SetCursorPosInCurrentPage(index) {
+	if e.isEmojiLTOpened && e.setCursorPosInEmojiTable(index) {
 		e.commitEmojiCandidate()
 		e.closeEmojiCandidates()
 	}
@@ -330,9 +334,11 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		if propState == ibus.PROP_STATE_CHECKED {
 			e.config.IBflags |= IBmouseCapturing
 			startMouseCapturing()
+			stopMouseRecording()
 		} else {
 			e.config.IBflags &= ^IBmouseCapturing
 			stopMouseCapturing()
+			startMouseRecording()
 		}
 	}
 	if propName == PropKeyMacroEnabled {
