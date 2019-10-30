@@ -26,6 +26,8 @@ import (
 	"strconv"
 )
 
+const EMOJI_MAX_PAGE_SIZE = 9
+
 func (e *IBusBambooEngine) openEmojiList() {
 	e.emoji.ProcessKey(':')
 	e.UpdatePreeditText(ibus.NewText(":"), 1, true)
@@ -35,6 +37,7 @@ func (e *IBusBambooEngine) openEmojiList() {
 	for _, codePoint := range e.emoji.Query() {
 		lt.AppendCandidate(codePoint)
 	}
+	lt.PageSize = uint32(EMOJI_MAX_PAGE_SIZE)
 	e.emojiLookupTable = lt
 	e.updateEmojiLookupTable()
 }
@@ -43,7 +46,6 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 	var raw = e.emoji.GetRawString()
 	var rawTextLen = len([]rune(raw))
 	var keyRune = rune(keyVal)
-	var cps = e.emoji.Query()
 	var reset = e.closeEmojiCandidates
 	if keyVal == IBUS_Colon {
 		reset()
@@ -51,9 +53,7 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 	}
 	if keyVal == IBUS_Return {
 		if rawTextLen > 0 {
-			if raw == ":" {
-				e.CommitText(ibus.NewText(":"))
-			} else if len(e.emojiLookupTable.Candidates) > 0 {
+			if len(e.emojiLookupTable.Candidates) > 0 {
 				e.commitEmojiCandidate()
 			} else {
 				e.CommitText(ibus.NewText(raw))
@@ -99,7 +99,7 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 		e.emoji.ProcessKey(keyRune)
 	} else if keyRune >= '1' && keyRune <= '9' {
 		if pos, err := strconv.Atoi(string(keyRune)); err == nil {
-			if e.emojiLookupTable.SetCursorPosInCurrentPage(uint32(pos - 1)) {
+			if e.setCursorPosInEmojiTable(uint32(pos - 1)) {
 				e.commitEmojiCandidate()
 				reset()
 				return true, nil
@@ -126,7 +126,7 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 	}
 	raw = e.emoji.GetRawString()
 	rawTextLen = len([]rune(raw))
-	cps = e.emoji.Query()
+	cps := e.emoji.Query()
 	if cps != nil {
 		codePoint0 := cps[0]
 		e.UpdatePreeditTextWithMode(ibus.NewText(codePoint0), uint32(len(codePoint0)), true, ibus.IBUS_ENGINE_PREEDIT_COMMIT)
@@ -139,14 +139,34 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 	for _, codePoint := range cps {
 		lt.AppendCandidate(codePoint)
 	}
+	lt.PageSize = uint32(EMOJI_MAX_PAGE_SIZE)
 	e.emojiLookupTable = lt
 	e.updateEmojiLookupTable()
 	return true, nil
 }
 
+func (e *IBusBambooEngine) setCursorPosInEmojiTable(idx uint32) bool {
+	pageSize := e.emojiLookupTable.PageSize
+	if idx > pageSize {
+		return false
+	}
+	page := e.emojiLookupTable.CursorPos / pageSize
+	newPos := page*pageSize + idx
+	if int(newPos) > len(e.emojiLookupTable.Candidates) {
+		return false
+	}
+	e.emojiLookupTable.CursorPos = newPos
+	return true
+}
+
 func (e *IBusBambooEngine) updateEmojiLookupTable() {
 	var visible = len(e.emojiLookupTable.Candidates) > 0
 	e.UpdateLookupTable(e.emojiLookupTable, visible)
+	var cps = e.emoji.Query()
+	if pos := e.emojiLookupTable.CursorPos; pos < uint32(len(cps)) {
+		var codePoint0 = cps[pos]
+		e.UpdatePreeditTextWithMode(ibus.NewText(codePoint0), uint32(len(codePoint0)), true, ibus.IBUS_ENGINE_PREEDIT_COMMIT)
+	}
 }
 
 func (e *IBusBambooEngine) commitEmojiCandidate() {

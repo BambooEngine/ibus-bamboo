@@ -74,6 +74,7 @@ const (
 	IBUS_KP_Page_Up       = 0xff9a
 	IBUS_KP_Page_Down     = 0xff9b
 	IBUS_KP_End           = 0xff9c
+	IBUS_Tab              = 0xff09
 	IBUS_End              = 0xff57
 	IBUS_Colon            = 0x03a
 	IBUS_Left             = 0xFF51

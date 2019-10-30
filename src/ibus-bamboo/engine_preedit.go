@@ -65,7 +65,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 			e.updatePreedit(e.getPreeditString())
 		}
 		return true, nil
-	} else if bamboo.IsWordBreakSymbol(keyRune) || ('0' <= keyVal && keyVal <= '9') {
+	} else if bamboo.IsWordBreakSymbol(keyRune) {
 		if keyVal == IBUS_Space && state&IBUS_SHIFT_MASK != 0 &&
 			e.config.IBflags&IBrestoreKeyStrokesEnabled != 0 && !e.lastKeyWithShift {
 			// restore key strokes

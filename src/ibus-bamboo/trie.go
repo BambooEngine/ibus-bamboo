@@ -24,7 +24,11 @@ func InsertTrie(r *TrieNode, word, value string) {
 			currentNode = n
 		}
 	}
-	currentNode.value = value
+	if currentNode.value == "" {
+		currentNode.value = value
+	} else {
+		currentNode.value += ":" + value
+	}
 	currentNode.isWord = true
 }
 

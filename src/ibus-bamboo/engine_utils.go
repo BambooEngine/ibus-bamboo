@@ -24,8 +24,6 @@ import (
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
-	"runtime"
-	"runtime/debug"
 	"strconv"
 	"strings"
 	"time"
@@ -78,8 +76,9 @@ func (e *IBusBambooEngine) init() {
 
 	if e.config.IBflags&IBmouseCapturing != 0 {
 		startMouseCapturing()
+	} else {
+		startMouseRecording()
 	}
-	startMouseRecording()
 	onMouseMove = func() {
 		e.Lock()
 		defer e.Unlock()
@@ -101,16 +100,13 @@ func (e *IBusBambooEngine) init() {
 			e.resetBuffer()
 			e.keyPressDelay = KEYPRESS_DELAY_MS
 			if e.capabilities&IBUS_CAP_SURROUNDING_TEXT != 0 {
-				//engine.ForwardKeyEvent(IBUS_Shift_R, 0, IBUS_RELEASE_MASK)
+				//e.ForwardKeyEvent(IBUS_Shift_R, XK_Shift_R-8, 0)
 				x11SendShiftR()
 				e.isSurroundingTextReady = true
 				e.keyPressDelay = KEYPRESS_DELAY_MS * 10
 			}
 		}
 	}
-
-	runtime.GC()
-	debug.FreeOSMemory()
 }
 
 var keyPressHandler = func(keyVal, keyCode, state uint32) {}
@@ -203,7 +199,7 @@ func (e *IBusBambooEngine) openLookupTable() {
 		wmClass = wmClasses[1]
 	}
 
-	var lookupTableConfiguration = map[int]string{
+	var imLookupTable = map[int]string{
 		preeditIM:             "Cấu hình mặc định (Pre-edit)",
 		surroundingTextIM:     "Sửa lỗi gạch chân (Surrounding Text)",
 		backspaceForwardingIM: "Sửa lỗi gạch chân (ForwardKeyEvent I)",
@@ -216,10 +212,10 @@ func (e *IBusBambooEngine) openLookupTable() {
 	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (1/2/3/4/5/6/7) để lưu tùy chọn của bạn"), true)
 
 	lt := ibus.NewLookupTable()
-	lt.PageSize = uint32(len(lookupTableConfiguration))
+	lt.PageSize = uint32(len(imLookupTable))
 	lt.Orientation = IBUS_ORIENTATION_VERTICAL
 	var cursorPos = 0
-	for i := 0; i < len(lookupTableConfiguration); i++ {
+	for i := 0; i < len(imLookupTable); i++ {
 		var im = i + 1
 		if e.inputMode == im {
 			lt.AppendLabel("*")
@@ -227,7 +223,7 @@ func (e *IBusBambooEngine) openLookupTable() {
 		} else {
 			lt.AppendLabel(strconv.Itoa(im))
 		}
-		lt.AppendCandidate(lookupTableConfiguration[im])
+		lt.AppendCandidate(imLookupTable[im])
 	}
 	lt.SetCursorPos(uint32(cursorPos))
 	e.inputModeLookupTable = lt
@@ -347,7 +343,7 @@ func (e *IBusBambooEngine) canProcessKey(keyVal, state uint32) bool {
 		return true
 	}
 	var keyRune = rune(keyVal)
-	if bamboo.IsWordBreakSymbol(keyRune) || ('0' <= keyVal && keyVal <= '9') {
+	if bamboo.IsWordBreakSymbol(keyRune) {
 		return true
 	}
 	return e.preeditor.CanProcessKey(keyRune)

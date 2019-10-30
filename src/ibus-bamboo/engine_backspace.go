@@ -35,7 +35,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		return false, nil
 	}
 	if e.checkInputMode(xTestFakeKeyEventIM) || e.checkInputMode(surroundingTextIM) {
-		// we don't want to use ForwardKeyEvent api in X11 XTestFakeKeyEvent and Surrounding Text mode
+		// we don't want to use ForwardKeyEvent api in XTestFakeKeyEvent and SurroundingText mode
 		var sleep = func() {
 			for len(keyPressChan) > 0 {
 				time.Sleep(5 * time.Millisecond)
@@ -116,7 +116,7 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 			e.updatePreviousText(vnSeq, oldText)
 		}
 		return
-	} else if bamboo.IsWordBreakSymbol(keyRune) || ('0' <= keyVal && keyVal <= '9') {
+	} else if bamboo.IsWordBreakSymbol(keyRune) {
 		if keyVal == IBUS_Space && state&IBUS_SHIFT_MASK != 0 &&
 			e.config.IBflags&IBrestoreKeyStrokesEnabled != 0 && !e.lastKeyWithShift {
 			// restore key strokes
@@ -231,7 +231,7 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, 0)
 			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, IBUS_RELEASE_MASK)
 		}
-		time.Sleep(time.Duration(n) * 30 * time.Millisecond)
+		time.Sleep(time.Duration(n) * 20 * time.Millisecond)
 	} else if e.checkInputMode(shiftLeftForwardingIM) {
 		time.Sleep(30 * time.Millisecond)
 		log.Printf("Sendding %d Shift+Left via shiftLeftForwardingIM\n", n)
