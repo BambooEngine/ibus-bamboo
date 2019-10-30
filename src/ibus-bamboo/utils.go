@@ -35,7 +35,7 @@ import (
 )
 
 const (
-	VnCaseAllSmall uint8 = 1 << iota
+	VnCaseAllSmall uint8 = iota + 1
 	VnCaseAllCapital
 	VnCaseNoChange
 )
@@ -79,7 +79,7 @@ const (
 	IBautoCommitWithDelay
 	IBautoCommitWithMouseMovement
 	IBemojiDisabled
-	IBfakeBackspaceEnabled
+	IBpreeditElimination
 	IBinputModeLookupTableEnabled
 	IBautoCapitalizeMacro
 	IBimQuickSwitchEnabled
@@ -129,7 +129,7 @@ func getConfigPath(engineName string) string {
 	return fmt.Sprintf(configFile, getConfigDir(), engineName)
 }
 
-func LoadConfig(engineName string) *Config {
+func loadConfig(engineName string) *Config {
 	var c = Config{
 		InputMethod:               "Telex",
 		OutputCharset:             "Unicode",
@@ -154,7 +154,7 @@ func LoadConfig(engineName string) *Config {
 	return &c
 }
 
-func SaveConfig(c *Config, engineName string) {
+func saveConfig(c *Config, engineName string) {
 	data, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		return

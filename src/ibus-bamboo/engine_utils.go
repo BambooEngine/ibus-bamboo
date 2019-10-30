@@ -42,12 +42,12 @@ func GetBambooEngineCreator() func(*dbus.Conn, string) dbus.ObjectPath {
 
 	return func(conn *dbus.Conn, ngName string) dbus.ObjectPath {
 		var engine = new(IBusBambooEngine)
-		var config = LoadConfig(engineName)
+		var config = loadConfig(engineName)
 		var inputMethod = bamboo.ParseInputMethod(config.InputMethodDefinitions, config.InputMethod)
 		engine.Engine = ibus.BaseEngine(conn, objectPath)
 		engine.engineName = engineName
 		engine.preeditor = bamboo.NewEngine(inputMethod, config.Flags)
-		engine.config = LoadConfig(engineName)
+		engine.config = loadConfig(engineName)
 		engine.propList = GetPropListByConfig(config)
 		ibus.PublishEngine(conn, objectPath, engine)
 		go engine.init()
@@ -177,13 +177,12 @@ func (e *IBusBambooEngine) getRawKeyLen() int {
 }
 
 func (e *IBusBambooEngine) getInputMode() int {
-	if e.wmClasses == "" {
-		return preeditIM
-	}
 	var whiteList = e.getWhiteList()
-	for i, list := range whiteList {
-		if inStringList(list, e.wmClasses) {
-			return i + 1
+	if e.wmClasses != "" {
+		for i, list := range whiteList {
+			if inStringList(list, e.wmClasses) {
+				return i + 1
+			}
 		}
 	}
 	if e.config.DefaultInputMode > 0 && e.config.DefaultInputMode <= len(whiteList) {
@@ -306,7 +305,7 @@ func (e *IBusBambooEngine) commitInputModeCandidate() {
 		e.config.ExceptedList = addToWhiteList(e.config.ExceptedList, wmClasses)
 	}
 
-	SaveConfig(e.config, e.engineName)
+	saveConfig(e.config, e.engineName)
 	e.propList = GetPropListByConfig(e.config)
 	e.RegisterProperties(e.propList)
 	e.inputMode = e.getInputMode()

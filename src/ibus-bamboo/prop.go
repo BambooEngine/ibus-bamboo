@@ -27,24 +27,36 @@ import (
 
 const (
 	PropKeyAbout                = "about"
-	PropKeyStdToneStyle         = "tone_std_style"
+	PropKeyStdToneStyle         = "std_tone_style"
 	PropKeyFreeToneMarking      = "tone_free_marking"
-	PropKeySpellingChecking     = "spelling_checking"
-	PropKeySpellCheckingByRules = "spelling_checking_by_rules"
-	PropKeySpellCheckingByDicts = "spelling_checking_by_dicts"
-	PropKeyPreeditInvisibility  = "invisibility_preedit"
-	PropKeyVnConvert            = "vn_convert"
-	PropKeyMouseCapturing       = "MouseCapturing"
+	PropKeySpellChecking        = "spell_checking_enable"
+	PropKeySpellCheckingByRules = "spell_checking_by_rules"
+	PropKeySpellCheckingByDicts = "spell_checking_by_dicts"
+	PropKeyPreeditInvisibility  = "preedit_invisibility"
+	PropKeyVnCharsetConvert     = "charset_convert_page"
+	PropKeyMouseCapturing       = "mouse_capturing"
 	PropKeyMacroEnabled         = "macro_enabled"
 	PropKeyMacroTable           = "open_macro_table"
 	PropKeyEmojiEnabled         = "emoji_enabled"
-	PropKeyBambooConfiguration  = "bamboo_configuration"
-	PropKeyFakeBackspace        = "x11_fake_backspace"
+	PropKeyConfiguration        = "configuration"
+	PropKeyPreeditElimination   = "preedit_elimination"
 	PropKeyInputModeLookupTable = "input_mode_lookup_table"
 	PropKeyAutoCapitalizeMacro  = "auto_capitalize_macro"
 	PropKeyIMQuickSwitchEnabled = "im_quick_switch"
 	PropKeyRestoreKeyStrokes    = "restore_key_strokes"
 )
+
+var IBusSeparator = &ibus.Property{
+	Name:      "IBusProperty",
+	Key:       "-",
+	Type:      ibus.PROP_TYPE_SEPARATOR,
+	Label:     dbus.MakeVariant(ibus.NewText("")),
+	Tooltip:   dbus.MakeVariant(ibus.NewText("")),
+	Sensitive: true,
+	Visible:   true,
+	Symbol:    dbus.MakeVariant(ibus.NewText("")),
+	SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+}
 
 func GetPropListByConfig(c *Config) *ibus.PropList {
 	var aboutText = "IBus " + EngineName + " " + Version
@@ -64,17 +76,7 @@ func GetPropListByConfig(c *Config) *ibus.PropList {
 			Symbol:    dbus.MakeVariant(ibus.NewText("")),
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
-		&ibus.Property{
-			Name:      "IBusProperty",
-			Key:       "-",
-			Type:      ibus.PROP_TYPE_SEPARATOR,
-			Label:     dbus.MakeVariant(ibus.NewText("")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("")),
-			Sensitive: true,
-			Visible:   true,
-			Symbol:    dbus.MakeVariant(ibus.NewText("")),
-			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
-		},
+		IBusSeparator,
 		&ibus.Property{
 			Name:      "IBusProperty",
 			Key:       "-",
@@ -155,7 +157,7 @@ func GetCharsetPropListByConfig(c *Config) *ibus.PropList {
 	charsetProperties = append(charsetProperties,
 		&ibus.Property{
 			Name:      "IBusProperty",
-			Key:       PropKeyVnConvert,
+			Key:       PropKeyVnCharsetConvert,
 			Type:      ibus.PROP_TYPE_NORMAL,
 			Label:     dbus.MakeVariant(ibus.NewText("Chuyển mã online")),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("")),
@@ -164,17 +166,7 @@ func GetCharsetPropListByConfig(c *Config) *ibus.PropList {
 			Symbol:    dbus.MakeVariant(ibus.NewText("C")),
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
-		&ibus.Property{
-			Name:      "IBusProperty",
-			Key:       "-",
-			Type:      ibus.PROP_TYPE_SEPARATOR,
-			Label:     dbus.MakeVariant(ibus.NewText("")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("")),
-			Sensitive: true,
-			Visible:   true,
-			Symbol:    dbus.MakeVariant(ibus.NewText("")),
-			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
-		})
+		IBusSeparator)
 	for _, charset := range bamboo.GetCharsetNames() {
 		var state = ibus.PROP_STATE_UNCHECKED
 		if charset == c.OutputCharset {
@@ -202,7 +194,7 @@ func GetIMPropListByConfig(c *Config) *ibus.PropList {
 	imProperties = append(imProperties,
 		&ibus.Property{
 			Name:      "IBusProperty",
-			Key:       PropKeyBambooConfiguration,
+			Key:       PropKeyConfiguration,
 			Type:      ibus.PROP_TYPE_NORMAL,
 			Label:     dbus.MakeVariant(ibus.NewText("Tự định nghĩa kiểu gõ")),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("Tự định nghĩa kiểu gõ")),
@@ -211,17 +203,7 @@ func GetIMPropListByConfig(c *Config) *ibus.PropList {
 			Symbol:    dbus.MakeVariant(ibus.NewText("BC")),
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
-		&ibus.Property{
-			Name:      "IBusProperty",
-			Key:       "-",
-			Type:      ibus.PROP_TYPE_SEPARATOR,
-			Label:     dbus.MakeVariant(ibus.NewText("")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("")),
-			Sensitive: true,
-			Visible:   true,
-			Symbol:    dbus.MakeVariant(ibus.NewText("")),
-			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
-		},
+		IBusSeparator,
 	)
 	for im := range c.InputMethodDefinitions {
 		var state = ibus.PROP_STATE_UNCHECKED
@@ -312,7 +294,7 @@ func GetSpellCheckingPropListByConfig(c *Config) *ibus.PropList {
 	return ibus.NewPropList(
 		&ibus.Property{
 			Name:      "IBusProperty",
-			Key:       PropKeySpellingChecking,
+			Key:       PropKeySpellChecking,
 			Type:      ibus.PROP_TYPE_TOGGLE,
 			Label:     dbus.MakeVariant(ibus.NewText("Bật kiểm tra chính tả")),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("")),
@@ -322,17 +304,7 @@ func GetSpellCheckingPropListByConfig(c *Config) *ibus.PropList {
 			Symbol:    dbus.MakeVariant(ibus.NewText("S")),
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
-		&ibus.Property{
-			Name:      "IBusProperty",
-			Key:       "-",
-			Type:      ibus.PROP_TYPE_SEPARATOR,
-			Label:     dbus.MakeVariant(ibus.NewText("")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("")),
-			Sensitive: true,
-			Visible:   true,
-			Symbol:    dbus.MakeVariant(ibus.NewText("")),
-			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
-		},
+		IBusSeparator,
 		&ibus.Property{
 			Name:      "IBusProperty",
 			Key:       PropKeySpellCheckingByRules,
@@ -380,7 +352,7 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 	if c.IBflags&IBpreeditInvisibility != 0 {
 		preeditInvisibilityChecked = ibus.PROP_STATE_CHECKED
 	}
-	if c.IBflags&IBfakeBackspaceEnabled != 0 {
+	if c.IBflags&IBpreeditElimination != 0 {
 		x11FakeBackspaceChecked = ibus.PROP_STATE_CHECKED
 	}
 
@@ -435,7 +407,7 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 		},
 		&ibus.Property{
 			Name:      "IBusProperty",
-			Key:       PropKeyFakeBackspace,
+			Key:       PropKeyPreeditElimination,
 			Type:      ibus.PROP_TYPE_TOGGLE,
 			Label:     dbus.MakeVariant(ibus.NewText("Send key via ForwardKeyEvent")),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("Send key via ForwardKeyEvent")),
@@ -495,7 +467,7 @@ func GetHotKeyPropListByConfig(c *Config) *ibus.PropList {
 			Name:      "IBusProperty",
 			Key:       PropKeyIMQuickSwitchEnabled,
 			Type:      ibus.PROP_TYPE_TOGGLE,
-			Label:     dbus.MakeVariant(ibus.NewText("Chuyển nhanh vi-en  Shift")),
+			Label:     dbus.MakeVariant(ibus.NewText("Chuyển nhanh Vi-En  Shift")),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("IM quick switch")),
 			Sensitive: true,
 			Visible:   true,

@@ -23,7 +23,7 @@ IBus Bamboo - Bộ gõ tiếng Việt cho Linux
   * VIQR, VNI, VPS, VISCII, BK HCM1, BK HCM2,…
   * Unicode UTF-8, Unicode NCR - for Web editors.
 * Nhiều kiểu gõ:
-  * Telex, Telex 2, Telex 3, Telex + VNI + VIQR
+  * Telex, Telex W, Telex 2, Telex + VNI + VIQR
   * VNI, VIQR, Microsoft layout
 * Nhiều tính năng hữu ích, dễ dàng tùy chỉnh:
   * Kiểm tra chính tả (sử dụng từ điển/luật ghép vần)
@@ -78,7 +78,7 @@ sudo xbps-install -S ibus-bamboo
 **Một số lưu ý:**
 - Một ứng dụng có thể hoạt động tốt với chế độ gõ này trong khi không hoạt động tốt với chế độ gõ khác.
 - Các chế độ gõ được lưu riêng biệt cho mỗi phần mềm (`firefox` có thể đang dùng chế độ 3, trong khi `libreoffice` thì lại dùng chế độ 2).
-- Bạn có thể dùng chế độ `thêm vào danh sách loại trừ` để không gõ tiếng Việt trong một chương trình nào đó.
+- Bạn có thể dùng chế độ `Thêm vào danh sách loại trừ` để không gõ tiếng Việt trong một chương trình nào đó.
 - Để gõ ký tự `~` hãy nhấn tổ hợp <kbd>Shift</kbd>+<kbd>~</kbd> 2 lần.
 
 ## Báo lỗi

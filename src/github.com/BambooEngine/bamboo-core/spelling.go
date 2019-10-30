@@ -53,30 +53,27 @@ var vcMatrix = [7][]int{
 func lookup(seq []string, input string, inputIsFull, inputIsComplete bool) []int {
 	var ret []int
 	var inputLen = len([]rune(input))
-	for i, row := range seq {
-		var canvas []rune
-		var rowLen = len([]rune(row))
-		for ii, char := range []rune(row) {
+	for index, row := range seq {
+		var i = 0
+		var rows = append([]rune(row), ' ')
+		for j, char := range rows {
 			if char != ' ' {
-				canvas = append(canvas, char)
-				if ii < rowLen-1 {
-					continue
-				}
+				continue
 			}
-			var canvasLen = len(canvas)
-			if canvasLen < inputLen || (inputIsFull && canvasLen > inputLen) {
-				canvas = nil
+			var canvas = rows[i:j]
+			i = j + 1
+			if len(canvas) < inputLen || (inputIsFull && len(canvas) > inputLen) {
 				continue
 			}
 			var isMatch = true
-			for j, ic := range []rune(input) {
-				if ic != canvas[j] && !(!inputIsComplete && AddMarkToTonelessChar(canvas[j], 0) == ic) {
+			for k, ic := range []rune(input) {
+				if ic != canvas[k] && !(!inputIsComplete && AddMarkToTonelessChar(canvas[k], 0) == ic) {
 					isMatch = false
+					break
 				}
 			}
-			canvas = nil
 			if isMatch {
-				ret = append(ret, i)
+				ret = append(ret, index)
 				break
 			}
 		}
@@ -86,11 +83,11 @@ func lookup(seq []string, input string, inputIsFull, inputIsComplete bool) []int
 
 func isValidCVC(fc, vo, lc string, inputIsFullComplete bool) bool {
 	var ret bool
+	var fcIndexes, voIndexes, lcIndexes []int
 	defer func() {
 		return
 		log.Printf("fc=%s vo=%s lc=%s ret=%v", fc, vo, lc, ret)
 	}()
-	var fcIndexes, voIndexes, lcIndexes []int
 	if fc != "" {
 		if fcIndexes = lookup(firstConsonantSeqs, fc, inputIsFullComplete || vo != "", true); fcIndexes == nil {
 			return false
@@ -106,33 +103,20 @@ func isValidCVC(fc, vo, lc string, inputIsFullComplete bool) bool {
 			return false
 		}
 	}
-	// first consonant only
 	if voIndexes == nil {
+		// first consonant only
 		return fcIndexes != nil
 	}
-	// first consonant + vowel
 	if fcIndexes != nil {
-		for _, fci := range fcIndexes {
-			for _, voi := range voIndexes {
-				if isValidCV(fci, voi) {
-					ret = true
-				}
-			}
-		}
+		// first consonant + vowel
+		ret = isValidCV(fcIndexes, voIndexes)
 		if ret == false || lcIndexes == nil {
 			return ret
 		}
 	}
-	// vowel + last consonant
 	if lcIndexes != nil {
-		ret = false
-		for _, voi := range voIndexes {
-			for _, lci := range lcIndexes {
-				if isValidVC(voi, lci) {
-					ret = true
-				}
-			}
-		}
+		// vowel + last consonant
+		ret = isValidVC(voIndexes, lcIndexes)
 	} else {
 		// vowel only
 		ret = true
@@ -140,19 +124,27 @@ func isValidCVC(fc, vo, lc string, inputIsFullComplete bool) bool {
 	return ret
 }
 
-func isValidCV(fc, vo int) bool {
-	for _, v := range cvMatrix[fc] {
-		if v == vo {
-			return true
+func isValidCV(fcIndexes, voIndexes []int) bool {
+	for _, fc := range fcIndexes {
+		for _, c := range cvMatrix[fc] {
+			for _, vo := range voIndexes {
+				if c == vo {
+					return true
+				}
+			}
 		}
 	}
 	return false
 }
 
-func isValidVC(vo, lc int) bool {
-	for _, t := range vcMatrix[vo] {
-		if t == lc {
-			return true
+func isValidVC(voIndexes, lcIndexes []int) bool {
+	for _, vo := range voIndexes {
+		for _, c := range vcMatrix[vo] {
+			for _, lc := range lcIndexes {
+				if c == lc {
+					return true
+				}
+			}
 		}
 	}
 	return false

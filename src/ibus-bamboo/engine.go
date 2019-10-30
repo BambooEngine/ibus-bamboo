@@ -227,7 +227,7 @@ func (e *IBusBambooEngine) CursorDown() *dbus.Error {
 }
 
 func (e *IBusBambooEngine) CandidateClicked(index uint32, button uint32, state uint32) *dbus.Error {
-	if e.isEmojiLTOpened && e.setCursorPosInEmojiTable(index) {
+	if e.isEmojiLTOpened && e.updateCursorPosInEmojiTable(index) {
 		e.commitEmojiCandidate()
 		e.closeEmojiCandidates()
 	}
@@ -257,11 +257,11 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		exec.Command("xdg-open", HomePage).Start()
 		return nil
 	}
-	if propName == PropKeyVnConvert {
+	if propName == PropKeyVnCharsetConvert {
 		exec.Command("xdg-open", CharsetConvertPage).Start()
 		return nil
 	}
-	if propName == PropKeyBambooConfiguration {
+	if propName == PropKeyConfiguration {
 		exec.Command("xdg-open", getConfigPath(e.engineName)).Start()
 		return nil
 	}
@@ -306,7 +306,7 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 			e.config.Flags &= ^bamboo.EfreeToneMarking
 		}
 	}
-	if propName == PropKeySpellingChecking {
+	if propName == PropKeySpellChecking {
 		if propState == ibus.PROP_STATE_CHECKED {
 			turnSpellChecking(true)
 		} else {
@@ -358,11 +358,11 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 			e.config.IBflags &= ^IBpreeditInvisibility
 		}
 	}
-	if propName == PropKeyFakeBackspace {
+	if propName == PropKeyPreeditElimination {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBfakeBackspaceEnabled
+			e.config.IBflags |= IBpreeditElimination
 		} else {
-			e.config.IBflags &= ^IBfakeBackspaceEnabled
+			e.config.IBflags &= ^IBpreeditElimination
 		}
 	}
 	if propName == PropKeyRestoreKeyStrokes {
@@ -403,7 +403,7 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		e.config.InputMethod = propName
 	}
 	if propName != "-" {
-		SaveConfig(e.config, e.engineName)
+		saveConfig(e.config, e.engineName)
 	}
 	e.propList = GetPropListByConfig(e.config)
 
