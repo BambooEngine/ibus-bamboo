@@ -33,7 +33,7 @@ conflicts=(ibus-bamboo-git)
 build() {
   cd "$pkgname-$pkgver"
 
-  make
+  make build
 }
 
 
