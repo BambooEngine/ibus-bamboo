@@ -30,9 +30,6 @@ tar_file=$(pkg_name)-$(version).tar.gz
 rpm_src_tar=$(rpm_src_dir)/$(tar_file)
 tar_options_src=--transform "s/^\./$(pkg_name)-$(version)/" --exclude={"*.tar.gz",".git",".idea"} .
 
-test:
-	GOPATH=$(CURDIR) go test ibus-$(engine_name)
-
 build:
 	GOPATH=$(CURDIR) go build -ldflags="-s -w" -o $(ibus_e_name) ibus-$(engine_name)
 
@@ -74,11 +71,8 @@ rpm: clean
 	tar -zcf $(rpm_src_tar) $(tar_options_src)
 	rpmbuild $(pkg_name).spec -ba
 
-
-#start ubuntu docker:   docker  run  -v `pwd`:`pwd` -w `pwd` -i -t  ubuntu bash
-#install buildpackages: apt update && apt install dh-make golang libx11-dev -y
 deb: clean
 	dpkg-buildpackage
 
 
-.PHONY: test build clean build install uninstall src rpm deb
+.PHONY: build clean build install uninstall src rpm deb
