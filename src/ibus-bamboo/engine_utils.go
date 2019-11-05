@@ -21,12 +21,13 @@ package main
 
 import (
 	"fmt"
-	"github.com/BambooEngine/bamboo-core"
-	"github.com/BambooEngine/goibus/ibus"
-	"github.com/godbus/dbus"
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/BambooEngine/bamboo-core"
+	"github.com/BambooEngine/goibus/ibus"
+	"github.com/godbus/dbus"
 )
 
 var dictionary map[string]bool
@@ -341,11 +342,7 @@ func (e *IBusBambooEngine) canProcessKey(keyVal, state uint32) bool {
 	if keyVal == IBUS_Space || keyVal == IBUS_BackSpace {
 		return true
 	}
-	var keyRune = rune(keyVal)
-	if bamboo.IsWordBreakSymbol(keyRune) {
-		return true
-	}
-	return e.preeditor.CanProcessKey(keyRune)
+	return e.preeditor.CanProcessKey(rune(keyVal))
 }
 
 func (e *IBusBambooEngine) inBackspaceWhiteList() bool {

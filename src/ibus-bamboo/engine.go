@@ -21,13 +21,14 @@ package main
 
 import (
 	"fmt"
-	"github.com/BambooEngine/bamboo-core"
-	"github.com/BambooEngine/goibus/ibus"
-	"github.com/godbus/dbus"
 	"log"
 	"os/exec"
 	"reflect"
 	"sync"
+
+	"github.com/BambooEngine/bamboo-core"
+	"github.com/BambooEngine/goibus/ibus"
+	"github.com/godbus/dbus"
 )
 
 type IBusBambooEngine struct {
@@ -131,7 +132,10 @@ func (e *IBusBambooEngine) FocusOut() *dbus.Error {
 }
 
 func (e *IBusBambooEngine) Reset() *dbus.Error {
-	fmt.Print("Reset.")
+	fmt.Print("Reset.\n")
+	if e.checkInputMode(preeditIM) {
+		e.commitPreedit(e.getPreeditString())
+	}
 	return nil
 }
 

@@ -86,6 +86,9 @@ func (e *BambooEngine) isSupportedKey(key rune) bool {
 	if IsAlpha(key) || inKeyList(e.GetInputMethod().Keys, key) {
 		return true
 	}
+	if IsWordBreakSymbol(key) {
+		return false
+	}
 	return IsVietnameseRune(key)
 }
 

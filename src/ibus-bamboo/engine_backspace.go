@@ -21,10 +21,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/BambooEngine/bamboo-core"
-	"github.com/godbus/dbus"
 	"log"
 	"time"
+
+	"github.com/BambooEngine/bamboo-core"
+	"github.com/godbus/dbus"
 )
 
 func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
@@ -32,6 +33,17 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		e.preeditor.Reset()
 		e.resetFakeBackspace()
 		e.isSurroundingTextReady = true
+		return false, nil
+	}
+	var keyRune = rune(keyVal)
+	if e.getRawKeyLen() == 0 && len(keyPressChan) == 0 {
+		defer e.updateLastKeyWithShift(keyVal, state)
+		if e.preeditor.CanProcessKey(keyRune) {
+			e.preeditor.ProcessKey(keyRune, bamboo.VietnameseMode)
+		}
+		if e.config.IBflags&IBmouseCapturing != 0 {
+			mouseCaptureUnlock()
+		}
 		return false, nil
 	}
 	if e.checkInputMode(xTestFakeKeyEventIM) || e.checkInputMode(surroundingTextIM) {
@@ -48,6 +60,9 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 			e.preeditor.Reset()
 			e.resetFakeBackspace()
 			e.isFirstTimeSendingBS = true
+			if e.config.IBflags&IBmouseCapturing != 0 {
+				mouseCaptureUnlock()
+			}
 			sleep()
 			return false, nil
 		}
@@ -190,6 +205,9 @@ func (e *IBusBambooEngine) updatePreviousText(newText, oldText string) {
 	}
 
 	e.sendBackspaceAndNewRunes(nBackSpace, newRunes[diffFrom:])
+	if e.config.IBflags&IBmouseCapturing != 0 {
+		mouseCaptureUnlock()
+	}
 }
 
 func (e *IBusBambooEngine) sendBackspaceAndNewRunes(nBackSpace int, newRunes []rune) {
