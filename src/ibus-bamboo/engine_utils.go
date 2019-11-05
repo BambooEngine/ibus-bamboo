@@ -77,9 +77,8 @@ func (e *IBusBambooEngine) init() {
 
 	if e.config.IBflags&IBmouseCapturing != 0 {
 		startMouseCapturing()
-	} else {
-		startMouseRecording()
 	}
+	startMouseRecording()
 	onMouseMove = func() {
 		e.Lock()
 		defer e.Unlock()

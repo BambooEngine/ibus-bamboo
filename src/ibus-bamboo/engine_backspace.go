@@ -41,9 +41,6 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		if e.preeditor.CanProcessKey(keyRune) {
 			e.preeditor.ProcessKey(keyRune, bamboo.VietnameseMode)
 		}
-		if e.config.IBflags&IBmouseCapturing != 0 {
-			mouseCaptureUnlock()
-		}
 		return false, nil
 	}
 	if e.checkInputMode(xTestFakeKeyEventIM) || e.checkInputMode(surroundingTextIM) {
@@ -60,9 +57,6 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 			e.preeditor.Reset()
 			e.resetFakeBackspace()
 			e.isFirstTimeSendingBS = true
-			if e.config.IBflags&IBmouseCapturing != 0 {
-				mouseCaptureUnlock()
-			}
 			sleep()
 			return false, nil
 		}
@@ -205,9 +199,6 @@ func (e *IBusBambooEngine) updatePreviousText(newText, oldText string) {
 	}
 
 	e.sendBackspaceAndNewRunes(nBackSpace, newRunes[diffFrom:])
-	if e.config.IBflags&IBmouseCapturing != 0 {
-		mouseCaptureUnlock()
-	}
 }
 
 func (e *IBusBambooEngine) sendBackspaceAndNewRunes(nBackSpace int, newRunes []rune) {

@@ -150,9 +150,8 @@ func (e *IBusBambooEngine) Disable() *dbus.Error {
 	x11ClipboardExit()
 	if e.config.IBflags&IBmouseCapturing != 0 {
 		stopMouseCapturing()
-	} else {
-		stopMouseRecording()
 	}
+	stopMouseRecording()
 	return nil
 }
 
@@ -338,11 +337,9 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		if propState == ibus.PROP_STATE_CHECKED {
 			e.config.IBflags |= IBmouseCapturing
 			startMouseCapturing()
-			stopMouseRecording()
 		} else {
 			e.config.IBflags &= ^IBmouseCapturing
 			stopMouseCapturing()
-			startMouseRecording()
 		}
 	}
 	if propName == PropKeyMacroEnabled {
