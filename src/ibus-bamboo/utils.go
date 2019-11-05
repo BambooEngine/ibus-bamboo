@@ -23,7 +23,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"github.com/BambooEngine/bamboo-core"
 	"io/ioutil"
 	"log"
 	"os"
@@ -32,6 +31,8 @@ import (
 	"sort"
 	"strings"
 	"unicode"
+
+	"github.com/BambooEngine/bamboo-core"
 )
 
 const (
@@ -95,6 +96,16 @@ var DefaultBrowserList = []string{
 	"chromium-browser:Chromium-browser",
 }
 
+var imLookupTable = map[int]string{
+	preeditIM:             "Cấu hình mặc định (Pre-edit)",
+	surroundingTextIM:     "Sửa lỗi gạch chân (Surrounding Text)",
+	backspaceForwardingIM: "Sửa lỗi gạch chân (ForwardKeyEvent I)",
+	shiftLeftForwardingIM: "Sửa lỗi gạch chân (ForwardKeyEvent II)",
+	xTestFakeKeyEventIM:   "Sửa lỗi gạch chân (XTestFakeKeyEvent)",
+	forwardAsCommitIM:     "Sửa lỗi gạch chân (Forward as commit)",
+	usIM:                  "Thêm vào danh sách loại trừ",
+}
+
 type Config struct {
 	InputMethod               string
 	InputMethodDefinitions    map[string]bamboo.InputMethodDefinition
@@ -102,6 +113,7 @@ type Config struct {
 	Flags                     uint
 	IBflags                   uint
 	DefaultInputMode          int
+	InputModeTable            map[string]int
 	ExceptedList              []string
 	PreeditWhiteList          []string
 	X11ClipboardWhiteList     []string
@@ -137,6 +149,7 @@ func loadConfig(engineName string) *Config {
 		Flags:                     bamboo.EstdFlags,
 		IBflags:                   IBstdFlags,
 		DefaultInputMode:          preeditIM,
+		InputModeTable:            map[string]int{},
 		ExceptedList:              nil,
 		PreeditWhiteList:          nil,
 		X11ClipboardWhiteList:     nil,

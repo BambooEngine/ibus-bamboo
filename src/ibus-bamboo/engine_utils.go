@@ -108,6 +108,19 @@ func (e *IBusBambooEngine) init() {
 			}
 		}
 	}
+	for i, list := range e.getWhiteList() {
+		for _, wmClasses := range list {
+			e.config.InputModeTable[wmClasses] = i + 1
+		}
+	}
+	e.config.PreeditWhiteList = nil
+	e.config.SLForwardKeyWhiteList = nil
+	e.config.SurroundingTextWhiteList = nil
+	e.config.DirectForwardKeyWhiteList = nil
+	e.config.X11ClipboardWhiteList = nil
+	e.config.ExceptedList = nil
+	e.config.ForwardKeyWhiteList = nil
+	saveConfig(e.config, e.engineName)
 }
 
 var keyPressHandler = func(keyVal, keyCode, state uint32) {}
@@ -178,15 +191,12 @@ func (e *IBusBambooEngine) getRawKeyLen() int {
 }
 
 func (e *IBusBambooEngine) getInputMode() int {
-	var whiteList = e.getWhiteList()
 	if e.wmClasses != "" {
-		for i, list := range whiteList {
-			if inStringList(list, e.wmClasses) {
-				return i + 1
-			}
+		if im, ok := e.config.InputModeTable[e.wmClasses]; ok && imLookupTable[im] != "" {
+			return im
 		}
 	}
-	if e.config.DefaultInputMode > 0 && e.config.DefaultInputMode <= len(whiteList) {
+	if imLookupTable[e.config.DefaultInputMode] != "" {
 		return e.config.DefaultInputMode
 	}
 	return preeditIM
@@ -199,33 +209,24 @@ func (e *IBusBambooEngine) openLookupTable() {
 		wmClass = wmClasses[1]
 	}
 
-	var imLookupTable = map[int]string{
-		preeditIM:             "Cấu hình mặc định (Pre-edit)",
-		surroundingTextIM:     "Sửa lỗi gạch chân (Surrounding Text)",
-		backspaceForwardingIM: "Sửa lỗi gạch chân (ForwardKeyEvent I)",
-		shiftLeftForwardingIM: "Sửa lỗi gạch chân (ForwardKeyEvent II)",
-		xTestFakeKeyEventIM:   "Sửa lỗi gạch chân (XTestFakeKeyEvent)",
-		forwardAsCommitIM:     "Sửa lỗi gạch chân (Forward as commit)",
-		usIM:                  "Thêm vào danh sách loại trừ (" + wmClass + ")",
-	}
-
 	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (1/2/3/4/5/6/7) để lưu tùy chọn của bạn"), true)
 
 	lt := ibus.NewLookupTable()
 	lt.PageSize = uint32(len(imLookupTable))
 	lt.Orientation = IBUS_ORIENTATION_VERTICAL
-	var cursorPos = 0
-	for i := 0; i < len(imLookupTable); i++ {
-		var im = i + 1
+	for im := 1; im <= len(imLookupTable); im++ {
 		if e.inputMode == im {
 			lt.AppendLabel("*")
-			cursorPos = i
+			lt.SetCursorPos(uint32(im - 1))
 		} else {
 			lt.AppendLabel(strconv.Itoa(im))
 		}
-		lt.AppendCandidate(imLookupTable[im])
+		if im == usIM {
+			lt.AppendCandidate(imLookupTable[im] + " (" + wmClass + ")")
+		} else {
+			lt.AppendCandidate(imLookupTable[im])
+		}
 	}
-	lt.SetCursorPos(uint32(cursorPos))
 	e.inputModeLookupTable = lt
 	e.UpdateLookupTable(lt, true)
 }
@@ -278,33 +279,8 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 
 func (e *IBusBambooEngine) commitInputModeCandidate() {
 	var wmClasses = x11GetFocusWindowClass()
-	var pos = e.inputModeLookupTable.CursorPos + 1
-	var reset = func() {
-		e.config.PreeditWhiteList = removeFromWhiteList(e.config.PreeditWhiteList, wmClasses)
-		e.config.X11ClipboardWhiteList = removeFromWhiteList(e.config.X11ClipboardWhiteList, wmClasses)
-		e.config.SLForwardKeyWhiteList = removeFromWhiteList(e.config.SLForwardKeyWhiteList, wmClasses)
-		e.config.ForwardKeyWhiteList = removeFromWhiteList(e.config.ForwardKeyWhiteList, wmClasses)
-		e.config.SurroundingTextWhiteList = removeFromWhiteList(e.config.SurroundingTextWhiteList, wmClasses)
-		e.config.DirectForwardKeyWhiteList = removeFromWhiteList(e.config.DirectForwardKeyWhiteList, wmClasses)
-		e.config.ExceptedList = removeFromWhiteList(e.config.ExceptedList, wmClasses)
-	}
-	reset()
-	switch pos {
-	case 1:
-		e.config.PreeditWhiteList = addToWhiteList(e.config.PreeditWhiteList, wmClasses)
-	case 2:
-		e.config.SurroundingTextWhiteList = addToWhiteList(e.config.SurroundingTextWhiteList, wmClasses)
-	case 3:
-		e.config.ForwardKeyWhiteList = addToWhiteList(e.config.ForwardKeyWhiteList, wmClasses)
-	case 4:
-		e.config.SLForwardKeyWhiteList = addToWhiteList(e.config.SLForwardKeyWhiteList, wmClasses)
-	case 5:
-		e.config.X11ClipboardWhiteList = addToWhiteList(e.config.X11ClipboardWhiteList, wmClasses)
-	case 6:
-		e.config.DirectForwardKeyWhiteList = addToWhiteList(e.config.DirectForwardKeyWhiteList, wmClasses)
-	case 7:
-		e.config.ExceptedList = addToWhiteList(e.config.ExceptedList, wmClasses)
-	}
+	var im = e.inputModeLookupTable.CursorPos + 1
+	e.config.InputModeTable[wmClasses] = int(im)
 
 	saveConfig(e.config, e.engineName)
 	e.propList = GetPropListByConfig(e.config)
