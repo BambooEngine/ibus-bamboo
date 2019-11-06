@@ -107,19 +107,26 @@ func (e *IBusBambooEngine) init() {
 			}
 		}
 	}
+	var needToUpdate bool
+	var tmp = e.config.DirectForwardKeyWhiteList
+	e.config.DirectForwardKeyWhiteList = e.config.X11ClipboardWhiteList
+	e.config.X11ClipboardWhiteList = tmp
 	for i, list := range e.getWhiteList() {
 		for _, wmClasses := range list {
-			e.config.InputModeTable[wmClasses] = i + 1
+			e.config.InputModeMapping[wmClasses] = i + 1
+			needToUpdate = true
 		}
 	}
-	e.config.PreeditWhiteList = nil
-	e.config.SLForwardKeyWhiteList = nil
-	e.config.SurroundingTextWhiteList = nil
-	e.config.DirectForwardKeyWhiteList = nil
-	e.config.X11ClipboardWhiteList = nil
-	e.config.ExceptedList = nil
-	e.config.ForwardKeyWhiteList = nil
-	saveConfig(e.config, e.engineName)
+	if needToUpdate {
+		e.config.PreeditWhiteList = nil
+		e.config.SLForwardKeyWhiteList = nil
+		e.config.SurroundingTextWhiteList = nil
+		e.config.DirectForwardKeyWhiteList = nil
+		e.config.X11ClipboardWhiteList = nil
+		e.config.ExceptedList = nil
+		e.config.ForwardKeyWhiteList = nil
+		saveConfig(e.config, e.engineName)
+	}
 }
 
 var keyPressHandler = func(keyVal, keyCode, state uint32) {}
@@ -161,7 +168,7 @@ func (e *IBusBambooEngine) processShiftKey(keyVal, state uint32) bool {
 }
 
 func (e *IBusBambooEngine) updateLastKeyWithShift(keyVal, state uint32) {
-	if e.canProcessKey(keyVal, state) {
+	if e.canProcessKey(keyVal) {
 		e.lastKeyWithShift = state&IBUS_SHIFT_MASK != 0
 	} else {
 		e.lastKeyWithShift = false
@@ -191,7 +198,7 @@ func (e *IBusBambooEngine) getRawKeyLen() int {
 
 func (e *IBusBambooEngine) getInputMode() int {
 	if e.wmClasses != "" {
-		if im, ok := e.config.InputModeTable[e.wmClasses]; ok && imLookupTable[im] != "" {
+		if im, ok := e.config.InputModeMapping[e.wmClasses]; ok && imLookupTable[im] != "" {
 			return im
 		}
 	}
@@ -214,7 +221,7 @@ func (e *IBusBambooEngine) openLookupTable() {
 	lt.PageSize = uint32(len(imLookupTable))
 	lt.Orientation = IBUS_ORIENTATION_VERTICAL
 	for im := 1; im <= len(imLookupTable); im++ {
-		if e.inputMode == im {
+		if e.getInputMode() == im {
 			lt.AppendLabel("*")
 			lt.SetCursorPos(uint32(im - 1))
 		} else {
@@ -261,7 +268,7 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		e.closeInputModeCandidates()
 		return true, nil
 	}
-	if keyRune >= '1' && keyRune <= '9' {
+	if keyRune >= '1' && keyRune <= '7' {
 		if pos, err := strconv.Atoi(string(keyRune)); err == nil {
 			if e.inputModeLookupTable.SetCursorPos(uint32(pos - 1)) {
 				e.commitInputModeCandidate()
@@ -277,14 +284,12 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 }
 
 func (e *IBusBambooEngine) commitInputModeCandidate() {
-	var wmClasses = x11GetFocusWindowClass()
 	var im = e.inputModeLookupTable.CursorPos + 1
-	e.config.InputModeTable[wmClasses] = int(im)
+	e.config.InputModeMapping[e.wmClasses] = int(im)
 
 	saveConfig(e.config, e.engineName)
 	e.propList = GetPropListByConfig(e.config)
 	e.RegisterProperties(e.propList)
-	e.inputMode = e.getInputMode()
 }
 
 func (e *IBusBambooEngine) closeInputModeCandidates() {
@@ -313,7 +318,7 @@ func (e *IBusBambooEngine) isValidState(state uint32) bool {
 	return true
 }
 
-func (e *IBusBambooEngine) canProcessKey(keyVal, state uint32) bool {
+func (e *IBusBambooEngine) canProcessKey(keyVal uint32) bool {
 	if keyVal == IBUS_Space || keyVal == IBUS_BackSpace {
 		return true
 	}
@@ -321,7 +326,13 @@ func (e *IBusBambooEngine) canProcessKey(keyVal, state uint32) bool {
 }
 
 func (e *IBusBambooEngine) inBackspaceWhiteList() bool {
-	return e.inputMode > preeditIM && e.inputMode < usIM
+	var inputMode = e.getInputMode()
+	for _, im := range imBackspaceList {
+		if im == inputMode {
+			return true
+		}
+	}
+	return false
 }
 
 func (e *IBusBambooEngine) inBrowserList() bool {
@@ -329,7 +340,7 @@ func (e *IBusBambooEngine) inBrowserList() bool {
 }
 
 func (e *IBusBambooEngine) checkInputMode(im int) bool {
-	return e.inputMode == im
+	return e.getInputMode() == im
 }
 
 func notify(enMode bool) {

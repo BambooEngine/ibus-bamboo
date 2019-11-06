@@ -20,11 +20,12 @@
 package main
 
 import (
+	"log"
+	"strings"
+
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
-	"log"
-	"strings"
 )
 
 func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
@@ -32,7 +33,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	var keyRune = rune(keyVal)
 	defer e.updateLastKeyWithShift(keyVal, state)
 
-	if !e.isValidState(state) || !e.canProcessKey(keyVal, state) {
+	if !e.isValidState(state) || !e.canProcessKey(keyVal) {
 		// workaround for chrome's address bar, ibus-bamboo#5
 		e.HidePreeditText()
 		e.commitText(e.getPreeditString())

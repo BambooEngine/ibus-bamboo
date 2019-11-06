@@ -41,7 +41,6 @@ type IBusBambooEngine struct {
 	englishMode            bool
 	macroTable             *MacroTable
 	wmClasses              string
-	inputMode              int
 	isInputModeLTOpened    bool
 	isEmojiLTOpened        bool
 	emojiLookupTable       *ibus.LookupTable
@@ -112,7 +111,6 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 	log.Print("FocusIn.")
 	var oldWmClasses = e.wmClasses
 	e.wmClasses = x11GetFocusWindowClass()
-	e.inputMode = e.getInputMode()
 	fmt.Printf("WM_CLASS=(%s)\n", e.wmClasses)
 
 	e.RegisterProperties(e.propList)

@@ -53,7 +53,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		if keyVal == IBUS_Left && state&IBUS_SHIFT_MASK != 0 {
 			return false, nil
 		}
-		if !e.isValidState(state) || !e.canProcessKey(keyVal, state) {
+		if !e.isValidState(state) || !e.canProcessKey(keyVal) {
 			e.preeditor.Reset()
 			e.resetFakeBackspace()
 			e.isFirstTimeSendingBS = true

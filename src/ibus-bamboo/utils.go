@@ -61,8 +61,8 @@ const (
 	surroundingTextIM
 	backspaceForwardingIM
 	shiftLeftForwardingIM
-	xTestFakeKeyEventIM
 	forwardAsCommitIM
+	xTestFakeKeyEventIM
 	usIM
 )
 
@@ -101,9 +101,17 @@ var imLookupTable = map[int]string{
 	surroundingTextIM:     "Sửa lỗi gạch chân (Surrounding Text)",
 	backspaceForwardingIM: "Sửa lỗi gạch chân (ForwardKeyEvent I)",
 	shiftLeftForwardingIM: "Sửa lỗi gạch chân (ForwardKeyEvent II)",
-	xTestFakeKeyEventIM:   "Sửa lỗi gạch chân (XTestFakeKeyEvent)",
 	forwardAsCommitIM:     "Sửa lỗi gạch chân (Forward as commit)",
+	xTestFakeKeyEventIM:   "Sửa lỗi gạch chân (XTestFakeKeyEvent)",
 	usIM:                  "Thêm vào danh sách loại trừ",
+}
+
+var imBackspaceList = []int{
+	surroundingTextIM,
+	backspaceForwardingIM,
+	shiftLeftForwardingIM,
+	forwardAsCommitIM,
+	xTestFakeKeyEventIM,
 }
 
 type Config struct {
@@ -113,7 +121,7 @@ type Config struct {
 	Flags                     uint
 	IBflags                   uint
 	DefaultInputMode          int
-	InputModeTable            map[string]int
+	InputModeMapping          map[string]int
 	ExceptedList              []string
 	PreeditWhiteList          []string
 	X11ClipboardWhiteList     []string
@@ -149,7 +157,7 @@ func loadConfig(engineName string) *Config {
 		Flags:                     bamboo.EstdFlags,
 		IBflags:                   IBstdFlags,
 		DefaultInputMode:          preeditIM,
-		InputModeTable:            map[string]int{},
+		InputModeMapping:          map[string]int{},
 		ExceptedList:              nil,
 		PreeditWhiteList:          nil,
 		X11ClipboardWhiteList:     nil,
