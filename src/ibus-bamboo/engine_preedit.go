@@ -50,6 +50,18 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 			return false, nil
 		}
 	}
+	if keyVal == IBUS_Tab {
+		var text = e.preeditor.GetProcessedString(bamboo.VietnameseMode)
+		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(text) {
+			// macro processing
+			macText := e.expandMacro(text)
+			e.commitPreedit(macText)
+		} else {
+			e.commitPreedit(e.getComposedString() + "\t")
+		}
+		return true, nil
+	}
+
 	if e.preeditor.CanProcessKey(keyRune) {
 		if state&IBUS_LOCK_MASK != 0 {
 			keyRune = toUpper(keyRune)

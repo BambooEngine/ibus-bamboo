@@ -112,6 +112,18 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 		return
 	}
 
+	if keyVal == IBUS_Tab {
+		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(oldText) {
+			// macro processing
+			macText := e.expandMacro(oldText)
+			e.updatePreviousText(macText, oldText)
+		} else {
+			e.commitText("\t")
+		}
+		e.preeditor.Reset()
+		return
+	}
+
 	if e.preeditor.CanProcessKey(keyRune) {
 		if state&IBUS_LOCK_MASK != 0 {
 			keyRune = toUpper(keyRune)
