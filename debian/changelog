@@ -1,3 +1,9 @@
+ibus-bamboo (0.6.1-0) stable; urgency=medium
+
+  * New upstream release
+
+ -- Luong Thanh Lam <ltlam93@gmail.com>  Wed, 06 Nov 2019 08:09:42 +0700
+
 ibus-bamboo (0.6.0-2) stable; urgency=medium
 
   * New upstream release
