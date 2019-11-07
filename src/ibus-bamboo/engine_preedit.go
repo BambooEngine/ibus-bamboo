@@ -57,7 +57,8 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 			macText := e.expandMacro(text)
 			e.commitPreedit(macText)
 		} else {
-			e.commitPreedit(e.getComposedString() + "\t")
+			e.commitPreedit(e.getComposedString())
+			return false, nil
 		}
 		return true, nil
 	}

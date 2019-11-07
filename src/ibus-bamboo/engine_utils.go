@@ -319,7 +319,10 @@ func (e *IBusBambooEngine) isValidState(state uint32) bool {
 }
 
 func (e *IBusBambooEngine) canProcessKey(keyVal uint32) bool {
-	if keyVal == IBUS_Space || keyVal == IBUS_BackSpace || keyVal == IBUS_Tab {
+	if keyVal == IBUS_Space || keyVal == IBUS_BackSpace {
+		return true
+	}
+	if e.config.IBflags&IBmarcoEnabled != 0 && keyVal == IBUS_Tab {
 		return true
 	}
 	return e.preeditor.CanProcessKey(rune(keyVal))

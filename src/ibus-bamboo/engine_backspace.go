@@ -118,7 +118,7 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 			macText := e.expandMacro(oldText)
 			e.updatePreviousText(macText, oldText)
 		} else {
-			e.commitText("\t")
+			e.ForwardKeyEvent(keyVal, keyCode, state)
 		}
 		e.preeditor.Reset()
 		return
