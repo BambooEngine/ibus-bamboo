@@ -38,7 +38,10 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 	var keyRune = rune(keyVal)
 	if e.getRawKeyLen() == 0 && len(keyPressChan) == 0 {
 		defer e.updateLastKeyWithShift(keyVal, state)
-		if e.preeditor.CanProcessKey(keyRune) {
+		if e.preeditor.CanProcessKey(keyRune) && e.isValidState(state) {
+			if state&IBUS_LOCK_MASK != 0 {
+				keyRune = toUpper(keyRune)
+			}
 			e.preeditor.ProcessKey(keyRune, bamboo.VietnameseMode)
 		}
 		return false, nil
