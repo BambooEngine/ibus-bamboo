@@ -37,7 +37,7 @@ prerare () {
 build() {
   cd "$pkgname"
 
-  make
+  make build
 }
 
 
