@@ -29,9 +29,9 @@ const (
 	PropKeyAbout                = "about"
 	PropKeyStdToneStyle         = "std_tone_style"
 	PropKeyFreeToneMarking      = "tone_free_marking"
-	PropKeySpellChecking        = "spell_checking_enable"
-	PropKeySpellCheckingByRules = "spell_checking_by_rules"
-	PropKeySpellCheckingByDicts = "spell_checking_by_dicts"
+	PropKeyEnableSpellCheck     = "enable_spell_check"
+	PropKeySpellCheckByRules    = "spell_check_by_rules"
+	PropKeySpellCheckByDicts    = "spell_check_by_dicts"
 	PropKeyPreeditInvisibility  = "preedit_invisibility"
 	PropKeyVnCharsetConvert     = "charset_convert_page"
 	PropKeyMouseCapturing       = "mouse_capturing"
@@ -282,19 +282,19 @@ func GetSpellCheckingPropListByConfig(c *Config) *ibus.PropList {
 
 	// spelling
 	spellingChecked := ibus.PROP_STATE_UNCHECKED
-	if c.IBflags&IBspellChecking != 0 {
+	if c.IBflags&IBspellCheckEnabled != 0 {
 		spellingChecked = ibus.PROP_STATE_CHECKED
 	}
-	if c.IBflags&IBspellCheckingWithRules != 0 {
+	if c.IBflags&IBspellCheckWithRules != 0 {
 		spellCheckByRules = ibus.PROP_STATE_CHECKED
 	}
-	if c.IBflags&IBspellCheckingWithDicts != 0 {
+	if c.IBflags&IBspellCheckWithDicts != 0 {
 		spellCheckByDicts = ibus.PROP_STATE_CHECKED
 	}
 	return ibus.NewPropList(
 		&ibus.Property{
 			Name:      "IBusProperty",
-			Key:       PropKeySpellChecking,
+			Key:       PropKeyEnableSpellCheck,
 			Type:      ibus.PROP_TYPE_TOGGLE,
 			Label:     dbus.MakeVariant(ibus.NewText("Bật kiểm tra chính tả")),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("")),
@@ -307,7 +307,7 @@ func GetSpellCheckingPropListByConfig(c *Config) *ibus.PropList {
 		IBusSeparator,
 		&ibus.Property{
 			Name:      "IBusProperty",
-			Key:       PropKeySpellCheckingByRules,
+			Key:       PropKeySpellCheckByRules,
 			Type:      ibus.PROP_TYPE_TOGGLE,
 			Label:     dbus.MakeVariant(ibus.NewText("Sử dụng luật ghép vần")),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("Sử dụng luật ghép vần")),
@@ -319,7 +319,7 @@ func GetSpellCheckingPropListByConfig(c *Config) *ibus.PropList {
 		},
 		&ibus.Property{
 			Name:      "IBusProperty",
-			Key:       PropKeySpellCheckingByDicts,
+			Key:       PropKeySpellCheckByDicts,
 			Type:      ibus.PROP_TYPE_TOGGLE,
 			Label:     dbus.MakeVariant(ibus.NewText("Sử dụng từ điển")),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("Sử dụng từ điển")),

@@ -5,6 +5,7 @@
  * This software is licensed under the MIT license. For more information,
  * see <https://github.com/BambooEngine/bamboo-core/blob/master/LICENSE>.
  */
+
 package bamboo
 
 import (
@@ -13,12 +14,12 @@ import (
 )
 
 var tones = map[string]Tone{
-	"XoaDauThanh": TONE_NONE,
-	"DauSac":      TONE_ACUTE,
-	"DauHuyen":    TONE_GRAVE,
-	"DauNga":      TONE_TILDE,
-	"DauNang":     TONE_DOT,
-	"DauHoi":      TONE_HOOK,
+	"XoaDauThanh": ToneNone,
+	"DauSac":      ToneAcute,
+	"DauHuyen":    ToneGrave,
+	"DauNga":      ToneTilde,
+	"DauNang":     ToneDot,
+	"DauHoi":      ToneHook,
 }
 
 type EffectType int
@@ -34,23 +35,23 @@ const (
 type Mark uint8
 
 const (
-	MARK_NONE  Mark = iota << 0
-	MARK_HAT   Mark = iota
-	MARK_BREVE Mark = iota
-	MARK_HORN  Mark = iota
-	MARK_DASH  Mark = iota
-	MARK_RAW   Mark = iota
+	MarkNone  Mark = iota << 0
+	MarkHat   Mark = iota
+	MarkBreve Mark = iota
+	MarkHorn  Mark = iota
+	MarkDash  Mark = iota
+	MarkRaw   Mark = iota
 )
 
 type Tone uint8
 
 const (
-	TONE_NONE  Tone = iota << 0
-	TONE_GRAVE Tone = iota
-	TONE_ACUTE Tone = iota
-	TONE_HOOK  Tone = iota
-	TONE_TILDE Tone = iota
-	TONE_DOT   Tone = iota
+	ToneNone  Tone = iota << 0
+	ToneGrave Tone = iota
+	ToneAcute Tone = iota
+	ToneHook  Tone = iota
+	ToneTilde Tone = iota
+	ToneDot   Tone = iota
 )
 
 type Rule struct {
@@ -160,7 +161,7 @@ func ParseTonelessRules(key rune, line string) []Rule {
 
 func ParseToneLessRule(key, effectiveOn, result rune, effect Mark) []Rule {
 	var rules []Rule
-	var tones = []Tone{TONE_NONE, TONE_DOT, TONE_ACUTE, TONE_GRAVE, TONE_HOOK, TONE_TILDE}
+	var tones = []Tone{ToneNone, ToneDot, ToneAcute, ToneGrave, ToneHook, ToneTilde}
 	for _, chr := range getMarkFamily(effectiveOn) {
 		if chr == result {
 			var rule Rule

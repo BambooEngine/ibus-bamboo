@@ -39,7 +39,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 	if e.getRawKeyLen() == 0 && len(keyPressChan) == 0 {
 		defer e.updateLastKeyWithShift(keyVal, state)
 		if e.preeditor.CanProcessKey(keyRune) && e.isValidState(state) {
-			if state&IBUS_LOCK_MASK != 0 {
+			if state&IBusLockMask != 0 {
 				keyRune = toUpper(keyRune)
 			}
 			e.preeditor.ProcessKey(keyRune, bamboo.VietnameseMode)
@@ -53,7 +53,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 				time.Sleep(5 * time.Millisecond)
 			}
 		}
-		if keyVal == IBUS_Left && state&IBUS_SHIFT_MASK != 0 {
+		if keyVal == IBusLeft && state&IBusShiftMask != 0 {
 			return false, nil
 		}
 		if !e.isValidState(state) || !e.canProcessKey(keyVal) {
@@ -63,7 +63,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 			sleep()
 			return false, nil
 		}
-		if keyVal == IBUS_BackSpace {
+		if keyVal == IBusBackSpace {
 			if e.nFakeBackSpace > 0 {
 				e.nFakeBackSpace--
 				return false, nil
@@ -94,7 +94,7 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 	}
 	var keyRune = rune(keyVal)
 	oldText := e.preeditor.GetProcessedString(bamboo.VietnameseMode | bamboo.WithEffectKeys)
-	if keyVal == IBUS_BackSpace {
+	if keyVal == IBusBackSpace {
 		if e.config.IBflags&IBautoNonVnRestore == 0 || e.checkInputMode(shiftLeftForwardingIM) {
 			if e.getRawKeyLen() > 0 {
 				e.preeditor.RemoveLastChar(false)
@@ -115,7 +115,7 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 		return
 	}
 
-	if keyVal == IBUS_Tab {
+	if keyVal == IBusTab {
 		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(oldText) {
 			// macro processing
 			macText := e.expandMacro(oldText)
@@ -128,7 +128,7 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 	}
 
 	if e.preeditor.CanProcessKey(keyRune) {
-		if state&IBUS_LOCK_MASK != 0 {
+		if state&IBusLockMask != 0 {
 			keyRune = toUpper(keyRune)
 		}
 		e.preeditor.ProcessKey(keyRune, e.getInputMethod())
@@ -141,7 +141,7 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 		}
 		return
 	} else if bamboo.IsWordBreakSymbol(keyRune) {
-		if keyVal == IBUS_Space && state&IBUS_SHIFT_MASK != 0 &&
+		if keyVal == IBusSpace && state&IBusShiftMask != 0 &&
 			e.config.IBflags&IBrestoreKeyStrokesEnabled != 0 && !e.lastKeyWithShift {
 			// restore key strokes
 			if bamboo.HasAnyVietnameseRune(oldText) {
@@ -252,8 +252,8 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 		time.Sleep(20 * time.Millisecond)
 		fmt.Printf("Sendding %d backspace via forwardAsCommitIM\n", n)
 		for i := 0; i < n; i++ {
-			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, 0)
-			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, IBUS_RELEASE_MASK)
+			e.ForwardKeyEvent(IBusBackSpace, XkBackspace-8, 0)
+			e.ForwardKeyEvent(IBusBackSpace, XkBackspace-8, IBusReleaseMask)
 		}
 		time.Sleep(time.Duration(n) * 20 * time.Millisecond)
 	} else if e.checkInputMode(shiftLeftForwardingIM) {
@@ -261,8 +261,8 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 		log.Printf("Sendding %d Shift+Left via shiftLeftForwardingIM\n", n)
 
 		for i := 0; i < n; i++ {
-			e.ForwardKeyEvent(IBUS_Left, XK_Left-8, IBUS_SHIFT_MASK)
-			e.ForwardKeyEvent(IBUS_Left, XK_Left-8, IBUS_RELEASE_MASK)
+			e.ForwardKeyEvent(IBusLeft, XkLeft-8, IBusShiftMask)
+			e.ForwardKeyEvent(IBusLeft, XkLeft-8, IBusReleaseMask)
 		}
 		time.Sleep(time.Duration(n) * 30 * time.Millisecond)
 	} else if e.checkInputMode(backspaceForwardingIM) {
@@ -270,8 +270,8 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 		log.Printf("Sendding %d backspace via backspaceForwardingIM\n", n)
 
 		for i := 0; i < n; i++ {
-			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, 0)
-			e.ForwardKeyEvent(IBUS_BackSpace, XK_BackSpace-8, IBUS_RELEASE_MASK)
+			e.ForwardKeyEvent(IBusBackSpace, XkBackspace-8, 0)
+			e.ForwardKeyEvent(IBusBackSpace, XkBackspace-8, IBusReleaseMask)
 		}
 		time.Sleep(time.Duration(n) * 30 * time.Millisecond)
 	} else {
@@ -295,7 +295,7 @@ func (e *IBusBambooEngine) SendText(rs []rune) {
 				keyVal = uint32(chr)
 			}
 			e.ForwardKeyEvent(keyVal, 0, 0)
-			e.ForwardKeyEvent(keyVal, 0, IBUS_RELEASE_MASK)
+			e.ForwardKeyEvent(keyVal, 0, IBusReleaseMask)
 			time.Sleep(5 * time.Millisecond)
 		}
 		return

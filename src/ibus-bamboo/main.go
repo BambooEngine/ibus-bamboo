@@ -22,10 +22,10 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/BambooEngine/goibus/ibus"
-	"github.com/godbus/dbus"
 	"log"
 	"os"
+
+	"github.com/BambooEngine/goibus/ibus"
 )
 
 const (
@@ -72,11 +72,6 @@ func main() {
 
 		bus.CallMethod("SetGlobalEngine", 0, EngineName+"Standalone")
 
-		c := make(chan *dbus.Signal, 10)
-		conn.Signal(c)
-
-		select {
-		case <-c:
-		}
+		select {}
 	}
 }

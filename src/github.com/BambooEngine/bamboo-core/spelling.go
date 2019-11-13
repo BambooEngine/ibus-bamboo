@@ -5,9 +5,8 @@
  * This software is licensed under the MIT license. For more information,
  * see <https://github.com/BambooEngine/bamboo-core/blob/master/LICENCE>.
  */
-package bamboo
 
-import "log"
+package bamboo
 
 var firstConsonantSeqs = []string{
 	"b d đ g gh m n nh p ph r s t tr v z",
@@ -84,10 +83,7 @@ func lookup(seq []string, input string, inputIsFull, inputIsComplete bool) []int
 func isValidCVC(fc, vo, lc string, inputIsFullComplete bool) bool {
 	var ret bool
 	var fcIndexes, voIndexes, lcIndexes []int
-	defer func() {
-		return
-		log.Printf("fc=%s vo=%s lc=%s ret=%v", fc, vo, lc, ret)
-	}()
+	// log.Printf("fc=%s vo=%s lc=%s ret=%v", fc, vo, lc, ret)
 	if fc != "" {
 		if fcIndexes = lookup(firstConsonantSeqs, fc, inputIsFullComplete || vo != "", true); fcIndexes == nil {
 			return false
@@ -109,8 +105,7 @@ func isValidCVC(fc, vo, lc string, inputIsFullComplete bool) bool {
 	}
 	if fcIndexes != nil {
 		// first consonant + vowel
-		ret = isValidCV(fcIndexes, voIndexes)
-		if ret == false || lcIndexes == nil {
+		if ret = isValidCV(fcIndexes, voIndexes); !ret || lcIndexes == nil {
 			return ret
 		}
 	}

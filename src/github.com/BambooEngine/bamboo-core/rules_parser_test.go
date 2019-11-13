@@ -5,6 +5,7 @@
  * This software is licensed under the MIT license. For more information,
  * see <https://github.com/BambooEngine/bamboo-core/blob/master/LICENSE>.
  */
+
 package bamboo
 
 import (
@@ -13,7 +14,7 @@ import (
 
 func TestParseToneRules(t *testing.T) {
 	rules := ParseRules('z', "XoaDauThanh")
-	if len(rules) != 1 || rules[0].EffectType != ToneTransformation || Tone(rules[0].Effect) != TONE_NONE {
+	if len(rules) != 1 || rules[0].EffectType != ToneTransformation || Tone(rules[0].Effect) != ToneNone {
 		t.Errorf("Test parse None Rule. Got %v, expected %v", rules[0], Rule{
 			Key:        'z',
 			EffectType: ToneTransformation,
@@ -21,11 +22,11 @@ func TestParseToneRules(t *testing.T) {
 		})
 	}
 	rules = ParseRules('x', "DauNga")
-	if len(rules) != 1 || rules[0].EffectType != ToneTransformation || rules[0].GetTone() != TONE_TILDE {
+	if len(rules) != 1 || rules[0].EffectType != ToneTransformation || rules[0].GetTone() != ToneTilde {
 		t.Errorf("Test parse None Rule. Got %v, expected %v", rules[0], Rule{
 			Key:        'x',
 			EffectType: ToneTransformation,
-			Effect:     uint8(TONE_TILDE),
+			Effect:     uint8(ToneTilde),
 		})
 	}
 }
@@ -33,11 +34,11 @@ func TestParseToneRules(t *testing.T) {
 func TestParseTonelessRules(t *testing.T) {
 	rules := ParseTonelessRules('d', "D_Đ")
 	idx := 0
-	if len(rules) != 2 || rules[idx].EffectType != MarkTransformation || rules[idx].Effect != uint8(MARK_DASH) || rules[idx].EffectOn != 'd' {
+	if len(rules) != 2 || rules[idx].EffectType != MarkTransformation || rules[idx].Effect != uint8(MarkDash) || rules[idx].EffectOn != 'd' {
 		t.Errorf("Test parsing Mark Rule. Got %v, expected %v", rules[idx], Rule{
 			Key:        'd',
 			EffectType: MarkTransformation,
-			Effect:     uint8(MARK_DASH),
+			Effect:     uint8(MarkDash),
 			EffectOn:   'd',
 		})
 	}
@@ -54,29 +55,29 @@ func TestParseTonelessRules(t *testing.T) {
 	if len(rules) != 33 {
 		t.Errorf("Test the length of parsing mark rule. Got %d, expected %d", len(rules), 30)
 	}
-	if rules[0].EffectType != MarkTransformation || rules[0].GetMark() != MARK_HORN || rules[0].EffectOn != 'u' {
+	if rules[0].EffectType != MarkTransformation || rules[0].GetMark() != MarkHorn || rules[0].EffectOn != 'u' {
 		t.Errorf("Test parsing mark Rule. Got %v, expected %v", rules[0], Rule{
 			Key:        'w',
 			EffectType: MarkTransformation,
-			Effect:     uint8(MARK_HORN),
+			Effect:     uint8(MarkHorn),
 			EffectOn:   'u',
 		})
 	}
 	idx = 7
-	if rules[idx].EffectType != MarkTransformation || rules[idx].GetMark() != MARK_HORN || rules[idx].EffectOn != 'o' {
+	if rules[idx].EffectType != MarkTransformation || rules[idx].GetMark() != MarkHorn || rules[idx].EffectOn != 'o' {
 		t.Errorf("Test parsing mark Rule. Got %v, expected %v", rules[idx], Rule{
 			Key:        'w',
 			EffectType: MarkTransformation,
-			Effect:     uint8(MARK_HORN),
+			Effect:     uint8(MarkHorn),
 			EffectOn:   'o',
 		})
 	}
 	idx = 20
-	if rules[idx].EffectType != MarkTransformation || rules[idx].GetMark() != MARK_BREVE || rules[idx].EffectOn != 'a' {
+	if rules[idx].EffectType != MarkTransformation || rules[idx].GetMark() != MarkBreve || rules[idx].EffectOn != 'a' {
 		t.Errorf("Test parsing mark Rule. Got %v, expected %v", rules[idx], Rule{
 			Key:        'w',
 			EffectType: MarkTransformation,
-			Effect:     uint8(MARK_BREVE),
+			Effect:     uint8(MarkBreve),
 			EffectOn:   'a',
 		})
 	}
@@ -86,11 +87,11 @@ func TestParseTonelessRules(t *testing.T) {
 	} else {
 		t.Log("RULES[UOA_ƯƠĂ__Ư]=", rules)
 		idx = 20
-		if rules[idx].EffectType != MarkTransformation || rules[idx].GetMark() != MARK_BREVE || rules[idx].EffectOn != 'a' {
+		if rules[idx].EffectType != MarkTransformation || rules[idx].GetMark() != MarkBreve || rules[idx].EffectOn != 'a' {
 			t.Errorf("Test parsing mark Rule. Got %v, expected %v", rules[idx], Rule{
 				Key:        'w',
 				EffectType: MarkTransformation,
-				Effect:     uint8(MARK_BREVE),
+				Effect:     uint8(MarkBreve),
 				EffectOn:   'a',
 			})
 		}

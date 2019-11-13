@@ -57,7 +57,7 @@ func GetBambooEngineCreator() func(*dbus.Conn, string) dbus.ObjectPath {
 	}
 }
 
-const KEYPRESS_DELAY_MS = 10
+const KeypressDelayMs = 10
 
 func (e *IBusBambooEngine) init() {
 	e.emoji = NewEmojiEngine()
@@ -67,7 +67,7 @@ func (e *IBusBambooEngine) init() {
 			e.macroTable.Enable(e.engineName)
 		}
 	}
-	if e.config.IBflags&IBspellCheckingWithDicts != 0 && len(dictionary) == 0 {
+	if e.config.IBflags&IBspellCheckWithDicts != 0 && len(dictionary) == 0 {
 		dictionary, _ = loadDictionary(DictVietnameseCm)
 	}
 	if e.config.IBflags&IBemojiDisabled == 0 && emojiTrie != nil && len(emojiTrie.Children) == 0 {
@@ -98,12 +98,12 @@ func (e *IBusBambooEngine) init() {
 		} else {
 			e.resetFakeBackspace()
 			e.resetBuffer()
-			e.keyPressDelay = KEYPRESS_DELAY_MS
-			if e.capabilities&IBUS_CAP_SURROUNDING_TEXT != 0 {
+			e.keyPressDelay = KeypressDelayMs
+			if e.capabilities&IBusCapSurroundingText != 0 {
 				//e.ForwardKeyEvent(IBUS_Shift_R, XK_Shift_R-8, 0)
 				x11SendShiftR()
 				e.isSurroundingTextReady = true
-				e.keyPressDelay = KEYPRESS_DELAY_MS * 10
+				e.keyPressDelay = KeypressDelayMs * 10
 			}
 		}
 	}
@@ -133,12 +133,9 @@ var keyPressHandler = func(keyVal, keyCode, state uint32) {}
 var keyPressChan = make(chan [3]uint32, 100)
 
 func keyPressCapturing() {
-	for {
-		select {
-		case keyEvents := <-keyPressChan:
-			var keyVal, keyCode, state = keyEvents[0], keyEvents[1], keyEvents[2]
-			keyPressHandler(keyVal, keyCode, state)
-		}
+	for keyEvents := range keyPressChan {
+		var keyVal, keyCode, state = keyEvents[0], keyEvents[1], keyEvents[2]
+		keyPressHandler(keyVal, keyCode, state)
 	}
 }
 
@@ -154,9 +151,9 @@ func (e *IBusBambooEngine) resetBuffer() {
 }
 
 func (e *IBusBambooEngine) processShiftKey(keyVal, state uint32) bool {
-	if keyVal == IBUS_Shift_L || keyVal == IBUS_Shift_R {
+	if keyVal == IBusShiftL || keyVal == IBusShiftR {
 		// when press one Shift key
-		if state&IBUS_SHIFT_MASK != 0 && state&IBUS_RELEASE_MASK != 0 &&
+		if state&IBusShiftMask != 0 && state&IBusReleaseMask != 0 &&
 			e.config.IBflags&IBimQuickSwitchEnabled != 0 && !e.lastKeyWithShift {
 			e.englishMode = !e.englishMode
 			notify(e.englishMode)
@@ -169,22 +166,22 @@ func (e *IBusBambooEngine) processShiftKey(keyVal, state uint32) bool {
 
 func (e *IBusBambooEngine) updateLastKeyWithShift(keyVal, state uint32) {
 	if e.canProcessKey(keyVal) {
-		e.lastKeyWithShift = state&IBUS_SHIFT_MASK != 0
+		e.lastKeyWithShift = state&IBusShiftMask != 0
 	} else {
 		e.lastKeyWithShift = false
 	}
 }
 
 func (e *IBusBambooEngine) isIgnoredKey(keyVal, state uint32) bool {
-	if state&IBUS_RELEASE_MASK != 0 {
+	if state&IBusReleaseMask != 0 {
 		//Ignore key-up event
 		return true
 	}
-	if keyVal == IBUS_Caps_Lock {
+	if keyVal == IBusCapsLock {
 		return true
 	}
 	if e.checkInputMode(usIM) {
-		if e.isInputModeLTOpened || keyVal == IBUS_OpenLookupTable {
+		if e.isInputModeLTOpened || keyVal == IBusOpenLookupTable {
 			return false
 		}
 		return true
@@ -193,7 +190,7 @@ func (e *IBusBambooEngine) isIgnoredKey(keyVal, state uint32) bool {
 }
 
 func (e *IBusBambooEngine) getRawKeyLen() int {
-	return len(e.preeditor.GetRawString())
+	return len(e.preeditor.GetProcessedString(bamboo.EnglishMode | bamboo.FullText))
 }
 
 func (e *IBusBambooEngine) getInputMode() int {
@@ -219,7 +216,7 @@ func (e *IBusBambooEngine) openLookupTable() {
 
 	lt := ibus.NewLookupTable()
 	lt.PageSize = uint32(len(imLookupTable))
-	lt.Orientation = IBUS_ORIENTATION_VERTICAL
+	lt.Orientation = IBusOrientationVertical
 	for im := 1; im <= len(imLookupTable); im++ {
 		if e.getInputMode() == im {
 			lt.AppendLabel("*")
@@ -245,25 +242,25 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 	if wmClasses == "" {
 		return true, nil
 	}
-	if keyVal == IBUS_OpenLookupTable {
+	if keyVal == IBusOpenLookupTable {
 		e.closeInputModeCandidates()
 		return false, nil
 	}
 	var keyRune = rune(keyVal)
-	if keyVal == IBUS_Left || keyVal == IBUS_Up {
+	if keyVal == IBusLeft || keyVal == IBusUp {
 		e.CursorUp()
 		return true, nil
-	} else if keyVal == IBUS_Right || keyVal == IBUS_Down {
+	} else if keyVal == IBusRight || keyVal == IBusDown {
 		e.CursorDown()
 		return true, nil
-	} else if keyVal == IBUS_Page_Up {
+	} else if keyVal == IBusPageUp {
 		e.PageUp()
 		return true, nil
-	} else if keyVal == IBUS_Page_Down {
+	} else if keyVal == IBusPageDown {
 		e.PageDown()
 		return true, nil
 	}
-	if keyVal == IBUS_Return {
+	if keyVal == IBusReturn {
 		e.commitInputModeCandidate()
 		e.closeInputModeCandidates()
 		return true, nil
@@ -307,22 +304,22 @@ func (e *IBusBambooEngine) updateInputModeLT() {
 }
 
 func (e *IBusBambooEngine) isValidState(state uint32) bool {
-	if state&IBUS_CONTROL_MASK != 0 ||
-		state&IBUS_MOD1_MASK != 0 ||
-		state&IBUS_IGNORED_MASK != 0 ||
-		state&IBUS_SUPER_MASK != 0 ||
-		state&IBUS_HYPER_MASK != 0 ||
-		state&IBUS_META_MASK != 0 {
+	if state&IBusControlMask != 0 ||
+		state&IBusMod1Mask != 0 ||
+		state&IBusIgnoredMask != 0 ||
+		state&IBusSuperMask != 0 ||
+		state&IBusHyperMask != 0 ||
+		state&IBusMetaMask != 0 {
 		return false
 	}
 	return true
 }
 
 func (e *IBusBambooEngine) canProcessKey(keyVal uint32) bool {
-	if keyVal == IBUS_Space || keyVal == IBUS_BackSpace {
+	if keyVal == IBusSpace || keyVal == IBusBackSpace {
 		return true
 	}
-	if e.config.IBflags&IBmarcoEnabled != 0 && keyVal == IBUS_Tab {
+	if e.config.IBflags&IBmarcoEnabled != 0 && keyVal == IBusTab {
 		return true
 	}
 	return e.preeditor.CanProcessKey(rune(keyVal))

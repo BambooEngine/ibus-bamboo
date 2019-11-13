@@ -20,86 +20,68 @@
 package main
 
 const (
-	IBUS_SHIFT_MASK   = 1 << 0
-	IBUS_LOCK_MASK    = 1 << 1
-	IBUS_CONTROL_MASK = 1 << 2
-	IBUS_MOD1_MASK    = 1 << 3
-	IBUS_MOD2_MASK    = 1 << 4
-	IBUS_MOD3_MASK    = 1 << 5
-	IBUS_MOD4_MASK    = 1 << 6
-	IBUS_MOD5_MASK    = 1 << 7
-	IBUS_BUTTON1_MASK = 1 << 8
-	IBUS_BUTTON2_MASK = 1 << 9
-	IBUS_BUTTON3_MASK = 1 << 10
-	IBUS_BUTTON4_MASK = 1 << 11
-	IBUS_BUTTON5_MASK = 1 << 12
+	IBusShiftMask   = 1 << 0
+	IBusLockMask    = 1 << 1
+	IBusControlMask = 1 << 2
+	IBusMod1Mask    = 1 << 3
 
 	/* The next few modifiers are used by XKB so we skip to the end.
 	 * Bits 15 - 23 are currently unused. Bit 29 is used internally.
 	 */
 
 	/* ibus mask */
-	IBUS_HANDLED_MASK = 1 << 24
-	IBUS_FORWARD_MASK = 1 << 25
-	IBUS_IGNORED_MASK = IBUS_FORWARD_MASK
+	IBusHandledMask = 1 << 24
+	IBusForwardMask = 1 << 25
+	IBusIgnoredMask = IBusForwardMask
 
-	IBUS_SUPER_MASK = 1 << 26
-	IBUS_HYPER_MASK = 1 << 27
-	IBUS_META_MASK  = 1 << 28
+	IBusSuperMask = 1 << 26
+	IBusHyperMask = 1 << 27
+	IBusMetaMask  = 1 << 28
 
-	IBUS_RELEASE_MASK = 1 << 30
+	IBusReleaseMask = 1 << 30
 
-	IBUS_MODIFIER_MASK = 0x5f001fff
+	IBusModifierMask = 0x5f001fff
 )
 
 const (
 	//IBusCapability
-	IBUS_CAP_PREEDIT_TEXT = 1 << 0 //UI is capable to show pre-edit text.
+	IBusCapPreeditText = 1 << 0 //UI is capable to show pre-edit text.
 	//IBUS_CAP_AUXILIARY_TEXT   = 1 << 1 //UI is capable to show auxiliary text.
 	//IBUS_CAP_LOOKUP_TABLE     = 1 << 2 //UI is capable to show the lookup table.
 	//IBUS_CAP_FOCUS            = 1 << 3 //UI is capable to get focus.
 	//IBUS_CAP_PROPERTY         = 1 << 4 //UI is capable to have property.
-	IBUS_CAP_SURROUNDING_TEXT = 1 << 5 //Client can provide surround text, or IME can handle surround text.
+	IBusCapSurroundingText = 1 << 5 //Client can provide surround text, or IME can handle surround text.
 )
 const (
-	XK_BackSpace = 0x16
-	XK_Left      = 0x71
+	XkBackspace = 0x16
+	XkLeft      = 0x71
 )
 const (
-	IBUS_KP_Up            = 0xff97
-	IBUS_KP_Left          = 0xff96
-	IBUS_KP_Right         = 0xff98
-	IBUS_KP_Down          = 0xff99
-	IBUS_KP_Next          = 0xff9b
-	IBUS_KP_Page_Up       = 0xff9a
-	IBUS_KP_Page_Down     = 0xff9b
-	IBUS_KP_End           = 0xff9c
-	IBUS_Tab              = 0xff09
-	IBUS_End              = 0xff57
-	IBUS_Colon            = 0x03a
-	IBUS_Left             = 0xFF51
-	IBUS_Up               = 0xFF52
-	IBUS_Right            = 0xFF53
-	IBUS_Down             = 0xFF54
-	IBUS_Page_Up          = 0xFF55
-	IBUS_Page_Down        = 0xFF56
-	IBUS_BackSpace        = 0xff08
-	IBUS_Return           = 0xff0d
-	IBUS_Escape           = 0xff1b
-	IBUS_Shift_L          = 0xffe1
-	IBUS_Shift_R          = 0xffe2
-	IBUS_Space            = 0x020
-	IBUS_TILDE            = 0x007e
-	IBUS_GRAVE            = 0x0060
-	IBUS_Insert           = 0xff63
-	IBUS_Deadkey_Currency = 0xfe6f
-	IBUS_Caps_Lock        = 0xffe5
-	IBUS_OpenLookupTable  = IBUS_TILDE
-	IBUS_OpenEmojiTable   = IBUS_Colon
+	IBusTab             = 0xff09
+	IBusEnd             = 0xff57
+	IBusColon           = 0x03a
+	IBusLeft            = 0xFF51
+	IBusUp              = 0xFF52
+	IBusRight           = 0xFF53
+	IBusDown            = 0xFF54
+	IBusPageUp          = 0xFF55
+	IBusPageDown        = 0xFF56
+	IBusBackSpace       = 0xff08
+	IBusReturn          = 0xff0d
+	IBusEscape          = 0xff1b
+	IBusShiftL          = 0xffe1
+	IBusShiftR          = 0xffe2
+	IBusSpace           = 0x020
+	IBusTilde           = 0x007e
+	IBusGrave           = 0x0060
+	IBusInsert          = 0xff63
+	IBusCapsLock        = 0xffe5
+	IBusOpenLookupTable = IBusTilde
+	IBusOpenEmojiTable  = IBusColon
 )
 
 const (
-	IBUS_ORIENTATION_HORIZONTAL = 0
-	IBUS_ORIENTATION_VERTICAL   = 1
-	IBUS_ORIENTATION_SYSTEM     = 2
+	IBusOrientationHorizontal = 0
+	IBusOrientationVertical   = 1
+	IBusOrientationSystem     = 2
 )

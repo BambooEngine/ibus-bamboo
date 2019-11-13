@@ -26,18 +26,18 @@ import (
 	"strconv"
 )
 
-const EMOJI_MAX_PAGE_SIZE = 9
+const EmojiMaxPageSize = 9
 
 func (e *IBusBambooEngine) openEmojiList() {
 	e.emoji.ProcessKey(':')
 	e.UpdatePreeditText(ibus.NewText(":"), 1, true)
 	e.UpdateAuxiliaryText(ibus.NewText(":"), true)
 	lt := ibus.NewLookupTable()
-	lt.Orientation = IBUS_ORIENTATION_HORIZONTAL
+	lt.Orientation = IBusOrientationHorizontal
 	for _, codePoint := range e.emoji.Query() {
 		lt.AppendCandidate(codePoint)
 	}
-	lt.PageSize = uint32(EMOJI_MAX_PAGE_SIZE)
+	lt.PageSize = uint32(EmojiMaxPageSize)
 	e.emojiLookupTable = lt
 	e.updateEmojiLookupTable()
 }
@@ -47,11 +47,11 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 	var rawTextLen = len([]rune(raw))
 	var keyRune = rune(keyVal)
 	var reset = e.closeEmojiCandidates
-	if keyVal == IBUS_Colon {
+	if keyVal == IBusColon {
 		reset()
 		return false, nil
 	}
-	if keyVal == IBUS_Return {
+	if keyVal == IBusReturn {
 		if rawTextLen > 0 {
 			if len(e.emojiLookupTable.Candidates) > 0 {
 				e.commitEmojiCandidate()
@@ -63,7 +63,7 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 		}
 		return false, nil
 	}
-	if keyVal == IBUS_Escape {
+	if keyVal == IBusEscape {
 		if rawTextLen > 0 {
 			e.CommitText(ibus.NewText(raw))
 			reset()
@@ -71,20 +71,20 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 		}
 		return false, nil
 	}
-	if keyVal == IBUS_Left || keyVal == IBUS_Up {
+	if keyVal == IBusLeft || keyVal == IBusUp {
 		e.CursorUp()
 		return true, nil
-	} else if keyVal == IBUS_Right || keyVal == IBUS_Down {
+	} else if keyVal == IBusRight || keyVal == IBusDown {
 		e.CursorDown()
 		return true, nil
-	} else if keyVal == IBUS_Page_Up {
+	} else if keyVal == IBusPageUp {
 		e.PageUp()
 		return true, nil
-	} else if keyVal == IBUS_Page_Down {
+	} else if keyVal == IBusPageDown {
 		e.PageDown()
 		return true, nil
 	}
-	if keyVal == IBUS_BackSpace {
+	if keyVal == IBusBackSpace {
 		if rawTextLen > 0 {
 			e.emoji.RemoveLastKey()
 		} else {
@@ -93,7 +93,7 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 		}
 	} else if (keyRune >= 'a' && keyRune <= 'z') || (keyRune >= 'A' && keyRune <= 'Z') {
 		var testStr = string(append(e.emoji.keys, keyRune))
-		if raw == ":" && e.emoji.MatchString(testStr) == false {
+		if raw == ":" && !e.emoji.MatchString(testStr) {
 			e.emoji.Reset()
 		}
 		e.emoji.ProcessKey(keyRune)
@@ -110,11 +110,11 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 		return false, nil
 	} else if (keyRune >= ' ' && keyRune <= '~') || bamboo.IsWordBreakSymbol(keyRune) {
 		var testStr = string(append(e.emoji.keys, keyRune))
-		if raw == ":" && e.emoji.MatchString(testStr) == false {
+		if raw == ":" && !e.emoji.MatchString(testStr) {
 			e.emoji.Reset()
 		}
 		e.emoji.ProcessKey(keyRune)
-		if e.emoji.MatchString(string(e.emoji.keys)) == false {
+		if !e.emoji.MatchString(string(e.emoji.keys)) {
 			e.CommitText(ibus.NewText(e.emoji.GetRawString()))
 			reset()
 			return true, nil
@@ -135,11 +135,11 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 	}
 	e.UpdateAuxiliaryText(ibus.NewText(raw), true)
 	lt := ibus.NewLookupTable()
-	lt.Orientation = IBUS_ORIENTATION_HORIZONTAL
+	lt.Orientation = IBusOrientationHorizontal
 	for _, codePoint := range cps {
 		lt.AppendCandidate(codePoint)
 	}
-	lt.PageSize = uint32(EMOJI_MAX_PAGE_SIZE)
+	lt.PageSize = uint32(EmojiMaxPageSize)
 	e.emojiLookupTable = lt
 	e.updateEmojiLookupTable()
 	return true, nil

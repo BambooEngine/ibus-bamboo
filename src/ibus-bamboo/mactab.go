@@ -44,10 +44,10 @@ func NewMacroTable() *MacroTable {
 //---------------------------------------------------------------
 func (e *MacroTable) LoadFromFile(macroFileName string) error {
 	f, err := os.Open(macroFileName)
-	defer f.Close()
 	if err != nil {
 		return err
 	}
+	defer f.Close()
 	e.mTable = map[string]string{}
 	rd := bufio.NewReader(f)
 	for {
@@ -82,7 +82,7 @@ func (e *MacroTable) IncludeKey(key string) bool {
 	if e.mTable[key] != "" {
 		return true
 	}
-	for k, _ := range e.mTable {
+	for k := range e.mTable {
 		if strings.Contains(k, key) {
 			return true
 		}

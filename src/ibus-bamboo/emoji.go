@@ -16,6 +16,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
+
 package main
 
 import (
@@ -30,7 +31,7 @@ type EmojiOne struct {
 	Name      string
 	Shortname string
 	Keywords  []string
-	Ascii     []string
+	ASCII     []string
 }
 
 func loadEmojiOne(dataFile string) (*TrieNode, error) {
@@ -48,7 +49,7 @@ func loadEmojiOne(dataFile string) (*TrieNode, error) {
 				codePointStr += string(rune(code))
 			}
 		}
-		for _, ascii := range v.Ascii {
+		for _, ascii := range v.ASCII {
 			InsertTrie(trie, ascii, codePointStr)
 		}
 		for _, keyword := range v.Keywords {
@@ -76,7 +77,7 @@ func (be *EmojiEngine) Filter(s string) []string {
 	var codePoints []string
 	var keys []string
 	var lookup = FindPrefix(emojiTrie, s)
-	for key, _ := range lookup {
+	for key := range lookup {
 		keys = append(keys, key)
 	}
 	var names = byString(keys)

@@ -77,14 +77,14 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 		return false, nil
 	}
 	log.Printf("ProcessKeyEvent >  %c | keyCode 0x%04x keyVal 0x%04x | %d\n", rune(keyVal), keyCode, keyVal, len(keyPressChan))
-	if e.config.IBflags&IBinputModeLookupTableEnabled != 0 && keyVal == IBUS_OpenLookupTable && e.isInputModeLTOpened == false && e.wmClasses != "" {
+	if e.config.IBflags&IBinputModeLookupTableEnabled != 0 && keyVal == IBusOpenLookupTable && !e.isInputModeLTOpened && e.wmClasses != "" {
 		e.resetBuffer()
 		e.isInputModeLTOpened = true
 		e.lastKeyWithShift = true
 		e.openLookupTable()
 		return true, nil
 	}
-	if e.config.IBflags&IBemojiDisabled == 0 && keyVal == IBUS_Colon && e.isEmojiLTOpened == false {
+	if e.config.IBflags&IBemojiDisabled == 0 && keyVal == IBusColon && !e.isEmojiLTOpened {
 		e.resetBuffer()
 		e.isEmojiLTOpened = true
 		e.lastKeyWithShift = true
@@ -273,13 +273,13 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 
 	turnSpellChecking := func(on bool) {
 		if on {
-			e.config.IBflags |= IBspellChecking
+			e.config.IBflags |= IBspellCheckEnabled
 			e.config.IBflags |= IBautoNonVnRestore
-			if e.config.IBflags&IBspellCheckingWithDicts == 0 {
-				e.config.IBflags |= IBspellCheckingWithRules
+			if e.config.IBflags&IBspellCheckWithDicts == 0 {
+				e.config.IBflags |= IBspellCheckWithRules
 			}
 		} else {
-			e.config.IBflags &= ^IBspellChecking
+			e.config.IBflags &= ^IBspellCheckEnabled
 			e.config.IBflags &= ^IBautoNonVnRestore
 		}
 	}
@@ -307,28 +307,28 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 			e.config.Flags &= ^bamboo.EfreeToneMarking
 		}
 	}
-	if propName == PropKeySpellChecking {
+	if propName == PropKeyEnableSpellCheck {
 		if propState == ibus.PROP_STATE_CHECKED {
 			turnSpellChecking(true)
 		} else {
 			turnSpellChecking(false)
 		}
 	}
-	if propName == PropKeySpellCheckingByRules {
+	if propName == PropKeySpellCheckByRules {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBspellCheckingWithRules
+			e.config.IBflags |= IBspellCheckWithRules
 			turnSpellChecking(true)
 		} else {
-			e.config.IBflags &= ^IBspellCheckingWithRules
+			e.config.IBflags &= ^IBspellCheckWithRules
 		}
 	}
-	if propName == PropKeySpellCheckingByDicts {
+	if propName == PropKeySpellCheckByDicts {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBspellCheckingWithDicts
+			e.config.IBflags |= IBspellCheckWithDicts
 			turnSpellChecking(true)
 			dictionary, _ = loadDictionary(DictVietnameseCm)
 		} else {
-			e.config.IBflags &= ^IBspellCheckingWithDicts
+			e.config.IBflags &= ^IBspellCheckWithDicts
 		}
 	}
 	if propName == PropKeyMouseCapturing {

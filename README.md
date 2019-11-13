@@ -28,7 +28,8 @@ IBus Bamboo - Bộ gõ tiếng Việt cho Linux
 * Nhiều tính năng hữu ích, dễ dàng tùy chỉnh:
   * Kiểm tra chính tả (sử dụng từ điển/luật ghép vần)
   * Dấu thanh chuẩn và dấu thanh kiểu mới
-  * Bỏ dấu tự do, Gõ tắt, Emoji,...
+  * Bỏ dấu tự do, Gõ tắt,...
+  * 2666 emojis từ [emojiOne](https://github.com/joypixels/emojione)
 * Sử dụng phím tắt <kbd>Shift</kbd>+<kbd>~</kbd> để loại trừ ứng dụng không dùng bộ gõ, chuyển qua lại giữa các chế độ gõ:
   	* Pre-edit (default)
   	* Surrounding text, IBus ForwardKeyEvent, XTestFakeKeyEvent,...

@@ -41,7 +41,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		return false, nil
 	}
 
-	if keyVal == IBUS_BackSpace {
+	if keyVal == IBusBackSpace {
 		if rawKeyLen > 0 {
 			e.preeditor.RemoveLastChar(true)
 			e.updatePreedit(e.getPreeditString())
@@ -50,7 +50,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 			return false, nil
 		}
 	}
-	if keyVal == IBUS_Tab {
+	if keyVal == IBusTab {
 		var text = e.preeditor.GetProcessedString(bamboo.VietnameseMode)
 		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(text) {
 			// macro processing
@@ -64,7 +64,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	}
 
 	if e.preeditor.CanProcessKey(keyRune) {
-		if state&IBUS_LOCK_MASK != 0 {
+		if state&IBusLockMask != 0 {
 			keyRune = toUpper(keyRune)
 		}
 		var oMode = bamboo.VietnameseMode
@@ -80,7 +80,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		}
 		return true, nil
 	} else if bamboo.IsWordBreakSymbol(keyRune) {
-		if keyVal == IBUS_Space && state&IBUS_SHIFT_MASK != 0 &&
+		if keyVal == IBusSpace && state&IBusShiftMask != 0 &&
 			e.config.IBflags&IBrestoreKeyStrokesEnabled != 0 && !e.lastKeyWithShift {
 			// restore key strokes
 			var vnSeq = e.preeditor.GetProcessedString(bamboo.VietnameseMode)
@@ -197,7 +197,7 @@ func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
 	if !bamboo.HasAnyVietnameseRune(vnSeq) {
 		return false
 	}
-	if e.config.IBflags&IBspellCheckingWithDicts != 0 {
+	if e.config.IBflags&IBspellCheckWithDicts != 0 {
 		return !dictionary[vnSeq]
 	}
 	return !e.preeditor.IsValid(true)

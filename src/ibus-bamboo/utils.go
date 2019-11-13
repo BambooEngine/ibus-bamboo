@@ -71,12 +71,12 @@ const (
 	IBmarcoEnabled
 	IBautoCommitWithVnFullMatch
 	IBautoCommitWithVnWordBreak
-	IBspellChecking
+	IBspellCheckEnabled
 	IBautoNonVnRestore
 	IBddFreeStyle
 	IBpreeditInvisibility
-	IBspellCheckingWithRules
-	IBspellCheckingWithDicts
+	IBspellCheckWithRules
+	IBspellCheckWithDicts
 	IBautoCommitWithDelay
 	IBautoCommitWithMouseMovement
 	IBemojiDisabled
@@ -86,7 +86,7 @@ const (
 	IBimQuickSwitchEnabled
 	IBrestoreKeyStrokesEnabled
 	IBmouseCapturing
-	IBstdFlags = IBspellChecking | IBspellCheckingWithRules | IBautoNonVnRestore | IBddFreeStyle |
+	IBstdFlags = IBspellCheckEnabled | IBspellCheckWithRules | IBautoNonVnRestore | IBddFreeStyle |
 		IBemojiDisabled | IBinputModeLookupTableEnabled | IBmouseCapturing
 )
 
@@ -316,8 +316,7 @@ func loadDictionary(dataFiles ...string) (map[string]bool, error) {
 }
 
 func isMovementKey(keyVal uint32) bool {
-	var list = []uint32{IBUS_Left, IBUS_Right, IBUS_Up, IBUS_Down, IBUS_Page_Down, IBUS_Page_Up, IBUS_End, IBUS_KP_Down,
-		IBUS_KP_End, IBUS_KP_Left, IBUS_KP_Next, IBUS_KP_Page_Down, IBUS_KP_Page_Up, IBUS_KP_Right, IBUS_KP_Up}
+	var list = []uint32{IBusLeft, IBusRight, IBusUp, IBusDown, IBusPageDown, IBusPageUp, IBusEnd}
 	for _, item := range list {
 		if item == keyVal {
 			return true

@@ -5,6 +5,7 @@
  * This software is licensed under the MIT license. For more information,
  * see <https://github.com/BambooEngine/bamboo-core/blob/master/LICENSE>.
  */
+
 package bamboo
 
 import (
@@ -140,7 +141,7 @@ func findToneTarget(composition []*Transformation, stdStyle bool) *Transformatio
 }
 
 func hasValidTone(composition []*Transformation, tone Tone) bool {
-	if tone == TONE_NONE || tone == TONE_ACUTE || tone == TONE_DOT {
+	if tone == ToneNone || tone == ToneAcute || tone == ToneDot {
 		return true
 	}
 	var _, _, lc = extractCvcTrans(composition)
@@ -247,7 +248,7 @@ func extractLastWord(composition []*Transformation, effectKeys []rune) ([]*Trans
 			continue
 		}
 		var key = canvas[0]
-		if IsWordBreakSymbol(key) && !inKeyList(effectKeys, key) {
+		if !canProcessKey(key, effectKeys) {
 			if i == len(composition)-1 {
 				return composition, nil
 			}
@@ -260,7 +261,7 @@ func extractLastWord(composition []*Transformation, effectKeys []rune) ([]*Trans
 func extractLastSyllable(composition []*Transformation) ([]*Transformation, []*Transformation) {
 	var previous, last = extractLastWord(composition, nil)
 	var anchor = 0
-	for i, _ := range last {
+	for i := range last {
 		if !isValid(last[anchor:i+1], false) {
 			anchor = i
 		}
@@ -295,26 +296,25 @@ func findMarkTarget(composition []*Transformation, rules []Rule) (*Transformatio
 }
 
 func findTarget(composition []*Transformation, applicableRules []Rule, flags uint) (*Transformation, Rule) {
-	var lastAppending = findLastAppendingTrans(composition)
 	var str = Flatten(composition, VietnameseMode)
 	// find tone target
 	for _, applicableRule := range applicableRules {
 		if applicableRule.EffectType != ToneTransformation {
 			continue
 		}
-		var target *Transformation = nil
+    var target *Transformation
 		if flags&EfreeToneMarking != 0 {
 			if hasValidTone(composition, Tone(applicableRule.Effect)) {
 				target = findToneTarget(composition, flags&EstdToneStyle != 0)
 			}
-		} else if lastAppending != nil && IsVowel(lastAppending.Rule.EffectOn) {
+    } else if lastAppending := findLastAppendingTrans(composition); lastAppending != nil && IsVowel(lastAppending.Rule.EffectOn) {
 			target = lastAppending
 		}
 		if str == Flatten(append(composition, &Transformation{Target: target, Rule: applicableRule}), VietnameseMode) {
 			continue
 		}
-		if Tone(applicableRule.Effect) == TONE_NONE && isFree(composition, target, ToneTransformation) &&
-			FindToneFromChar(target.Rule.Result) == TONE_NONE {
+		if Tone(applicableRule.Effect) == ToneNone && isFree(composition, target, ToneTransformation) &&
+			FindToneFromChar(target.Rule.Result) == ToneNone {
 			target = nil
 		}
 		return target, applicableRule
@@ -327,13 +327,12 @@ func generateUndoTransformations(composition []*Transformation, rules []Rule, fl
 	var str = Flatten(composition, VietnameseMode|ToneLess|LowerCase)
 	for _, rule := range rules {
 		if rule.EffectType == ToneTransformation {
-			var lastAppending = findLastAppendingTrans(composition)
 			var target *Transformation
 			if flags&EfreeToneMarking != 0 {
 				if hasValidTone(composition, Tone(rule.Effect)) {
 					target = findToneTarget(composition, flags&EstdToneStyle != 0)
 				}
-			} else if lastAppending != nil && IsVowel(lastAppending.Rule.EffectOn) {
+      } else if lastAppending := findLastAppendingTrans(composition); lastAppending != nil && IsVowel(lastAppending.Rule.EffectOn) {
 				target = lastAppending
 			}
 			if target == nil {
@@ -370,14 +369,14 @@ func generateUndoTransformations(composition []*Transformation, rules []Rule, fl
 	return transformations
 }
 
-var regUOh_UhO_Tail = regexp.MustCompile(`(uơ|ưo)\p{L}+`)
-var regUhO_UhOh = regexp.MustCompile(`(ưo|ươ)`)
+var regUOhTail = regexp.MustCompile(`(uơ|ưo)\p{L}+`)
+var regUhO = regexp.MustCompile(`(ưo|ươ)`)
 
 /**
 * 1 | o + ff     ->  undo + append       -> of
-* 2 | o + fs     ->  override			 -> ó
-* 3 | o + fz     ->  override	         -> o
-* 4 | o + z      ->  append	     		 -> oz
+* 2 | o + fs     ->  override            -> ó
+* 3 | o + fz     ->  override            -> o
+* 4 | o + z      ->  append              -> oz
 * 5 | o + f      ->  tone_grave          -> ò
 * 6 | w + w      ->  raw                 -> w
 * 7 | (u)wo + w  ->  undo + append       -> uow
@@ -392,7 +391,7 @@ func generateTransformations(composition []*Transformation, applicableRules []Ru
 			transformations = append(transformations, &Transformation{
 				Rule: Rule{
 					EffectType: MarkTransformation,
-					Effect:     uint8(MARK_RAW),
+					Effect:     uint8(MarkRaw),
 					Key:        0,
 				},
 				Target: composition[len(composition)-1],
@@ -422,14 +421,14 @@ func generateTransformations(composition []*Transformation, applicableRules []Ru
 		}
 	} else {
 		// Implement ươ/ưo(i/c/ng) + o -> uô
-		if regUhO_UhOh.MatchString(Flatten(composition, VietnameseMode|ToneLess|LowerCase)) {
+		if regUhO.MatchString(Flatten(composition, VietnameseMode|ToneLess|LowerCase)) {
 			var vowels = filterAppendingComposition(getRightMostVowels(composition))
 			var trans = &Transformation{
 				Target: vowels[0],
 				Rule: Rule{
 					EffectType: MarkTransformation,
 					Key:        0,
-					Effect:     uint8(MARK_NONE),
+					Effect:     uint8(MarkNone),
 				},
 			}
 			if target, applicableRule := findTarget(append(composition, trans), applicableRules, flags); target != nil && target != vowels[0] {
@@ -497,7 +496,7 @@ func refreshLastToneTarget(composition []*Transformation, stdStyle bool) []*Tran
 			Rule: Rule{
 				Key:        0,
 				EffectType: ToneTransformation,
-				Effect:     uint8(TONE_NONE),
+				Effect:     uint8(ToneNone),
 			},
 		})
 		var overrideRule = lastToneTrans.Rule
