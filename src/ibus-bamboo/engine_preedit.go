@@ -52,7 +52,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	}
 	if keyVal == IBusTab {
 		var text = e.preeditor.GetProcessedString(bamboo.VietnameseMode)
-		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(text) {
+		if e.config.IBflags&IBmacroEnabled != 0 && e.macroTable.HasKey(text) {
 			// macro processing
 			macText := e.expandMacro(text)
 			e.commitPreedit(macText)
@@ -65,7 +65,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 
 	if e.preeditor.CanProcessKey(keyRune) {
 		if state&IBusLockMask != 0 {
-			keyRune = toUpper(keyRune)
+			keyRune = e.toUpper(keyRune)
 		}
 		var oMode = bamboo.VietnameseMode
 		if e.shouldFallbackToEnglish(true) {
@@ -93,7 +93,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 			return true, nil
 		}
 		var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode)
-		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(processedStr) {
+		if e.config.IBflags&IBmacroEnabled != 0 && e.macroTable.HasKey(processedStr) {
 			processedStr = e.expandMacro(processedStr)
 			e.commitPreedit(processedStr + string(keyRune))
 			return true, nil
@@ -168,7 +168,7 @@ func (e *IBusBambooEngine) shouldFallbackToEnglish(checkVnRune bool) bool {
 	if len(vnRunes) == 0 {
 		return false
 	}
-	if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(vnSeq) {
+	if e.config.IBflags&IBmacroEnabled != 0 && e.macroTable.HasKey(vnSeq) {
 		return false
 	}
 	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation

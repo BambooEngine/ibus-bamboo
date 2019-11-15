@@ -127,7 +127,7 @@ func (e *MacroTable) Disable() {
 
 //---------------------------------------------------------------
 func getMactabFile(engineName string) string {
-	return fmt.Sprintf(mactabFile, getConfigDir(), engineName)
+	return fmt.Sprintf(mactabFile, getConfigDir(engineName), engineName)
 }
 
 //---------------------------------------------------------------

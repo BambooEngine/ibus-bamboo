@@ -84,6 +84,7 @@ type InputMethod struct {
 	Rules     []Rule
 	SuperKeys []rune
 	ToneKeys  []rune
+	AppendingKeys  []rune
 	Keys      []rune
 }
 
@@ -110,11 +111,16 @@ func parseInputMethods(imDef map[string]InputMethodDefinition) map[string]InputM
 			if strings.Contains(strings.ToLower(line), "uo") {
 				im.SuperKeys = append(im.SuperKeys, key)
 			}
-			if _, ok := tones[line]; ok {
-				im.ToneKeys = append(im.ToneKeys, key)
-			}
 			im.Keys = append(im.Keys, key)
 		}
+    for _, rule := range im.Rules {
+      if rule.EffectType == Appending {
+        im.AppendingKeys = append(im.AppendingKeys, rule.Key)
+      }
+      if rule.EffectType == ToneTransformation {
+        im.ToneKeys = append(im.ToneKeys, rule.Key)
+      }
+    }
 		inputMethods[name] = im
 	}
 	return inputMethods

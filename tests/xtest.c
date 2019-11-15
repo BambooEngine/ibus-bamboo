@@ -78,9 +78,11 @@ int main(int argc, char * argv[]) {
                 char keyname[1000] = "";
                 str_copy(keyname, command, 1, strlen(command));
                 xks[len] = XStringToKeysym(keyname);
-            } else {
+            } else if ((chr >= 'a' && chr <= 'z') || (chr >= '0' && chr <= '9'))  {
                 char str[2] = {chr, '\0'};
                 xks[len] = XStringToKeysym(str);
+            } else {
+                xks[len] = XStringToKeysym("space");
             }
             len += 1;
         } while (chr != EOF);

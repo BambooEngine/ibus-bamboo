@@ -44,7 +44,7 @@ func main() {
 	if *version {
 		fmt.Println(Version)
 	} else if *embedded {
-		engine := GetBambooEngineCreator()
+		engine := GetIBusEngineCreator()
 		bus := ibus.NewBus()
 		bus.RequestName(ComponentName, 0)
 
@@ -68,7 +68,7 @@ func main() {
 		bus.RegisterComponent(component)
 
 		conn := bus.GetDbusConn()
-		ibus.NewFactory(conn, GetBambooEngineCreator())
+		ibus.NewFactory(conn, GetIBusEngineCreator())
 
 		bus.CallMethod("SetGlobalEngine", 0, EngineName+"Standalone")
 

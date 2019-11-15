@@ -30,20 +30,17 @@ import (
 	"github.com/godbus/dbus"
 )
 
-var dictionary map[string]bool
-var emojiTrie *TrieNode
+var dictionary = map[string]bool{}
+var emojiTrie = NewTrie()
 
-func GetBambooEngineCreator() func(*dbus.Conn, string) dbus.ObjectPath {
-	objectPath := dbus.ObjectPath(fmt.Sprintf("/org/freedesktop/IBus/Engine/bamboo/%d", time.Now().UnixNano()))
-	setupConfigDir()
+func GetIBusEngineCreator() func(*dbus.Conn, string) dbus.ObjectPath {
 	go keyPressCapturing()
-	engineName := strings.ToLower(EngineName)
-	dictionary = map[string]bool{}
-	emojiTrie = NewTrie()
 
 	return func(conn *dbus.Conn, ngName string) dbus.ObjectPath {
+		var engineName = strings.ToLower(ngName)
 		var engine = new(IBusBambooEngine)
 		var config = loadConfig(engineName)
+		var objectPath = dbus.ObjectPath(fmt.Sprintf("/org/freedesktop/IBus/Engine/%s/%d", engineName, time.Now().UnixNano()))
 		var inputMethod = bamboo.ParseInputMethod(config.InputMethodDefinitions, config.InputMethod)
 		engine.Engine = ibus.BaseEngine(conn, objectPath)
 		engine.engineName = engineName
@@ -63,7 +60,7 @@ func (e *IBusBambooEngine) init() {
 	e.emoji = NewEmojiEngine()
 	if e.macroTable == nil {
 		e.macroTable = NewMacroTable()
-		if e.config.IBflags&IBmarcoEnabled != 0 {
+		if e.config.IBflags&IBmacroEnabled != 0 {
 			e.macroTable.Enable(e.engineName)
 		}
 	}
@@ -92,7 +89,6 @@ func (e *IBusBambooEngine) init() {
 	onMouseClick = func() {
 		e.Lock()
 		defer e.Unlock()
-		e.isFirstTimeSendingBS = true
 		if e.isEmojiLTOpened {
 			e.refreshEmojiCandidate()
 		} else {
@@ -162,6 +158,18 @@ func (e *IBusBambooEngine) processShiftKey(keyVal, state uint32) bool {
 		return true
 	}
 	return false
+}
+
+func (e *IBusBambooEngine) toUpper(keyRune rune) rune {
+	var keyMapping = map[rune]rune{
+		'[': '{',
+		']': '}',
+	}
+
+	if upperSpecialKey, found := keyMapping[keyRune]; found && inKeyList(e.preeditor.GetInputMethod().AppendingKeys, keyRune) {
+		keyRune = upperSpecialKey
+	}
+	return keyRune
 }
 
 func (e *IBusBambooEngine) updateLastKeyWithShift(keyVal, state uint32) {
@@ -319,7 +327,7 @@ func (e *IBusBambooEngine) canProcessKey(keyVal uint32) bool {
 	if keyVal == IBusSpace || keyVal == IBusBackSpace {
 		return true
 	}
-	if e.config.IBflags&IBmarcoEnabled != 0 && keyVal == IBusTab {
+	if e.config.IBflags&IBmacroEnabled != 0 && keyVal == IBusTab {
 		return true
 	}
 	return e.preeditor.CanProcessKey(rune(keyVal))

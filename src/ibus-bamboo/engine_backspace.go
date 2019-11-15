@@ -29,6 +29,11 @@ import (
 )
 
 func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
+	var sleep = func() {
+		for len(keyPressChan) > 0 {
+			time.Sleep(5 * time.Millisecond)
+		}
+	}
 	if isMovementKey(keyVal) {
 		e.preeditor.Reset()
 		e.resetFakeBackspace()
@@ -36,43 +41,39 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		return false, nil
 	}
 	var keyRune = rune(keyVal)
-	if e.getRawKeyLen() == 0 && len(keyPressChan) == 0 {
-		defer e.updateLastKeyWithShift(keyVal, state)
-		if e.preeditor.CanProcessKey(keyRune) && e.isValidState(state) {
-			if state&IBusLockMask != 0 {
-				keyRune = toUpper(keyRune)
-			}
-			e.preeditor.ProcessKey(keyRune, bamboo.VietnameseMode)
-		}
-		return false, nil
-	}
 	if e.checkInputMode(xTestFakeKeyEventIM) || e.checkInputMode(surroundingTextIM) {
 		// we don't want to use ForwardKeyEvent api in XTestFakeKeyEvent and SurroundingText mode
-		var sleep = func() {
-			for len(keyPressChan) > 0 {
-				time.Sleep(5 * time.Millisecond)
-			}
-		}
 		if keyVal == IBusLeft && state&IBusShiftMask != 0 {
 			return false, nil
 		}
 		if !e.isValidState(state) || !e.canProcessKey(keyVal) {
+			sleep()
 			e.preeditor.Reset()
 			e.resetFakeBackspace()
-			e.isFirstTimeSendingBS = true
-			sleep()
 			return false, nil
 		}
 		if keyVal == IBusBackSpace {
+			sleep()
 			if e.nFakeBackSpace > 0 {
 				e.nFakeBackSpace--
 				return false, nil
 			} else {
 				e.preeditor.RemoveLastChar(false)
 			}
-			sleep()
 			return false, nil
 		}
+	}
+	if e.getRawKeyLen() == 0 && !inKeyList(e.preeditor.GetInputMethod().AppendingKeys, keyRune) {
+		sleep()
+		e.updateLastKeyWithShift(keyVal, state)
+		if e.preeditor.CanProcessKey(keyRune) && e.isValidState(state) {
+			e.isFirstTimeSendingBS = true
+			if state&IBusLockMask != 0 {
+				keyRune = e.toUpper(keyRune)
+			}
+			e.preeditor.ProcessKey(keyRune, bamboo.VietnameseMode)
+		}
+		return false, nil
 	}
 	// if the main thread is busy processing, the keypress events come all mixed up
 	// so we enqueue these keypress events and process them sequentially on another thread
@@ -81,6 +82,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 }
 
 func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
+	log.Printf("Backspace:ProcessKeyEvent >  %c | keyCode 0x%04x keyVal 0x%04x | %d\n", rune(keyVal), keyCode, keyVal, len(keyPressChan))
 	defer e.updateLastKeyWithShift(keyVal, state)
 	if e.keyPressDelay > 0 {
 		time.Sleep(time.Duration(e.keyPressDelay) * time.Millisecond)
@@ -88,7 +90,6 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 	}
 	if !e.isValidState(state) {
 		e.preeditor.Reset()
-		e.isFirstTimeSendingBS = true
 		e.ForwardKeyEvent(keyVal, keyCode, state)
 		return
 	}
@@ -116,7 +117,7 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 	}
 
 	if keyVal == IBusTab {
-		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(oldText) {
+		if e.config.IBflags&IBmacroEnabled != 0 && e.macroTable.HasKey(oldText) {
 			// macro processing
 			macText := e.expandMacro(oldText)
 			e.updatePreviousText(macText, oldText)
@@ -129,7 +130,7 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 
 	if e.preeditor.CanProcessKey(keyRune) {
 		if state&IBusLockMask != 0 {
-			keyRune = toUpper(keyRune)
+			keyRune = e.toUpper(keyRune)
 		}
 		e.preeditor.ProcessKey(keyRune, e.getInputMethod())
 		var vnSeq = e.preeditor.GetProcessedString(bamboo.VietnameseMode | bamboo.WithEffectKeys)
@@ -154,7 +155,7 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 			}
 			return
 		}
-		if e.config.IBflags&IBmarcoEnabled != 0 && e.macroTable.HasKey(oldText) {
+		if e.config.IBflags&IBmacroEnabled != 0 && e.macroTable.HasKey(oldText) {
 			// macro processing
 			macText := e.expandMacro(oldText)
 			macText = macText + string(keyRune)

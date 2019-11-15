@@ -231,7 +231,7 @@ func GetMacroPropListByConfig(c *Config) *ibus.PropList {
 	macroChecked := ibus.PROP_STATE_UNCHECKED
 	autoCapitalizeMacro := ibus.PROP_STATE_UNCHECKED
 
-	if c.IBflags&IBmarcoEnabled != 0 {
+	if c.IBflags&IBmacroEnabled != 0 {
 		macroChecked = ibus.PROP_STATE_CHECKED
 	}
 	if c.IBflags&IBautoCapitalizeMacro != 0 {

@@ -116,7 +116,6 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 	e.RegisterProperties(e.propList)
 	e.RequireSurroundingText()
 	if oldWmClasses != e.wmClasses {
-		e.isFirstTimeSendingBS = true
 		e.resetBuffer()
 		e.resetFakeBackspace()
 	}
@@ -145,11 +144,6 @@ func (e *IBusBambooEngine) Enable() *dbus.Error {
 
 func (e *IBusBambooEngine) Disable() *dbus.Error {
 	fmt.Print("Disable.")
-	x11ClipboardExit()
-	if e.config.IBflags&IBmouseCapturing != 0 {
-		stopMouseCapturing()
-	}
-	stopMouseRecording()
 	return nil
 }
 
@@ -342,11 +336,11 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	}
 	if propName == PropKeyMacroEnabled {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBmarcoEnabled
+			e.config.IBflags |= IBmacroEnabled
 			e.config.IBflags |= IBautoCapitalizeMacro
 			e.macroTable.Enable(e.engineName)
 		} else {
-			e.config.IBflags &= ^IBmarcoEnabled
+			e.config.IBflags &= ^IBmacroEnabled
 			e.macroTable.Disable()
 		}
 	}

@@ -50,7 +50,7 @@ const (
 )
 
 const (
-	configDir        = "%s/.config/ibus-bamboo"
+	configDir        = "%s/.config/ibus-%s"
 	configFile       = "%s/ibus-%s.config.json"
 	mactabFile       = "%s/ibus-%s.macro.text"
 	sampleMactabFile = "data/macro.tpl.txt"
@@ -68,7 +68,7 @@ const (
 
 const (
 	IBautoCommitWithVnNotMatch uint = 1 << iota
-	IBmarcoEnabled
+	IBmacroEnabled
 	IBautoCommitWithVnFullMatch
 	IBautoCommitWithVnWordBreak
 	IBspellCheckEnabled
@@ -88,6 +88,13 @@ const (
 	IBmouseCapturing
 	IBstdFlags = IBspellCheckEnabled | IBspellCheckWithRules | IBautoNonVnRestore | IBddFreeStyle |
 		IBemojiDisabled | IBinputModeLookupTableEnabled | IBmouseCapturing
+)
+
+const (
+	JemojiEnabled uint = 1 << iota
+	JmacroEnabled
+	JmacroAutoCapitalize
+	JstdFlags = JmacroAutoCapitalize
 )
 
 var DefaultBrowserList = []string{
@@ -120,6 +127,7 @@ type Config struct {
 	OutputCharset             string
 	Flags                     uint
 	IBflags                   uint
+	JupiterFlags              uint
 	DefaultInputMode          int
 	InputModeMapping          map[string]int
 	ExceptedList              []string
@@ -131,22 +139,22 @@ type Config struct {
 	SurroundingTextWhiteList  []string
 }
 
-func getConfigDir() string {
+func getConfigDir(ngName string) string {
 	u, err := user.Current()
 	if err == nil {
-		return fmt.Sprintf(configDir, u.HomeDir)
+		return fmt.Sprintf(configDir, u.HomeDir, ngName)
 	}
-	return fmt.Sprintf(configDir, "~")
+	return fmt.Sprintf(configDir, "~", ngName)
 }
 
-func setupConfigDir() {
-	if sta, err := os.Stat(getConfigDir()); err != nil || !sta.IsDir() {
-		os.Mkdir(getConfigDir(), 0777)
+func setupConfigDir(ngName string) {
+	if sta, err := os.Stat(getConfigDir(ngName)); err != nil || !sta.IsDir() {
+		os.Mkdir(getConfigDir(ngName), 0777)
 	}
 }
 
 func getConfigPath(engineName string) string {
-	return fmt.Sprintf(configFile, getConfigDir(), engineName)
+	return fmt.Sprintf(configFile, getConfigDir(engineName), engineName)
 }
 
 func loadConfig(engineName string) *Config {
@@ -167,6 +175,7 @@ func loadConfig(engineName string) *Config {
 		SurroundingTextWhiteList:  nil,
 	}
 
+	setupConfigDir(engineName)
 	data, err := ioutil.ReadFile(getConfigPath(engineName))
 	if err == nil {
 		json.Unmarshal(data, &c)
@@ -181,7 +190,7 @@ func saveConfig(c *Config, engineName string) {
 		return
 	}
 
-	err = ioutil.WriteFile(fmt.Sprintf(configFile, getConfigDir(), engineName), data, 0644)
+	err = ioutil.WriteFile(fmt.Sprintf(configFile, getConfigDir(engineName), engineName), data, 0644)
 	if err != nil {
 		log.Println(err)
 	}
@@ -212,18 +221,13 @@ func determineMacroCase(str string) uint8 {
 	return VnCaseAllCapital
 }
 
-func toUpper(keyRune rune) rune {
-	var upperSpecialKeys = map[rune]rune{
-		'[': '{',
-		']': '}',
+func inKeyList(list []rune, key rune) bool {
+	for _, s := range list {
+		if s == key {
+			return true
+		}
 	}
-
-	if upperSpecialKey, found := upperSpecialKeys[keyRune]; found {
-		keyRune = upperSpecialKey
-	} else {
-		keyRune = unicode.ToUpper(keyRune)
-	}
-	return keyRune
+	return false
 }
 
 func inStringList(list []string, str string) bool {
