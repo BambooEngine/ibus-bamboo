@@ -8,7 +8,9 @@
 
 package bamboo
 
-import "unicode"
+import (
+	"unicode"
+)
 
 var Vowels = []rune("aàáảãạăằắẳẵặâầấẩẫậeèéẻẽẹêềếểễệiìíỉĩịoòóỏõọôồốổỗộơờớởỡợuùúủũụưừứửữựyỳýỷỹỵ")
 
@@ -150,13 +152,14 @@ func canProcessKey(lowerKey rune, effectKeys []rune) bool {
 	if IsAlpha(lowerKey) || inKeyList(effectKeys, lowerKey) {
 		return true
 	}
-  if IsWordBreakSymbol(lowerKey) {
-    return false
-  }
+	if IsWordBreakSymbol(lowerKey) {
+		return false
+	}
 	return IsVietnameseRune(lowerKey)
 }
 
 func IsVietnameseRune(lowerKey rune) bool {
+	// lowerKey = unicode.ToLower(lowerKey)
 	if FindToneFromChar(lowerKey) != ToneNone {
 		return true
 	}

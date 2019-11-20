@@ -324,13 +324,14 @@ func (e *IBusBambooEngine) isValidState(state uint32) bool {
 }
 
 func (e *IBusBambooEngine) canProcessKey(keyVal uint32) bool {
-	if keyVal == IBusSpace || keyVal == IBusBackSpace {
+  var keyRune = rune(keyVal)
+	if keyVal == IBusSpace || keyVal == IBusBackSpace || bamboo.IsWordBreakSymbol(keyRune) {
 		return true
 	}
 	if e.config.IBflags&IBmacroEnabled != 0 && keyVal == IBusTab {
 		return true
 	}
-	return e.preeditor.CanProcessKey(rune(keyVal))
+	return e.preeditor.CanProcessKey(keyRune)
 }
 
 func (e *IBusBambooEngine) inBackspaceWhiteList() bool {

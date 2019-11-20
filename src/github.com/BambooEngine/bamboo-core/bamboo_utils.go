@@ -243,7 +243,7 @@ func extractCvcTrans(composition []*Transformation) ([]*Transformation, []*Trans
 
 func extractLastWord(composition []*Transformation, effectKeys []rune) ([]*Transformation, []*Transformation) {
 	for i := len(composition) - 1; i >= 0; i-- {
-		var canvas = getCanvas(composition[i:], VietnameseMode)
+		var canvas = getCanvas(composition[i:], VietnameseMode|LowerCase)
 		if len(canvas) == 0 {
 			continue
 		}
@@ -302,12 +302,12 @@ func findTarget(composition []*Transformation, applicableRules []Rule, flags uin
 		if applicableRule.EffectType != ToneTransformation {
 			continue
 		}
-    var target *Transformation
+		var target *Transformation
 		if flags&EfreeToneMarking != 0 {
 			if hasValidTone(composition, Tone(applicableRule.Effect)) {
 				target = findToneTarget(composition, flags&EstdToneStyle != 0)
 			}
-    } else if lastAppending := findLastAppendingTrans(composition); lastAppending != nil && IsVowel(lastAppending.Rule.EffectOn) {
+		} else if lastAppending := findLastAppendingTrans(composition); lastAppending != nil && IsVowel(lastAppending.Rule.EffectOn) {
 			target = lastAppending
 		}
 		if str == Flatten(append(composition, &Transformation{Target: target, Rule: applicableRule}), VietnameseMode) {
@@ -332,7 +332,7 @@ func generateUndoTransformations(composition []*Transformation, rules []Rule, fl
 				if hasValidTone(composition, Tone(rule.Effect)) {
 					target = findToneTarget(composition, flags&EstdToneStyle != 0)
 				}
-      } else if lastAppending := findLastAppendingTrans(composition); lastAppending != nil && IsVowel(lastAppending.Rule.EffectOn) {
+			} else if lastAppending := findLastAppendingTrans(composition); lastAppending != nil && IsVowel(lastAppending.Rule.EffectOn) {
 				target = lastAppending
 			}
 			if target == nil {
