@@ -324,7 +324,7 @@ func (e *IBusBambooEngine) isValidState(state uint32) bool {
 }
 
 func (e *IBusBambooEngine) canProcessKey(keyVal uint32) bool {
-  var keyRune = rune(keyVal)
+	var keyRune = rune(keyVal)
 	if keyVal == IBusSpace || keyVal == IBusBackSpace || bamboo.IsWordBreakSymbol(keyRune) {
 		return true
 	}

@@ -33,11 +33,14 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	var keyRune = rune(keyVal)
 	defer e.updateLastKeyWithShift(keyVal, state)
 
-	if !e.isValidState(state) || !e.canProcessKey(keyVal) {
-		// workaround for chrome's address bar, ibus-bamboo#5
-		e.HidePreeditText()
-		e.commitText(e.getPreeditString())
-		e.preeditor.Reset()
+  // workaround for chrome's address bar and Google SpreadSheets
+	if !e.isValidState(state) || !e.canProcessKey(keyVal) ||
+		(rawKeyLen == 0 && !e.preeditor.CanProcessKey(keyRune)) {
+		if rawKeyLen > 0 {
+			e.HidePreeditText()
+			e.commitText(e.getPreeditString())
+			e.preeditor.Reset()
+		}
 		return false, nil
 	}
 

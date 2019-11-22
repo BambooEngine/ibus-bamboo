@@ -41,8 +41,8 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		return false, nil
 	}
 	var keyRune = rune(keyVal)
+  // don't use ForwardKeyEvent api in XTestFakeKeyEvent and SurroundingText mode
 	if e.checkInputMode(xTestFakeKeyEventIM) || e.checkInputMode(surroundingTextIM) {
-		// we don't want to use ForwardKeyEvent api in XTestFakeKeyEvent and SurroundingText mode
 		if keyVal == IBusLeft && state&IBusShiftMask != 0 {
 			return false, nil
 		}
@@ -62,18 +62,28 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 			}
 			return false, nil
 		}
+		if keyVal == IBusTab {
+			sleep()
+			oldText := e.preeditor.GetProcessedString(bamboo.VietnameseMode | bamboo.WithEffectKeys)
+			if e.config.IBflags&IBmacroEnabled != 0 && !e.macroTable.HasKey(oldText) {
+				e.preeditor.Reset()
+				return false, nil
+			}
+		}
 	}
 	if e.getRawKeyLen() == 0 && !inKeyList(e.preeditor.GetInputMethod().AppendingKeys, keyRune) {
 		sleep()
-		e.updateLastKeyWithShift(keyVal, state)
-		if e.preeditor.CanProcessKey(keyRune) && e.isValidState(state) {
-			e.isFirstTimeSendingBS = true
-			if state&IBusLockMask != 0 {
-				keyRune = e.toUpper(keyRune)
+		if e.getRawKeyLen() == 0 {
+			e.updateLastKeyWithShift(keyVal, state)
+			if e.preeditor.CanProcessKey(keyRune) && e.isValidState(state) {
+				e.isFirstTimeSendingBS = true
+				if state&IBusLockMask != 0 {
+					keyRune = e.toUpper(keyRune)
+				}
+				e.preeditor.ProcessKey(keyRune, bamboo.VietnameseMode)
 			}
-			e.preeditor.ProcessKey(keyRune, bamboo.VietnameseMode)
+			return false, nil
 		}
-		return false, nil
 	}
 	// if the main thread is busy processing, the keypress events come all mixed up
 	// so we enqueue these keypress events and process them sequentially on another thread
