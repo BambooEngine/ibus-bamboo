@@ -41,7 +41,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		return false, nil
 	}
 	var keyRune = rune(keyVal)
-  // don't use ForwardKeyEvent api in XTestFakeKeyEvent and SurroundingText mode
+  // Caution: don't use ForwardKeyEvent api in XTestFakeKeyEvent and SurroundingText mode
 	if e.checkInputMode(xTestFakeKeyEventIM) || e.checkInputMode(surroundingTextIM) {
 		if keyVal == IBusLeft && state&IBusShiftMask != 0 {
 			return false, nil
@@ -104,23 +104,21 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 		return
 	}
 	var keyRune = rune(keyVal)
-	oldText := e.preeditor.GetProcessedString(bamboo.VietnameseMode | bamboo.WithEffectKeys)
+	oldText := e.getPreeditString()
 	if keyVal == IBusBackSpace {
-		if e.config.IBflags&IBautoNonVnRestore == 0 || e.checkInputMode(shiftLeftForwardingIM) {
-			if e.getRawKeyLen() > 0 {
-				e.preeditor.RemoveLastChar(false)
-			}
-			e.ForwardKeyEvent(keyVal, keyCode, state)
-			return
-		}
-		if e.getRawKeyLen() > 0 {
+		if e.getRawKeyLen() > 0 && oldText != "" {
+      if e.config.IBflags&IBautoNonVnRestore == 0 {
+        e.preeditor.RemoveLastChar(false)
+        e.ForwardKeyEvent(keyVal, keyCode, state)
+        return
+      }
 			e.preeditor.RemoveLastChar(true)
-			if oldText == "" {
-				e.ForwardKeyEvent(keyVal, keyCode, state)
-				return
-			}
-			e.updatePreviousText(e.preeditor.GetProcessedString(bamboo.VietnameseMode|bamboo.WithEffectKeys), oldText)
-			return
+      var newText = e.getPreeditString()
+      var offset = e.getPreeditOffset([]rune(newText), []rune(oldText))
+      if offset != len([]rune(newText)) {
+        e.updatePreviousText(newText, oldText)
+        return
+      }
 		}
 		e.ForwardKeyEvent(keyVal, keyCode, state)
 		return
@@ -142,13 +140,19 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 		if state&IBusLockMask != 0 {
 			keyRune = e.toUpper(keyRune)
 		}
+		var outputMode = bamboo.VietnameseMode
+		if e.shouldFallbackToEnglish(true) {
+			outputMode = bamboo.EnglishMode
+		}
+    var t =e.getInputMethod()
 		e.preeditor.ProcessKey(keyRune, e.getInputMethod())
-		var vnSeq = e.preeditor.GetProcessedString(bamboo.VietnameseMode | bamboo.WithEffectKeys)
+		var vnSeq = e.preeditor.GetProcessedString(outputMode | bamboo.WithEffectKeys)
+    log.Println("vnsql", vnSeq, t , outputMode)
 		if len(vnSeq) > 0 && rune(vnSeq[len(vnSeq)-1]) == keyRune && bamboo.IsWordBreakSymbol(keyRune) {
 			e.updatePreviousText(vnSeq, oldText)
 			e.preeditor.Reset()
 		} else {
-			e.updatePreviousText(vnSeq, oldText)
+			e.updatePreviousText(e.getPreeditString(), oldText)
 		}
 		return
 	} else if bamboo.IsWordBreakSymbol(keyRune) {
@@ -188,30 +192,30 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 	e.ForwardKeyEvent(keyVal, keyCode, state)
 }
 
+func (e *IBusBambooEngine) getPreeditOffset(newRunes, oldRunes []rune) int {
+	var minLen = len(oldRunes)
+	if len(newRunes) < minLen {
+		minLen = len(newRunes)
+	}
+	for i := 0; i < minLen; i++ {
+		if oldRunes[i] != newRunes[i] {
+      return i
+		}
+	}
+	return minLen
+}
+
 func (e *IBusBambooEngine) updatePreviousText(newText, oldText string) {
 	var oldRunes = []rune(oldText)
 	var newRunes = []rune(newText)
-	oldLen := len(oldRunes)
-	newLen := len(newRunes)
-	minLen := oldLen
-	if newLen < minLen {
-		minLen = newLen
-	}
+  var nBackSpace = 0
+  var offset = e.getPreeditOffset(newRunes, oldRunes)
+  if offset < len(oldRunes) {
+    nBackSpace += len(oldRunes) - offset
+  }
 
-	sameTo := -1
-	for i := 0; i < minLen; i++ {
-		if oldRunes[i] == newRunes[i] {
-			sameTo = i
-		} else {
-			break
-		}
-	}
-	diffFrom := sameTo + 1
-	log.Printf("Updating Previous Text %s ---> %s\n", string(oldRunes), string(newRunes))
-
-	nBackSpace := 0
 	// workaround for chrome and firefox's address bar
-	if e.isFirstTimeSendingBS && diffFrom < newLen && diffFrom < oldLen && e.inBrowserList() &&
+	if e.isFirstTimeSendingBS && offset < len(newRunes) && offset < len(oldRunes) && e.inBrowserList() &&
 		!e.checkInputMode(shiftLeftForwardingIM) {
 		fmt.Println("Append a deadkey")
 		e.SendText([]rune(" "))
@@ -220,11 +224,8 @@ func (e *IBusBambooEngine) updatePreviousText(newText, oldText string) {
 		e.isFirstTimeSendingBS = false
 	}
 
-	if diffFrom < oldLen {
-		nBackSpace += oldLen - diffFrom
-	}
-
-	e.sendBackspaceAndNewRunes(nBackSpace, newRunes[diffFrom:])
+	log.Printf("Updating Previous Text %s ---> %s\n", oldText, newText)
+  e.sendBackspaceAndNewRunes(nBackSpace, newRunes[offset:])
 }
 
 func (e *IBusBambooEngine) sendBackspaceAndNewRunes(nBackSpace int, newRunes []rune) {
@@ -307,8 +308,8 @@ func (e *IBusBambooEngine) SendText(rs []rune) {
 			}
 			e.ForwardKeyEvent(keyVal, 0, 0)
 			e.ForwardKeyEvent(keyVal, 0, IBusReleaseMask)
-			time.Sleep(5 * time.Millisecond)
 		}
+		time.Sleep(time.Duration(len(rs)) * 5 * time.Millisecond)
 		return
 	}
 	e.commitText(string(rs))
