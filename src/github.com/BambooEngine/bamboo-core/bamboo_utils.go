@@ -243,12 +243,12 @@ func extractCvcTrans(composition []*Transformation) ([]*Transformation, []*Trans
 
 func extractLastWord(composition []*Transformation, effectKeys []rune) ([]*Transformation, []*Transformation) {
 	for i := len(composition) - 1; i >= 0; i-- {
-		var canvas = getCanvas(composition[i:], VietnameseMode|LowerCase)
+		var canvas = getCanvas(composition[i:], VietnameseMode|LowerCase|ToneLess|MarkLess)
 		if len(canvas) == 0 {
 			continue
 		}
-		var key = canvas[0]
-		if !canProcessKey(key, effectKeys) {
+		var c = canvas[0]
+		if !IsAlpha(c) && !inKeyList(effectKeys, c) {
 			if i == len(composition)-1 {
 				return composition, nil
 			}
@@ -463,9 +463,6 @@ func generateFallbackTransformations(composition []*Transformation, applicableRu
 			Rule:        appendedRule,
 			IsUpperCase: _isUpperCase,
 		})
-	}
-	if composition != nil && IsPunctuationMark(trans.Rule.Key) && !isValid(append(composition, transformations...), false) {
-		transformations = []*Transformation{newAppendingTrans(lowerKey, isUpperCase)}
 	}
 	return transformations
 }

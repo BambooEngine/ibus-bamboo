@@ -21,9 +21,8 @@ const (
 	ToneLess
 	MarkLess
 	LowerCase
-	WithEffectKeys
-	InReverseOrder
 	FullText
+	InReverseOrder
 )
 
 const (
@@ -91,7 +90,7 @@ func (e *BambooEngine) isEffectiveKey(key rune) bool {
 }
 
 func (e *BambooEngine) IsValid(inputIsFullComplete bool) bool {
-	var _, last = extractLastWord(e.composition, e.inputMethod.Keys)
+	var _, last = extractLastWord(e.composition, e.GetInputMethod().Keys)
 	return isValid(last, inputIsFullComplete)
 }
 
@@ -99,10 +98,8 @@ func (e *BambooEngine) GetProcessedString(mode Mode) string {
 	var tmp []*Transformation
 	if mode&FullText != 0 {
 		tmp = e.composition
-	} else if mode&WithEffectKeys != 0 {
-		_, tmp = extractLastWord(e.composition, e.inputMethod.Keys)
 	} else {
-		_, tmp = extractLastWord(e.composition, nil)
+		_, tmp = extractLastWord(e.composition, e.inputMethod.Keys)
 	}
 	return Flatten(tmp, mode)
 }
@@ -202,7 +199,7 @@ func (e *BambooEngine) ProcessKey(key rune, mode Mode) {
 }
 
 func (e *BambooEngine) RestoreLastWord() {
-	var previous, lastComb = extractLastWord(e.composition, e.inputMethod.Keys)
+	var previous, lastComb = extractLastWord(e.composition, e.GetInputMethod().Keys)
 	if len(lastComb) == 0 {
 		return
 	}
@@ -224,7 +221,7 @@ func (e *BambooEngine) RemoveLastChar(refreshLastToneTarget bool) {
 		e.composition = e.composition[:len(e.composition)-1]
 		return
 	}
-	var previous, lastComb = extractLastWord(e.composition, e.inputMethod.Keys)
+	var previous, lastComb = extractLastWord(e.composition, e.GetInputMethod().Keys)
 	var newComb []*Transformation
 	for _, t := range lastComb {
 		if t.Target == lastAppending || t == lastAppending {

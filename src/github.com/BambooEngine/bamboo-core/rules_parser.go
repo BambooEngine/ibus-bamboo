@@ -80,12 +80,12 @@ func (r *Rule) GetMark() Mark {
 }
 
 type InputMethod struct {
-	Name      string
-	Rules     []Rule
-	SuperKeys []rune
-	ToneKeys  []rune
-	AppendingKeys  []rune
-	Keys      []rune
+	Name          string
+	Rules         []Rule
+	SuperKeys     []rune
+	ToneKeys      []rune
+	AppendingKeys []rune
+	Keys          []rune
 }
 
 func ParseInputMethod(imDef map[string]InputMethodDefinition, imName string) InputMethod {
@@ -113,14 +113,14 @@ func parseInputMethods(imDef map[string]InputMethodDefinition) map[string]InputM
 			}
 			im.Keys = append(im.Keys, key)
 		}
-    for _, rule := range im.Rules {
-      if rule.EffectType == Appending {
-        im.AppendingKeys = append(im.AppendingKeys, rule.Key)
-      }
-      if rule.EffectType == ToneTransformation {
-        im.ToneKeys = append(im.ToneKeys, rule.Key)
-      }
-    }
+		for _, rule := range im.Rules {
+			if rule.EffectType == Appending {
+				im.AppendingKeys = append(im.AppendingKeys, rule.Key)
+			}
+			if rule.EffectType == ToneTransformation {
+				im.ToneKeys = append(im.ToneKeys, rule.Key)
+			}
+		}
 		inputMethods[name] = im
 	}
 	return inputMethods

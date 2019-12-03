@@ -7,6 +7,7 @@
  */
 
 package bamboo
+
 type charsetDefinition map[rune]string
 
 var charsetDefinitions = map[string]charsetDefinition{

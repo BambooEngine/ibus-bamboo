@@ -7,6 +7,7 @@
  */
 
 package bamboo
+
 import (
 	"unicode"
 )

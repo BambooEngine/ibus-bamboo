@@ -164,6 +164,8 @@ func (e *IBusBambooEngine) toUpper(keyRune rune) rune {
 	var keyMapping = map[rune]rune{
 		'[': '{',
 		']': '}',
+    '{': '[',
+    '}': ']',
 	}
 
 	if upperSpecialKey, found := keyMapping[keyRune]; found && inKeyList(e.preeditor.GetInputMethod().AppendingKeys, keyRune) {

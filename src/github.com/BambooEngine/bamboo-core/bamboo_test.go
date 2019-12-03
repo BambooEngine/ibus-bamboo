@@ -164,24 +164,24 @@ func TestTelex23(t *testing.T) {
 	ng = newStdEngine()
 	ng.ProcessString("t ]", EnglishMode)
 	ng.ProcessString("a", VietnameseMode)
-  if ng.GetProcessedString(VietnameseMode) != "a" || !ng.IsValid(false) {
-    t.Errorf("Process ]aa, got %s valid=%v expected true", ng.GetProcessedString(VietnameseMode), ng.IsValid(true))
-  }
+	if ng.GetProcessedString(VietnameseMode) != "]a" {
+		t.Errorf("Process t ]a, got %s valid=%v expected true", ng.GetProcessedString(VietnameseMode), ng.IsValid(false))
+	}
 	ng.Reset()
 	ng.ProcessString("]]a", VietnameseMode)
-  if ng.GetProcessedString(VietnameseMode) != "a" || !ng.IsValid(false) {
-    t.Errorf("Process ]aa, got %s valid=%v expected true", ng.GetProcessedString(VietnameseMode), ng.IsValid(true))
-  }
-	var im = ParseInputMethod(InputMethodDefinitions, "Telex 3")
+	if ng.GetProcessedString(VietnameseMode) != "]a" {
+		t.Errorf("Process ]aa, got %s valid=%v expected true", ng.GetProcessedString(VietnameseMode), ng.IsValid(true))
+	}
+	var im = ParseInputMethod(InputMethodDefinitions, "Telex 2")
 	var ng = NewEngine(im, EstdFlags)
 	ng.ProcessString("[", VietnameseMode)
-	if ng.GetProcessedString(VietnameseMode) != "ươ" {
-		t.Errorf("Process Telex 3 [[], got [%v] expected [ươ]", ng.GetProcessedString(VietnameseMode))
+	if ng.GetProcessedString(VietnameseMode) != "ơ" {
+		t.Errorf("Process Telex 2 [[], got [%v] expected [ươ]", ng.GetProcessedString(VietnameseMode))
 	}
 	ng.Reset()
 	ng.ProcessString("{", VietnameseMode)
-	if ng.GetProcessedString(VietnameseMode) != "ƯƠ" {
-		t.Errorf("Process Telex 3 [{], got [%s] expected [ƯƠ]", ng.GetProcessedString(EnglishMode))
+	if ng.GetProcessedString(VietnameseMode) != "Ơ" {
+		t.Errorf("Process Telex 2 [{], got [%s] expected [Ơ]", ng.GetProcessedString(VietnameseMode))
 	}
 }
 
@@ -238,7 +238,7 @@ func TestSpellingCheckForGiw(t *testing.T) {
 func TestDoubleBrackets(t *testing.T) {
 	ng := newStdEngine()
 	ng.ProcessString("[[", VietnameseMode)
-	if ng.GetProcessedString(EnglishMode|WithEffectKeys) != "[" {
+	if ng.GetProcessedString(EnglishMode) != "[" {
 		t.Errorf("TestDoubleBrackets, got [%v] expected [%v]", ng.GetProcessedString(EnglishMode), "[")
 	}
 }
@@ -398,8 +398,8 @@ func TestProcessTo5(t *testing.T) {
 	var im = ParseInputMethod(InputMethodDefinitions, "VNI")
 	ng := NewEngine(im, EstdFlags)
 	ng.ProcessString("o55", VietnameseMode)
-	if ng.GetProcessedString(VietnameseMode|WithEffectKeys) != "o5" {
-		t.Errorf("Process [o55-VNI], got [%v] expected [o5]", ng.GetProcessedString(VietnameseMode|WithEffectKeys))
+	if ng.GetProcessedString(VietnameseMode) != "o5" {
+		t.Errorf("Process [o55-VNI], got [%v] expected [o5]", ng.GetProcessedString(VietnameseMode))
 	}
 }
 
@@ -445,18 +445,18 @@ func TestBambooEngine_RestoreLastWord_TCVN(t *testing.T) {
 	var im = ParseInputMethod(InputMethodDefinitions, "Microsoft layout")
 	ng := NewEngine(im, EstdFlags)
 	ng.ProcessString("112", VietnameseMode)
-	if ng.GetProcessedString(VietnameseMode|WithEffectKeys) != "1â" {
-		t.Errorf("Process-VIE 112 (Microsoft layout), got [%v] expected [1â]", ng.GetProcessedString(VietnameseMode|WithEffectKeys))
+	if ng.GetProcessedString(VietnameseMode) != "1â" {
+		t.Errorf("Process-VIE 112 (Microsoft layout), got [%v] expected [1â]", ng.GetProcessedString(VietnameseMode))
 	}
 	ng.RestoreLastWord()
-	if ng.GetProcessedString(EnglishMode|WithEffectKeys) != "12" {
-		t.Errorf("Process-ENG 112 (Microsoft layout), got [%v] expected [12]", ng.GetProcessedString(EnglishMode|WithEffectKeys))
+	if ng.GetProcessedString(EnglishMode) != "12" {
+		t.Errorf("Process-ENG 112 (Microsoft layout), got [%v] expected [12]", ng.GetProcessedString(EnglishMode))
 	}
 	ng.Reset()
 	ng.ProcessString("d[]ng9 t4i", VietnameseMode)
 	ng.RestoreLastWord()
-	if ng.GetProcessedString(VietnameseMode|WithEffectKeys) != "t4i" {
-		t.Errorf("Process [duongwj t4i - MS layout], got [%v] expected [t4i]", ng.GetProcessedString(VietnameseMode|WithEffectKeys))
+	if ng.GetProcessedString(VietnameseMode) != "t4i" {
+		t.Errorf("Process [duongwj t4i - MS layout], got [%v] expected [t4i]", ng.GetProcessedString(VietnameseMode))
 	}
 }
 
@@ -589,13 +589,13 @@ func TestDoubleTyping(t *testing.T) {
 	ng.Reset()
 	ng.ProcessString("[[", VietnameseMode)
 	ng.ProcessString("oo", VietnameseMode)
-	if ng.GetProcessedString(VietnameseMode|WithEffectKeys) != "[ô" {
-		t.Errorf("Process [oo, got %s expected [ô", ng.GetProcessedString(VietnameseMode|WithEffectKeys))
+	if ng.GetProcessedString(VietnameseMode) != "[ô" {
+		t.Errorf("Process [oo, got %s expected [ô", ng.GetProcessedString(VietnameseMode))
 	}
 	ng.Reset()
 	ng.ProcessString("oo]", VietnameseMode)
-	if ng.GetProcessedString(VietnameseMode|WithEffectKeys) != "ô]" {
-		t.Errorf("Process oo], got %s expected ô]", ng.GetProcessedString(VietnameseMode|WithEffectKeys))
+	if ng.GetProcessedString(VietnameseMode) != "ôư" {
+		t.Errorf("Process oo], got %s expected ôư", ng.GetProcessedString(VietnameseMode))
 	}
 	ng.Reset()
 	ng.ProcessString("chury", VietnameseMode)
@@ -639,9 +639,9 @@ func TestDoubleTyping(t *testing.T) {
 	}
 	ng.Reset()
 	ng.ProcessString("tôi）t", EnglishMode)
-  if ng.GetProcessedString(VietnameseMode) != "t" {
-    t.Errorf("Process [tôi）t], got %s expected t", ng.GetProcessedString(VietnameseMode))
-  }
+	if ng.GetProcessedString(VietnameseMode) != "t" {
+		t.Errorf("Process [tôi）t], got %s expected t", ng.GetProcessedString(VietnameseMode))
+	}
 	log.Print("===============end")
 	ng.Reset()
 }

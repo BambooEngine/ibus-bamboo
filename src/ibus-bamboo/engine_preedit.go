@@ -31,9 +31,10 @@ import (
 func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
 	var rawKeyLen = e.getRawKeyLen()
 	var keyRune = rune(keyVal)
+	var oldText = e.getPreeditString()
 	defer e.updateLastKeyWithShift(keyVal, state)
 
-  // workaround for chrome's address bar and Google SpreadSheets
+	// workaround for chrome's address bar and Google SpreadSheets
 	if !e.isValidState(state) || !e.canProcessKey(keyVal) ||
 		(rawKeyLen == 0 && !e.preeditor.CanProcessKey(keyRune)) {
 		if rawKeyLen > 0 {
@@ -60,7 +61,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 			macText := e.expandMacro(text)
 			e.commitPreedit(macText)
 		} else {
-			e.commitPreedit(e.getComposedString())
+			e.commitPreedit(e.getComposedString(oldText))
 			return false, nil
 		}
 		return true, nil
@@ -70,14 +71,15 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		if state&IBusLockMask != 0 {
 			keyRune = e.toUpper(keyRune)
 		}
-		var oMode = bamboo.VietnameseMode
-		if e.shouldFallbackToEnglish(true) {
-			oMode = bamboo.EnglishMode
-		}
-		e.preeditor.ProcessKey(keyRune, e.getInputMethod())
-		var newSeq = e.preeditor.GetProcessedString(oMode | bamboo.WithEffectKeys)
-		if len(newSeq) > 0 && rune(newSeq[len(newSeq)-1]) == keyRune && bamboo.IsWordBreakSymbol(keyRune) {
-			e.commitPreedit(newSeq)
+		e.preeditor.ProcessKey(keyRune, e.getBambooInputMode())
+		if inKeyList(e.preeditor.GetInputMethod().AppendingKeys, keyRune) {
+			if fullSeq := e.preeditor.GetProcessedString(bamboo.VietnameseMode); len(fullSeq) > 0 && rune(fullSeq[len(fullSeq)-1]) == keyRune {
+				e.commitPreedit(fullSeq)
+			} else if newText := e.getPreeditString(); newText != "" && keyRune == rune(newText[len(newText)-1]) {
+				e.commitPreedit(oldText + string(keyRune))
+			} else {
+				e.updatePreedit(e.getPreeditString())
+			}
 		} else {
 			e.updatePreedit(e.getPreeditString())
 		}
@@ -88,8 +90,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 			// restore key strokes
 			var vnSeq = e.preeditor.GetProcessedString(bamboo.VietnameseMode)
 			if bamboo.HasAnyVietnameseRune(vnSeq) {
-				e.preeditor.RestoreLastWord()
-				e.updatePreedit(e.getPreeditString())
+				e.commitPreedit(e.preeditor.GetProcessedString(bamboo.EnglishMode))
 			} else {
 				e.commitPreedit(vnSeq + string(keyRune))
 			}
@@ -101,7 +102,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 			e.commitPreedit(processedStr + string(keyRune))
 			return true, nil
 		}
-		e.commitPreedit(e.getComposedString() + string(keyRune))
+		e.commitPreedit(e.getComposedString(oldText) + string(keyRune))
 		return true, nil
 	}
 	e.commitPreedit(e.getPreeditString())
@@ -155,7 +156,7 @@ func (e *IBusBambooEngine) getWhiteList() [][]string {
 	}
 }
 
-func (e *IBusBambooEngine) getInputMethod() bamboo.Mode {
+func (e *IBusBambooEngine) getBambooInputMode() bamboo.Mode {
 	if e.shouldFallbackToEnglish(false) {
 		return bamboo.EnglishMode
 	}
@@ -197,20 +198,17 @@ func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
 	if e.config.IBflags&IBddFreeStyle != 0 && strings.ContainsRune(vnSeq, 'đ') {
 		return false
 	}
-	if !bamboo.HasAnyVietnameseRune(vnSeq) {
-		return false
-	}
 	if e.config.IBflags&IBspellCheckWithDicts != 0 {
 		return !dictionary[vnSeq]
 	}
 	return !e.preeditor.IsValid(true)
 }
 
-func (e *IBusBambooEngine) getComposedString() string {
-	if e.mustFallbackToEnglish() {
-		return e.getProcessedString(bamboo.EnglishMode | bamboo.WithEffectKeys)
+func (e *IBusBambooEngine) getComposedString(oldText string) string {
+	if bamboo.HasAnyVietnameseRune(oldText) && e.mustFallbackToEnglish() {
+		return e.getProcessedString(bamboo.EnglishMode)
 	}
-	return e.getProcessedString(bamboo.VietnameseMode | bamboo.WithEffectKeys)
+	return e.getProcessedString(bamboo.VietnameseMode)
 }
 
 func (e *IBusBambooEngine) encodeText(text string) string {
@@ -223,9 +221,9 @@ func (e *IBusBambooEngine) getProcessedString(mode bamboo.Mode) string {
 
 func (e *IBusBambooEngine) getPreeditString() string {
 	if e.shouldFallbackToEnglish(true) {
-		return e.getProcessedString(bamboo.EnglishMode | bamboo.WithEffectKeys)
+		return e.getProcessedString(bamboo.EnglishMode)
 	}
-	return e.getProcessedString(bamboo.VietnameseMode | bamboo.WithEffectKeys)
+	return e.getProcessedString(bamboo.VietnameseMode)
 }
 
 func (e *IBusBambooEngine) resetPreedit() {
