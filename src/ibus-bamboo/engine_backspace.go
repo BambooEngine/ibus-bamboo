@@ -57,7 +57,10 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 			if e.nFakeBackSpace > 0 {
 				e.nFakeBackSpace--
 				return false, nil
-			} else {
+			} else if e.getRawKeyLen() > 0 {
+				if e.shouldFallbackToEnglish(true) {
+					e.preeditor.RestoreLastWord()
+				}
 				e.preeditor.RemoveLastChar(false)
 			}
 			return false, nil
@@ -71,19 +74,16 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 			}
 		}
 	}
-	if e.getRawKeyLen() == 0 && !inKeyList(e.preeditor.GetInputMethod().AppendingKeys, keyRune) {
-		sleep()
-		if e.getRawKeyLen() == 0 {
-			e.updateLastKeyWithShift(keyVal, state)
-			if e.preeditor.CanProcessKey(keyRune) && e.isValidState(state) {
-				e.isFirstTimeSendingBS = true
-				if state&IBusLockMask != 0 {
-					keyRune = e.toUpper(keyRune)
-				}
-				e.preeditor.ProcessKey(keyRune, bamboo.VietnameseMode)
+	if len(keyPressChan) == 0 && e.getRawKeyLen() == 0 && !inKeyList(e.preeditor.GetInputMethod().AppendingKeys, keyRune) {
+		e.updateLastKeyWithShift(keyVal, state)
+		if e.preeditor.CanProcessKey(keyRune) && e.isValidState(state) {
+			e.isFirstTimeSendingBS = true
+			if state&IBusLockMask != 0 {
+				keyRune = e.toUpper(keyRune)
 			}
-			return false, nil
+			e.preeditor.ProcessKey(keyRune, bamboo.VietnameseMode)
 		}
+		return false, nil
 	}
 	// if the main thread is busy processing, the keypress events come all mixed up
 	// so we enqueue these keypress events and process them sequentially on another thread

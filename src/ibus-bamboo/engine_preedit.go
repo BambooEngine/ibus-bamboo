@@ -208,7 +208,7 @@ func (e *IBusBambooEngine) getComposedString(oldText string) string {
 	if bamboo.HasAnyVietnameseRune(oldText) && e.mustFallbackToEnglish() {
 		return e.getProcessedString(bamboo.EnglishMode)
 	}
-	return e.getProcessedString(bamboo.VietnameseMode)
+	return oldText
 }
 
 func (e *IBusBambooEngine) encodeText(text string) string {
