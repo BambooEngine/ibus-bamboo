@@ -1,6 +1,7 @@
 /*
  * Bamboo - A Vietnamese Input method editor
- * Copyright (C) 2018 Luong Thanh Lam <ltlam93@gmail.com>
+ * Copyright (C) 2012 Le Quoc Tuan <mr.lequoctuan@gmail.com>
+ * Copyright (C) 2018-2020 Luong Thanh Lam <ltlam93@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
