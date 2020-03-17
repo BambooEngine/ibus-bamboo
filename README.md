@@ -22,7 +22,7 @@ IBus Bamboo - Bộ gõ tiếng Việt cho Linux
   * Unicode, TCVN (ABC)
   * VIQR, VNI, VPS, VISCII, BK HCM1, BK HCM2,…
   * Unicode UTF-8, Unicode NCR - for Web editors.
-* Nhiều kiểu gõ:
+* Các kiểu gõ thông dụng:
   * Telex, Telex W, Telex 2, Telex + VNI + VIQR
   * VNI, VIQR, Microsoft layout
 * Nhiều tính năng hữu ích, dễ dàng tùy chỉnh:
@@ -32,7 +32,7 @@ IBus Bamboo - Bộ gõ tiếng Việt cho Linux
   * 2666 emojis từ [emojiOne](https://github.com/joypixels/emojione)
 * Sử dụng phím tắt <kbd>Shift</kbd>+<kbd>~</kbd> để loại trừ ứng dụng không dùng bộ gõ, chuyển qua lại giữa các chế độ gõ:
   	* Pre-edit (default)
-  	* Surrounding text, IBus ForwardKeyEvent, XTestFakeKeyEvent,...
+  	* Surrounding text, IBus ForwardKeyEvent,...
    ![ibus-bamboo](https://github.com/BambooEngine/ibus-bamboo/raw/gh-resources/demo.gif)
 
 ## Hướng dẫn cài đặt
