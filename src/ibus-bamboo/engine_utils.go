@@ -103,26 +103,6 @@ func (e *IBusBambooEngine) init() {
 			}
 		}
 	}
-	var needToUpdate bool
-	var tmp = e.config.DirectForwardKeyWhiteList
-	e.config.DirectForwardKeyWhiteList = e.config.X11ClipboardWhiteList
-	e.config.X11ClipboardWhiteList = tmp
-	for i, list := range e.getWhiteList() {
-		for _, wmClasses := range list {
-			e.config.InputModeMapping[wmClasses] = i + 1
-			needToUpdate = true
-		}
-	}
-	if needToUpdate {
-		e.config.PreeditWhiteList = nil
-		e.config.SLForwardKeyWhiteList = nil
-		e.config.SurroundingTextWhiteList = nil
-		e.config.DirectForwardKeyWhiteList = nil
-		e.config.X11ClipboardWhiteList = nil
-		e.config.ExceptedList = nil
-		e.config.ForwardKeyWhiteList = nil
-		saveConfig(e.config, e.engineName)
-	}
 }
 
 var keyPressHandler = func(keyVal, keyCode, state uint32) {}
