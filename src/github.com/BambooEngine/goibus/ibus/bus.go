@@ -1,6 +1,8 @@
 package ibus
 
-import "github.com/godbus/dbus"
+import (
+	"github.com/godbus/dbus"
+)
 
 type Bus struct {
 	dbusConn   *dbus.Conn

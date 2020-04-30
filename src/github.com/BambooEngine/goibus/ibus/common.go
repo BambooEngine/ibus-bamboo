@@ -79,20 +79,31 @@ func GetSocketPath() string {
 	if path != "" {
 		return path
 	}
-	display := os.Getenv("DISPLAY")
+    display := os.Getenv("WAYLAND_DISPLAY")
+    isWayland := true
+    if display == "" {
+        isWayland = false
+        display = os.Getenv("DISPLAY")
+    }
 	if display == "" {
 		fmt.Fprintf(os.Stderr, "DISPLAY is empty! We use default DISPLAY (:0.0)")
 		display = ":0.0"
 	}
-	// format is {hostname}:{displaynumber}.{screennumber}
-	hostname := "unix"
-	HDS := strings.SplitN(display, ":", 2)
-	DS := strings.SplitN(HDS[1], ".", 2)
+    hostname := "unix"
+    displayNumber := ""
+    if isWayland {
+        displayNumber = display
+    } else {
+        // format is {hostname}:{displaynumber}.{screennumber}
+        HDS := strings.SplitN(display, ":", 2)
+        DS := strings.SplitN(HDS[1], ".", 2)
 
-	if HDS[0] != "" {
-		hostname = HDS[0]
-	}
-	p := fmt.Sprintf("%s-%s-%s", GetLocalMachineId(), hostname, DS[0])
+        if HDS[0] != "" {
+            hostname = HDS[0]
+        }
+        displayNumber = DS[0]
+    }
+	p := fmt.Sprintf("%s-%s-%s", GetLocalMachineId(), hostname, displayNumber)
 	path = GetUserConfigDir() + "/ibus/bus/" + p
 
 	return path
