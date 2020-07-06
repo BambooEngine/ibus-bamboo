@@ -130,13 +130,6 @@ type Config struct {
 	JupiterFlags              uint
 	DefaultInputMode          int
 	InputModeMapping          map[string]int
-	ExceptedList              []string
-	PreeditWhiteList          []string
-	X11ClipboardWhiteList     []string
-	ForwardKeyWhiteList       []string
-	SLForwardKeyWhiteList     []string
-	DirectForwardKeyWhiteList []string
-	SurroundingTextWhiteList  []string
 }
 
 func getConfigDir(ngName string) string {
@@ -166,13 +159,6 @@ func loadConfig(engineName string) *Config {
 		IBflags:                   IBstdFlags,
 		DefaultInputMode:          preeditIM,
 		InputModeMapping:          map[string]int{},
-		ExceptedList:              nil,
-		PreeditWhiteList:          nil,
-		X11ClipboardWhiteList:     nil,
-		ForwardKeyWhiteList:       nil,
-		SLForwardKeyWhiteList:     nil,
-		DirectForwardKeyWhiteList: nil,
-		SurroundingTextWhiteList:  nil,
 	}
 
 	setupConfigDir(engineName)
