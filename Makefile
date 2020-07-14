@@ -15,13 +15,15 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
+PREFIX=/usr
+
 engine_name=bamboo
 ibus_e_name=ibus-engine-$(engine_name)
 pkg_name=ibus-$(engine_name)
 version=0.6.5
 
-engine_dir=/usr/share/$(pkg_name)
-ibus_dir=/usr/share/ibus
+engine_dir=$(PREFIX)/share/$(pkg_name)
+ibus_dir=$(PREFIX)/share/ibus
 
 GOPATH=$(shell pwd)/vendor:$(shell pwd)
 
@@ -43,17 +45,17 @@ clean:
 
 install: build
 	mkdir -p $(DESTDIR)$(engine_dir)
-	mkdir -p $(DESTDIR)/usr/lib/
+	mkdir -p $(DESTDIR)$(PREFIX)/lib/
 	mkdir -p $(DESTDIR)$(ibus_dir)/component/
 
 	cp -R -f viet-on.png data $(DESTDIR)$(engine_dir)
-	cp -f $(ibus_e_name) $(DESTDIR)/usr/lib/
+	cp -f $(ibus_e_name) $(DESTDIR)$(PREFIX)/lib/
 	cp -f $(engine_name).xml $(DESTDIR)$(ibus_dir)/component/
 
 
 uninstall:
 	sudo rm -rf $(DESTDIR)$(engine_dir)
-	sudo rm -f $(DESTDIR)/usr/lib/$(ibus_e_name)
+	sudo rm -f $(DESTDIR)$(PREFIX)/lib/$(ibus_e_name)
 	sudo rm -f $(DESTDIR)$(ibus_dir)/component/$(engine_name).xml
 
 
