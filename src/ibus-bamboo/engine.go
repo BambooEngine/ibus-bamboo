@@ -70,6 +70,13 @@ Return:
 This function gets called whenever a key is pressed.
 */
 func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
+	if e.checkInputMode(usIM) {
+		if e.isInputModeLTOpened || keyVal == IBusOpenLookupTable {
+			// return false, nil
+		} else {
+			return false, nil
+		}
+	}
 	if e.processShiftKey(keyVal, state) {
 		return true, nil
 	}

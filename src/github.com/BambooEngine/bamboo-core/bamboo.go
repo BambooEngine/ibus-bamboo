@@ -22,6 +22,7 @@ const (
 	MarkLess
 	LowerCase
 	FullText
+	PunctuationMode
 	InReverseOrder
 )
 
@@ -98,6 +99,9 @@ func (e *BambooEngine) GetProcessedString(mode Mode) string {
 	var tmp []*Transformation
 	if mode&FullText != 0 {
 		tmp = e.composition
+	} else if mode&PunctuationMode != 0 {
+		_, tmp = extractLastPunctuationMarks(e.composition, e.inputMethod.Keys)
+		return Flatten(tmp, EnglishMode)
 	} else {
 		_, tmp = extractLastWord(e.composition, e.inputMethod.Keys)
 	}

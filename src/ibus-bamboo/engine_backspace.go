@@ -67,8 +67,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		}
 		if keyVal == IBusTab {
 			sleep()
-			oldText := e.preeditor.GetProcessedString(bamboo.VietnameseMode)
-			if e.config.IBflags&IBmacroEnabled != 0 && !e.macroTable.HasKey(oldText) {
+			if ok, _ := e.getMacroText(); !ok {
 				e.preeditor.Reset()
 				return false, nil
 			}
@@ -105,6 +104,7 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 	}
 	var keyRune = rune(keyVal)
 	oldText := e.getPreeditString()
+	_, oldMacText := e.getMacroText()
 	if keyVal == IBusBackSpace {
 		if e.getRawKeyLen() > 0 {
 			if e.config.IBflags&IBautoNonVnRestore == 0 {
@@ -125,10 +125,8 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 	}
 
 	if keyVal == IBusTab {
-		if e.config.IBflags&IBmacroEnabled != 0 && e.macroTable.HasKey(oldText) {
-			// macro processing
-			macText := e.expandMacro(oldText)
-			e.updatePreviousText(macText, oldText)
+		if oldMacText != "" {
+			e.updatePreviousText(oldMacText, oldText)
 		} else {
 			e.ForwardKeyEvent(keyVal, keyCode, state)
 		}
@@ -169,10 +167,9 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 			}
 			return
 		}
-		if e.config.IBflags&IBmacroEnabled != 0 && e.macroTable.HasKey(oldText) {
+		if oldMacText != "" {
 			// macro processing
-			macText := e.expandMacro(oldText)
-			macText = macText + string(keyRune)
+			macText := oldMacText + string(keyRune)
 			e.updatePreviousText(macText, oldText)
 			e.preeditor.Reset()
 			return

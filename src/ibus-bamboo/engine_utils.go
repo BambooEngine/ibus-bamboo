@@ -144,8 +144,8 @@ func (e *IBusBambooEngine) toUpper(keyRune rune) rune {
 	var keyMapping = map[rune]rune{
 		'[': '{',
 		']': '}',
-    '{': '[',
-    '}': ']',
+		'{': '[',
+		'}': ']',
 	}
 
 	if upperSpecialKey, found := keyMapping[keyRune]; found && inKeyList(e.preeditor.GetInputMethod().AppendingKeys, keyRune) {
@@ -305,12 +305,28 @@ func (e *IBusBambooEngine) isValidState(state uint32) bool {
 	return true
 }
 
+func (e *IBusBambooEngine) getMacroText() (bool, string) {
+	if e.config.IBflags&IBmacroEnabled == 0 {
+		return false, ""
+	}
+	var text = e.preeditor.GetProcessedString(bamboo.VietnameseMode | bamboo.LowerCase)
+	if e.macroTable.HasKey(text) {
+		return true, e.expandMacro(text)
+	} else {
+		text = e.preeditor.GetProcessedString(bamboo.PunctuationMode)
+		if e.macroTable.HasKey(text) {
+			return true, e.expandMacro(text)
+		}
+	}
+	return false, ""
+}
+
 func (e *IBusBambooEngine) canProcessKey(keyVal uint32) bool {
 	var keyRune = rune(keyVal)
 	if keyVal == IBusSpace || keyVal == IBusBackSpace || bamboo.IsWordBreakSymbol(keyRune) {
 		return true
 	}
-	if e.config.IBflags&IBmacroEnabled != 0 && keyVal == IBusTab {
+	if ok, _ := e.getMacroText(); ok && keyVal == IBusTab {
 		return true
 	}
 	return e.preeditor.CanProcessKey(keyRune)

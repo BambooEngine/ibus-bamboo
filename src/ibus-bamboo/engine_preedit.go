@@ -55,10 +55,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		}
 	}
 	if keyVal == IBusTab {
-		var text = e.preeditor.GetProcessedString(bamboo.VietnameseMode)
-		if e.config.IBflags&IBmacroEnabled != 0 && e.macroTable.HasKey(text) {
-			// macro processing
-			macText := e.expandMacro(text)
+		if ok, macText := e.getMacroText(); ok {
 			e.commitPreedit(macText)
 		} else {
 			e.commitPreedit(e.getComposedString(oldText))
@@ -96,10 +93,8 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 			}
 			return true, nil
 		}
-		var processedStr = e.preeditor.GetProcessedString(bamboo.VietnameseMode)
-		if e.config.IBflags&IBmacroEnabled != 0 && e.macroTable.HasKey(processedStr) {
-			processedStr = e.expandMacro(processedStr)
-			e.commitPreedit(processedStr + string(keyRune))
+		if ok, macText := e.getMacroText(); ok {
+			e.commitPreedit(macText + string(keyRune))
 			return true, nil
 		}
 		e.commitPreedit(e.getComposedString(oldText) + string(keyRune))
@@ -144,18 +139,6 @@ func (e *IBusBambooEngine) updatePreedit(processedStr string) {
 	}
 }
 
-func (e *IBusBambooEngine) getWhiteList() [][]string {
-	return [][]string{
-		e.config.PreeditWhiteList,
-		e.config.SurroundingTextWhiteList,
-		e.config.ForwardKeyWhiteList,
-		e.config.SLForwardKeyWhiteList,
-		e.config.X11ClipboardWhiteList,
-		e.config.DirectForwardKeyWhiteList,
-		e.config.ExceptedList,
-	}
-}
-
 func (e *IBusBambooEngine) getBambooInputMode() bamboo.Mode {
 	if e.shouldFallbackToEnglish(false) {
 		return bamboo.EnglishMode
@@ -172,7 +155,7 @@ func (e *IBusBambooEngine) shouldFallbackToEnglish(checkVnRune bool) bool {
 	if len(vnRunes) == 0 {
 		return false
 	}
-	if e.config.IBflags&IBmacroEnabled != 0 && e.macroTable.HasKey(vnSeq) {
+	if ok, _ := e.getMacroText(); ok {
 		return false
 	}
 	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation

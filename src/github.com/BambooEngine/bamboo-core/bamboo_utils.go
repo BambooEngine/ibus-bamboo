@@ -241,6 +241,23 @@ func extractCvcTrans(composition []*Transformation) ([]*Transformation, []*Trans
 	return fc, vo, lc
 }
 
+func extractLastPunctuationMarks(composition []*Transformation, effectKeys []rune) ([]*Transformation, []*Transformation) {
+	for i := len(composition) - 1; i >= 0; i-- {
+		var canvas = getCanvas(composition[i:], VietnameseMode|LowerCase|ToneLess|MarkLess)
+		if len(canvas) == 0 {
+			continue
+		}
+		var c = canvas[0]
+		if IsAlpha(c) || inKeyList(effectKeys, c) {
+			if i == len(composition)-1 {
+				return composition, nil
+			}
+			return composition[:i+1], composition[i+1:]
+		}
+	}
+	return nil, composition
+}
+
 func extractLastWord(composition []*Transformation, effectKeys []rune) ([]*Transformation, []*Transformation) {
 	for i := len(composition) - 1; i >= 0; i-- {
 		var canvas = getCanvas(composition[i:], VietnameseMode|LowerCase|ToneLess|MarkLess)
