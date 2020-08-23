@@ -61,9 +61,12 @@ func GetAddress() string {
 	if address != "" {
 		return address
 	}
-	data, err := ioutil.ReadFile(GetSocketPath())
+	data, err := ioutil.ReadFile(GetSocketPath(true))
 	if err != nil {
-		panic(err)
+		data, err = ioutil.ReadFile(GetSocketPath(false))
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	for _, line := range strings.Split(string(data), "\n") {
@@ -74,39 +77,42 @@ func GetAddress() string {
 	return address
 }
 
-func GetSocketPath() string {
+func GetSocketPath(useWayland bool) string {
 	path := os.Getenv("IBUS_ADDRESS_FILE")
 	if path != "" {
 		return path
 	}
-    display := os.Getenv("WAYLAND_DISPLAY")
-    isWayland := true
-    if display == "" {
-        isWayland = false
-        display = os.Getenv("DISPLAY")
-    }
+	display := os.Getenv("WAYLAND_DISPLAY")
+	if display != "" && useWayland {
+		return GetWaylandSocketPath(display)
+	}
+	return GetX11SocketPath()
+}
+
+func GetX11SocketPath() string {
+	display := os.Getenv("DISPLAY")
 	if display == "" {
 		fmt.Fprintf(os.Stderr, "DISPLAY is empty! We use default DISPLAY (:0.0)")
 		display = ":0.0"
 	}
-    hostname := "unix"
-    displayNumber := ""
-    if isWayland {
-        displayNumber = display
-    } else {
-        // format is {hostname}:{displaynumber}.{screennumber}
-        HDS := strings.SplitN(display, ":", 2)
-        DS := strings.SplitN(HDS[1], ".", 2)
+	hostname := "unix"
+	displayNumber := ""
+	// format is {hostname}:{displaynumber}.{screennumber}
+	HDS := strings.SplitN(display, ":", 2)
+	DS := strings.SplitN(HDS[1], ".", 2)
 
-        if HDS[0] != "" {
-            hostname = HDS[0]
-        }
-        displayNumber = DS[0]
-    }
+	if HDS[0] != "" {
+		hostname = HDS[0]
+	}
+	displayNumber = DS[0]
 	p := fmt.Sprintf("%s-%s-%s", GetLocalMachineId(), hostname, displayNumber)
-	path = GetUserConfigDir() + "/ibus/bus/" + p
+	return GetUserConfigDir() + "/ibus/bus/" + p
+}
 
-	return path
+func GetWaylandSocketPath(display string) string {
+	hostname := "unix"
+	p := fmt.Sprintf("%s-%s-%s", GetLocalMachineId(), hostname, display)
+	return GetUserConfigDir() + "/ibus/bus/" + p
 }
 
 func GetLocalMachineId() string {
