@@ -52,8 +52,7 @@ type IBusBambooEngine struct {
 	emoji                  *EmojiEngine
 	isSurroundingTextReady bool
 	lastKeyWithShift       bool
-	printableKeyCounter    int
-	encounterControlKey    bool
+	lastCommitText         int64
 }
 
 /**

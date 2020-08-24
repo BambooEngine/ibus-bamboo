@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/BambooEngine/bamboo-core"
@@ -76,9 +77,10 @@ func (e *IBusBambooEngine) init() {
 		startMouseCapturing()
 	}
 	startMouseRecording()
+	var mouseMutex sync.Mutex
 	onMouseMove = func() {
-		e.Lock()
-		defer e.Unlock()
+		mouseMutex.Lock()
+		defer mouseMutex.Unlock()
 		if e.checkInputMode(preeditIM) {
 			if e.getRawKeyLen() == 0 {
 				return
@@ -87,12 +89,11 @@ func (e *IBusBambooEngine) init() {
 		}
 	}
 	onMouseClick = func() {
-		e.Lock()
-		defer e.Unlock()
+		mouseMutex.Lock()
+		defer mouseMutex.Unlock()
 		if e.isEmojiLTOpened {
 			e.refreshEmojiCandidate()
 		} else {
-			e.printableKeyCounter = 0
 			e.resetFakeBackspace()
 			e.resetBuffer()
 			e.keyPressDelay = KeypressDelayMs
@@ -323,6 +324,24 @@ func (e *IBusBambooEngine) getMacroText() (bool, string) {
 		}
 	}
 	return false, ""
+}
+
+func (e *IBusBambooEngine) getFakeBackspace() int {
+	return e.nFakeBackSpace
+}
+
+var mtx sync.Mutex
+
+func (e *IBusBambooEngine) setFakeBackspace(n int) {
+	mtx.Lock()
+	e.nFakeBackSpace = n
+	mtx.Unlock()
+}
+
+func (e *IBusBambooEngine) addFakeBackspace(n int) {
+	mtx.Lock()
+	e.nFakeBackSpace += n
+	mtx.Unlock()
 }
 
 func (e *IBusBambooEngine) canProcessKey(keyVal uint32) bool {

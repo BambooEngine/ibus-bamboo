@@ -92,8 +92,6 @@ func (e *MacroTable) IncludeKey(key string) bool {
 
 //---------------------------------------------------------------
 func (e *MacroTable) Enable(engineName string) {
-	e.Lock()
-	defer e.Unlock()
 	e.enable = true
 
 	go func() {
@@ -119,8 +117,6 @@ func (e *MacroTable) Enable(engineName string) {
 
 //---------------------------------------------------------------
 func (e *MacroTable) Disable() {
-	e.Lock()
-	defer e.Unlock()
 	e.enable = false
 	e.mTable = map[string]string{}
 }

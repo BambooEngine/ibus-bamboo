@@ -22,6 +22,7 @@ package main
 import (
 	"log"
 	"strings"
+	"time"
 
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
@@ -225,6 +226,8 @@ func (e *IBusBambooEngine) commitText(str string) {
 		return
 	}
 	log.Printf("Commit Text [%s]\n", str)
+	var now = time.Now()
+	e.lastCommitText = now.UnixNano()
 	e.CommitText(ibus.NewText(e.encodeText(str)))
 }
 
