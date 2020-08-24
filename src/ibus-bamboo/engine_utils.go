@@ -92,6 +92,7 @@ func (e *IBusBambooEngine) init() {
 		if e.isEmojiLTOpened {
 			e.refreshEmojiCandidate()
 		} else {
+			e.printableKeyCounter = 0
 			e.resetFakeBackspace()
 			e.resetBuffer()
 			e.keyPressDelay = KeypressDelayMs
@@ -107,11 +108,14 @@ func (e *IBusBambooEngine) init() {
 
 var keyPressHandler = func(keyVal, keyCode, state uint32) {}
 var keyPressChan = make(chan [3]uint32, 100)
+var isProcessing bool
 
 func keyPressCapturing() {
 	for keyEvents := range keyPressChan {
+		isProcessing = true
 		var keyVal, keyCode, state = keyEvents[0], keyEvents[1], keyEvents[2]
 		keyPressHandler(keyVal, keyCode, state)
+		isProcessing = false
 	}
 }
 

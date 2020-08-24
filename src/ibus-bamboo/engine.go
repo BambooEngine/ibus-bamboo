@@ -52,6 +52,8 @@ type IBusBambooEngine struct {
 	emoji                  *EmojiEngine
 	isSurroundingTextReady bool
 	lastKeyWithShift       bool
+	printableKeyCounter    int
+	encounterControlKey    bool
 }
 
 /**
@@ -83,7 +85,7 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 	if e.isIgnoredKey(keyVal, state) {
 		return false, nil
 	}
-	log.Printf("ProcessKeyEvent >  %c | keyCode 0x%04x keyVal 0x%04x | %d\n", rune(keyVal), keyCode, keyVal, len(keyPressChan))
+	log.Printf(">ProcessKeyEvent >  %c | keyCode 0x%04x keyVal 0x%04x | %d\n", rune(keyVal), keyCode, keyVal, len(keyPressChan))
 	if e.config.IBflags&IBinputModeLookupTableEnabled != 0 && keyVal == IBusOpenLookupTable && !e.isInputModeLTOpened && e.wmClasses != "" {
 		e.resetBuffer()
 		e.isInputModeLTOpened = true
