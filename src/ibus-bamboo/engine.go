@@ -24,6 +24,7 @@ import (
 	"log"
 	"os/exec"
 	"reflect"
+	"strconv"
 	"sync"
 
 	"github.com/BambooEngine/bamboo-core"
@@ -396,7 +397,11 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		}
 	}
 
-	var charset, foundCs = getCharsetFromPropKey(propName)
+	var im, foundIm = getValueFromPropKey(propName, "InputMode")
+	if foundIm && propState == ibus.PROP_STATE_CHECKED {
+		e.config.DefaultInputMode, _ = strconv.Atoi(im)
+	}
+	var charset, foundCs = getValueFromPropKey(propName, "OutputCharset")
 	if foundCs && isValidCharset(charset) && propState == ibus.PROP_STATE_CHECKED {
 		e.config.OutputCharset = charset
 	}

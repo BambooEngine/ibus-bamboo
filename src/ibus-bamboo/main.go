@@ -35,8 +35,16 @@ const (
 
 var embedded = flag.Bool("ibus", false, "Run the embedded ibus component")
 var version = flag.Bool("version", false, "Show version")
+var isWayland = false
+var isGnome = false
 
 func main() {
+	if os.Getenv("WAYLAND_DISPLAY") != "" {
+		isWayland = true
+	}
+	if os.Getenv("GDMSESSION") == "gnome" || os.Getenv("DESKTOP_SESSION") == "gnome" {
+		isGnome = true
+	}
 	flag.Parse()
 	if *embedded {
 		os.Chdir(DataDir)

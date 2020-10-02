@@ -20,6 +20,8 @@
 package main
 
 import (
+	"strconv"
+
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
@@ -136,6 +138,18 @@ func GetPropListByConfig(c *Config) *ibus.PropList {
 			Icon:      "appointment",
 			Symbol:    dbus.MakeVariant(ibus.NewText("")),
 			SubProps:  dbus.MakeVariant(GetHotKeyPropListByConfig(c)),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
+			Key:       "-",
+			Type:      ibus.PROP_TYPE_MENU,
+			Label:     dbus.MakeVariant(ibus.NewText("Chế độ gõ mặc định")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Chế độ gõ mặc định")),
+			Sensitive: true,
+			Visible:   true,
+			Icon:      "preferences-other",
+			Symbol:    dbus.MakeVariant(ibus.NewText("")),
+			SubProps:  dbus.MakeVariant(GetDefaultModePropListByConfig(c)),
 		},
 		&ibus.Property{
 			Name:      "IBusProperty",
@@ -488,4 +502,38 @@ func GetHotKeyPropListByConfig(c *Config) *ibus.PropList {
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
 	)
+}
+
+func GetDefaultModePropListByConfig(c *Config) *ibus.PropList {
+	var inputModes = []string{
+		"1. Pre-edit (có gạch chân)",
+		"2. Surrounding Text (không gạch chân)",
+		"3. ForwardKeyEvent I (không gạch chân)",
+		"4. ForwardKeyEvent II (không gạch chân)",
+		"5. Forward as Commit (không gạch chân)",
+		"6. XTestFakeKeyEvent (không gạch chân)",
+	}
+	var imProperties []*ibus.Property
+	for i, label := range inputModes {
+		var state = ibus.PROP_STATE_UNCHECKED
+		var im = i + 1
+		var ims = strconv.Itoa(im)
+		if im == c.DefaultInputMode {
+			state = ibus.PROP_STATE_CHECKED
+		}
+		var imProp = &ibus.Property{
+			Name:      "IBusProperty",
+			Key:       "InputMode::" + ims,
+			Type:      ibus.PROP_TYPE_RADIO,
+			Label:     dbus.MakeVariant(ibus.NewText(label)),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("InputMode: " + ims)),
+			Sensitive: true,
+			Visible:   true,
+			State:     state,
+			Symbol:    dbus.MakeVariant(ibus.NewText("U")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		}
+		imProperties = append(imProperties, imProp)
+	}
+	return ibus.NewPropList(imProperties...)
 }
