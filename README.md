@@ -43,6 +43,8 @@ sudo add-apt-repository ppa:bamboo-engine/ibus-bamboo
 sudo apt-get update
 sudo apt-get install ibus-bamboo
 ibus restart
+# Đặt ibus-bamboo làm bộ gõ mặc định
+gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us'), ('ibus', 'Bamboo')]"
 ```
 
 ### Arch Linux và các distro tương tự
