@@ -151,12 +151,16 @@ func getConfigPath(engineName string) string {
 }
 
 func loadConfig(engineName string) *Config {
+	var flags = IBstdFlags
+	if isGnome {
+		flags &= ^IBmouseCapturing
+	}
 	var c = Config{
 		InputMethod:            "Telex",
 		OutputCharset:          "Unicode",
 		InputMethodDefinitions: bamboo.GetInputMethodDefinitions(),
 		Flags:                  bamboo.EstdFlags,
-		IBflags:                IBstdFlags,
+		IBflags:                flags,
 		DefaultInputMode:       preeditIM,
 		InputModeMapping:       map[string]int{},
 	}
