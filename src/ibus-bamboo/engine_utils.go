@@ -41,6 +41,9 @@ func GetIBusEngineCreator() func(*dbus.Conn, string) dbus.ObjectPath {
 		var engineName = strings.ToLower(ngName)
 		var engine = new(IBusBambooEngine)
 		var config = loadConfig(engineName)
+		if isGnome {
+			config.IBflags &= ^IBmouseCapturing
+		}
 		var objectPath = dbus.ObjectPath(fmt.Sprintf("/org/freedesktop/IBus/Engine/%s/%d", engineName, time.Now().UnixNano()))
 		var inputMethod = bamboo.ParseInputMethod(config.InputMethodDefinitions, config.InputMethod)
 		engine.Engine = ibus.BaseEngine(conn, objectPath)
