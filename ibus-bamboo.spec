@@ -13,7 +13,7 @@ URL: https://github.com/BambooEngine/ibus-bamboo
 Source0: %{name}-%{version}.tar.gz
 
 BuildRequires: go, libX11-devel, libXtst-devel
-Requires: ibus, libX11, libXtst
+Requires: ibus
 
 %description
 A Vietnamese IME for IBus using Bamboo Engine.

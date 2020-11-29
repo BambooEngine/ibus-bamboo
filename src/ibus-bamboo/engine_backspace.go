@@ -268,7 +268,6 @@ func (e *IBusBambooEngine) batchUpdatePreviousText(oldText, newText string, isLa
 				buffer = []string{""}
 			}
 			e.ForwardKeyEvent(keyVal, keyCode, state)
-			isDirty = false
 		} else {
 			var commitText, isLastRune0 = e.getCommitText(keyVal, keyCode, state)
 			buffer[len(buffer)-1] = commitText
@@ -288,6 +287,9 @@ func (e *IBusBambooEngine) batchUpdatePreviousText(oldText, newText string, isLa
 
 func (e *IBusBambooEngine) batchCommit(oldText string, newText string, nBackSpace int, isLastRune bool) {
 	fullRunes := []rune(newText)
+	if len(fullRunes) == 0 {
+		return
+	}
 	offsetRunes0, nBackSpace0 := e.getOffsetRunes(newText, oldText)
 	if isLastRune {
 		e.bsCommitText(offsetRunes0)
