@@ -29,7 +29,7 @@ Nếu cần thiết, hãy [đính kèm hình ảnh](https://help.github.com/arti
 **Môi trường**
  - OS và version: (ví dụ: Ubuntu 20.04)
  - Desktop: (Xfce, KDE, Gnome,... hoặc **mặc định**)
- - Phiên bản ibus-bamboo: (bản mới nhất là v0.6.5)
+ - Phiên bản ibus-bamboo: (bản mới nhất là v0.6.8)
 
 **Thông tin thêm**
 <!--

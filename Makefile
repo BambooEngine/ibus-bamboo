@@ -20,7 +20,7 @@ PREFIX=/usr
 engine_name=bamboo
 ibus_e_name=ibus-engine-$(engine_name)
 pkg_name=ibus-$(engine_name)
-version=0.6.7
+version=0.6.8
 
 engine_dir=$(PREFIX)/share/$(pkg_name)
 ibus_dir=$(PREFIX)/share/ibus
