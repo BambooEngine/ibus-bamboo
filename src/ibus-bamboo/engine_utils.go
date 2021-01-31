@@ -314,12 +314,12 @@ func (e *IBusBambooEngine) getMacroText() (bool, string) {
 	if e.config.IBflags&IBmacroEnabled == 0 {
 		return false, ""
 	}
-	var text = e.preeditor.GetProcessedString(bamboo.VietnameseMode | bamboo.LowerCase)
-	if e.macroTable.HasKey(text) {
+	var text = e.preeditor.GetProcessedString(bamboo.VietnameseMode)
+	if e.macroTable.HasKey(strings.ToLower(text)) {
 		return true, e.expandMacro(text)
 	} else {
 		text = e.preeditor.GetProcessedString(bamboo.PunctuationMode)
-		if e.macroTable.HasKey(text) {
+		if e.macroTable.HasKey(strings.ToLower(text)) {
 			return true, e.expandMacro(text)
 		}
 	}

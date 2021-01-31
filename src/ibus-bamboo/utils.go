@@ -87,7 +87,7 @@ const (
 	IBrestoreKeyStrokesEnabled
 	IBmouseCapturing
 	IBstdFlags = IBspellCheckEnabled | IBspellCheckWithRules | IBautoNonVnRestore | IBddFreeStyle |
-		IBemojiDisabled | IBinputModeLookupTableEnabled | IBmouseCapturing
+		IBemojiDisabled | IBinputModeLookupTableEnabled | IBmouseCapturing | IBautoCapitalizeMacro
 )
 
 const (
