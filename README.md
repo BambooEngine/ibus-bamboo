@@ -48,19 +48,23 @@ gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us'), ('ibus', 
 ```
 
 ### Arch Linux và các distro tương tự
-Với Arch Linux, bạn có thể build từ AUR bằng yay:
+Với Arch Linux, bạn thêm các dòng sau vào cuối file `/etc/pacman.conf`:
 ```sh
-yay -S ibus-bamboo
+[home_lamlng_Arch]
+SigLevel = Never
+Server = https://download.opensuse.org/repositories/home:/lamlng/Arch/$arch
 ```
-Hoặc bằng pamac:
+rồi chạy lệnh:
 ```sh
-pamac build ibus-bamboo
+pacman -Syu
+pacman -S home_lamlng_Arch/ibus-bamboo
 ```
-Hoặc build build từ file PKGBUILD:
+
+Hoặc build trực tiếp từ mã nguồn:
 ```sh
-git clone https://aur.archlinux.org/ibus-bamboo.git
-cd ibus-bamboo
-makepkg -si
+wget https://raw.githubusercontent.com/BambooEngine/ibus-bamboo/master/archlinux/install.sh
+chmod +x install.sh
+./install.sh
 ```
 
 ### Void Linux
