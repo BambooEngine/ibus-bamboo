@@ -80,16 +80,17 @@ void x11SendShiftLeft(int n, int r, int timeout) {
 void x11SendBackspace(int n, int timeout) {
     Display *display = XOpenDisplay(NULL);
     if (display) {
-        XSynchronize(display, 1);
+        /* XSynchronize(display, 1); */
         KeyCode modcode;
         modcode = XKeysymToKeycode(display, XStringToKeysym("BackSpace"));
         for (int i=0; i<n; i++) {
             XTestFakeKeyEvent(display, modcode, True, 0);
             XTestFakeKeyEvent(display, modcode, False, 0);
-            XSync(display, 0);
+            /* XSync(display, 0); */
             delay(0, timeout);
         }
-        XSynchronize(display, 0);
+        XFlush(display);
+        /* XSynchronize(display, 0); */
         XCloseDisplay(display);
     }
 }
