@@ -40,6 +40,8 @@ extern void x11SendShiftR();
 extern void x11SendShiftLeft(int n, int r, int timeout);
 extern void setXIgnoreErrorHandler();
 extern char* x11GetFocusWindowClass();
+extern void start_input_watching();
+extern void stop_input_watching();
 */
 import "C"
 import (
@@ -62,6 +64,14 @@ func mouse_click_handler() {
 
 var onMouseMove func()
 var onMouseClick func()
+
+func startInputWatching() {
+	C.start_input_watching()
+}
+
+func stopInputWatching() {
+	C.stop_input_watching()
+}
 
 func startMouseRecording() {
 	C.mouse_recording_init()
@@ -128,7 +138,6 @@ func x11SendBackspace(n int, timeout int) {
 func x11GetFocusWindowClass() string {
 	var wmClass = C.x11GetFocusWindowClass()
 	if wmClass != nil {
-		defer C.free(unsafe.Pointer(wmClass))
 		return C.GoString(wmClass)
 	}
 	return ""

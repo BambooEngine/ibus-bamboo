@@ -72,6 +72,7 @@ Return:
 This function gets called whenever a key is pressed.
 */
 func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
+	e.checkWmClass()
 	if e.checkInputMode(usIM) {
 		if e.isInputModeLTOpened || keyVal == IBusOpenLookupTable {
 			// return false, nil
@@ -86,7 +87,7 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 		return false, nil
 	}
 	log.Printf(">ProcessKeyEvent >  %c | keyCode 0x%04x keyVal 0x%04x | %d\n", rune(keyVal), keyCode, keyVal, len(keyPressChan))
-	if e.config.IBflags&IBinputModeLookupTableEnabled != 0 && keyVal == IBusOpenLookupTable && !e.isInputModeLTOpened && e.wmClasses != "" {
+	if e.config.IBflags&IBinputModeLookupTableEnabled != 0 && keyVal == IBusOpenLookupTable && !e.isInputModeLTOpened && e.getWmClass() != "" {
 		e.resetBuffer()
 		e.isInputModeLTOpened = true
 		e.lastKeyWithShift = true
@@ -118,22 +119,17 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 
 func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 	log.Print("FocusIn.")
-	var oldWmClasses = e.wmClasses
-	e.wmClasses = x11GetFocusWindowClass()
-	fmt.Printf("WM_CLASS=(%s)\n", e.wmClasses)
+	fmt.Printf("WM_CLASS=(%s)\n", e.getWmClass())
 
+	e.checkWmClass()
 	e.RegisterProperties(e.propList)
 	e.RequireSurroundingText()
-	if oldWmClasses != e.wmClasses {
-		e.resetBuffer()
-		e.resetFakeBackspace()
-	}
 	return nil
 }
 
 func (e *IBusBambooEngine) FocusOut() *dbus.Error {
 	log.Print("FocusOut.")
-	//e.wmClasses = ""
+	// e.checkWmClass()
 	return nil
 }
 
@@ -148,11 +144,13 @@ func (e *IBusBambooEngine) Reset() *dbus.Error {
 func (e *IBusBambooEngine) Enable() *dbus.Error {
 	fmt.Print("Enable.")
 	e.RequireSurroundingText()
+	startInputWatching()
 	return nil
 }
 
 func (e *IBusBambooEngine) Disable() *dbus.Error {
 	fmt.Print("Disable.")
+	stopInputWatching()
 	return nil
 }
 

@@ -131,6 +131,14 @@ func (e *IBusBambooEngine) resetBuffer() {
 	}
 }
 
+func (e *IBusBambooEngine) checkWmClass() {
+	if e.wmClasses != e.getWmClass() {
+		e.wmClasses = e.getWmClass()
+		e.resetBuffer()
+		e.resetFakeBackspace()
+	}
+}
+
 func (e *IBusBambooEngine) processShiftKey(keyVal, state uint32) bool {
 	if keyVal == IBusShiftL || keyVal == IBusShiftR {
 		// when press one Shift key
@@ -189,8 +197,8 @@ func (e *IBusBambooEngine) getRawKeyLen() int {
 }
 
 func (e *IBusBambooEngine) getInputMode() int {
-	if e.wmClasses != "" {
-		if im, ok := e.config.InputModeMapping[e.wmClasses]; ok && imLookupTable[im] != "" {
+	if e.getWmClass() != "" {
+		if im, ok := e.config.InputModeMapping[e.getWmClass()]; ok && imLookupTable[im] != "" {
 			return im
 		}
 	}
@@ -201,8 +209,8 @@ func (e *IBusBambooEngine) getInputMode() int {
 }
 
 func (e *IBusBambooEngine) openLookupTable() {
-	var wmClasses = strings.Split(e.wmClasses, ":")
-	var wmClass = e.wmClasses
+	var wmClasses = strings.Split(e.getWmClass(), ":")
+	var wmClass = e.getWmClass()
 	if len(wmClasses) == 2 {
 		wmClass = wmClasses[1]
 	}
@@ -277,7 +285,7 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 
 func (e *IBusBambooEngine) commitInputModeCandidate() {
 	var im = e.inputModeLookupTable.CursorPos + 1
-	e.config.InputModeMapping[e.wmClasses] = int(im)
+	e.config.InputModeMapping[e.getWmClass()] = int(im)
 
 	saveConfig(e.config, e.engineName)
 	e.propList = GetPropListByConfig(e.config)
@@ -366,7 +374,11 @@ func (e *IBusBambooEngine) inBackspaceWhiteList() bool {
 }
 
 func (e *IBusBambooEngine) inBrowserList() bool {
-	return inStringList(DefaultBrowserList, e.wmClasses)
+	return inStringList(DefaultBrowserList, e.getWmClass())
+}
+
+func (e *IBusBambooEngine) getWmClass() string {
+	return x11GetFocusWindowClass()
 }
 
 func (e *IBusBambooEngine) checkInputMode(im int) bool {
