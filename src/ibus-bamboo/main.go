@@ -54,6 +54,9 @@ func main() {
 	if *embedded {
 		os.Chdir(DataDir)
 	}
+	if isWayland && !isGnome {
+		go wlGetFocusWindowClass()
+	}
 	if *version {
 		fmt.Println(Version)
 	} else if *embedded {
