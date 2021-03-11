@@ -378,7 +378,18 @@ func (e *IBusBambooEngine) inBrowserList() bool {
 }
 
 func (e *IBusBambooEngine) getWmClass() string {
-	return x11GetFocusWindowClass()
+	var wmClass string
+	if isWayland {
+		if isGnome {
+			wmClass = gnomeGetFocusWindowClass()
+		} else {
+			wmClass = wlAppId
+		}
+	}
+	if wmClass == "" {
+		wmClass = x11GetFocusWindowClass()
+	}
+	return wmClass
 }
 
 func (e *IBusBambooEngine) checkInputMode(im int) bool {
