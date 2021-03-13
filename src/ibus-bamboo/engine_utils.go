@@ -131,9 +131,9 @@ func (e *IBusBambooEngine) resetBuffer() {
 	}
 }
 
-func (e *IBusBambooEngine) checkWmClass() {
-	if e.wmClasses != e.getWmClass() {
-		e.wmClasses = e.getWmClass()
+func (e *IBusBambooEngine) checkWmClass(newId string) {
+	if e.wmClasses != newId {
+		e.wmClasses = newId
 		e.resetBuffer()
 		e.resetFakeBackspace()
 	}
@@ -238,7 +238,7 @@ func (e *IBusBambooEngine) openLookupTable() {
 }
 
 func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
-	var wmClasses = x11GetFocusWindowClass()
+	var wmClasses = e.getWmClass()
 	//e.HideLookupTable()
 	fmt.Printf("keyCode 0x%04x keyval 0x%04x | %c\n", keyCode, keyVal, rune(keyVal))
 	//e.HideAuxiliaryText()
@@ -378,10 +378,14 @@ func (e *IBusBambooEngine) inBrowserList() bool {
 }
 
 func (e *IBusBambooEngine) getWmClass() string {
+	return e.wmClasses
+}
+
+func (e *IBusBambooEngine) getLatestWmClass() string {
 	var wmClass string
 	if isWayland {
 		if isGnome {
-			wmClass = gnomeGetFocusWindowClass()
+			wmClass, _ = gnomeGetFocusWindowClass()
 		} else {
 			wmClass = wlAppId
 		}

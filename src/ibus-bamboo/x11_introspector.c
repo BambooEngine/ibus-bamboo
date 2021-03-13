@@ -97,7 +97,11 @@ char * x11GetFocusWindowClassByDpy(Display *display) {
 }
 
 char * x11GetFocusWindowClass() {
-    return text;
+    Display * dpy;
+    dpy = XOpenDisplay(NULL);
+    char * wm = x11GetFocusWindowClassByDpy(dpy);
+    XCloseDisplay(dpy);
+    return wm;
 }
 
 static int input_watching = 0;
@@ -143,11 +147,12 @@ static void* thread_input_watching(void* data)
     }
     input_watching = 0;
     th_count--;
+    free(text);
     XCloseDisplay(dpy);
     return NULL;
 }
 
-void start_input_watching()
+void x11StartWindowInspector()
 {
     setbuf(stdout, NULL);
     setbuf(stderr, NULL);
@@ -161,6 +166,6 @@ void start_input_watching()
     pthread_detach(th_input_watch);
 }
 
-void stop_input_watching() {
+void x11StopWindowInspector() {
     input_watching = 0;
 }
