@@ -7,6 +7,7 @@
 package main
 
 import (
+	"context"
 	"sync"
 
 	wl "github.com/dkolbly/wl"
@@ -67,12 +68,13 @@ func (p *ZwlrForeignToplevelManagerV1) RemoveFinishedHandler(h ZwlrForeignToplev
 	}
 }
 
-func (p *ZwlrForeignToplevelManagerV1) Dispatch(event *wl.Event) {
+func (p *ZwlrForeignToplevelManagerV1) Dispatch(c context.Context, event *wl.Event) {
 	switch event.Opcode {
 	case 0:
 		if len(p.toplevelHandlers) > 0 {
 			ev := ZwlrForeignToplevelManagerV1ToplevelEvent{}
-			ev.Toplevel = event.Proxy(p.Context()).(*ZwlrForeignToplevelHandleV1)
+			// ev.Toplevel = event.Proxy(p.Context()).(*ZwlrForeignToplevelHandleV1)
+			ev.Toplevel = NewZwlrForeignToplevelHandleV1(p.Context(), wl.ProxyId(event.Uint32()))
 			p.mu.RLock()
 			for _, h := range p.toplevelHandlers {
 				h.HandleZwlrForeignToplevelManagerV1Toplevel(ev)
@@ -339,7 +341,7 @@ func (p *ZwlrForeignToplevelHandleV1) RemoveParentHandler(h ZwlrForeignToplevelH
 	}
 }
 
-func (p *ZwlrForeignToplevelHandleV1) Dispatch(event *wl.Event) {
+func (p *ZwlrForeignToplevelHandleV1) Dispatch(c context.Context, event *wl.Event) {
 	switch event.Opcode {
 	case 0:
 		if len(p.titleHandlers) > 0 {
@@ -435,8 +437,9 @@ type ZwlrForeignToplevelHandleV1 struct {
 	parentHandlers      []ZwlrForeignToplevelHandleV1ParentHandler
 }
 
-func NewZwlrForeignToplevelHandleV1(ctx *wl.Context) *ZwlrForeignToplevelHandleV1 {
+func NewZwlrForeignToplevelHandleV1(ctx *wl.Context, pid wl.ProxyId) *ZwlrForeignToplevelHandleV1 {
 	ret := new(ZwlrForeignToplevelHandleV1)
+	ret.SetId(pid)
 	ctx.Register(ret)
 	return ret
 }

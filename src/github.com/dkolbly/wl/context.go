@@ -27,10 +27,15 @@ type Context struct {
 func (ctx *Context) Register(proxy Proxy) {
 	ctx.mu.Lock()
 	defer ctx.mu.Unlock()
-	ctx.currentId += 1
-	proxy.SetId(ctx.currentId)
+	pid := proxy.Id()
 	proxy.SetContext(ctx)
-	ctx.objects[ctx.currentId] = proxy
+	if pid > 0 {
+		ctx.objects[pid] = proxy
+	} else {
+		ctx.currentId += 1
+		proxy.SetId(ctx.currentId)
+		ctx.objects[ctx.currentId] = proxy
+	}
 }
 
 func (ctx *Context) lookupProxy(id ProxyId) Proxy {

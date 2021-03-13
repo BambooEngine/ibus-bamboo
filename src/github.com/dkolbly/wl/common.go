@@ -1,8 +1,6 @@
 package wl
 
-import (
-	"context"
-)
+import "context"
 
 type ProxyId uint32
 
