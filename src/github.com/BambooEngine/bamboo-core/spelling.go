@@ -13,6 +13,7 @@ var firstConsonantSeqs = []string{
 	"c h k kh qu th",
 	"ch gi l ng ngh x",
 	"đ l",
+	"h",
 }
 
 var vowelSeqs = []string{
@@ -23,6 +24,7 @@ var vowelSeqs = []string{
 	"uơ",
 	"ai ao au âu ay ây eo êu ia iêu iu oai oao oay oeo oi ôi ơi ưa uây ui ưi uôi ươi ươu ưu uya uyu yêu",
 	"ă",
+	"i",
 }
 
 var lastConsonantSeqs = []string{
@@ -30,16 +32,18 @@ var lastConsonantSeqs = []string{
 	"c ng",
 	"m n p t",
 	"k",
+	"c",
 }
 
-var cvMatrix = [4][]int{
+var cvMatrix = [][]int{
 	{0, 1, 2, 5},
 	{0, 1, 2, 3, 4, 5},
 	{0, 1, 2, 3, 5},
 	{6},
+	{7},
 }
 
-var vcMatrix = [7][]int{
+var vcMatrix = [][]int{
 	{0, 2},
 	{0, 1, 2},
 	{1, 2},
@@ -47,6 +51,7 @@ var vcMatrix = [7][]int{
 	{},
 	{},
 	{3},
+	{4},
 }
 
 func lookup(seq []string, input string, inputIsFull, inputIsComplete bool) []int {
