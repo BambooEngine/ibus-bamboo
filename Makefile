@@ -21,7 +21,7 @@ engine_name=bamboo
 ibus_e_name=ibus-engine-$(engine_name)
 keyboard_shortcut_editor=keyboard-shortcut-editor
 pkg_name=ibus-$(engine_name)
-version=0.7.0
+version=0.7.1
 
 engine_dir=$(PREFIX)/share/$(pkg_name)
 ibus_dir=$(PREFIX)/share/ibus
