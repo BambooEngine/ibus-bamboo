@@ -28,24 +28,25 @@ import (
 )
 
 const (
-	PropKeyAbout                = "about"
-	PropKeyStdToneStyle         = "std_tone_style"
-	PropKeyFreeToneMarking      = "tone_free_marking"
-	PropKeyEnableSpellCheck     = "enable_spell_check"
-	PropKeySpellCheckByRules    = "spell_check_by_rules"
-	PropKeySpellCheckByDicts    = "spell_check_by_dicts"
-	PropKeyPreeditInvisibility  = "preedit_invisibility"
-	PropKeyVnCharsetConvert     = "charset_convert_page"
-	PropKeyMouseCapturing       = "mouse_capturing"
-	PropKeyMacroEnabled         = "macro_enabled"
-	PropKeyMacroTable           = "open_macro_table"
-	PropKeyEmojiEnabled         = "emoji_enabled"
-	PropKeyConfiguration        = "configuration"
-	PropKeyPreeditElimination   = "preedit_elimination"
-	PropKeyInputModeLookupTable = "input_mode_lookup_table"
-	PropKeyAutoCapitalizeMacro  = "auto_capitalize_macro"
-	PropKeyIMQuickSwitchEnabled = "im_quick_switch"
-	PropKeyRestoreKeyStrokes    = "restore_key_strokes"
+	PropKeyAbout                        = "about"
+	PropKeyStdToneStyle                 = "std_tone_style"
+	PropKeyFreeToneMarking              = "tone_free_marking"
+	PropKeyEnableSpellCheck             = "enable_spell_check"
+	PropKeySpellCheckByRules            = "spell_check_by_rules"
+	PropKeySpellCheckByDicts            = "spell_check_by_dicts"
+	PropKeyPreeditInvisibility          = "preedit_invisibility"
+	PropKeyVnCharsetConvert             = "charset_convert_page"
+	PropKeyMouseCapturing               = "mouse_capturing"
+	PropKeyMacroEnabled                 = "macro_enabled"
+	PropKeyMacroTable                   = "open_macro_table"
+	PropKeyEmojiEnabled                 = "emoji_enabled"
+	PropKeyConfiguration                = "configuration"
+	PropKeyPreeditElimination           = "preedit_elimination"
+	PropKeyInputModeLookupTable         = "input_mode_lookup_table"
+	PropKeyInputModeLookupTableShortcut = "input_mode_lookup_table_shortcut"
+	PropKeyAutoCapitalizeMacro          = "auto_capitalize_macro"
+	PropKeyIMQuickSwitchEnabled         = "im_quick_switch"
+	PropKeyRestoreKeyStrokes            = "restore_key_strokes"
 )
 
 var IBusSeparator = &ibus.Property{
@@ -479,6 +480,18 @@ func GetHotKeyPropListByConfig(c *Config) *ibus.PropList {
 		},
 		&ibus.Property{
 			Name:      "IBusProperty",
+			Key:       PropKeyRestoreKeyStrokes,
+			Type:      ibus.PROP_TYPE_TOGGLE,
+			Label:     dbus.MakeVariant(ibus.NewText("Khôi phục phím  [Shift + Space]")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Restore key strokes")),
+			Sensitive: true,
+			Visible:   true,
+			State:     restoreKeyStrokesChecked,
+			Symbol:    dbus.MakeVariant(ibus.NewText("")),
+			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+		},
+		&ibus.Property{
+			Name:      "IBusProperty",
 			Key:       PropKeyInputModeLookupTable,
 			Type:      ibus.PROP_TYPE_TOGGLE,
 			Label:     dbus.MakeVariant(ibus.NewText("Chuyển chế độ gõ  [Shift + ~]")),
@@ -491,13 +504,12 @@ func GetHotKeyPropListByConfig(c *Config) *ibus.PropList {
 		},
 		&ibus.Property{
 			Name:      "IBusProperty",
-			Key:       PropKeyRestoreKeyStrokes,
-			Type:      ibus.PROP_TYPE_TOGGLE,
-			Label:     dbus.MakeVariant(ibus.NewText("Khôi phục phím  [Shift + Space]")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("Restore key strokes")),
+			Key:       PropKeyInputModeLookupTableShortcut,
+			Type:      ibus.PROP_TYPE_NORMAL,
+			Label:     dbus.MakeVariant(ibus.NewText("Chọn phím tắt chuyển chế độ gõ")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Custom Input Mode LookupTable")),
 			Sensitive: true,
 			Visible:   true,
-			State:     restoreKeyStrokesChecked,
 			Symbol:    dbus.MakeVariant(ibus.NewText("")),
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},

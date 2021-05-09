@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/bamboo/keyboard-editor">
+    <file>enter-keyboard-shortcut.svg</file>
+    <file>keyboard-shortcut-editor.ui</file>
+  </gresource>
+</gresources>

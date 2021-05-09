@@ -12,7 +12,7 @@ License: GPLv3+
 URL: https://github.com/BambooEngine/ibus-bamboo
 Source0: %{name}-%{version}.tar.gz
 
-BuildRequires: go, libX11-devel, libXtst-devel
+BuildRequires: go, libX11-devel, libXtst-devel, gtk3-devel
 Requires: ibus
 
 %description

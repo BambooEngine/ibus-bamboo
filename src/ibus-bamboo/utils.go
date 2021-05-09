@@ -128,6 +128,7 @@ type Config struct {
 	Flags                  uint
 	IBflags                uint
 	JupiterFlags           uint
+	InputModeShortcut      string
 	DefaultInputMode       int
 	InputModeMapping       map[string]int
 }
@@ -161,6 +162,7 @@ func loadConfig(engineName string) *Config {
 		InputMethodDefinitions: bamboo.GetInputMethodDefinitions(),
 		Flags:                  bamboo.EstdFlags,
 		IBflags:                flags,
+		InputModeShortcut:      "126,1",
 		DefaultInputMode:       preeditIM,
 		InputModeMapping:       map[string]int{},
 	}

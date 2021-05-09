@@ -95,6 +95,7 @@ type registrar struct {
 func (r registrar) HandleRegistryGlobal(ev wl.RegistryGlobalEvent) {
 	r.ch <- ev
 }
+
 type toplevelHandlers struct {
 	adHandler *appIdHandler
 }
@@ -105,7 +106,7 @@ func (t toplevelHandlers) HandleZwlrForeignToplevelManagerV1Toplevel(ev ZwlrFore
 }
 
 type appIdHandler struct {
-	ch chan string
+	ch             chan string
 	isAppIdUpdated bool
 }
 
@@ -120,4 +121,3 @@ func (a *appIdHandler) HandleZwlrForeignToplevelHandleV1Done(ev ZwlrForeignTople
 	}
 	a.isAppIdUpdated = false
 }
-

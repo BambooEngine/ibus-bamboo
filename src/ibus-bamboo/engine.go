@@ -73,7 +73,7 @@ This function gets called whenever a key is pressed.
 */
 func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
 	if e.checkInputMode(usIM) {
-		if e.isInputModeLTOpened || keyVal == IBusOpenLookupTable {
+		if e.isInputModeLTOpened || e.isInputModeShortcutKeyPressed(keyVal, keyCode, state) {
 			// return false, nil
 		} else {
 			return false, nil
@@ -82,11 +82,11 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 	if e.processShiftKey(keyVal, state) {
 		return true, nil
 	}
-	if e.isIgnoredKey(keyVal, state) {
+	if e.isIgnoredKey(keyVal, keyCode, state) {
 		return false, nil
 	}
 	log.Printf(">ProcessKeyEvent >  %c | keyCode 0x%04x keyVal 0x%04x | %d\n", rune(keyVal), keyCode, keyVal, len(keyPressChan))
-	if e.config.IBflags&IBinputModeLookupTableEnabled != 0 && keyVal == IBusOpenLookupTable && !e.isInputModeLTOpened && e.getWmClass() != "" {
+	if e.config.IBflags&IBinputModeLookupTableEnabled != 0 && e.isInputModeShortcutKeyPressed(keyVal, keyCode, state) && !e.isInputModeLTOpened && e.getWmClass() != "" {
 		e.resetBuffer()
 		e.isInputModeLTOpened = true
 		e.lastKeyWithShift = true
@@ -116,14 +116,14 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 	return e.preeditProcessKeyEvent(keyVal, keyCode, state)
 }
 
+func (e *IBusBambooEngine) isInputModeShortcutKeyPressed(keyVal, keyCode, state uint32) bool {
+	// fmt.Printf("in=(%d,%d)\n", keyVal, state);
+	return fmt.Sprintf("%d,%d", keyVal, state) == e.config.InputModeShortcut
+}
+
 func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 	log.Print("FocusIn.")
-	var latestWm string
-	if isGnome && isGnomeOverviewVisible() {
-		latestWm = ""
-	} else {
-		latestWm = e.getLatestWmClass()
-	}
+	var latestWm = e.getLatestWmClass()
 	e.checkWmClass(latestWm)
 	e.RegisterProperties(e.propList)
 	e.RequireSurroundingText()
@@ -267,6 +267,19 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	if propName == PropKeyConfiguration {
 		exec.Command("xdg-open", getConfigPath(e.engineName)).Start()
 		return nil
+	}
+	if propName == PropKeyInputModeLookupTableShortcut {
+		out, err := exec.Command("/usr/lib/ibus-bamboo/keyboard-shortcut-editor").Output()
+		if err != nil {
+			out, err = exec.Command("./keyboard-shortcut-editor").Output()
+			if err != nil {
+				return nil
+			}
+		}
+		if len(out) > 0 {
+			e.config.InputModeShortcut = string(out)
+			fmt.Printf("output=(%s)\n", out)
+		}
 	}
 	if propName == PropKeyMacroTable {
 		OpenMactabFile(e.engineName)

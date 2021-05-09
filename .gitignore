@@ -24,3 +24,4 @@ debian/.debhelper
 *_linux
 *.tar.gz
 ibus-engine-*
+keyboard-shortcut-editor
