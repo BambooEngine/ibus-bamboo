@@ -78,11 +78,10 @@
                     <property name="can_focus">False</property>
                     <property name="spacing">18</property>
                     <child type="center">
-                      <object class="GtkShortcutLabel" id="shortcut_accel_label">
+                      <object class="GtkLabel" id="shortcut_accel_label">
                         <property name="visible">True</property>
                         <property name="can_focus">False</property>
                         <property name="halign">center</property>
-                        <property name="disabled-text" translatable="yes">Disabled</property>
                       </object>
                     </child>
                     <child>

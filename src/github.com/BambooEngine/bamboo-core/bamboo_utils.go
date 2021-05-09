@@ -243,7 +243,7 @@ func extractCvcTrans(composition []*Transformation) ([]*Transformation, []*Trans
 
 func extractLastWordWithPunctuationMarks(composition []*Transformation, effectKeys []rune) ([]*Transformation, []*Transformation) {
 	for i := len(composition) - 1; i >= 0; i-- {
-		var canvas = getCanvas(composition[i:], EnglishMode|LowerCase|ToneLess|MarkLess)
+		var canvas = getCanvas(composition[i:], EnglishMode)
 		if len(canvas) == 0 {
 			continue
 		}

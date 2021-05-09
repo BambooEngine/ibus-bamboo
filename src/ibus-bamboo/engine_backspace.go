@@ -144,7 +144,7 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 		return
 	}
 
-	newText, isLast := e.getCommitText(keyVal, keyCode, state)
+	newText, oldText := e.getCommitText(keyVal, keyCode, state)
 	if newText != "" {
 		if e.shouldAppendDeadKey(newText, oldText) {
 			fmt.Println("Append a deadkey")
@@ -153,17 +153,16 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 			e.isFirstTimeSendingBS = false
 			e.SendBackSpace(1)
 		}
-		e.batchUpdatePreviousText(oldText, newText, isLast)
+		e.batchUpdatePreviousText(oldText, newText)
 		return
 	}
 	e.preeditor.Reset()
 	e.ForwardKeyEvent(keyVal, keyCode, state)
 }
 
-func (e *IBusBambooEngine) getCommitText(keyVal, keyCode, state uint32) (string, bool) {
+func (e *IBusBambooEngine) getCommitText(keyVal, keyCode, state uint32) (string, string) {
 	var keyRune = rune(keyVal)
 	oldText := e.getPreeditString()
-	_, oldMacText := e.getMacroText()
 	if e.preeditor.CanProcessKey(keyRune) {
 		if state&IBusLockMask != 0 {
 			keyRune = e.toUpper(keyRune)
@@ -171,18 +170,19 @@ func (e *IBusBambooEngine) getCommitText(keyVal, keyCode, state uint32) (string,
 		e.preeditor.ProcessKey(keyRune, e.getBambooInputMode())
 		if inKeyList(e.preeditor.GetInputMethod().AppendingKeys, keyRune) {
 			if fullSeq := e.preeditor.GetProcessedString(bamboo.VietnameseMode); len(fullSeq) > 0 && rune(fullSeq[len(fullSeq)-1]) == keyRune {
-				// u] => uo?
-				return fullSeq, false
-			} else if newText := e.getPreeditString(); newText != "" && keyRune == rune(newText[len(newText)-1]) {
-				// ]] => ]
+				// [[ => [
 				e.preeditor.Reset()
-				return oldText + string(keyRune), true
+				return fullSeq, oldText
+			} else if newText := e.getPreeditString(); newText != "" && keyRune == rune(newText[len(newText)-1]) {
+				// f] => f]
+				e.preeditor.Reset()
+				return string(keyRune), ""
 			} else {
 				// ] => o?
-				return e.getPreeditString(), false
+				return e.getPreeditString(), oldText
 			}
 		} else {
-			return e.getPreeditString(), false
+			return e.getPreeditString(), oldText
 		}
 	} else if bamboo.IsWordBreakSymbol(keyRune) {
 		// restore key strokes by pressing Shift + Space
@@ -191,29 +191,34 @@ func (e *IBusBambooEngine) getCommitText(keyVal, keyCode, state uint32) (string,
 			if bamboo.HasAnyVietnameseRune(oldText) {
 				commitText := e.preeditor.GetProcessedString(bamboo.EnglishMode)
 				e.preeditor.RestoreLastWord()
-				return commitText, false
+				return commitText, oldText
 			}
 			e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
-			return oldText + string(keyRune), true
+			return string(keyRune), ""
 		}
 		// macro processing
-		var keyS = string(keyRune)
-		if e.macroTable.HasKey(oldMacText) {
-			return e.expandMacro(oldMacText) + keyS, true
-		} else if e.macroTable.HasKey(oldMacText + keyS) {
-			e.preeditor.ProcessKey(keyRune, e.getBambooInputMode())
-			return oldMacText + keyS, true
+		if e.config.IBflags&IBmacroEnabled != 0 {
+			var keyS = string(keyRune)
+			var text = e.preeditor.GetProcessedString(bamboo.PunctuationMode)
+			if keyVal == IBusSpace && e.macroTable.HasKey(text) {
+				var ret = e.expandMacro(text) + keyS
+				e.preeditor.Reset()
+				return ret, text
+			} else if e.macroTable.HasKey(text + keyS) {
+				e.preeditor.ProcessKey(keyRune, e.getBambooInputMode())
+				return keyS, ""
+			}
 		}
 		if bamboo.HasAnyVietnameseRune(oldText) && e.mustFallbackToEnglish() {
 			e.preeditor.RestoreLastWord()
 			newText := e.preeditor.GetProcessedString(bamboo.EnglishMode) + string(keyRune)
 			e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
-			return newText, true
+			return newText, oldText
 		}
 		e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
-		return oldText + string(keyRune), true
+		return string(keyRune), ""
 	}
-	return "", false
+	return "", ""
 }
 
 func (e *IBusBambooEngine) getPreeditOffset(newRunes, oldRunes []rune) int {
@@ -251,13 +256,13 @@ func (e *IBusBambooEngine) updatePreviousText(oldText, newText string) {
 	e.bsCommitText(offsetRunes)
 }
 
-func (e *IBusBambooEngine) batchUpdatePreviousText(oldText, newText string, isLastRune bool) {
+func (e *IBusBambooEngine) batchUpdatePreviousText(oldText, newText string) {
 	offsetRunes, nBackSpace := e.getOffsetRunes(newText, oldText)
 	if nBackSpace > 0 {
 		e.SendBackSpace(nBackSpace)
 	}
 	var buffer = []string{string(offsetRunes)}
-	if isLastRune {
+	if len(oldText) == 0 {
 		buffer = append(buffer, "")
 	}
 	var isDirty = false
@@ -266,34 +271,34 @@ func (e *IBusBambooEngine) batchUpdatePreviousText(oldText, newText string, isLa
 		var keyVal, keyCode, state = keyEvents[0], keyEvents[1], keyEvents[2]
 		if !e.isValidState(state) || !e.canProcessKey(keyVal) {
 			if isDirty {
-				e.batchCommit(oldText, strings.Join(buffer, ""), nBackSpace, isLastRune)
+				e.batchCommit(oldText, strings.Join(buffer, ""), nBackSpace)
 				buffer = []string{""}
 			}
 			e.ForwardKeyEvent(keyVal, keyCode, state)
 		} else {
-			var commitText, isLastRune0 = e.getCommitText(keyVal, keyCode, state)
+			var commitText, oldText0 = e.getCommitText(keyVal, keyCode, state)
 			buffer[len(buffer)-1] = commitText
-			if isLastRune0 {
+			if len(oldText0) == 0 {
 				buffer = append(buffer, "")
 			}
 			isDirty = true
 		}
 	}
 	if isDirty {
-		e.batchCommit(oldText, strings.Join(buffer, ""), nBackSpace, isLastRune)
+		e.batchCommit(oldText, strings.Join(buffer, ""), nBackSpace)
 		return
 	}
 	log.Printf("Updating Previous Text %s ---> %s\n", oldText, newText)
 	e.bsCommitText(offsetRunes)
 }
 
-func (e *IBusBambooEngine) batchCommit(oldText string, newText string, nBackSpace int, isLastRune bool) {
+func (e *IBusBambooEngine) batchCommit(oldText string, newText string, nBackSpace int) {
 	fullRunes := []rune(newText)
 	if len(fullRunes) == 0 {
 		return
 	}
 	offsetRunes0, nBackSpace0 := e.getOffsetRunes(newText, oldText)
-	if isLastRune {
+	if len(oldText) == 0 {
 		e.bsCommitText(offsetRunes0)
 		return
 	}

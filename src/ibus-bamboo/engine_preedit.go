@@ -33,6 +33,9 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	var rawKeyLen = e.getRawKeyLen()
 	var keyRune = rune(keyVal)
 	var oldText = e.getPreeditString()
+	if e.config.IBflags&IBmacroEnabled != 0 {
+		oldText = e.getProcessedString(bamboo.PunctuationMode)
+	}
 	defer e.updateLastKeyWithShift(keyVal, state)
 
 	// workaround for chrome's address bar and Google SpreadSheets
@@ -65,6 +68,22 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		return true, nil
 	}
 
+	newText, oldText0 := e.getCommitText(keyVal, keyCode, state)
+	macroExpanding := e.config.IBflags&IBmacroEnabled != 0 && keyVal == IBusSpace
+	shouldCommit := e.config.IBflags&IBmacroEnabled == 0 && len(e.getPreeditString()) == 0
+	if inKeyList(e.preeditor.GetInputMethod().AppendingKeys, keyRune) && bamboo.IsWordBreakSymbol(rune(newText[len(newText)-1])) {
+		shouldCommit = true
+	}
+	var ret = newText
+	if len(oldText0) == 0 {
+		ret = oldText + newText
+	}
+	if shouldCommit || macroExpanding {
+		e.commitPreedit(ret)
+		return true, nil
+	}
+	e.updatePreedit(ret)
+	return true, nil
 	if e.preeditor.CanProcessKey(keyRune) {
 		if state&IBusLockMask != 0 {
 			keyRune = e.toUpper(keyRune)

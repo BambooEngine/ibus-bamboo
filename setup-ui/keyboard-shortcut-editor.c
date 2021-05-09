@@ -39,8 +39,7 @@ struct _CcKeyboardShortcutEditor
   GtkBox             *standard_box;
   GtkBox             *edit_box;
   GtkStack           *stack;
-  GtkShortcutLabel   *shortcut_accel_label;
-  GdkDevice          *grab_pointer;
+  GtkLabel   *shortcut_accel_label;
   guint               grab_idle_id;
 
   CcKeyCombo         *custom_combo;
@@ -88,47 +87,6 @@ cancel_editing (CcKeyboardShortcutEditor *self)
   clear_custom_entries (self);
 
   gtk_widget_destroy (GTK_WIDGET (self));
-}
-
-static void
-grab_seat (CcKeyboardShortcutEditor *self)
-{
-  GdkGrabStatus status;
-  GdkWindow *window;
-  GdkSeat *seat;
-
-  window = gtk_widget_get_window (GTK_WIDGET (self));
-  g_assert (window);
-
-  seat = gdk_display_get_default_seat (gdk_window_get_display (window));
-
-  status = gdk_seat_grab (seat,
-                          window,
-                          GDK_SEAT_CAPABILITY_KEYBOARD,
-                          FALSE,
-                          NULL,
-                          NULL,
-                          NULL,
-                          NULL);
-
-  if (status != GDK_GRAB_SUCCESS) {
-    g_warning ("Grabbing keyboard failed");
-    return;
-  }
-
-  self->grab_pointer = gdk_seat_get_keyboard (seat);
-  if (!self->grab_pointer)
-    self->grab_pointer = gdk_seat_get_pointer (seat);
-}
-
-static void
-release_grab (CcKeyboardShortcutEditor *self)
-{
-  if (self->grab_pointer)
-    {
-      gdk_seat_ungrab (gdk_device_get_seat (self->grab_pointer));
-      self->grab_pointer = NULL;
-    }
 }
 
 static void
@@ -231,7 +189,6 @@ cc_keyboard_shortcut_editor_key_press_event (GtkWidget   *widget,
   if (!event->is_modifier && real_mask == 0 && keyval_lower == GDK_KEY_Escape)
     {
 
-      release_grab (self);
       cancel_editing (self);
 
       return GDK_EVENT_STOP;
@@ -244,10 +201,17 @@ cc_keyboard_shortcut_editor_key_press_event (GtkWidget   *widget,
   /* CapsLock isn't supported as a keybinding modifier, so keep it from confusing us */
   self->custom_combo->mask &= ~GDK_LOCK_MASK;
 
+  GtkWidget *label;
 
   g_autofree gchar *accel = NULL;
-  accel = gtk_accelerator_name (keyval_lower, real_mask);
-  gtk_shortcut_label_set_accelerator (self->shortcut_accel_label, accel);
+
+  #if GTK_MAJOR_VERSION <= 3 && GTK_MINOR_VERSION < 24
+    accel = gtk_accelerator_get_label_with_keycode (NULL, self->custom_combo->keyval, self->custom_combo->keycode, self->custom_combo->mask);
+    gtk_label_set_text (self->shortcut_accel_label, accel);
+  #else
+    accel = gtk_accelerator_name (keyval_lower, real_mask);
+    gtk_shortcut_label_set_accelerator (GTK_SHORTCUT_LABEL(self->shortcut_accel_label), accel);
+  #endif
   gtk_stack_set_visible_child (self->stack, GTK_WIDGET (self->standard_box));
   gtk_widget_show (GTK_WIDGET (self->set_button));
   /* gtk_widget_show (GTK_WIDGET (self->revert_button)); */
@@ -273,8 +237,6 @@ static gboolean
 grab_idle (gpointer data)
 {
   CcKeyboardShortcutEditor *self = data;
-
-  /* grab_seat (self); */
 
   self->grab_idle_id = 0;
 
@@ -303,8 +265,6 @@ cc_keyboard_shortcut_editor_unrealize (GtkWidget *widget)
     self->grab_idle_id = 0;
   }
 
-  release_grab (self);
-
   GTK_WIDGET_CLASS (cc_keyboard_shortcut_editor_parent_class)->unrealize (widget);
 }
 
@@ -325,7 +285,11 @@ cc_keyboard_shortcut_editor_class_init (CcKeyboardShortcutEditorClass *klass)
 
   dialog_class->close = cc_keyboard_shortcut_editor_close;
   dialog_class->response = cc_keyboard_shortcut_editor_response;
-  gtk_widget_class_set_template_from_resource (widget_class, "/org/bamboo/keyboard-editor/keyboard-shortcut-editor.ui");
+#if GTK_MAJOR_VERSION <= 3 && GTK_MINOR_VERSION < 24
+  gtk_widget_class_set_template_from_resource (widget_class, "/org/input/bamboo/setup-ui/keyboard-shortcut-editor-v3.ui");
+#else
+  gtk_widget_class_set_template_from_resource (widget_class, "/org/input/bamboo/setup-ui/keyboard-shortcut-editor.ui");
+#endif
 
   gtk_widget_class_bind_template_child (widget_class, CcKeyboardShortcutEditor, cancel_button);
   gtk_widget_class_bind_template_child (widget_class, CcKeyboardShortcutEditor, headerbar);

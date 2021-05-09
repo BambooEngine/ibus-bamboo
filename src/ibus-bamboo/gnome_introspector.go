@@ -18,7 +18,7 @@ func gnomeGetFocusWindowClass() (string, error) {
 		}
 	}()
 
-	js_code := "global.get_window_actors().find(window => window.meta_window.has_focus()).get_meta_window().get_wm_class()"
+	js_code := "global.get_window_actors().find(window => !Main.overview.visible && window.meta_window.has_focus()).get_meta_window().get_wm_class()"
 	obj := conn.Object("org.gnome.Shell", "/org/gnome/Shell")
 	var ok bool
 	err = obj.Call("org.gnome.Shell.Eval", 0, js_code).Store(&ok, &s)
