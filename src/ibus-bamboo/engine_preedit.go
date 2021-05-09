@@ -94,8 +94,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 			}
 			return true, nil
 		}
-		if ok, macText := e.getMacroText(); ok {
-			e.commitPreedit(macText + string(keyRune))
+		if e.commitMacroText(keyRune) {
 			return true, nil
 		}
 		e.commitPreedit(e.getComposedString(oldText) + string(keyRune))

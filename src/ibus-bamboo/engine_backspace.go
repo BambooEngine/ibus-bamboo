@@ -197,10 +197,12 @@ func (e *IBusBambooEngine) getCommitText(keyVal, keyCode, state uint32) (string,
 			return oldText + string(keyRune), true
 		}
 		// macro processing
-		if oldMacText != "" {
-			macText := oldMacText + string(keyRune)
-			e.preeditor.Reset()
-			return macText, true
+		var keyS = string(keyRune)
+		if e.macroTable.HasKey(oldMacText) {
+			return e.expandMacro(oldMacText) + keyS, true
+		} else if e.macroTable.HasKey(oldMacText + keyS) {
+			e.preeditor.ProcessKey(keyRune, e.getBambooInputMode())
+			return oldMacText + keyS, true
 		}
 		if bamboo.HasAnyVietnameseRune(oldText) && e.mustFallbackToEnglish() {
 			e.preeditor.RestoreLastWord()

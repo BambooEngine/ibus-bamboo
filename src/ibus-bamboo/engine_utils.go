@@ -175,7 +175,7 @@ func (e *IBusBambooEngine) updateLastKeyWithShift(keyVal, state uint32) {
 	}
 }
 
-func (e *IBusBambooEngine) isIgnoredKey(keyVal, state uint32) bool {
+func (e *IBusBambooEngine) isIgnoredKey(keyVal, keyCode, state uint32) bool {
 	if state&IBusReleaseMask != 0 {
 		//Ignore key-up event
 		return true
@@ -184,7 +184,7 @@ func (e *IBusBambooEngine) isIgnoredKey(keyVal, state uint32) bool {
 		return true
 	}
 	if e.checkInputMode(usIM) {
-		if e.isInputModeLTOpened || keyVal == IBusOpenLookupTable {
+		if e.isInputModeLTOpened || e.isInputModeShortcutKeyPressed(keyVal, keyCode, state) {
 			return false
 		}
 		return true
@@ -245,7 +245,7 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 	if wmClasses == "" {
 		return true, nil
 	}
-	if keyVal == IBusOpenLookupTable {
+	if e.isInputModeShortcutKeyPressed(keyVal, keyCode, state) {
 		e.closeInputModeCandidates()
 		return false, nil
 	}
@@ -318,18 +318,30 @@ func (e *IBusBambooEngine) isValidState(state uint32) bool {
 	return true
 }
 
+func (e *IBusBambooEngine) commitMacroText(keyRune rune) bool {
+	if e.config.IBflags&IBmacroEnabled == 0 {
+		return false
+	}
+	var keyS = string(keyRune)
+	var text = e.preeditor.GetProcessedString(bamboo.PunctuationMode)
+	if e.macroTable.HasKey(text) {
+		e.commitPreedit(e.expandMacro(text) + keyS)
+		return true
+	} else if e.macroTable.HasKey(text + keyS) {
+		e.preeditor.ProcessKey(keyRune, e.getBambooInputMode())
+		e.updatePreedit(text + keyS)
+		return true
+	}
+	return false
+}
+
 func (e *IBusBambooEngine) getMacroText() (bool, string) {
 	if e.config.IBflags&IBmacroEnabled == 0 {
 		return false, ""
 	}
-	var text = e.preeditor.GetProcessedString(bamboo.VietnameseMode)
-	if e.macroTable.HasKey(strings.ToLower(text)) {
+	var text = e.preeditor.GetProcessedString(bamboo.PunctuationMode)
+	if e.macroTable.HasKey(text) {
 		return true, e.expandMacro(text)
-	} else {
-		text = e.preeditor.GetProcessedString(bamboo.PunctuationMode)
-		if e.macroTable.HasKey(strings.ToLower(text)) {
-			return true, e.expandMacro(text)
-		}
 	}
 	return false, ""
 }
@@ -383,12 +395,10 @@ func (e *IBusBambooEngine) getWmClass() string {
 
 func (e *IBusBambooEngine) getLatestWmClass() string {
 	var wmClass string
-	if isWayland {
-		if isGnome {
-			wmClass, _ = gnomeGetFocusWindowClass()
-		} else {
-			wmClass = wlAppId
-		}
+	if isGnome {
+		wmClass, _ = gnomeGetFocusWindowClass()
+	} else if isWayland {
+		wmClass = wlAppId
 	}
 	if wmClass == "" {
 		wmClass = x11GetFocusWindowClass()

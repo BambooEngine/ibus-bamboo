@@ -100,7 +100,7 @@ func (e *BambooEngine) GetProcessedString(mode Mode) string {
 	if mode&FullText != 0 {
 		tmp = e.composition
 	} else if mode&PunctuationMode != 0 {
-		_, tmp = extractLastPunctuationMarks(e.composition, e.inputMethod.Keys)
+		_, tmp = extractLastWordWithPunctuationMarks(e.composition, e.inputMethod.Keys)
 		return Flatten(tmp, EnglishMode)
 	} else {
 		_, tmp = extractLastWord(e.composition, e.inputMethod.Keys)

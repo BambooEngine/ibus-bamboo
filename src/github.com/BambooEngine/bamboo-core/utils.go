@@ -21,6 +21,10 @@ var PunctuationMarks = []rune{
 	'|',
 }
 
+func IsSpace(key rune) bool {
+	return key == ' '
+}
+
 func IsPunctuationMark(key rune) bool {
 	for _, c := range PunctuationMarks {
 		if c == key {
