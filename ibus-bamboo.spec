@@ -6,7 +6,7 @@
 %define _unpackaged_files_terminate_build 0
 
 Name: ibus-bamboo
-Version: 0.7.1
+Version: 0.7.2
 Release: 1%{?dist}
 Summary: A Vietnamese input method for IBus
 
@@ -15,7 +15,7 @@ URL: https://github.com/BambooEngine/ibus-bamboo
 Source0: %{name}-%{version}.tar.gz
 
 BuildRequires: go, libX11-devel, libXtst-devel, gtk3-devel
-Requires: ibus
+Requires: ibus, gtk3
 
 %description
 A Vietnamese IME for IBus using Bamboo Engine.

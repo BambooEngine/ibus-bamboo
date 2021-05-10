@@ -164,7 +164,8 @@ cc_keyboard_shortcut_editor_key_press_event (GtkWidget   *widget,
 
   self = CC_KEYBOARD_SHORTCUT_EDITOR (widget);
 
-  real_mask = event->state & gtk_accelerator_get_default_mod_mask ();
+  real_mask = event->state;
+  /* real_mask = event->state & gtk_accelerator_get_default_mod_mask (); */
 
   /* keyval_lower = gdk_keyval_to_lower (event->keyval); */
   keyval_lower = event->keyval;
