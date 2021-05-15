@@ -25,3 +25,4 @@ debian/.debhelper
 *.tar.gz
 ibus-engine-*
 keyboard-shortcut-editor
+macro-editor

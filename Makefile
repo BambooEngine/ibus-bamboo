@@ -20,6 +20,7 @@ PREFIX=/usr
 engine_name=bamboo
 ibus_e_name=ibus-engine-$(engine_name)
 keyboard_shortcut_editor=keyboard-shortcut-editor
+macro_editor=macro-editor
 pkg_name=ibus-$(engine_name)
 version=0.7.3
 
@@ -39,6 +40,7 @@ xml:
 build:
 	GOPATH=$(CURDIR) GO111MODULE=off go build -ldflags="-s -w" -o $(ibus_e_name) ibus-$(engine_name)
 	gcc -o $(keyboard_shortcut_editor) setup-ui/$(keyboard_shortcut_editor).c `pkg-config --libs --cflags gtk+-3.0`
+	gcc -rdynamic -o $(macro_editor) setup-ui/$(macro_editor).c `pkg-config --libs --cflags gtk+-3.0`
 
 clean:
 	rm -f ibus-engine-* *_linux *_cover.html go_test_* go_build_* test *.gz test
@@ -56,13 +58,14 @@ install: build
 	cp -R -f viet-on.png data $(DESTDIR)$(engine_dir)
 	cp -f $(ibus_e_name) $(DESTDIR)$(PREFIX)/lib/
 	cp -f $(keyboard_shortcut_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
+	cp -f $(macro_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
 	cp -f $(engine_name).xml $(DESTDIR)$(ibus_dir)/component/
 
 
 uninstall:
 	sudo rm -rf $(DESTDIR)$(engine_dir)
 	sudo rm -f $(DESTDIR)$(PREFIX)/lib/$(ibus_e_name)
-	sudo rm -f $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/$(keyboard_shortcut_editor)
+	sudo rm -rf $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
 	sudo rm -f $(DESTDIR)$(ibus_dir)/component/$(engine_name).xml
 
 

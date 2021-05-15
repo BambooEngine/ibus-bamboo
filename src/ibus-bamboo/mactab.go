@@ -136,5 +136,8 @@ func OpenMactabFile(engineName string) {
 		ioutil.WriteFile(efPath, sample, 0644)
 	}
 
-	exec.Command("xdg-open", efPath).Start()
+	err := exec.Command("/usr/lib/ibus-bamboo/macro-editor", efPath).Start()
+	if err != nil {
+		_ = exec.Command("./macro-editor", efPath).Start()
+	}
 }

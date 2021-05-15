@@ -4,5 +4,6 @@
       <file>setup-ui/enter-keyboard-shortcut.svg</file>
       <file>setup-ui/keyboard-shortcut-editor.ui</file>
       <file>setup-ui/keyboard-shortcut-editor-v3.ui</file>
+      <file>setup-ui/macro-editor.ui</file>
   </gresource>
 </gresources>
