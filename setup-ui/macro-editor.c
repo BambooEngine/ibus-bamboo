@@ -1,4 +1,5 @@
 #include <gtk/gtk.h>
+#include "keyboard.c"
 #include "utils.h"
 
 GtkTextBuffer *textBuff;
@@ -6,7 +7,7 @@ GtkWidget *textView;
 
 FILE *fh;
 char fileBuf[1284];
-char *ui_path = "setup-ui/macro-editor.ui";
+char *ui_path = "/org/input/bamboo/setup-ui/macro-editor.ui";
 int modified = 0;
 
 int main(int argc, char *argv[]) {
@@ -16,7 +17,7 @@ int main(int argc, char *argv[]) {
     gtk_init(&argc, &argv);
 
     builder = gtk_builder_new();
-    gtk_builder_add_from_file (builder, ui_path, NULL);
+    gtk_builder_add_from_resource (builder, ui_path, NULL);
 
     window = GTK_WIDGET(gtk_builder_get_object(builder, "macro_window"));
     gtk_builder_connect_signals(builder, NULL);
