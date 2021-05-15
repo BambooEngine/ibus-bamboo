@@ -117,8 +117,9 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 }
 
 func (e *IBusBambooEngine) isInputModeShortcutKeyPressed(keyVal, keyCode, state uint32) bool {
-	// fmt.Printf("in=(%d,%d)\n", keyVal, state);
-	return fmt.Sprintf("%d,%d", keyVal, state) == e.config.InputModeShortcut
+	realState := state & IBusDefaultModMask
+	// fmt.Printf("in=(%d,%d-%d)\n", keyVal, state, realState);
+	return fmt.Sprintf("%d,%d", keyVal, realState) == e.config.InputModeShortcut
 }
 
 func (e *IBusBambooEngine) FocusIn() *dbus.Error {

@@ -41,6 +41,7 @@ const (
 	IBusReleaseMask = 1 << 30
 
 	IBusModifierMask = 0x5f001fff
+	IBusDefaultModMask = IBusControlMask | IBusShiftMask | IBusMetaMask | IBusSuperMask | IBusHyperMask | IBusMetaMask
 )
 
 const (
