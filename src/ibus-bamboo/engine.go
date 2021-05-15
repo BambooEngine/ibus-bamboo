@@ -266,7 +266,7 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		return nil
 	}
 	if propName == PropKeyConfiguration {
-		exec.Command("xdg-open", getConfigPath(e.engineName)).Start()
+		exec.Command("/usr/lib/ibus-bamboo/macro-editor", getConfigPath(e.engineName)).Start()
 		return nil
 	}
 	if propName == PropKeyInputModeLookupTableShortcut {

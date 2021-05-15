@@ -83,7 +83,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 			}
 		}
 	}
-	if len(keyPressChan) == 0 && e.getRawKeyLen() == 0 && !inKeyList(e.preeditor.GetInputMethod().AppendingKeys, keyRune) {
+	if e.config.IBflags&IBmacroEnabled == 0 && len(keyPressChan) == 0 && e.getRawKeyLen() == 0 && !inKeyList(e.preeditor.GetInputMethod().AppendingKeys, keyRune) {
 		e.updateLastKeyWithShift(keyVal, state)
 		if e.preeditor.CanProcessKey(keyRune) && e.isValidState(state) {
 			e.isFirstTimeSendingBS = true
@@ -145,7 +145,7 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 	}
 
 	newText, isWordBreakRune := e.getCommitText(keyVal, keyCode, state)
-	if newText != "" {
+	if len(newText) > 0 {
 		if e.shouldAppendDeadKey(newText, oldText) {
 			fmt.Println("Append a deadkey")
 			e.bsCommitText([]rune(" "))

@@ -37,7 +37,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 
 	// workaround for chrome's address bar and Google SpreadSheets
 	if !e.isValidState(state) || !e.canProcessKey(keyVal) ||
-		(rawKeyLen == 0 && !e.preeditor.CanProcessKey(keyRune)) {
+		(e.config.IBflags&IBmacroEnabled == 0 && rawKeyLen == 0 && !e.preeditor.CanProcessKey(keyRune)) {
 		if rawKeyLen > 0 {
 			e.HidePreeditText()
 			e.commitText(e.getPreeditString())
