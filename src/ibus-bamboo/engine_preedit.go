@@ -65,8 +65,8 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		return true, nil
 	}
 
-	newText, isLastRune := e.getCommitText(keyVal, keyCode, state)
-	if isLastRune {
+	newText, isWordBreakRune := e.getCommitText(keyVal, keyCode, state)
+	if isWordBreakRune {
 		e.commitPreedit(newText)
 		return true, nil
 	}
