@@ -84,7 +84,7 @@ sudo xbps-install -S ibus-bamboo
 [![OpenBuildService](https://github.com/BambooEngine/ibus-bamboo/raw/gh-resources/obs.png)](https://software.opensuse.org//download.html?project=home%3Alamlng&package=ibus-bamboo)
 
 ## Usage
-The difference between `ibus-bamboo` and other input methods is that `ibus-bamboo` provides different typing modes (1 underlined and 5 non-underlined typing modes - avoid confusion **typing mode** with **typing method**, typing methods include `telex`, `vni`, ...).
+The difference between `ibus-bamboo` and other input methods is that `ibus-bamboo` provides different typing modes (1 underlined and 5 non-underlined typing modes - don't confuse **typing mode** with **typing method**, typing methods are `telex`, `vni`, ...).
 
 To switch between typing modes, simply click on an input box (a box to enter text), then press the combination <kbd>Shift</kbd>+<kbd>~</kbd>, a table with the available typing modes will appear, you just need to press the corresponding number key to select.
 
