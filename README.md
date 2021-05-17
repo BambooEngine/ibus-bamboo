@@ -49,7 +49,7 @@ env DCONF_PROFILE=ibus dconf write /desktop/ibus/general/preload-engines "['xkb:
 
 ### Arch Linux và các distro tương tự
 ```
-sh -c "$(curl -fsSL https://raw.githubusercontent.com/BambooEngine/ibus-bamboo/master/archlinux/install.sh)"
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/BambooEngine/ibus-bamboo/master/archlinux/install.sh)"
 ```
 
 ### Void Linux
