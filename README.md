@@ -48,23 +48,8 @@ env DCONF_PROFILE=ibus dconf write /desktop/ibus/general/preload-engines "['xkb:
 ```
 
 ### Arch Linux và các distro tương tự
-Với Arch Linux, bạn thêm các dòng sau vào cuối file `/etc/pacman.conf`:
-```sh
-[home_lamlng_Arch]
-SigLevel = Never
-Server = https://download.opensuse.org/repositories/home:/lamlng/Arch/$arch
 ```
-rồi chạy lệnh:
-```sh
-pacman -Syu
-pacman -S home_lamlng_Arch/ibus-bamboo
-```
-
-Hoặc build trực tiếp từ mã nguồn:
-```sh
-wget https://raw.githubusercontent.com/BambooEngine/ibus-bamboo/master/archlinux/install.sh
-chmod +x install.sh
-./install.sh
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/BambooEngine/ibus-bamboo/master/archlinux/install.sh)"
 ```
 
 ### Void Linux

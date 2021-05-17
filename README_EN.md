@@ -4,6 +4,10 @@ IBus Bamboo - An open source Vietnamese IME for IBus using Bamboo Engine
 [![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://opensource.org/licenses/GPL-3.0)
 [![contributions welcome](https://img.shields.io/badge/contributions-welcome-brightgreen.svg?style=flat)](https://github.com/BambooEngine/ibus-bamboo)
 
+IBus Bamboo is a Vietnamese input method engine for IBus that translates key strokes into Vietnamese characters. For example, when you type `a`, an `a` will appear on the screen, but if one more `a` is typed, IBus Bamboo will replace the first `a` with the letter `â` according to [Telex](https://en.wikipedia.org/wiki/Telex_(input_method)) typing.
+
+   ![ibus-bamboo](https://github.com/BambooEngine/ibus-bamboo/raw/gh-resources/demo.gif)
+
 ## Getting Started
 
 - [Futures](#futures)
@@ -28,7 +32,6 @@ IBus Bamboo - An open source Vietnamese IME for IBus using Bamboo Engine
 * Using shortcut <kbd>Shift</kbd>+<kbd>~</kbd> to switch between typing modes for an application or add it to the exclusion list:
   	* Pre-edit (default)
   	* Surrounding text, IBus ForwardKeyEvent,...
-   ![ibus-bamboo](https://github.com/BambooEngine/ibus-bamboo/raw/gh-resources/demo.gif)
 * Other useful futures, easy to use:
   * Spelling check (using dictionary/rules)
   * Use oà, uý (instead of òa, úy)
@@ -48,29 +51,8 @@ env DCONF_PROFILE=ibus dconf write /desktop/ibus/general/preload-engines "['xkb:
 ```
 
 ### Arch Linux and derivatives
-For Arch Linux, edit /etc/pacman.conf and add the following :
-```sh
-[home_lamlng_Arch]
-SigLevel = Never
-Server = https://download.opensuse.org/repositories/home:/lamlng/Arch/$arch
 ```
-Then run the following as root:
-```sh
-key=$(curl -fsSL https://download.opensuse.org/repositories/home:lamlng/Arch/$(uname -m)/home_lamlng_Arch.key)
-fingerprint=$(gpg --quiet --with-colons --import-options show-only --import --fingerprint <<< "${key}" | awk -F: '$1 == "fpr" { print $10 }')
-
-pacman-key --init
-pacman-key --add - <<< "${key}"
-pacman-key --lsign-key "${fingerprint}"
-
-pacman -Sy home_lamlng_Arch/ibus-bamboo
-```
-
-Or build from source:
-```sh
-wget https://raw.githubusercontent.com/BambooEngine/ibus-bamboo/master/archlinux/install.sh
-chmod +x install.sh
-./install.sh
+sh -c "$(curl -fsSL https://raw.githubusercontent.com/BambooEngine/ibus-bamboo/master/archlinux/install.sh)"
 ```
 
 ### Void Linux
