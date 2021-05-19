@@ -1,13 +1,36 @@
 #!/bin/bash
+set_default() {
+	ibus restart
+	echo -n "Bạn có muốn đặt ibus-bamboo làm bộ gõ Tiếng Việt mặc định? [y/n]: "
+	read choice
+	case $choice in
+		"y")
+			env DCONF_PROFILE=ibus dconf write /desktop/ibus/general/preload-engines "['xkb:us::eng', 'Bamboo']" && gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us'), ('ibus', 'Bamboo')]"
+			exit -1;;
+		*) exit -1;;
+	esac
+}
 echo "Chọn phiên bản muốn cài:"
-echo "1. Bản release, cài đặt từ Open Build Service"
-echo "2. Bản release, cài đặt từ mã nguồn"
-echo "3. Bản git, cài đặt từ mã nguồn mới nhất lấy từ github"
-echo "4. Thoát"
-echo -n "Lựa chọn (1/2/3/4): "
+echo "1. Bản release, cài đặt từ AUR (yay)"
+echo "2. Bản release, cài đặt từ AUR (pamac)"
+echo "3. Bản release, cài đặt từ Open Build Service (pacman)"
+echo "4. Bản release, cài đặt từ mã nguồn"
+echo "5. Bản git, cài đặt từ mã nguồn mới nhất lấy từ github"
+echo "6. Thoát"
+echo -n "Lựa chọn (1/2/3/4/5/6): "
 read choice
 case $choice in
 	"1")
+		if yay -S ibus-bamboo; then
+			set_default
+		fi
+		exit -1;;
+	"2")
+		if pamac build ibus-bamboo; then
+			set_default
+		fi
+		exit -1;;
+	"3")
 		echo -n Password:
 		read -s szPassword
 		echo $szPassword | sudo -S sh -c 'echo "[home_lamlng_Arch]" >> /etc/pacman.conf'
@@ -17,10 +40,12 @@ case $choice in
 		echo $szPassword | sudo -S pacman-key --init
 		echo $szPassword | sudo -S pacman-key --add - <<< "${key}"
 		echo $szPassword | sudo -S pacman-key --lsign-key "${fingerprint}"
-		echo $szPassword | sudo -S pacman -Sy home_lamlng_Arch/ibus-bamboo
+		if sudo -S pacman -Sy home_lamlng_Arch/ibus-bamboo; then
+			set_default
+		fi
 		exit -1;;
-	"2") VER="release";;
-	"3") VER="git";;
+	"4") VER="release";;
+	"5") VER="git";;
 	*) exit -1;;
 esac
 
@@ -42,3 +67,5 @@ makepkg -si
 cd ..
 rm ibus-bamboo -rf
 rm install.sh
+
+set_default
