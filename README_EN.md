@@ -10,7 +10,7 @@ IBus Bamboo is a Vietnamese input method engine for IBus that translates key str
 
 ## Getting Started
 
-- [Futures](#futures)
+- [Features](#features)
 - [Installation](#installation)
 	- [Ubuntu, Mint and derivatives](#ubuntu-and-derivatives)
 	- [Arch Linux and derivatives](#arch-linux-and-derivatives)
@@ -21,7 +21,7 @@ IBus Bamboo is a Vietnamese input method engine for IBus that translates key str
 - [Bug reports](#bug-reports)
 - [License](#license)
 
-## Futures
+## Features
 * Support many Vietnamese character sets/encodings:
   * Unicode, TCVN (ABC)
   * VIQR, VNI, VPS, VISCII, BK HCM1, BK HCM2,…
