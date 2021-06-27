@@ -7,10 +7,10 @@
 package zxdg
 
 import (
-	"context"
 	"sync"
 
 	"github.com/dkolbly/wl"
+	"golang.org/x/net/context"
 )
 
 type ShellPingEvent struct {

@@ -29,12 +29,12 @@ Nếu cần thiết, hãy [đính kèm hình ảnh](https://help.github.com/arti
 **Môi trường**
  - OS và version: (ví dụ: Ubuntu 20.04)
  - Desktop: (Xfce, KDE, Gnome,... hoặc **mặc định**)
- - Phiên bản ibus-bamboo: (bản mới nhất là v0.6.8)
+ - Phiên bản ibus-bamboo: (bản mới nhất là 0.7.4)
 
 **Thông tin thêm**
 <!--
 Các nội dung khác có liên quan đến lỗi đang xảy ra.
-Ví dụ: Chương trình XYZ được cài đặt từ: (apt-get, snap, flatpak, download từ trang chủ,...)
+Ví dụ: Phần mềm XYZ được cài đặt từ: (apt-get, snap, flatpak, download từ trang chủ,...)
 -->
 
 <!--

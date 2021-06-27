@@ -7,8 +7,9 @@
 package main
 
 import (
-	"context"
 	"sync"
+
+	"golang.org/x/net/context"
 
 	wl "github.com/dkolbly/wl"
 )

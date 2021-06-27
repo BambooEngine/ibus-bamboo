@@ -7,10 +7,10 @@
 package xdg
 
 import (
-	"context"
 	"sync"
 
 	"github.com/dkolbly/wl"
+	"golang.org/x/net/context"
 )
 
 type WmBasePingEvent struct {

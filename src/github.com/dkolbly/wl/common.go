@@ -1,6 +1,6 @@
 package wl
 
-import "context"
+import "golang.org/x/net/context"
 
 type ProxyId uint32
 
