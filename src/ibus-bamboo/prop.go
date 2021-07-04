@@ -524,6 +524,7 @@ func GetDefaultModePropListByConfig(c *Config) *ibus.PropList {
 		"4. ForwardKeyEvent II (không gạch chân)",
 		"5. Forward as Commit (không gạch chân)",
 		"6. XTestFakeKeyEvent (không gạch chân)",
+		"7. Tắt hoàn toàn bộ gõ",
 	}
 	var imProperties []*ibus.Property
 	for i, label := range inputModes {

@@ -55,7 +55,7 @@ install: build
 	mkdir -p $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)
 	mkdir -p $(DESTDIR)$(ibus_dir)/component/
 
-	cp -R -f viet-on.png data $(DESTDIR)$(engine_dir)
+	cp -R -f viet-on.png icons data $(DESTDIR)$(engine_dir)
 	cp -f $(ibus_e_name) $(DESTDIR)$(PREFIX)/lib/
 	cp -f $(keyboard_shortcut_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
 	cp -f $(macro_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/

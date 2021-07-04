@@ -72,6 +72,9 @@ Return:
 This function gets called whenever a key is pressed.
 */
 func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
+	if e.checkInputMode(usModeIM) {
+		return false, nil
+	}
 	if e.checkInputMode(usIM) {
 		if e.isInputModeLTOpened || e.isInputModeShortcutKeyPressed(keyVal, keyCode, state) {
 			// return false, nil

@@ -63,6 +63,7 @@ const (
 	shiftLeftForwardingIM
 	forwardAsCommitIM
 	xTestFakeKeyEventIM
+	usModeIM
 	usIM
 )
 
@@ -110,6 +111,7 @@ var imLookupTable = map[int]string{
 	shiftLeftForwardingIM: "Sửa lỗi gạch chân (ForwardKeyEvent II)",
 	forwardAsCommitIM:     "Sửa lỗi gạch chân (Forward as commit)",
 	xTestFakeKeyEventIM:   "Sửa lỗi gạch chân (XTestFakeKeyEvent)",
+	usModeIM:              "Tắt hoàn toàn bộ gõ",
 	usIM:                  "Thêm vào danh sách loại trừ",
 }
 

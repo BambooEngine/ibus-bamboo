@@ -52,5 +52,103 @@
               <description>Vietnamese input method editor with US keyboard layout</description>
               <rank>1</rank>
           </engine>
+	  <!-- Vietnamese Icons -->
+          <engine>
+              <symbol>vi</symbol>
+              <name>BambooVi</name>
+              <language>vi</language>
+              <license>GPLv3</license>
+              <author>Tran Duc Binh &lt;binhtran432k@gmail.com&gt;</author>
+	      <icon>/usr/share/ibus-bamboo/icons/vi.svg</icon>
+              <layout>default</layout>
+              <longname>Bamboo Vietnamese</longname>
+              <description>Vietnamese input method editor with US keyboard layout with Normal Icon</description>
+              <rank>1</rank>
+          </engine>
+          <engine>
+              <symbol>vi</symbol>
+              <name>BambooViCandy</name>
+              <language>vi</language>
+              <license>GPLv3</license>
+              <author>Tran Duc Binh &lt;binhtran432k@gmail.com&gt;</author>
+	      <icon>/usr/share/ibus-bamboo/icons/vi-candy.svg</icon>
+              <layout>default</layout>
+              <longname>Bamboo Vietnamese Candy</longname>
+              <description>Vietnamese input method editor with US keyboard layout with Candy Icon</description>
+              <rank>1</rank>
+          </engine>
+          <engine>
+              <symbol>vi</symbol>
+              <name>BambooViFlag</name>
+              <language>vi</language>
+              <license>GPLv3</license>
+              <author>Tran Duc Binh &lt;binhtran432k@gmail.com&gt;</author>
+	      <icon>/usr/share/ibus-bamboo/icons/vi-flag.svg</icon>
+              <layout>default</layout>
+              <longname>Bamboo Vietnamese Flag</longname>
+              <description>Vietnamese input method editor with US keyboard layout with Flag Icon</description>
+              <rank>1</rank>
+          </engine>
+          <engine>
+              <symbol>vi</symbol>
+              <name>BambooViUnikey</name>
+              <language>vi</language>
+              <license>GPLv3</license>
+              <author>Tran Duc Binh &lt;binhtran432k@gmail.com&gt;</author>
+	      <icon>/usr/share/ibus-bamboo/icons/vi-unikey.svg</icon>
+              <layout>default</layout>
+              <longname>Bamboo Vietnamese Unikey</longname>
+              <description>Vietnamese input method editor with US keyboard layout with Unikey Icon</description>
+              <rank>1</rank>
+          </engine>
+	  <!-- US Icons -->
+          <engine>
+              <symbol>en</symbol>
+              <name>BambooUsMode</name>
+              <language>en</language>
+              <license>GPLv3</license>
+              <author>Tran Duc Binh &lt;binhtran432k@gmail.com&gt;</author>
+	      <icon>/usr/share/ibus-bamboo/icons/us.svg</icon>
+              <layout>us</layout>
+              <longname>Bamboo US</longname>
+              <description>Vietnamese input method editor with US keyboard layout with US Normal Icon</description>
+              <rank>2</rank>
+          </engine>
+          <engine>
+              <symbol>en</symbol>
+              <name>BambooUsCandy</name>
+              <language>en</language>
+              <license>GPLv3</license>
+              <author>Tran Duc Binh &lt;binhtran432k@gmail.com&gt;</author>
+	      <icon>/usr/share/ibus-bamboo/icons/us-candy.svg</icon>
+              <layout>us</layout>
+              <longname>Bamboo US Candy</longname>
+              <description>Vietnamese input method editor with US keyboard layout with US Candy Icon</description>
+              <rank>2</rank>
+          </engine>
+          <engine>
+              <symbol>en</symbol>
+              <name>BambooUsFlag</name>
+              <language>en</language>
+              <license>GPLv3</license>
+              <author>Tran Duc Binh &lt;binhtran432k@gmail.com&gt;</author>
+	      <icon>/usr/share/ibus-bamboo/icons/us-flag.svg</icon>
+              <layout>us</layout>
+              <longname>Bamboo US Flag</longname>
+              <description>Vietnamese input method editor with US keyboard layout with US Flag Icon</description>
+              <rank>2</rank>
+          </engine>
+          <engine>
+              <symbol>en</symbol>
+              <name>BambooUsUnikey</name>
+              <language>en</language>
+              <license>GPLv3</license>
+              <author>Tran Duc Binh &lt;binhtran432k@gmail.com&gt;</author>
+	      <icon>/usr/share/ibus-bamboo/icons/us-unikey.svg</icon>
+              <layout>default</layout>
+              <longname>Bamboo US Unikey</longname>
+              <description>Vietnamese input method editor with US keyboard layout with US Unikey Icon</description>
+              <rank>2</rank>
+          </engine>
     </engines>
 </component>
