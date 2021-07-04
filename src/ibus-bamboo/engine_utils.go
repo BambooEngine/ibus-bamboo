@@ -271,7 +271,10 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		e.closeInputModeCandidates()
 		return true, nil
 	}
-	if keyRune >= '1' && keyRune <= '7' {
+	if keyRune >= '1' && keyRune <= '8' {
+		if keyRune == '7' {
+			keyRune = '8'
+		}
 		if pos, err := strconv.Atoi(string(keyRune)); err == nil {
 			if e.inputModeLookupTable.SetCursorPos(uint32(pos - 1)) {
 				e.commitInputModeCandidate()
