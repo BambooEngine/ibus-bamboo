@@ -530,6 +530,9 @@ func GetDefaultModePropListByConfig(c *Config) *ibus.PropList {
 	for i, label := range inputModes {
 		var state = ibus.PROP_STATE_UNCHECKED
 		var im = i + 1
+		if im == usIM {
+			im = usModeIM
+		}
 		var ims = strconv.Itoa(im)
 		if im == c.DefaultInputMode {
 			state = ibus.PROP_STATE_CHECKED

@@ -224,6 +224,9 @@ func (e *IBusBambooEngine) openLookupTable() {
 	lt.PageSize = uint32(len(imLookupTable))
 	lt.Orientation = IBusOrientationVertical
 	for im := 1; im <= len(imLookupTable); im++ {
+		if im == usModeIM {
+			continue
+		}
 		if e.getInputMode() == im {
 			lt.AppendLabel("*")
 			lt.SetCursorPos(uint32(im - 1))
@@ -271,10 +274,7 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		e.closeInputModeCandidates()
 		return true, nil
 	}
-	if keyRune >= '1' && keyRune <= '8' {
-		if keyRune == '7' {
-			keyRune = '8'
-		}
+	if keyRune >= '1' && keyRune <= '7' {
 		if pos, err := strconv.Atoi(string(keyRune)); err == nil {
 			if e.inputModeLookupTable.SetCursorPos(uint32(pos - 1)) {
 				e.commitInputModeCandidate()
