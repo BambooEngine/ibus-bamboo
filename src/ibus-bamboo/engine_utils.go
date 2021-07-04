@@ -218,7 +218,7 @@ func (e *IBusBambooEngine) openLookupTable() {
 		wmClass = wmClasses[1]
 	}
 
-	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (1/2/3/4/5/6/7/8) để lưu tùy chọn của bạn"), true)
+	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (1/2/3/4/5/6/7) để lưu tùy chọn của bạn"), true)
 
 	lt := ibus.NewLookupTable()
 	lt.PageSize = uint32(len(imLookupTable))
@@ -233,7 +233,7 @@ func (e *IBusBambooEngine) openLookupTable() {
 		} else {
 			lt.AppendLabel(strconv.Itoa(im))
 		}
-		if im == usIM || im == usModeIM {
+		if im == usIM {
 			lt.AppendCandidate(imLookupTable[im] + " (" + wmClass + ")")
 		} else {
 			lt.AppendCandidate(imLookupTable[im])
