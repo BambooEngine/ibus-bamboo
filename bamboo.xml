@@ -145,7 +145,7 @@
               <license>GPLv3</license>
               <author>Tran Duc Binh &lt;binhtran432k@gmail.com&gt;</author>
 	      <icon>/usr/share/ibus-bamboo/icons/us-unikey.svg</icon>
-              <layout>default</layout>
+              <layout>us</layout>
               <longname>Bamboo English (US) Unikey</longname>
               <description>Vietnamese input method editor with US keyboard layout with US Unikey Icon</description>
               <rank>2</rank>
