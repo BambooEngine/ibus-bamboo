@@ -153,6 +153,31 @@ func getConfigPath(engineName string) string {
 	return fmt.Sprintf(configFile, getConfigDir(engineName), engineName)
 }
 
+func loadUsConfig(engineName string) *Config {
+	var flags = IBstdFlags
+	if isGnome {
+		flags &= ^IBmouseCapturing
+	}
+	var c = Config{
+		InputMethod:            "Telex",
+		OutputCharset:          "Unicode",
+		InputMethodDefinitions: bamboo.GetInputMethodDefinitions(),
+		Flags:                  bamboo.EstdFlags,
+		IBflags:                flags,
+		InputModeShortcut:      "126,1",
+		DefaultInputMode:       usModeIM,
+		InputModeMapping:       map[string]int{},
+	}
+
+	setupConfigDir(engineName)
+	data, err := ioutil.ReadFile(getConfigPath(engineName))
+	if err == nil {
+		json.Unmarshal(data, &c)
+	}
+
+	return &c
+}
+
 func loadConfig(engineName string) *Config {
 	var flags = IBstdFlags
 	if isGnome {

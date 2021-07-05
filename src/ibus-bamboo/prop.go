@@ -66,6 +66,46 @@ func GetPropListByConfig(c *Config) *ibus.PropList {
 	if !*embedded {
 		aboutText += " (Debug)"
 	}
+	if c.DefaultInputMode == usModeIM {
+		return ibus.NewPropList(
+			&ibus.Property{
+				Name:      "IBusProperty",
+				Key:       PropKeyAbout,
+				Type:      ibus.PROP_TYPE_NORMAL,
+				Label:     dbus.MakeVariant(ibus.NewText(aboutText)),
+				Tooltip:   dbus.MakeVariant(ibus.NewText("Mở trang chủ")),
+				Sensitive: true,
+				Visible:   true,
+				Icon:      "gtk-home",
+				Symbol:    dbus.MakeVariant(ibus.NewText("")),
+				SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+			},
+			&ibus.Property{
+				Name:      "IBusProperty",
+				Key:       "-",
+				Type:      ibus.PROP_TYPE_MENU,
+				Label:     dbus.MakeVariant(ibus.NewText("Chế độ gõ mặc định")),
+				Tooltip:   dbus.MakeVariant(ibus.NewText("Chế độ gõ mặc định")),
+				Sensitive: true,
+				Visible:   true,
+				Icon:      "preferences-other",
+				Symbol:    dbus.MakeVariant(ibus.NewText("")),
+				SubProps:  dbus.MakeVariant(GetDefaultModePropListByConfig(c)),
+			},
+			&ibus.Property{
+				Name:      "IBusProperty",
+				Key:       "-",
+				Type:      ibus.PROP_TYPE_MENU,
+				Label:     dbus.MakeVariant(ibus.NewText("Cấu hình khác")),
+				Tooltip:   dbus.MakeVariant(ibus.NewText("Cấu hình khác")),
+				Sensitive: true,
+				Visible:   true,
+				Icon:      "preferences-other",
+				Symbol:    dbus.MakeVariant(ibus.NewText("")),
+				SubProps:  dbus.MakeVariant(GetOptionsPropListByConfig(c)),
+			},
+		)
+	}
 	return ibus.NewPropList(
 		&ibus.Property{
 			Name:      "IBusProperty",

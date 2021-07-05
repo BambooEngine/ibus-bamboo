@@ -38,15 +38,25 @@ func GetIBusEngineCreator() func(*dbus.Conn, string) dbus.ObjectPath {
 	go keyPressCapturing()
 
 	return func(conn *dbus.Conn, ngName string) dbus.ObjectPath {
-		var engineName = strings.ToLower(ngName)
+		var ngGroupName = strings.Split(ngName, "::")[0]
+		var engineName = strings.ToLower(ngGroupName)
 		var engine = new(IBusBambooEngine)
-		var config = loadConfig(engineName)
+		var config *Config
+		if engineName == "bamboous" {
+			config = loadUsConfig(engineName)
+		} else {
+			config = loadConfig(engineName)
+		}
 		var objectPath = dbus.ObjectPath(fmt.Sprintf("/org/freedesktop/IBus/Engine/%s/%d", engineName, time.Now().UnixNano()))
 		var inputMethod = bamboo.ParseInputMethod(config.InputMethodDefinitions, config.InputMethod)
 		engine.Engine = ibus.BaseEngine(conn, objectPath)
 		engine.engineName = engineName
 		engine.preeditor = bamboo.NewEngine(inputMethod, config.Flags)
-		engine.config = loadConfig(engineName)
+		if engineName == "bamboous" {
+			engine.config = loadUsConfig(engineName)
+		} else {
+			engine.config = loadConfig(engineName)
+		}
 		engine.propList = GetPropListByConfig(config)
 		ibus.PublishEngine(conn, objectPath, engine)
 		go engine.init()
