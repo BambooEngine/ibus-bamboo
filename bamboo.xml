@@ -101,7 +101,7 @@
               <description>Vietnamese input method editor with US keyboard layout with Unikey Icon</description>
               <rank>1</rank>
           </engine>
-	  <!-- US Icons -->
+	  <!-- English (US) Icons -->
           <engine>
               <symbol>en</symbol>
               <name>BambooUs</name>

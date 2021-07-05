@@ -92,18 +92,6 @@ func GetPropListByConfig(c *Config) *ibus.PropList {
 				Symbol:    dbus.MakeVariant(ibus.NewText("")),
 				SubProps:  dbus.MakeVariant(GetDefaultModePropListByConfig(c)),
 			},
-			&ibus.Property{
-				Name:      "IBusProperty",
-				Key:       "-",
-				Type:      ibus.PROP_TYPE_MENU,
-				Label:     dbus.MakeVariant(ibus.NewText("Cấu hình khác")),
-				Tooltip:   dbus.MakeVariant(ibus.NewText("Cấu hình khác")),
-				Sensitive: true,
-				Visible:   true,
-				Icon:      "preferences-other",
-				Symbol:    dbus.MakeVariant(ibus.NewText("")),
-				SubProps:  dbus.MakeVariant(GetOptionsPropListByConfig(c)),
-			},
 		)
 	}
 	return ibus.NewPropList(
