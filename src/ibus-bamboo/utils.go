@@ -64,7 +64,6 @@ const (
 	forwardAsCommitIM
 	xTestFakeKeyEventIM
 	usIM
-	usModeIM
 )
 
 const (
@@ -112,7 +111,6 @@ var imLookupTable = map[int]string{
 	forwardAsCommitIM:     "Sửa lỗi gạch chân (Forward as commit)",
 	xTestFakeKeyEventIM:   "Sửa lỗi gạch chân (XTestFakeKeyEvent)",
 	usIM:                  "Thêm vào danh sách loại trừ",
-	usModeIM:              "Tắt hoàn toàn bộ gõ",
 }
 
 var imBackspaceList = []int{
@@ -138,9 +136,9 @@ type Config struct {
 func getConfigDir(ngName string) string {
 	u, err := user.Current()
 	if err == nil {
-		return fmt.Sprintf(configDir, u.HomeDir, ngName)
+		return fmt.Sprintf(configDir, u.HomeDir, "bamboo")
 	}
-	return fmt.Sprintf(configDir, "~", ngName)
+	return fmt.Sprintf(configDir, "~", "bamboo")
 }
 
 func setupConfigDir(ngName string) {
@@ -160,7 +158,7 @@ func loadConfig(engineName string) *Config {
 	}
 	var defaultIM = preeditIM
 	if engineName == "bamboous" {
-		defaultIM = usModeIM
+		defaultIM = usIM
 	}
 	var c = Config{
 		InputMethod:            "Telex",

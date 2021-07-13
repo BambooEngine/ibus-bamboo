@@ -184,9 +184,6 @@ func (e *IBusBambooEngine) isIgnoredKey(keyVal, keyCode, state uint32) bool {
 	if keyVal == IBusCapsLock {
 		return true
 	}
-	if e.checkInputMode(usModeIM) {
-		return true
-	}
 	if e.checkInputMode(usIM) {
 		if e.isInputModeLTOpened || e.isInputModeShortcutKeyPressed(keyVal, keyCode, state) {
 			return false
@@ -225,9 +222,6 @@ func (e *IBusBambooEngine) openLookupTable() {
 	lt.PageSize = uint32(len(imLookupTable))
 	lt.Orientation = IBusOrientationVertical
 	for im := 1; im <= len(imLookupTable); im++ {
-		if im == usModeIM {
-			continue
-		}
 		if e.getInputMode() == im {
 			lt.AppendLabel("*")
 			lt.SetCursorPos(uint32(im - 1))

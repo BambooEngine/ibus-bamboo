@@ -66,7 +66,7 @@ func GetPropListByConfig(c *Config) *ibus.PropList {
 	if !*embedded {
 		aboutText += " (Debug)"
 	}
-	if c.DefaultInputMode == usModeIM {
+	if c.DefaultInputMode == usIM {
 		return ibus.NewPropList(
 			&ibus.Property{
 				Name:      "IBusProperty",
@@ -558,9 +558,6 @@ func GetDefaultModePropListByConfig(c *Config) *ibus.PropList {
 	for i, label := range inputModes {
 		var state = ibus.PROP_STATE_UNCHECKED
 		var im = i + 1
-		if im == usIM {
-			im = usModeIM
-		}
 		var ims = strconv.Itoa(im)
 		if im == c.DefaultInputMode {
 			state = ibus.PROP_STATE_CHECKED
