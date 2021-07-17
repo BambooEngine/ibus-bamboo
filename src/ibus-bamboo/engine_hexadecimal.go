@@ -39,7 +39,8 @@ func (e *IBusBambooEngine) hexadecimalProcessKeyEvent(keyVal uint32, keyCode uin
 	var oldText = e.getProcessedString(mode)
 	defer e.updateLastKeyWithShift(keyVal, state)
 
-	if rawKeyLen <= 0 || oldText[0] != 'u' {
+
+	if rawKeyLen == 0 || oldText[0] != 'u' {
 		e.closeHexadecimalInput()
 		return false, nil
 	}
@@ -71,6 +72,9 @@ func (e *IBusBambooEngine) hexadecimalProcessKeyEvent(keyVal uint32, keyCode uin
 	}
 
 	if (keyRune >= '0' && keyRune <= '9') || (keyRune >= 'A' && keyRune <= 'F') || (keyRune >= 'a' && keyRune <= 'f') {
+		if !e.isValidState(state) || !e.canProcessKey(keyVal) {
+			return true, nil
+		}
 		if e.canProcessKey(keyVal) {
 			e.preeditor.ProcessKey(keyRune, mode)
 		}

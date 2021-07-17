@@ -78,9 +78,18 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 			//Ignore key-up event
 			return false, nil
 		}
+		if e.isHexadecimalKeyPressed(keyVal, keyCode, state) {
+			e.closeHexadecimalInput()
+			e.updateLastKeyWithShift(keyVal, state)
+			return false, nil
+		}
 		return e.hexadecimalProcessKeyEvent(keyVal, keyCode, state)
 	}
 	if e.isHexadecimalKeyPressed(keyVal, keyCode, state) {
+		if state&IBusReleaseMask != 0 {
+			//Ignore key-up event
+			return false, nil
+		}
 		e.resetBuffer()
 		e.isInHexadecimal = true
 		return e.setupHexadecimalProcessKeyEvent()
