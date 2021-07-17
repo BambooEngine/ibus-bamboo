@@ -19,4 +19,4 @@
 
 package main
 
-const Version = "v0.7.4"
+var Version string
