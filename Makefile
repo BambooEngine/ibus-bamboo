@@ -22,23 +22,27 @@ ibus_e_name=ibus-engine-$(engine_name)
 keyboard_shortcut_editor=keyboard-shortcut-editor
 macro_editor=macro-editor
 pkg_name=ibus-$(engine_name)
-version=0.7.4
+version=0.7.5
 
 engine_dir=$(PREFIX)/share/$(pkg_name)
 ibus_dir=$(PREFIX)/share/ibus
 
 GOPATH=$(shell pwd)/vendor:$(shell pwd)
 
+GOLDFLAGS=-ldflags "-w -s -X main.Version=$(version)"
+
 rpm_src_dir=~/rpmbuild/SOURCES
 tar_file=$(pkg_name)-$(version).tar.gz
 rpm_src_tar=$(rpm_src_dir)/$(tar_file)
 tar_options_src=--transform "s/^\./$(pkg_name)-$(version)/" --exclude={"*.tar.gz",".git",".idea"} .
 
+all: xml build
+
 xml:
 	glib-compile-resources --generate-source setup-ui/keyboard.gresource.xml
 
 build:
-	GOPATH=$(CURDIR) GO111MODULE=off go build -ldflags="-s -w" -o $(ibus_e_name) ibus-$(engine_name)
+	GOPATH=$(CURDIR) GO111MODULE=off go build $(GOLDFLAGS) -o $(ibus_e_name) ibus-$(engine_name)
 	gcc -o $(keyboard_shortcut_editor) setup-ui/$(keyboard_shortcut_editor).c `pkg-config --libs --cflags gtk+-3.0`
 	gcc -rdynamic -o $(macro_editor) setup-ui/$(macro_editor).c `pkg-config --libs --cflags gtk+-3.0`
 

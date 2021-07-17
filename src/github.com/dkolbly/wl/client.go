@@ -7,8 +7,8 @@
 package wl
 
 import (
-	"context"
 	"sync"
+	"golang.org/x/net/context"
 )
 
 type DisplayErrorEvent struct {

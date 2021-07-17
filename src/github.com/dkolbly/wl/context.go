@@ -1,7 +1,6 @@
 package wl
 
 import (
-	"context"
 	"errors"
 	"io"
 	"log"
@@ -9,6 +8,8 @@ import (
 	"os"
 	"sync"
 	"time"
+
+	"golang.org/x/net/context"
 )
 
 func init() {
