@@ -6,7 +6,7 @@
 %define _unpackaged_files_terminate_build 0
 
 Name: ibus-bamboo
-Version: 0.7.4
+Version: 0.7.5
 Release: 1%{?dist}
 Summary: A Vietnamese input method for IBus
 
