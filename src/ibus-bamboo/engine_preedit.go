@@ -39,18 +39,15 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	if !e.isValidState(state) || !e.canProcessKey(keyVal) ||
 		(e.config.IBflags&IBmacroEnabled == 0 && rawKeyLen == 0 && !e.preeditor.CanProcessKey(keyRune)) {
 		if rawKeyLen > 0 {
-			e.commitText(e.getPreeditString())
-			e.preeditor.Reset()
+			e.commitPreedit(e.getPreeditString())
 		}
 		return false, nil
 	}
 
 	if keyVal == IBusBackSpace {
-		if rawKeyLen == 1 && e.inBrowserList() {
-			e.preeditor.Reset()
-			e.commitText(" ")
-			time.Sleep(time.Duration(10 * time.Millisecond))
-			return false, nil
+		if e.runeCount() == 1 {
+			e.commitPreedit("")
+			return true, nil
 		}
 		if rawKeyLen > 0 {
 			e.preeditor.RemoveLastChar(true)
@@ -194,9 +191,9 @@ func (e *IBusBambooEngine) resetPreedit() {
 
 func (e *IBusBambooEngine) commitPreedit(s string) {
 	e.commitText(s)
-	if !e.inBrowserList() {
-		e.HidePreeditText()
-	}
+	e.HidePreeditText()
+	e.HideAuxiliaryText()
+	e.HideLookupTable()
 	e.preeditor.Reset()
 }
 

@@ -25,6 +25,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
@@ -196,6 +197,10 @@ func (e *IBusBambooEngine) getRawKeyLen() int {
 	return len(e.preeditor.GetProcessedString(bamboo.EnglishMode | bamboo.FullText))
 }
 
+func (e *IBusBambooEngine) runeCount() int {
+	return utf8.RuneCountInString(e.getPreeditString())
+}
+
 func (e *IBusBambooEngine) getInputMode() int {
 	if e.getWmClass() != "" {
 		if im, ok := e.config.InputModeMapping[e.getWmClass()]; ok && imLookupTable[im] != "" {
@@ -338,7 +343,7 @@ func (e *IBusBambooEngine) getCommitText(keyVal, keyCode, state uint32) (string,
 				var ret = e.getPreeditString()
 				e.preeditor.Reset()
 				return ret, true
-			} else if newText != "" && keyRune == rune(newText[len(newText)-1]) {
+			} else if l := []rune(newText); len(l) > 0 && keyRune == l[len(l)-1] {
 				// f] => f]
 				e.preeditor.Reset()
 				return oldText + string(keyRune), true

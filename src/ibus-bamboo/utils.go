@@ -127,7 +127,6 @@ type Config struct {
 	OutputCharset          string
 	Flags                  uint
 	IBflags                uint
-	JupiterFlags           uint
 	InputModeShortcut      string
 	DefaultInputMode       int
 	InputModeMapping       map[string]int
