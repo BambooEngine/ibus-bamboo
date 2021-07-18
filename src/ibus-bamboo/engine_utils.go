@@ -39,7 +39,8 @@ func GetIBusEngineCreator() func(*dbus.Conn, string) dbus.ObjectPath {
 	go keyPressCapturing()
 
 	return func(conn *dbus.Conn, ngName string) dbus.ObjectPath {
-		var engineName = strings.ToLower(ngName)
+		var ngGroupName = strings.Split(ngName, "::")[0]
+		var engineName = strings.ToLower(ngGroupName)
 		var engine = new(IBusBambooEngine)
 		var config = loadConfig(engineName)
 		var objectPath = dbus.ObjectPath(fmt.Sprintf("/org/freedesktop/IBus/Engine/%s/%d", engineName, time.Now().UnixNano()))

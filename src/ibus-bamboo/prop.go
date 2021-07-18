@@ -66,6 +66,22 @@ func GetPropListByConfig(c *Config) *ibus.PropList {
 	if !*embedded {
 		aboutText += " (Debug)"
 	}
+	if c.DefaultInputMode == usIM {
+		return ibus.NewPropList(
+			&ibus.Property{
+				Name:      "IBusProperty",
+				Key:       PropKeyAbout,
+				Type:      ibus.PROP_TYPE_NORMAL,
+				Label:     dbus.MakeVariant(ibus.NewText(aboutText)),
+				Tooltip:   dbus.MakeVariant(ibus.NewText("Mở trang chủ")),
+				Sensitive: true,
+				Visible:   true,
+				Icon:      "gtk-home",
+				Symbol:    dbus.MakeVariant(ibus.NewText("")),
+				SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+			},
+		)
+	}
 	return ibus.NewPropList(
 		&ibus.Property{
 			Name:      "IBusProperty",

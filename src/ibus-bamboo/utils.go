@@ -135,9 +135,9 @@ type Config struct {
 func getConfigDir(ngName string) string {
 	u, err := user.Current()
 	if err == nil {
-		return fmt.Sprintf(configDir, u.HomeDir, ngName)
+		return fmt.Sprintf(configDir, u.HomeDir, "bamboo")
 	}
-	return fmt.Sprintf(configDir, "~", ngName)
+	return fmt.Sprintf(configDir, "~", "bamboo")
 }
 
 func setupConfigDir(ngName string) {
@@ -155,6 +155,10 @@ func loadConfig(engineName string) *Config {
 	if isGnome {
 		flags &= ^IBmouseCapturing
 	}
+	var defaultIM = preeditIM
+	if engineName == "bamboous" {
+		defaultIM = usIM
+	}
 	var c = Config{
 		InputMethod:            "Telex",
 		OutputCharset:          "Unicode",
@@ -162,7 +166,7 @@ func loadConfig(engineName string) *Config {
 		Flags:                  bamboo.EstdFlags,
 		IBflags:                flags,
 		InputModeShortcut:      "126,1",
-		DefaultInputMode:       preeditIM,
+		DefaultInputMode:       defaultIM,
 		InputModeMapping:       map[string]int{},
 	}
 

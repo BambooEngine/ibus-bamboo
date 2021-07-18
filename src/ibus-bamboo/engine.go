@@ -44,6 +44,7 @@ type IBusBambooEngine struct {
 	wmClasses              string
 	isInputModeLTOpened    bool
 	isEmojiLTOpened        bool
+	isInHexadecimal        bool
 	emojiLookupTable       *ibus.LookupTable
 	inputModeLookupTable   *ibus.LookupTable
 	capabilities           uint32
@@ -72,6 +73,30 @@ Return:
 This function gets called whenever a key is pressed.
 */
 func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
+	if e.isInHexadecimal {
+		if state&IBusReleaseMask != 0 {
+			//Ignore key-up event
+			return false, nil
+		}
+		if e.isHexadecimalKeyPressed(keyVal, keyCode, state) {
+			e.closeHexadecimalInput()
+			e.updateLastKeyWithShift(keyVal, state)
+			return false, nil
+		}
+		return e.hexadecimalProcessKeyEvent(keyVal, keyCode, state)
+	}
+	if e.isHexadecimalKeyPressed(keyVal, keyCode, state) {
+		if state&IBusReleaseMask != 0 {
+			//Ignore key-up event
+			return false, nil
+		}
+		e.resetBuffer()
+		e.isInHexadecimal = true
+		return e.setupHexadecimalProcessKeyEvent()
+	}
+	if e.config.DefaultInputMode == usIM {
+		return false, nil
+	}
 	if e.checkInputMode(usIM) {
 		if e.isInputModeLTOpened || e.isInputModeShortcutKeyPressed(keyVal, keyCode, state) {
 			// return false, nil
@@ -120,6 +145,11 @@ func (e *IBusBambooEngine) isInputModeShortcutKeyPressed(keyVal, keyCode, state 
 	realState := state & IBusDefaultModMask
 	// fmt.Printf("in=(%d,%d-%d)\n", keyVal, state, realState);
 	return fmt.Sprintf("%d,%d", keyVal, realState) == e.config.InputModeShortcut
+}
+
+func (e *IBusBambooEngine) isHexadecimalKeyPressed(keyVal, keyCode, state uint32) bool {
+	realState := state & IBusDefaultModMask
+	return keyVal == 85 && realState == 5
 }
 
 func (e *IBusBambooEngine) FocusIn() *dbus.Error {
