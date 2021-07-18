@@ -17,7 +17,7 @@
 #
 # Maintainer: Luong Thanh Lam <ltlam93@gmail.com>
 pkgname=ibus-bamboo-git
-pkgver=0.7.6
+pkgver=0.7.7
 pkgrel=1
 pkgdesc='A Vietnamese IME for IBus'
 arch=(any)
