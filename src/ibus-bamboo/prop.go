@@ -80,18 +80,6 @@ func GetPropListByConfig(c *Config) *ibus.PropList {
 				Symbol:    dbus.MakeVariant(ibus.NewText("")),
 				SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 			},
-			&ibus.Property{
-				Name:      "IBusProperty",
-				Key:       "-",
-				Type:      ibus.PROP_TYPE_MENU,
-				Label:     dbus.MakeVariant(ibus.NewText("Chế độ gõ mặc định")),
-				Tooltip:   dbus.MakeVariant(ibus.NewText("Chế độ gõ mặc định")),
-				Sensitive: true,
-				Visible:   true,
-				Icon:      "preferences-other",
-				Symbol:    dbus.MakeVariant(ibus.NewText("")),
-				SubProps:  dbus.MakeVariant(GetDefaultModePropListByConfig(c)),
-			},
 		)
 	}
 	return ibus.NewPropList(
@@ -552,7 +540,6 @@ func GetDefaultModePropListByConfig(c *Config) *ibus.PropList {
 		"4. ForwardKeyEvent II (không gạch chân)",
 		"5. Forward as Commit (không gạch chân)",
 		"6. XTestFakeKeyEvent (không gạch chân)",
-		"7. Tắt hoàn toàn bộ gõ",
 	}
 	var imProperties []*ibus.Property
 	for i, label := range inputModes {

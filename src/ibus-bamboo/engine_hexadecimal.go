@@ -75,9 +75,7 @@ func (e *IBusBambooEngine) hexadecimalProcessKeyEvent(keyVal uint32, keyCode uin
 		if !e.isValidState(state) || !e.canProcessKey(keyVal) {
 			return true, nil
 		}
-		if e.canProcessKey(keyVal) {
-			e.preeditor.ProcessKey(keyRune, mode)
-		}
+		e.preeditor.ProcessKey(keyRune, mode)
 		e.updateHexadecimal(e.getProcessedString(mode))
 	}
 	return true, nil
