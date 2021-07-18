@@ -22,7 +22,7 @@ ibus_e_name=ibus-engine-$(engine_name)
 keyboard_shortcut_editor=keyboard-shortcut-editor
 macro_editor=macro-editor
 pkg_name=ibus-$(engine_name)
-version=0.7.5
+version=0.7.6
 
 engine_dir=$(PREFIX)/share/$(pkg_name)
 ibus_dir=$(PREFIX)/share/ibus
