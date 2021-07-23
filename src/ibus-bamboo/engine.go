@@ -22,6 +22,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"reflect"
 	"strconv"
@@ -35,26 +36,27 @@ import (
 type IBusBambooEngine struct {
 	sync.Mutex
 	ibus.Engine
-	preeditor              bamboo.IEngine
-	engineName             string
-	config                 *Config
-	propList               *ibus.PropList
-	englishMode            bool
-	macroTable             *MacroTable
-	wmClasses              string
-	isInputModeLTOpened    bool
-	isEmojiLTOpened        bool
-	isInHexadecimal        bool
-	emojiLookupTable       *ibus.LookupTable
-	inputModeLookupTable   *ibus.LookupTable
-	capabilities           uint32
-	keyPressDelay          int
-	nFakeBackSpace         int
-	isFirstTimeSendingBS   bool
-	emoji                  *EmojiEngine
-	isSurroundingTextReady bool
-	lastKeyWithShift       bool
-	lastCommitText         int64
+	preeditor               bamboo.IEngine
+	engineName              string
+	config                  *Config
+	propList                *ibus.PropList
+	englishMode             bool
+	macroTable              *MacroTable
+	wmClasses               string
+	isInputModeLTOpened     bool
+	isEmojiLTOpened         bool
+	isInHexadecimal         bool
+	emojiLookupTable        *ibus.LookupTable
+	inputModeLookupTable    *ibus.LookupTable
+	capabilities            uint32
+	keyPressDelay           int
+	nFakeBackSpace          int
+	isFirstTimeSendingBS    bool
+	emoji                   *EmojiEngine
+	isSurroundingTextReady  bool
+	lastKeyWithShift        bool
+	lastCommitText          int64
+	shouldRestoreKeyStrokes bool
 }
 
 /**
@@ -73,60 +75,17 @@ Return:
 This function gets called whenever a key is pressed.
 */
 func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
+	if state&IBusReleaseMask != 0 {
+		// fmt.Println("Ignore key-up event")
+		return false, nil
+	}
+	fmt.Printf("\n")
+	log.Printf(">>>>ProcessKeyEvent >  %d | state %d keyVal 0x%04x | %c <<<<\n", len(keyPressChan), state, keyVal, rune(keyVal))
+	if ret, retValue := e.processShortcutKey(keyVal, keyCode, state); ret {
+		return retValue, nil
+	}
 	if e.isInHexadecimal {
-		if state&IBusReleaseMask != 0 {
-			//Ignore key-up event
-			return false, nil
-		}
-		if e.isHexadecimalKeyPressed(keyVal, keyCode, state) {
-			e.closeHexadecimalInput()
-			e.updateLastKeyWithShift(keyVal, state)
-			return false, nil
-		}
 		return e.hexadecimalProcessKeyEvent(keyVal, keyCode, state)
-	}
-	if e.config.IBflags&IBhexadecimalDisabled == 0 && e.isHexadecimalKeyPressed(keyVal, keyCode, state) {
-		if state&IBusReleaseMask != 0 {
-			//Ignore key-up event
-			return false, nil
-		}
-		e.resetBuffer()
-		e.isInHexadecimal = true
-		return e.setupHexadecimalProcessKeyEvent()
-	}
-	if e.config.DefaultInputMode == usIM {
-		return false, nil
-	}
-	if e.checkInputMode(usIM) {
-		if e.isInputModeLTOpened || e.isInputModeShortcutKeyPressed(keyVal, keyCode, state) {
-			// return false, nil
-		} else {
-			return false, nil
-		}
-	}
-	if e.processShiftKey(keyVal, state) {
-		return true, nil
-	}
-	if e.isIgnoredKey(keyVal, keyCode, state) {
-		return false, nil
-	}
-	log.Printf(">ProcessKeyEvent >  %c | keyCode 0x%04x keyVal 0x%04x | %d\n", rune(keyVal), keyCode, keyVal, len(keyPressChan))
-	if e.config.IBflags&IBinputModeLookupTableEnabled != 0 && e.isInputModeShortcutKeyPressed(keyVal, keyCode, state) && !e.isInputModeLTOpened && e.getWmClass() != "" {
-		e.resetBuffer()
-		e.isInputModeLTOpened = true
-		e.lastKeyWithShift = true
-		e.openLookupTable()
-		return true, nil
-	}
-	if e.config.IBflags&IBemojiDisabled == 0 && keyVal == IBusColon && !e.isEmojiLTOpened {
-		e.resetBuffer()
-		e.isEmojiLTOpened = true
-		e.lastKeyWithShift = true
-		e.openEmojiList()
-		return true, nil
-	}
-	if e.isInputModeLTOpened {
-		return e.ltProcessKeyEvent(keyVal, keyCode, state)
 	}
 	if e.isEmojiLTOpened {
 		return e.emojiProcessKeyEvent(keyVal, keyCode, state)
@@ -141,23 +100,18 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 	return e.preeditProcessKeyEvent(keyVal, keyCode, state)
 }
 
-func (e *IBusBambooEngine) isInputModeShortcutKeyPressed(keyVal, keyCode, state uint32) bool {
-	realState := state & IBusDefaultModMask
-	// fmt.Printf("in=(%d,%d-%d)\n", keyVal, state, realState);
-	return fmt.Sprintf("%d,%d", keyVal, realState) == e.config.InputModeShortcut
-}
-
-func (e *IBusBambooEngine) isHexadecimalKeyPressed(keyVal, keyCode, state uint32) bool {
-	realState := state & IBusDefaultModMask
-	return keyVal == 85 && realState == 5
-}
-
 func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 	log.Print("FocusIn.")
 	var latestWm = e.getLatestWmClass()
 	e.checkWmClass(latestWm)
 	e.RegisterProperties(e.propList)
 	e.RequireSurroundingText()
+	if e.isShortcutKeyEnable(SKEmojiDialog) && emojiTrie != nil && len(emojiTrie.Children) == 0 {
+		emojiTrie, _ = loadEmojiOne(DictEmojiOne)
+	}
+	if e.config.IBflags&IBspellCheckWithDicts != 0 && len(dictionary) == 0 {
+		dictionary, _ = loadDictionary(DictVietnameseCm)
+	}
 	fmt.Printf("WM_CLASS=(%s)\n", e.getWmClass())
 	return nil
 }
@@ -300,16 +254,20 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		return nil
 	}
 	if propName == PropKeyInputModeLookupTableShortcut {
-		out, err := exec.Command("/usr/lib/ibus-bamboo/keyboard-shortcut-editor").Output()
+		cmd := exec.Command("/usr/lib/ibus-bamboo/keyboard-shortcut-editor", e.getShortcutString())
+		cmd.Env = os.Environ()
+		cmd.Env = append(cmd.Env, "GTK_IM_MODULE=gtk-im-context-simple")
+		out, err := cmd.Output()
 		if err != nil {
-			out, err = exec.Command("./keyboard-shortcut-editor").Output()
+			out, err = exec.Command("./keyboard-shortcut-editor", e.getShortcutString()).Output()
 			if err != nil {
 				return nil
 			}
 		}
 		if len(out) > 0 {
-			e.config.InputModeShortcut = string(out)
-			fmt.Printf("output=(%s)\n", out)
+			e.parseShortcuts(string(out))
+		} else if err != nil {
+			fmt.Println("execute keyboard-shortcut-editor: ", err)
 		}
 	}
 	if propName == PropKeyMacroTable {
@@ -327,23 +285,6 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		} else {
 			e.config.IBflags &= ^IBspellCheckEnabled
 			e.config.IBflags &= ^IBautoNonVnRestore
-		}
-	}
-
-	if propName == PropKeyEmojiEnabled {
-		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags &= ^IBemojiDisabled
-			emojiTrie, _ = loadEmojiOne(DictEmojiOne)
-		} else {
-			e.config.IBflags |= IBemojiDisabled
-		}
-	}
-
-	if propName == PropKeyHexadecimalEnabled {
-		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags &= ^IBhexadecimalDisabled
-		} else {
-			e.config.IBflags |= IBhexadecimalDisabled
 		}
 	}
 
@@ -417,28 +358,6 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		} else {
 			e.config.IBflags &= ^IBpreeditElimination
 		}
-	}
-	if propName == PropKeyRestoreKeyStrokes {
-		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBrestoreKeyStrokesEnabled
-		} else {
-			e.config.IBflags &= ^IBrestoreKeyStrokesEnabled
-		}
-	}
-	if propName == PropKeyInputModeLookupTable {
-		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBinputModeLookupTableEnabled
-		} else {
-			e.config.IBflags &= ^IBinputModeLookupTableEnabled
-		}
-	}
-	if propName == PropKeyIMQuickSwitchEnabled {
-		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBimQuickSwitchEnabled
-		} else {
-			e.config.IBflags &= ^IBimQuickSwitchEnabled
-		}
-		e.englishMode = false
 	}
 	if propName == PropKeyAutoCapitalizeMacro {
 		if propState == ibus.PROP_STATE_CHECKED {
