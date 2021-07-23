@@ -435,7 +435,7 @@ func TestProcesschoas(t *testing.T) {
 func TestBambooEngine_RestoreLastWord(t *testing.T) {
 	ng := newStdEngine()
 	ng.ProcessString("duwongj tooi", VietnameseMode)
-	ng.RestoreLastWord()
+	ng.RestoreLastWord(false)
 	if ng.GetProcessedString(VietnameseMode) != "tooi" {
 		t.Errorf("Process [duwongwj tooi], got [%v] expected [tooi]", ng.GetProcessedString(VietnameseMode))
 	}
@@ -448,13 +448,13 @@ func TestBambooEngine_RestoreLastWord_TCVN(t *testing.T) {
 	if ng.GetProcessedString(VietnameseMode) != "1â" {
 		t.Errorf("Process-VIE 112 (Microsoft layout), got [%v] expected [1â]", ng.GetProcessedString(VietnameseMode))
 	}
-	ng.RestoreLastWord()
+	ng.RestoreLastWord(false)
 	if ng.GetProcessedString(EnglishMode) != "12" {
 		t.Errorf("Process-ENG 112 (Microsoft layout), got [%v] expected [12]", ng.GetProcessedString(EnglishMode))
 	}
 	ng.Reset()
 	ng.ProcessString("d[]ng9 t4i", VietnameseMode)
-	ng.RestoreLastWord()
+	ng.RestoreLastWord(false)
 	if ng.GetProcessedString(VietnameseMode) != "t4i" {
 		t.Errorf("Process [duongwj t4i - MS layout], got [%v] expected [t4i]", ng.GetProcessedString(VietnameseMode))
 	}
@@ -480,7 +480,7 @@ func TestRestoreLastWord(t *testing.T) {
 	ng := newStdEngine()
 	s := "afq"
 	ng.ProcessString(s, VietnameseMode)
-	ng.RestoreLastWord()
+	ng.RestoreLastWord(false)
 	ng.RemoveLastChar(true)
 	ng.ProcessKey('f', VietnameseMode)
 	t.Logf("LOGGING Process [%s] got [%v], en=[%s]", s, ng.GetProcessedString(VietnameseMode), ng.GetProcessedString(EnglishMode))

@@ -77,6 +77,7 @@ const (
 	IBusGrave           = 0x0060
 	IBusInsert          = 0xff63
 	IBusCapsLock        = 0xffe5
+	IBusHyperR          = 0xffee
 	IBusOpenLookupTable = IBusTilde
 	IBusOpenEmojiTable  = IBusColon
 )

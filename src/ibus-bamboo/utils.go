@@ -67,10 +67,18 @@ const (
 )
 
 const (
+	SKInputModeSwitch uint = iota * 2
+	SKRestoreKeyStrokes
+	SKViEnSwitch
+	SKEmojiDialog
+	SKHexadecimal
+)
+
+const (
 	IBautoCommitWithVnNotMatch uint = 1 << iota
 	IBmacroEnabled
-	IBautoCommitWithVnFullMatch
-	IBautoCommitWithVnWordBreak
+	_IBautoCommitWithVnFullMatch //deprecated
+	_IBautoCommitWithVnWordBreak //deprecated
 	IBspellCheckEnabled
 	IBautoNonVnRestore
 	IBddFreeStyle
@@ -79,23 +87,15 @@ const (
 	IBspellCheckWithDicts
 	IBautoCommitWithDelay
 	IBautoCommitWithMouseMovement
-	IBemojiDisabled
+	_IBemojiDisabled //deprecated
 	IBpreeditElimination
-	IBinputModeLookupTableEnabled
+	_IBinputModeLookupTableEnabled //deprecated
 	IBautoCapitalizeMacro
-	IBimQuickSwitchEnabled
-	IBrestoreKeyStrokesEnabled
+	_IBimQuickSwitchEnabled     //deprecated
+	_IBrestoreKeyStrokesEnabled //deprecated
 	IBmouseCapturing
-    IBhexadecimalDisabled
 	IBstdFlags = IBspellCheckEnabled | IBspellCheckWithRules | IBautoNonVnRestore | IBddFreeStyle |
-		IBemojiDisabled | IBinputModeLookupTableEnabled | IBmouseCapturing | IBautoCapitalizeMacro | IBhexadecimalDisabled
-)
-
-const (
-	JemojiEnabled uint = 1 << iota
-	JmacroEnabled
-	JmacroAutoCapitalize
-	JstdFlags = JmacroAutoCapitalize
+		IBmouseCapturing | IBautoCapitalizeMacro
 )
 
 var DefaultBrowserList = []string{
@@ -128,7 +128,7 @@ type Config struct {
 	OutputCharset          string
 	Flags                  uint
 	IBflags                uint
-	InputModeShortcut      string
+	Shortcuts              [10]uint32
 	DefaultInputMode       int
 	InputModeMapping       map[string]int
 }
@@ -166,7 +166,7 @@ func loadConfig(engineName string) *Config {
 		InputMethodDefinitions: bamboo.GetInputMethodDefinitions(),
 		Flags:                  bamboo.EstdFlags,
 		IBflags:                flags,
-		InputModeShortcut:      "126,1",
+		Shortcuts:              [10]uint32{1, 126, 0, 0, 0, 0, 0, 0, 0, 0},
 		DefaultInputMode:       defaultIM,
 		InputModeMapping:       map[string]int{},
 	}

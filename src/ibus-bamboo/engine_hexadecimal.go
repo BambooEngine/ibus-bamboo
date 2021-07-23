@@ -81,7 +81,7 @@ func (e *IBusBambooEngine) hexadecimalProcessKeyEvent(keyVal uint32, keyCode uin
 	return true, nil
 }
 
-func (e *IBusBambooEngine) setupHexadecimalProcessKeyEvent() (bool, *dbus.Error) {
+func (e *IBusBambooEngine) setupHexadecimalProcessKeyEvent() {
 	var keyVal = uint32(117)
 	var state = uint32(0)
 	var keyRune = rune(keyVal)
@@ -92,8 +92,6 @@ func (e *IBusBambooEngine) setupHexadecimalProcessKeyEvent() (bool, *dbus.Error)
 		e.preeditor.ProcessKey(keyRune, mode)
 	}
 	e.updateHexadecimal(e.getProcessedString(mode))
-
-	return true, nil
 }
 
 func (e *IBusBambooEngine) closeHexadecimalInput() {

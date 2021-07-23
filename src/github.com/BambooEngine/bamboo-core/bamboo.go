@@ -48,7 +48,7 @@ type IEngine interface {
 	IsValid(bool) bool
 	CanProcessKey(rune) bool
 	RemoveLastChar(bool)
-	RestoreLastWord()
+	RestoreLastWord(bool)
 	Reset()
 }
 
@@ -151,6 +151,17 @@ func (e *BambooEngine) generateTransformations(composition []*Transformation, lo
 	return transformations
 }
 
+func (e *BambooEngine) newComposition(composition []*Transformation, key rune, isUpperCase bool) ([]*Transformation) {
+	// Just process the key stroke on the last syllable
+	var previousTransformations, lastSyllable = extractLastSyllable(composition)
+
+	// Find all possible transformations this keypress can generate
+	lastSyllable = append(lastSyllable, e.generateTransformations(lastSyllable, key, isUpperCase)...)
+
+	// Put these transformations back to the composition
+	return append(previousTransformations, lastSyllable...)
+}
+
 func (e *BambooEngine) applyUowShortcut(syllable []*Transformation) *Transformation {
 	str := Flatten(syllable, ToneLess|LowerCase)
 	if len(e.inputMethod.SuperKeys) > 0 && regUOhTail.MatchString(str) {
@@ -192,22 +203,23 @@ func (e *BambooEngine) ProcessKey(key rune, mode Mode) {
 		e.composition = append(e.composition, newAppendingTrans(lowerKey, isUpperCase))
 		return
 	}
-	// Just process the key stroke on the last syllable
-	var previousTransformations, lastSyllable = extractLastSyllable(e.composition)
-
-	// Find all possible transformations this keypress can generate
-	lastSyllable = append(lastSyllable, e.generateTransformations(lastSyllable, lowerKey, isUpperCase)...)
-
-	// Put these transformations back to the composition
-	e.composition = append(previousTransformations, lastSyllable...)
+	e.composition = e.newComposition(e.composition, lowerKey, isUpperCase)
 }
 
-func (e *BambooEngine) RestoreLastWord() {
+func (e *BambooEngine) RestoreLastWord(toVietnamese bool) {
 	var previous, lastComb = extractLastWord(e.composition, e.GetInputMethod().Keys)
 	if len(lastComb) == 0 {
 		return
 	}
-	e.composition = append(previous, breakComposition(lastComb)...)
+	if !toVietnamese {
+		e.composition = append(previous, breakComposition(lastComb)...)
+	} else {
+		var newComp []*Transformation
+		for _, tnx := range lastComb {
+			newComp = e.newComposition(newComp, tnx.Rule.Key, tnx.IsUpperCase)
+		}
+		e.composition = append(previous, newComp...)
+	}
 }
 
 func (e *BambooEngine) Reset() {

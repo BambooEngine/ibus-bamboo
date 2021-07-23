@@ -44,7 +44,7 @@ sudo apt-get update
 sudo apt-get install ibus-bamboo
 ibus restart
 # Đặt ibus-bamboo làm bộ gõ mặc định
-env DCONF_PROFILE=ibus dconf write /desktop/ibus/general/preload-engines "['xkb:us::eng', 'Bamboo']" && gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us'), ('ibus', 'Bamboo')]"
+env DCONF_PROFILE=ibus dconf write /desktop/ibus/general/preload-engines "['BambooUs', 'Bamboo']" && gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us'), ('ibus', 'Bamboo')]"
 ```
 
 ### Arch Linux và các distro tương tự
