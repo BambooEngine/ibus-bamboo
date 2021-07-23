@@ -68,7 +68,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 				sleep()
 				if e.getRawKeyLen() > 0 {
 					if e.shouldFallbackToEnglish(true) {
-						e.preeditor.RestoreLastWord()
+						e.preeditor.RestoreLastWord(false)
 					}
 					e.preeditor.RemoveLastChar(false)
 				}

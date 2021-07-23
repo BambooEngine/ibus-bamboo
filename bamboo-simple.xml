@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ Bamboo - A Vietnamese Input method editor
+  ~ Copyright (C) 2018 Luong Thanh Lam <ltlam93@gmail.com>
+  ~
+  ~ This program is free software: you can redistribute it and/or modify
+  ~ it under the terms of the GNU General Public License as published by
+  ~ the Free Software Foundation, either version 3 of the License, or
+  ~ (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  ~
+  -->
+
+<component>
+    <name>org.freedesktop.IBus.Simple</name>
+    <description>Bamboo English input engine for IBus</description>
+    <exec>/usr/libexec/ibus-engine-simple</exec>
+    <version>0.7.9</version>
+    <author>Luong Thanh Lam &lt;ltlam93@gmail.com&gt;</author>
+    <license>GPLv3</license>
+    <homepage>https://github.com/BambooEngine/ibus-bamboo/</homepage>
+    <textdomain>ibus-bamboo-simple</textdomain>
+    <engines>
+          <engine>
+              <symbol>en</symbol>
+              <name>xkb:us:bamboo:eng</name>
+              <language>en</language>
+              <license>GPLv3</license>
+              <author>Tran Duc Binh &lt;binhtran432k@gmail.com&gt;</author>
+              <icon>/usr/share/ibus-bamboo/icons/us.svg</icon>
+              <layout>us</layout>
+              <longname>Bamboo English (US)</longname>
+              <description>Vietnamese input method editor with US keyboard layout with US Normal Icon</description>
+              <rank>2</rank>
+          </engine>
+          <engine>
+              <symbol>en</symbol>
+              <name>xkb:us:candy:eng</name>
+              <language>en</language>
+              <license>GPLv3</license>
+              <author>Tran Duc Binh &lt;binhtran432k@gmail.com&gt;</author>
+              <icon>/usr/share/ibus-bamboo/icons/us-candy.svg</icon>
+              <layout>us</layout>
+              <longname>Bamboo English (US) Candy</longname>
+              <description>Vietnamese input method editor with US keyboard layout with US Candy Icon</description>
+              <rank>2</rank>
+          </engine>
+          <engine>
+              <symbol>en</symbol>
+              <name>xkb:us:flag:eng</name>
+              <language>en</language>
+              <license>GPLv3</license>
+              <author>Tran Duc Binh &lt;binhtran432k@gmail.com&gt;</author>
+              <icon>/usr/share/ibus-bamboo/icons/us-flag.svg</icon>
+              <layout>us</layout>
+              <longname>Bamboo English (US) Flag</longname>
+              <description>Vietnamese input method editor with US keyboard layout with US Flag Icon</description>
+              <rank>2</rank>
+          </engine>
+    </engines>
+</component>
+
