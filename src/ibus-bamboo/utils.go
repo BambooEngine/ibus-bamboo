@@ -86,8 +86,9 @@ const (
 	IBimQuickSwitchEnabled
 	IBrestoreKeyStrokesEnabled
 	IBmouseCapturing
+    IBhexadecimalDisabled
 	IBstdFlags = IBspellCheckEnabled | IBspellCheckWithRules | IBautoNonVnRestore | IBddFreeStyle |
-		IBemojiDisabled | IBinputModeLookupTableEnabled | IBmouseCapturing | IBautoCapitalizeMacro
+		IBemojiDisabled | IBinputModeLookupTableEnabled | IBmouseCapturing | IBautoCapitalizeMacro | IBhexadecimalDisabled
 )
 
 const (
