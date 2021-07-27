@@ -85,7 +85,7 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 		}
 		return e.hexadecimalProcessKeyEvent(keyVal, keyCode, state)
 	}
-	if e.isHexadecimalKeyPressed(keyVal, keyCode, state) {
+	if e.config.IBflags&IBhexadecimalDisabled == 0 && e.isHexadecimalKeyPressed(keyVal, keyCode, state) {
 		if state&IBusReleaseMask != 0 {
 			//Ignore key-up event
 			return false, nil
@@ -336,6 +336,14 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 			emojiTrie, _ = loadEmojiOne(DictEmojiOne)
 		} else {
 			e.config.IBflags |= IBemojiDisabled
+		}
+	}
+
+	if propName == PropKeyHexadecimalEnabled {
+		if propState == ibus.PROP_STATE_CHECKED {
+			e.config.IBflags &= ^IBhexadecimalDisabled
+		} else {
+			e.config.IBflags |= IBhexadecimalDisabled
 		}
 	}
 
