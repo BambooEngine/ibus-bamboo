@@ -13,6 +13,7 @@ xtest
 *.out
 
 .vim/
+.git/
 .idea/
 .ccls-cache/
 test-data/

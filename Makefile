@@ -22,7 +22,7 @@ ibus_e_name=ibus-engine-$(engine_name)
 keyboard_shortcut_editor=keyboard-shortcut-editor
 macro_editor=macro-editor
 pkg_name=ibus-$(engine_name)
-version=0.7.8
+version=0.7.9
 
 engine_dir=$(PREFIX)/share/$(pkg_name)
 ibus_dir=$(PREFIX)/share/ibus
@@ -72,6 +72,7 @@ uninstall:
 	sudo rm -f $(DESTDIR)$(PREFIX)/lib/$(ibus_e_name)
 	sudo rm -rf $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
 	sudo rm -f $(DESTDIR)$(ibus_dir)/component/$(engine_name).xml
+	sudo rm -f $(DESTDIR)$(ibus_dir)/component/$(engine_name)-simple.xml
 
 
 src: clean
