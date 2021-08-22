@@ -124,7 +124,7 @@ func (e *IBusBambooEngine) FocusOut() *dbus.Error {
 func (e *IBusBambooEngine) Reset() *dbus.Error {
 	fmt.Print("Reset.\n")
 	if e.checkInputMode(preeditIM) {
-		e.commitPreedit(e.getPreeditString())
+		e.commitPreeditAndReset(e.getPreeditString())
 	}
 	return nil
 }

@@ -40,7 +40,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 		if !e.isValidState(state) || !e.canProcessKey(keyVal) ||
 			(e.config.IBflags&IBmacroEnabled == 0 && rawKeyLen == 0 && !e.preeditor.CanProcessKey(keyRune)) {
 			if rawKeyLen > 0 {
-				e.commitPreedit(e.getPreeditString())
+				e.commitPreeditAndReset(e.getPreeditString())
 			}
 			return false, nil
 		}
@@ -48,7 +48,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 
 	if keyVal == IBusBackSpace {
 		if e.runeCount() == 1 {
-			e.commitPreedit("")
+			e.commitPreeditAndReset("")
 			return true, nil
 		}
 		if rawKeyLen > 0 {
@@ -61,9 +61,9 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	}
 	if keyVal == IBusTab {
 		if ok, macText := e.getMacroText(); ok {
-			e.commitPreedit(macText)
+			e.commitPreeditAndReset(macText)
 		} else {
-			e.commitPreedit(e.getComposedString(oldText))
+			e.commitPreeditAndReset(e.getComposedString(oldText))
 			return false, nil
 		}
 		return true, nil
@@ -71,7 +71,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 
 	newText, isWordBreakRune := e.getCommitText(keyVal, keyCode, state)
 	if isWordBreakRune {
-		e.commitPreedit(newText)
+		e.commitPreeditAndReset(newText)
 		return true, nil
 	}
 	e.updatePreedit(newText)
@@ -133,7 +133,8 @@ func (e *IBusBambooEngine) shouldFallbackToEnglish(checkVnRune bool) bool {
 		return false
 	}
 	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation
-	if e.config.IBflags&IBddFreeStyle != 0 && (vnRunes[len(vnRunes)-1] == 'd' || strings.ContainsRune(vnSeq, 'đ')) {
+	if e.config.IBflags&IBddFreeStyle != 0 && !bamboo.HasAnyVietnameseVower(vnSeq) &&
+	(vnRunes[len(vnRunes)-1] == 'd' || strings.ContainsRune(vnSeq, 'đ')) {
 		return false
 	}
 	if checkVnRune && !bamboo.HasAnyVietnameseRune(vnSeq) {
@@ -191,7 +192,7 @@ func (e *IBusBambooEngine) resetPreedit() {
 	e.preeditor.Reset()
 }
 
-func (e *IBusBambooEngine) commitPreedit(s string) {
+func (e *IBusBambooEngine) commitPreeditAndReset(s string) {
 	e.commitText(s)
 	e.HidePreeditText()
 	e.HideAuxiliaryText()

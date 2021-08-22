@@ -178,3 +178,12 @@ func HasAnyVietnameseRune(word string) bool {
 	}
 	return false
 }
+
+func HasAnyVietnameseVower(word string) bool {
+	for _, chr := range word {
+		if IsVowel(unicode.ToLower(chr)) {
+			return true
+		}
+	}
+	return false
+}

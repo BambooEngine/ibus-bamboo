@@ -90,7 +90,7 @@ func (e *IBusBambooEngine) init() {
 			if e.getRawKeyLen() == 0 {
 				return
 			}
-			e.commitPreedit(e.getPreeditString())
+			e.commitPreeditAndReset(e.getPreeditString())
 		}
 	}
 	onMouseClick = func() {
@@ -130,7 +130,7 @@ func (e *IBusBambooEngine) resetBuffer() {
 		return
 	}
 	if e.checkInputMode(preeditIM) {
-		e.commitPreedit(e.getPreeditString())
+		e.commitPreeditAndReset(e.getPreeditString())
 	} else {
 		e.preeditor.Reset()
 	}
@@ -388,6 +388,7 @@ func (e *IBusBambooEngine) getCommitText(keyVal, keyCode, state uint32) (string,
 		return e.getPreeditString(), false
 	}
 	if e.preeditor.CanProcessKey(keyRune) {
+		fmt.Println("can processing key")
 		if state&IBusLockMask != 0 {
 			keyRune = e.toUpper(keyRune)
 		}
@@ -402,12 +403,22 @@ func (e *IBusBambooEngine) getCommitText(keyVal, keyCode, state uint32) (string,
 			if fullSeq := e.preeditor.GetProcessedString(bamboo.VietnameseMode); len(fullSeq) > 0 && rune(fullSeq[len(fullSeq)-1]) == keyRune {
 				// [[ => [
 				var ret = e.getPreeditString()
-				e.preeditor.Reset()
-				return ret, true
+				var lastRune = rune(ret[len(ret)-1])
+				var isWordBreakRune = bamboo.IsWordBreakSymbol(lastRune)
+				// TODO: THIS IS HACKING
+				if isWordBreakRune {
+					e.preeditor.RemoveLastChar(false)
+					e.preeditor.ProcessKey(' ', bamboo.EnglishMode)
+				}
+				return ret, isWordBreakRune
 			} else if l := []rune(newText); len(l) > 0 && keyRune == l[len(l)-1] {
 				// f] => f]
-				e.preeditor.Reset()
-				return oldText + string(keyRune), true
+				var isWordBreakRune = bamboo.IsWordBreakSymbol(keyRune)
+				if isWordBreakRune {
+					e.preeditor.RemoveLastChar(false)
+					e.preeditor.ProcessKey(' ', bamboo.EnglishMode)
+				}
+				return oldText + string(keyRune), isWordBreakRune
 			} else {
 				// ] => o?
 				return e.getPreeditString(), false
@@ -438,6 +449,7 @@ func (e *IBusBambooEngine) getCommitText(keyVal, keyCode, state uint32) (string,
 		e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
 		return oldText + string(keyRune), true
 	}
+	fmt.Println("0000000000000")
 	return "", true
 }
 
@@ -448,7 +460,7 @@ func (e *IBusBambooEngine) commitMacroText(keyRune rune) bool {
 	var keyS = string(keyRune)
 	var text = e.preeditor.GetProcessedString(bamboo.PunctuationMode)
 	if e.macroTable.HasKey(text) {
-		e.commitPreedit(e.expandMacro(text) + keyS)
+		e.commitPreeditAndReset(e.expandMacro(text) + keyS)
 		return true
 	} else if e.macroTable.HasKey(text + keyS) {
 		e.preeditor.ProcessKey(keyRune, e.getBambooInputMode())
