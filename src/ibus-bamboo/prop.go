@@ -428,7 +428,7 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 			Name:      "IBusProperty",
 			Key:       PropKeyMouseCapturing,
 			Type:      ibus.PROP_TYPE_TOGGLE,
-			Label:     dbus.MakeVariant(ibus.NewText("Capture mouse events")),
+			Label:     dbus.MakeVariant(ibus.NewText("Bắt sự kiện chuột")),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("Mouse capturing")),
 			Sensitive: true,
 			Visible:   true,

@@ -80,8 +80,8 @@ func (e *IBusBambooEngine) init() {
 
 	if e.config.IBflags&IBmouseCapturing != 0 {
 		startMouseCapturing()
+		startMouseRecording()
 	}
-	startMouseRecording()
 	var mouseMutex sync.Mutex
 	onMouseMove = func() {
 		mouseMutex.Lock()
@@ -166,7 +166,6 @@ func (e *IBusBambooEngine) processShortcutKey(keyVal, keyCode, state uint32) (bo
 	if keyVal == IBusCapsLock {
 		return true, false
 	}
-	//-------------IGNORE KEY-UP EVENT FROM HERE ----------------//
 	// fmt.Println("===== Process restoring key strokes")
 	if e.isShortcutKeyPressed(keyVal, state, SKRestoreKeyStrokes) {
 		e.shouldRestoreKeyStrokes = true
