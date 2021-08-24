@@ -330,9 +330,11 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		if propState == ibus.PROP_STATE_CHECKED {
 			e.config.IBflags |= IBmouseCapturing
 			startMouseCapturing()
+			startMouseRecording()
 		} else {
 			e.config.IBflags &= ^IBmouseCapturing
 			stopMouseCapturing()
+			stopMouseRecording()
 		}
 	}
 	if propName == PropKeyMacroEnabled {
