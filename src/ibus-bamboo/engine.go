@@ -84,16 +84,6 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 	if ret, retValue := e.processShortcutKey(keyVal, keyCode, state); ret {
 		return retValue, nil
 	}
-	if e.isInHexadecimal {
-		return e.hexadecimalProcessKeyEvent(keyVal, keyCode, state)
-	}
-	if e.isEmojiLTOpened {
-		return e.emojiProcessKeyEvent(keyVal, keyCode, state)
-	}
-	if e.englishMode {
-		e.updateLastKeyWithShift(keyVal, state)
-		return false, nil
-	}
 	if e.inBackspaceWhiteList() {
 		return e.bsProcessKeyEvent(keyVal, keyCode, state)
 	}
@@ -106,7 +96,7 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 	e.checkWmClass(latestWm)
 	e.RegisterProperties(e.propList)
 	e.RequireSurroundingText()
-	if e.isShortcutKeyEnable(SKEmojiDialog) && emojiTrie != nil && len(emojiTrie.Children) == 0 {
+	if e.isShortcutKeyEnable(KSEmojiDialog) && emojiTrie != nil && len(emojiTrie.Children) == 0 {
 		emojiTrie, _ = loadEmojiOne(DictEmojiOne)
 	}
 	if e.config.IBflags&IBspellCheckWithDicts != 0 && len(dictionary) == 0 {
@@ -254,12 +244,12 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		return nil
 	}
 	if propName == PropKeyInputModeLookupTableShortcut {
-		cmd := exec.Command("/usr/lib/ibus-bamboo/keyboard-shortcut-editor", e.getShortcutString())
+		cmd := exec.Command("/usr/lib/ibus-bamboo/keyboard-shortcut-editor", e.getShortcutString(), strconv.Itoa(e.config.DefaultInputMode))
 		cmd.Env = os.Environ()
 		cmd.Env = append(cmd.Env, "GTK_IM_MODULE=gtk-im-context-simple")
 		out, err := cmd.Output()
 		if err != nil {
-			out, err = exec.Command("./keyboard-shortcut-editor", e.getShortcutString()).Output()
+			out, err = exec.Command("./keyboard-shortcut-editor", e.getShortcutString(), strconv.Itoa(e.config.DefaultInputMode)).Output()
 			if err != nil {
 				return nil
 			}

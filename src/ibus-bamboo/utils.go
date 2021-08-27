@@ -66,12 +66,13 @@ const (
 	usIM
 )
 
+// Keyboard Shortcuts with keyVal-mask position
 const (
-	SKInputModeSwitch uint = iota * 2
-	SKRestoreKeyStrokes
-	SKViEnSwitch
-	SKEmojiDialog
-	SKHexadecimal
+	KSInputModeSwitch uint = iota * 2
+	KSRestoreKeyStrokes
+	KSViEnSwitch
+	KSEmojiDialog
+	KSHexadecimal
 )
 
 const (
@@ -166,7 +167,7 @@ func loadConfig(engineName string) *Config {
 		InputMethodDefinitions: bamboo.GetInputMethodDefinitions(),
 		Flags:                  bamboo.EstdFlags,
 		IBflags:                flags,
-		Shortcuts:              [10]uint32{1, 126, 0, 0, 0, 0, 0, 0, 0, 0},
+		Shortcuts:              [10]uint32{1, 126, 0, 0, 0, 0, 0, 0, 5, 117},
 		DefaultInputMode:       defaultIM,
 		InputModeMapping:       map[string]int{},
 	}

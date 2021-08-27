@@ -153,33 +153,18 @@ func (e *IBusBambooEngine) isShortcutKeyPressed(keyVal, state uint32, shortcut u
 	shortcuts := e.config.Shortcuts[shortcut : shortcut+2]
 	ret := shortcuts[0] == realState && shortcuts[1] == lowerKey
 	// fmt.Println("...isShortcutKeyPressed=", ret, ret && !e.lastKeyWithShift, shortcuts)
-	if realState == 1 && shortcut == SKViEnSwitch {
+	if realState == 1 && shortcut == KSViEnSwitch {
 		return ret && !e.lastKeyWithShift
 	}
 	return ret
 }
 
 func (e *IBusBambooEngine) processShortcutKey(keyVal, keyCode, state uint32) (bool, bool) {
-	if e.config.DefaultInputMode == usIM {
-		return true, false
-	}
 	if keyVal == IBusCapsLock {
 		return true, false
 	}
-	// fmt.Println("===== Process restoring key strokes")
-	if e.isShortcutKeyPressed(keyVal, state, SKRestoreKeyStrokes) {
-		e.shouldRestoreKeyStrokes = true
-		return false, false
-	}
-	// fmt.Println("===Process shortcut for input method switcher")
-	if e.isShortcutKeyPressed(keyVal, state, SKViEnSwitch) {
-		e.englishMode = !e.englishMode
-		notify(e.englishMode)
-		e.resetBuffer()
-		return true, true
-	}
 	// fmt.Println("===Process shortcut for emoji selector")
-	if e.isShortcutKeyPressed(keyVal, state, SKEmojiDialog) &&
+	if e.isShortcutKeyPressed(keyVal, state, KSEmojiDialog) &&
 		!e.isEmojiLTOpened {
 		e.resetBuffer()
 		e.isEmojiLTOpened = true
@@ -187,10 +172,44 @@ func (e *IBusBambooEngine) processShortcutKey(keyVal, keyCode, state uint32) (bo
 		e.openEmojiList()
 		return true, true
 	}
+	if e.isEmojiLTOpened {
+		return true, e.emojiProcessKeyEvent(keyVal, keyCode, state)
+	}
+	// fmt.Println("====== Process hexadecimal key pressed")
+	if e.isShortcutKeyPressed(keyVal, state, KSHexadecimal) {
+		e.resetBuffer()
+		e.isInHexadecimal = true
+		e.setupHexadecimalProcessKeyEvent()
+		return true, true
+	}
+	if e.isInHexadecimal {
+		if e.isShortcutKeyPressed(keyVal, state, KSHexadecimal) {
+			e.closeHexadecimalInput()
+			e.updateLastKeyWithShift(keyVal, state)
+			return true, false
+		}
+		return true, e.hexadecimalProcessKeyEvent(keyVal, keyCode, state)
+	}
+
+	if e.config.DefaultInputMode == usIM {
+		return true, false
+	}
+	// fmt.Println("===== Process restoring key strokes")
+	if e.isShortcutKeyPressed(keyVal, state, KSRestoreKeyStrokes) {
+		e.shouldRestoreKeyStrokes = true
+		return false, false
+	}
+	// fmt.Println("===Process shortcut for input method switcher")
+	if e.isShortcutKeyPressed(keyVal, state, KSViEnSwitch) {
+		e.englishMode = !e.englishMode
+		notify(e.englishMode)
+		e.resetBuffer()
+		return true, true
+	}
 	// fmt.Println("====== Process shortcut for input mode switch")
 	if e.isInputModeLTOpened {
 		return e.ltProcessKeyEvent(keyVal, keyCode, state)
-	} else if e.isShortcutKeyPressed(keyVal, state, SKInputModeSwitch) &&
+	} else if e.isShortcutKeyPressed(keyVal, state, KSInputModeSwitch) &&
 		e.getWmClass() != "" {
 		e.resetBuffer()
 		e.isInputModeLTOpened = true
@@ -198,27 +217,18 @@ func (e *IBusBambooEngine) processShortcutKey(keyVal, keyCode, state uint32) (bo
 		e.openLookupTable()
 		return true, true
 	}
-	// fmt.Println("====== Process hexadecimal key pressed")
-	if e.isShortcutKeyPressed(keyVal, state, SKHexadecimal) {
-		e.resetBuffer()
-		e.isInHexadecimal = true
-		e.setupHexadecimalProcessKeyEvent()
-		return true, true
-	}
-	if e.isInHexadecimal {
-		if e.isShortcutKeyPressed(keyVal, state, SKHexadecimal) {
-			e.closeHexadecimalInput()
-			e.updateLastKeyWithShift(keyVal, state)
-			return true, false
-		}
-	}
+
 	if keyVal == IBusShiftL || keyVal == IBusShiftR {
 		return true, false
 	}
 	if e.checkInputMode(usIM) {
-		if e.isInputModeLTOpened && e.isShortcutKeyPressed(keyVal, state, SKInputModeSwitch) {
+		if e.isInputModeLTOpened && e.isShortcutKeyPressed(keyVal, state, KSInputModeSwitch) {
 			return false, false
 		}
+		return true, false
+	}
+	if e.englishMode {
+		e.updateLastKeyWithShift(keyVal, state)
 		return true, false
 	}
 	return false, false
@@ -302,7 +312,7 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 	if wmClasses == "" {
 		return true, true
 	}
-	if e.isShortcutKeyPressed(keyVal, state, SKInputModeSwitch) {
+	if e.isShortcutKeyPressed(keyVal, state, KSInputModeSwitch) {
 		e.closeInputModeCandidates()
 		return true, false
 	}
@@ -448,7 +458,6 @@ func (e *IBusBambooEngine) getCommitText(keyVal, keyCode, state uint32) (string,
 		e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
 		return oldText + string(keyRune), true
 	}
-	fmt.Println("0000000000000")
 	return "", true
 }
 

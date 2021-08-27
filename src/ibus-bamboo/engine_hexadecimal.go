@@ -26,10 +26,9 @@ import (
 
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
-	"github.com/godbus/dbus"
 )
 
-func (e *IBusBambooEngine) hexadecimalProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
+func (e *IBusBambooEngine) hexadecimalProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool) {
 	var rawKeyLen = e.getRawKeyLen()
 	if (keyVal >= 0xffb0 && keyVal <= 0xffb9) {
 		keyVal = keyVal - 0xffb0 + 0x0030
@@ -42,11 +41,11 @@ func (e *IBusBambooEngine) hexadecimalProcessKeyEvent(keyVal uint32, keyCode uin
 
 	if rawKeyLen == 0 || oldText[0] != 'u' {
 		e.closeHexadecimalInput()
-		return false, nil
+		return false
 	}
 	if keyVal == IBusEscape {
 		e.closeHexadecimalInput()
-		return true, nil
+		return true
 	}
 	if keyVal == IBusBackSpace {
 		if rawKeyLen > 2 {
@@ -55,7 +54,7 @@ func (e *IBusBambooEngine) hexadecimalProcessKeyEvent(keyVal uint32, keyCode uin
 		} else {
 			e.closeHexadecimalInput()
 		}
-		return true, nil
+		return true
 	}
 	if keyVal == IBusSpace || keyVal == IBusReturn || keyVal == 0xff8d {
 		if rawKeyLen > 1 {
@@ -68,17 +67,17 @@ func (e *IBusBambooEngine) hexadecimalProcessKeyEvent(keyVal uint32, keyCode uin
 			}
 		}
 		e.closeHexadecimalInput()
-		return true, nil
+		return true
 	}
 
 	if (keyRune >= '0' && keyRune <= '9') || (keyRune >= 'A' && keyRune <= 'F') || (keyRune >= 'a' && keyRune <= 'f') {
 		if !e.isValidState(state) || !e.canProcessKey(keyVal) {
-			return true, nil
+			return true
 		}
 		e.preeditor.ProcessKey(keyRune, mode)
 		e.updateHexadecimal(e.getProcessedString(mode))
 	}
-	return true, nil
+	return true
 }
 
 func (e *IBusBambooEngine) setupHexadecimalProcessKeyEvent() {

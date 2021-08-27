@@ -17,6 +17,7 @@ char *text_arr[TOTAL_ROWS] = {"Chuyển chế độ gõ", "Khôi phục phím",
                                 "Tạm tắt bộ gõ", "Emoji", "Hexadecimal"};
 GtkWidget *maskWidgets[TOTAL_MASKS_PER_ROW * TOTAL_ROWS];
 GtkWidget *keyWidgets[TOTAL_ROWS];
+int usIM = 0;
 
 /*
  * Destroy
@@ -233,7 +234,12 @@ int main(int argc, char *argv[]) {
 
   /* --- GTK initialization --- */
   gtk_init(&argc, &argv);
-  if (argc > 1) {
+  if (argc > 2) {
+    int num;
+    sscanf (argv[2],"%d",&num);
+    if (num == 7) {
+      usIM = 1;
+    }
     shortcut_init(argv[1]);
   }
 
@@ -242,7 +248,7 @@ int main(int argc, char *argv[]) {
   dialog = gtk_dialog_new();
   content_area = gtk_dialog_get_content_area(GTK_DIALOG(dialog));
   gtk_window_set_transient_for(GTK_WINDOW(dialog), GTK_WINDOW(window));
-  gtk_widget_set_size_request(dialog, 600, 250);
+  gtk_widget_set_size_request(dialog, 600, 150);
 
   /* --- You should always remember to connect the delete_event
    *     to the main window.
@@ -257,7 +263,8 @@ int main(int argc, char *argv[]) {
    */
   vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, pad);
 
-  for (int i = 0; i < TOTAL_ROWS; i++) {
+  int i = usIM ? 3 : 0;
+  for (; i < TOTAL_ROWS; i++) {
     add_shortcut_box(vbox, text_arr[i], i);
   }
 
@@ -273,7 +280,7 @@ int main(int argc, char *argv[]) {
    * --- Make the main window visible
    */
   gtk_container_add(GTK_CONTAINER(content_area), vbox);
-  gtk_window_set_title(GTK_WINDOW(dialog), "IBus Bamboo Shortcuts");
+  gtk_window_set_title(GTK_WINDOW(dialog), "Keyboard Shortcuts");
   gtk_widget_show_all(dialog);
 
   gtk_main();

@@ -80,6 +80,18 @@ func GetPropListByConfig(c *Config) *ibus.PropList {
 				Symbol:    dbus.MakeVariant(ibus.NewText("")),
 				SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 			},
+			&ibus.Property{
+				Name:      "IBusProperty",
+				Key:       PropKeyInputModeLookupTableShortcut,
+				Type:      ibus.PROP_TYPE_NORMAL,
+				Label:     dbus.MakeVariant(ibus.NewText("Keyboard Shortcuts")),
+				Tooltip:   dbus.MakeVariant(ibus.NewText("Keyboard Shortcuts")),
+				Sensitive: true,
+				Visible:   true,
+				Icon:      "appointment",
+				Symbol:    dbus.MakeVariant(ibus.NewText("")),
+				SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
+			},
 		)
 	}
 	return ibus.NewPropList(
@@ -173,7 +185,7 @@ func GetPropListByConfig(c *Config) *ibus.PropList {
 			Key:       PropKeyInputModeLookupTableShortcut,
 			Type:      ibus.PROP_TYPE_NORMAL,
 			Label:     dbus.MakeVariant(ibus.NewText("Phím tắt")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("Shortcut Keys")),
+			Tooltip:   dbus.MakeVariant(ibus.NewText("Keyboard Shortcuts")),
 			Sensitive: true,
 			Visible:   true,
 			Icon:      "appointment",
