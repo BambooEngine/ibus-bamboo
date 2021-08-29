@@ -101,7 +101,7 @@ func (e *IBusBambooEngine) updatePreedit(processedStr string) {
 	}
 	var ibusText = ibus.NewText(encodedStr)
 
-	if e.config.IBflags&IBpreeditInvisibility != 0 {
+	if e.config.IBflags&IBnoUnderline != 0 {
 		ibusText.AppendAttr(ibus.IBUS_ATTR_TYPE_NONE, ibus.IBUS_ATTR_UNDERLINE_SINGLE, 0, preeditLen)
 	} else {
 		ibusText.AppendAttr(ibus.IBUS_ATTR_TYPE_UNDERLINE, ibus.IBUS_ATTR_UNDERLINE_SINGLE, 0, preeditLen)

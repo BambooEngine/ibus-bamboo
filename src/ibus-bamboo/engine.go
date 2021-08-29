@@ -339,9 +339,9 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	}
 	if propName == PropKeyPreeditInvisibility {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBpreeditInvisibility
+			e.config.IBflags |= IBnoUnderline
 		} else {
-			e.config.IBflags &= ^IBpreeditInvisibility
+			e.config.IBflags &= ^IBnoUnderline
 		}
 	}
 	if propName == PropKeyPreeditElimination {

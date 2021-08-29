@@ -392,7 +392,7 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 	if c.Flags&bamboo.EfreeToneMarking != 0 {
 		toneFreeMarkingChecked = ibus.PROP_STATE_CHECKED
 	}
-	if c.IBflags&IBpreeditInvisibility != 0 {
+	if c.IBflags&IBnoUnderline != 0 {
 		preeditInvisibilityChecked = ibus.PROP_STATE_CHECKED
 	}
 	if c.IBflags&IBpreeditElimination != 0 {

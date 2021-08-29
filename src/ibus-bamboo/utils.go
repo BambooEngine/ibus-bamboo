@@ -83,7 +83,7 @@ const (
 	IBspellCheckEnabled
 	IBautoNonVnRestore
 	IBddFreeStyle
-	IBpreeditInvisibility
+	IBnoUnderline
 	IBspellCheckWithRules
 	IBspellCheckWithDicts
 	IBautoCommitWithDelay
@@ -96,7 +96,7 @@ const (
 	_IBrestoreKeyStrokesEnabled //deprecated
 	IBmouseCapturing
 	IBstdFlags = IBspellCheckEnabled | IBspellCheckWithRules | IBautoNonVnRestore | IBddFreeStyle |
-		IBmouseCapturing | IBautoCapitalizeMacro
+		IBmouseCapturing | IBautoCapitalizeMacro | IBnoUnderline
 )
 
 var DefaultBrowserList = []string{
@@ -154,12 +154,10 @@ func getConfigPath(engineName string) string {
 
 func loadConfig(engineName string) *Config {
 	var flags = IBstdFlags
-	if isGnome {
-		flags &= ^IBmouseCapturing
-	}
 	var defaultIM = preeditIM
 	if engineName == "bamboous" {
 		defaultIM = usIM
+		flags = 0
 	}
 	var c = Config{
 		InputMethod:            "Telex",
