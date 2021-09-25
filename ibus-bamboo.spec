@@ -42,7 +42,6 @@ make DESTDIR=%{buildroot} install
 %{engine_share_dir}/*
 %{engine_lib_dir}/*
 %{ibus_comp_dir}/%{engine_name}.xml
-/usr/lib/%{engine_lib_dir}/ibus-engine-%{engine_name}
 
 %clean
 cd ..
