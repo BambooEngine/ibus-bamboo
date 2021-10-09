@@ -17,7 +17,7 @@ echo "osc install"
 mkdir ../build
 cd ../build
 echo "osc checkout"
-osc checkout $OSC_PATH
+yes 1 | osc checkout $OSC_PATH
 cd $TRAVIS_BUILD_DIR
 rm -rf ../build/$OSC_PATH/*
 echo "osc build"
