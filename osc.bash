@@ -17,7 +17,7 @@ echo "osc install"
 mkdir ../build
 cd ../build
 echo "osc checkout"
-osc checkout $OSC_PATH
+yes 2 | osc checkout $OSC_PATH
 cd $TRAVIS_BUILD_DIR
 rm -rf ../build/$OSC_PATH/*
 echo "osc build"
@@ -30,6 +30,6 @@ echo "osc st"
 osc st
 echo "osc commit"
 echo "$TRAVIS_TAG"
-osc ci -m "$TRAVIS_TAG"
+yes 2 | osc ci -m "$TRAVIS_TAG"
 echo "osc done"
 exit 0
