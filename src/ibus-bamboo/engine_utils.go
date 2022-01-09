@@ -438,25 +438,24 @@ func (e *IBusBambooEngine) getCommitText(keyVal, keyCode, state uint32) (string,
 			return e.getPreeditString(), false
 		}
 	} else if bamboo.IsWordBreakSymbol(keyRune) {
+		var isWordBreakRune = true
 		// macro processing
 		if e.config.IBflags&IBmacroEnabled != 0 {
+			isWordBreakRune = keyVal == IBusSpace
 			var keyS = string(keyRune)
 			if keyVal == IBusSpace && e.macroTable.HasKey(oldText) {
 				e.preeditor.Reset()
-				return e.expandMacro(oldText) + keyS, keyVal == IBusSpace
-			} else {
-				e.preeditor.ProcessKey(keyRune, e.getBambooInputMode())
-				return oldText + keyS, keyVal == IBusSpace
+				return e.expandMacro(oldText) + keyS, true
 			}
 		}
 		if bamboo.HasAnyVietnameseRune(oldText) && e.mustFallbackToEnglish() {
 			e.preeditor.RestoreLastWord(false)
 			newText := e.preeditor.GetProcessedString(bamboo.EnglishMode) + string(keyRune)
 			e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
-			return newText, true
+			return newText, isWordBreakRune
 		}
 		e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
-		return oldText + string(keyRune), true
+		return oldText + string(keyRune), isWordBreakRune
 	}
 	return "", true
 }
