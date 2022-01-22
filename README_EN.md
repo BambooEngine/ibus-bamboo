@@ -46,7 +46,7 @@ sudo add-apt-repository ppa:bamboo-engine/ibus-bamboo
 sudo apt-get update
 sudo apt-get install ibus-bamboo
 ibus restart
-# Make ibus-bamboo your default input method
+# Make ibus-bamboo your default input method, this will remove other existing input layouts
 env DCONF_PROFILE=ibus dconf write /desktop/ibus/general/preload-engines "['xkb:us::eng', 'Bamboo']" && gsettings set org.gnome.desktop.input-sources sources "[('xkb', 'us'), ('ibus', 'Bamboo')]"
 ```
 
