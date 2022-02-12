@@ -21,6 +21,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
@@ -52,6 +54,11 @@ func GetIBusEngineCreator() func(*dbus.Conn, string) dbus.ObjectPath {
 		engine.config = loadConfig(engineName)
 		engine.propList = GetPropListByConfig(config)
 		ibus.PublishEngine(conn, objectPath, engine)
+		if *gui {
+			engine.openShortcutsGUI()
+			saveConfig(engine.config, engine.engineName)
+			os.Exit(0)
+		}
 		go engine.init()
 
 		return objectPath
@@ -569,6 +576,24 @@ func notify(enMode bool) {
 		"", title, msg, []string{}, map[string]dbus.Variant{}, int32(3000))
 	if call.Err != nil {
 		fmt.Println(call.Err)
+	}
+}
+
+func (e *IBusBambooEngine) openShortcutsGUI() {
+	cmd := exec.Command("/usr/lib/ibus-bamboo/keyboard-shortcut-editor", e.getShortcutString(), strconv.Itoa(e.config.DefaultInputMode))
+	cmd.Env = os.Environ()
+	cmd.Env = append(cmd.Env, "GTK_IM_MODULE=gtk-im-context-simple")
+	out, err := cmd.Output()
+	if err != nil {
+		out, err = exec.Command("./keyboard-shortcut-editor", e.getShortcutString(), strconv.Itoa(e.config.DefaultInputMode)).Output()
+		if err != nil {
+			return
+		}
+	}
+	if len(out) > 0 {
+		e.parseShortcuts(string(out))
+	} else if err != nil {
+		fmt.Println("execute keyboard-shortcut-editor: ", err)
 	}
 }
 

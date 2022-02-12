@@ -1,0 +1,7 @@
+[Desktop Entry]
+Name=IBus-Bamboo Setup
+Type=Application
+Exec=/usr/lib/ibus-bamboo/ibus-engine-bamboo -gui
+Icon=/usr/share/ibus-bamboo/icons/vi.svg
+NoDisplay=true
+StartupNotify=true
