@@ -23,7 +23,7 @@ ibus_e_name=ibus-engine-$(engine_name)
 keyboard_shortcut_editor=keyboard-shortcut-editor
 macro_editor=macro-editor
 pkg_name=ibus-$(engine_name)
-version=0.8.0
+version=0.8.1
 
 engine_dir=$(PREFIX)/share/$(pkg_name)
 ibus_dir=$(PREFIX)/share/ibus
@@ -59,13 +59,14 @@ install: build
 	mkdir -p $(DESTDIR)$(engine_dir)
 	mkdir -p $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)
 	mkdir -p $(DESTDIR)$(ibus_dir)/component/
+	mkdir -p $(DESTDIR)$(PREFIX)/share/applications/
 
 	cp -R -f icons data $(DESTDIR)$(engine_dir)
-	cp -f $(engine_gui_name) $(DESTDIR)$(PREFIX)/share/applications/
 	cp -f $(ibus_e_name) $(DESTDIR)$(PREFIX)/lib/ibus-${engine_name}/
 	cp -f $(keyboard_shortcut_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
 	cp -f $(macro_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
 	cp -f $(engine_name).xml $(DESTDIR)$(ibus_dir)/component/
+	cp -f $(engine_gui_name) $(DESTDIR)$(PREFIX)/share/applications/
 
 
 uninstall:
