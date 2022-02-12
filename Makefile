@@ -18,6 +18,7 @@
 PREFIX=/usr
 
 engine_name=bamboo
+engine_gui_name=ibus-setup-Bamboo.desktop
 ibus_e_name=ibus-engine-$(engine_name)
 keyboard_shortcut_editor=keyboard-shortcut-editor
 macro_editor=macro-editor
@@ -60,6 +61,7 @@ install: build
 	mkdir -p $(DESTDIR)$(ibus_dir)/component/
 
 	cp -R -f icons data $(DESTDIR)$(engine_dir)
+	cp -f $(engine_gui_name) $(DESTDIR)$(PREFIX)/share/applications/
 	cp -f $(ibus_e_name) $(DESTDIR)$(PREFIX)/lib/ibus-${engine_name}/
 	cp -f $(keyboard_shortcut_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
 	cp -f $(macro_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
@@ -70,7 +72,7 @@ uninstall:
 	sudo rm -rf $(DESTDIR)$(engine_dir)
 	sudo rm -rf $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
 	sudo rm -f $(DESTDIR)$(ibus_dir)/component/$(engine_name).xml
-	sudo rm -f $(DESTDIR)$(ibus_dir)/component/$(engine_name)-simple.xml
+	sudo rm -rf $(DESTDIR)$(PREFIX)/share/applications/$(engine_gui_name)
 
 
 src: clean

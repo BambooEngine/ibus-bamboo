@@ -22,7 +22,6 @@ package main
 import (
 	"fmt"
 	"log"
-	"os"
 	"os/exec"
 	"reflect"
 	"strconv"
@@ -244,21 +243,7 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		return nil
 	}
 	if propName == PropKeyInputModeLookupTableShortcut {
-		cmd := exec.Command("/usr/lib/ibus-bamboo/keyboard-shortcut-editor", e.getShortcutString(), strconv.Itoa(e.config.DefaultInputMode))
-		cmd.Env = os.Environ()
-		cmd.Env = append(cmd.Env, "GTK_IM_MODULE=gtk-im-context-simple")
-		out, err := cmd.Output()
-		if err != nil {
-			out, err = exec.Command("./keyboard-shortcut-editor", e.getShortcutString(), strconv.Itoa(e.config.DefaultInputMode)).Output()
-			if err != nil {
-				return nil
-			}
-		}
-		if len(out) > 0 {
-			e.parseShortcuts(string(out))
-		} else if err != nil {
-			fmt.Println("execute keyboard-shortcut-editor: ", err)
-		}
+		e.openShortcutsGUI()
 	}
 	if propName == PropKeyMacroTable {
 		OpenMactabFile(e.engineName)
