@@ -80,7 +80,7 @@ func (lt *LookupTable) CursorUp() bool {
 }
 
 func (lt *LookupTable) CursorDown() bool {
-	if lt.CursorPos == uint32(len(lt.Candidates)) {
+	if lt.CursorPos+1 == uint32(len(lt.Candidates)) {
 		if lt.Round {
 			lt.CursorPos = 0
 			return true

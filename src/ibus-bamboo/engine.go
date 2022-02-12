@@ -96,7 +96,11 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 	e.RegisterProperties(e.propList)
 	e.RequireSurroundingText()
 	if e.isShortcutKeyEnable(KSEmojiDialog) && emojiTrie != nil && len(emojiTrie.Children) == 0 {
-		emojiTrie, _ = loadEmojiOne(DictEmojiOne)
+		var err error
+		emojiTrie, err = loadEmojiOne(DictEmojiOne)
+		if err != nil {
+			panic(fmt.Sprintf("failed to load emojiTrie from %s: %s", DictEmojiOne, err))
+		}
 	}
 	if e.config.IBflags&IBspellCheckWithDicts != 0 && len(dictionary) == 0 {
 		dictionary, _ = loadDictionary(DictVietnameseCm)

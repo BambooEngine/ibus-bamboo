@@ -42,7 +42,7 @@ func (e *IBusBambooEngine) openEmojiList() {
 	e.updateEmojiLookupTable()
 }
 
-func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool) {
+func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) bool {
 	var raw = e.emoji.GetRawString()
 	var rawTextLen = len([]rune(raw))
 	var keyRune = rune(keyVal)
@@ -160,6 +160,9 @@ func (e *IBusBambooEngine) updateCursorPosInEmojiTable(idx uint32) bool {
 }
 
 func (e *IBusBambooEngine) updateEmojiLookupTable() {
+	if len(e.emoji.keys) == 0 {
+		return
+	}
 	var visible = len(e.emojiLookupTable.Candidates) > 0
 	e.UpdateLookupTable(e.emojiLookupTable, visible)
 	var cps = e.emoji.Query()
