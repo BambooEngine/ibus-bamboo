@@ -92,14 +92,24 @@ func (e *IBusBambooEngine) expandMacro(str string) string {
 }
 
 func (e *IBusBambooEngine) updatePreedit(processedStr string) {
+	defer func() {
+		if e.config.IBflags&IBmouseCapturing != 0 {
+			mouseCaptureUnlock()
+		}
+	}()
 	var encodedStr = e.encodeText(processedStr)
 	var preeditLen = uint32(len([]rune(encodedStr)))
 	if preeditLen == 0 {
 		e.HidePreeditText()
+		e.HideAuxiliaryText()
 		e.CommitText(ibus.NewText(""))
 		return
 	}
 	var ibusText = ibus.NewText(encodedStr)
+	if inStringList(lookupTableList, e.getWmClass()) {
+		e.UpdateAuxiliaryText(ibusText, true)
+		return
+	}
 
 	if e.config.IBflags&IBnoUnderline != 0 {
 		ibusText.AppendAttr(ibus.IBUS_ATTR_TYPE_NONE, ibus.IBUS_ATTR_UNDERLINE_SINGLE, 0, preeditLen)
@@ -107,10 +117,6 @@ func (e *IBusBambooEngine) updatePreedit(processedStr string) {
 		ibusText.AppendAttr(ibus.IBUS_ATTR_TYPE_UNDERLINE, ibus.IBUS_ATTR_UNDERLINE_SINGLE, 0, preeditLen)
 	}
 	e.UpdatePreeditTextWithMode(ibusText, preeditLen, true, ibus.IBUS_ENGINE_PREEDIT_COMMIT)
-
-	if e.config.IBflags&IBmouseCapturing != 0 {
-		mouseCaptureUnlock()
-	}
 }
 
 func (e *IBusBambooEngine) getBambooInputMode() bamboo.Mode {
@@ -134,7 +140,7 @@ func (e *IBusBambooEngine) shouldFallbackToEnglish(checkVnRune bool) bool {
 	}
 	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation
 	if e.config.IBflags&IBddFreeStyle != 0 && !bamboo.HasAnyVietnameseVower(vnSeq) &&
-	(vnRunes[len(vnRunes)-1] == 'd' || strings.ContainsRune(vnSeq, 'đ')) {
+		(vnRunes[len(vnRunes)-1] == 'd' || strings.ContainsRune(vnSeq, 'đ')) {
 		return false
 	}
 	if checkVnRune && !bamboo.HasAnyVietnameseRune(vnSeq) {
@@ -189,6 +195,7 @@ func (e *IBusBambooEngine) getPreeditString() string {
 
 func (e *IBusBambooEngine) resetPreedit() {
 	e.HidePreeditText()
+	e.HideAuxiliaryText()
 	e.preeditor.Reset()
 }
 

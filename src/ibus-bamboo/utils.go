@@ -99,6 +99,10 @@ const (
 		IBmouseCapturing | IBautoCapitalizeMacro | IBnoUnderline
 )
 
+var lookupTableList = []string{
+	"wpsoffice:wpsoffice",
+}
+
 var DefaultBrowserList = []string{
 	"Navigator:Firefox",
 	"google-chrome:Google-chrome",
