@@ -106,7 +106,7 @@ func (e *IBusBambooEngine) updatePreedit(processedStr string) {
 		return
 	}
 	var ibusText = ibus.NewText(encodedStr)
-	if inStringList(lookupTableList, e.getWmClass()) {
+	if inStringList(enabledAuxiliaryTextList, e.getWmClass()) {
 		e.UpdateAuxiliaryText(ibusText, true)
 		return
 	}

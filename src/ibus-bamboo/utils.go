@@ -99,8 +99,13 @@ const (
 		IBmouseCapturing | IBautoCapitalizeMacro | IBnoUnderline
 )
 
-var lookupTableList = []string{
+var enabledAuxiliaryTextList = []string{
 	"wpsoffice:wpsoffice",
+}
+
+var disabledMouseCapturingList = []string{
+	"DesktopEditors",                //onlyoffice
+	"DesktopEditors:DesktopEditors", //onlyoffice
 }
 
 var DefaultBrowserList = []string{

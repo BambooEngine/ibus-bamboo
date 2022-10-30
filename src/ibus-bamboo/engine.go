@@ -105,6 +105,11 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 	if e.config.IBflags&IBspellCheckWithDicts != 0 && len(dictionary) == 0 {
 		dictionary, _ = loadDictionary(DictVietnameseCm)
 	}
+	if inStringList(disabledMouseCapturingList, e.getWmClass()) {
+		stopMouseCapturing()
+	} else if e.config.IBflags&IBmouseCapturing != 0 {
+		startMouseCapturing()
+	}
 	fmt.Printf("WM_CLASS=(%s)\n", e.getWmClass())
 	return nil
 }

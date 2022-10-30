@@ -45,7 +45,13 @@ extern void x11StopWindowInspector();
 */
 import "C"
 import (
+	"sync"
 	"unsafe"
+)
+
+var (
+	mcapRunning bool
+	mcapMutex   sync.RWMutex
 )
 
 func init() {
@@ -82,19 +88,37 @@ func stopMouseRecording() {
 }
 
 func startMouseCapturing() {
-	C.mouse_capture_init()
+	mcapMutex.Lock()
+	defer mcapMutex.Unlock()
+	if !mcapRunning {
+		C.mouse_capture_init()
+		mcapRunning = true
+	}
 }
 
 func stopMouseCapturing() {
-	C.mouse_capture_exit()
+	mcapMutex.RLock()
+	defer mcapMutex.RUnlock()
+	if mcapRunning {
+		C.mouse_capture_exit()
+	}
 }
 
 func mouseCaptureStartOrUnlock() {
-	C.mouse_capture_start_or_unlock()
+	mcapMutex.Lock()
+	defer mcapMutex.Unlock()
+	if !mcapRunning {
+		C.mouse_capture_start_or_unlock()
+		mcapRunning = true
+	}
 }
 
 func mouseCaptureUnlock() {
-	C.mouse_capture_unlock()
+	mcapMutex.RLock()
+	defer mcapMutex.RUnlock()
+	if mcapRunning {
+		C.mouse_capture_unlock()
+	}
 }
 
 func x11Copy(str string) {

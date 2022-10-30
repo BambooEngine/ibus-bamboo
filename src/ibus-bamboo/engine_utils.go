@@ -404,7 +404,6 @@ func (e *IBusBambooEngine) getCommitText(keyVal, keyCode, state uint32) (string,
 		return e.getPreeditString(), false
 	}
 	if e.preeditor.CanProcessKey(keyRune) {
-		fmt.Println("can processing key")
 		if state&IBusLockMask != 0 {
 			keyRune = e.toUpper(keyRune)
 		}
@@ -457,7 +456,7 @@ func (e *IBusBambooEngine) getCommitText(keyVal, keyCode, state uint32) (string,
 		}
 		if bamboo.HasAnyVietnameseRune(oldText) && e.mustFallbackToEnglish() {
 			e.preeditor.RestoreLastWord(false)
-			newText := e.preeditor.GetProcessedString(bamboo.EnglishMode) + string(keyRune)
+			newText := e.preeditor.GetProcessedString(bamboo.PunctuationMode|bamboo.EnglishMode) + string(keyRune)
 			e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
 			return newText, isWordBreakRune
 		}
@@ -552,6 +551,7 @@ func (e *IBusBambooEngine) getLatestWmClass() string {
 	if wmClass == "" {
 		wmClass = x11GetFocusWindowClass()
 	}
+	wmClass = strings.ReplaceAll(wmClass, "\"", "")
 	return wmClass
 }
 
