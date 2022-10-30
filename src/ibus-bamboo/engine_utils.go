@@ -551,7 +551,7 @@ func (e *IBusBambooEngine) getLatestWmClass() string {
 	if wmClass == "" {
 		wmClass = x11GetFocusWindowClass()
 	}
-	wmClass = strings.ReplaceAll(wmClass, "\"", "")
+	wmClass = strings.Replace(wmClass, "\"", "", -1)
 	return wmClass
 }
 

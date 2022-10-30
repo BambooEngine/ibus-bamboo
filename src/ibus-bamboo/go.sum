@@ -1,0 +1,10 @@
+github.com/BambooEngine/bamboo-core v0.0.0-20220521074724-f0ca534819fa h1:Ql7UXMW6XR5EvAKMhEO3ToYwFIOM4IVSGjj4uFYgXlc=
+github.com/BambooEngine/bamboo-core v0.0.0-20220521074724-f0ca534819fa/go.mod h1:OxsVN3QJM/OrAVsnsSrSTC2SOudVOrb0vTw1dJrcOK4=
+github.com/BambooEngine/goibus v0.0.0-20200430030917-ea4df577c5d6 h1:duAh0Z56MHQpHoIZDQGGcYjLNFQljPLUlcy2pI2PWbg=
+github.com/BambooEngine/goibus v0.0.0-20200430030917-ea4df577c5d6/go.mod h1:k0Sa2NLxVGrxYttQnbmJN0YxKtpPr+0x1Aql5FlD6QU=
+github.com/dkolbly/wl v0.0.0-20180220001605-b06f57e7e2e6 h1:boaySJl2jhPwf+lSBRugRERVEZ0ovAwppOBx73P6zoM=
+github.com/dkolbly/wl v0.0.0-20180220001605-b06f57e7e2e6/go.mod h1:fUuzU55URBTyjoKP2pYoAoeZd1SvdjJP4IkYoT21xZg=
+github.com/godbus/dbus v4.1.0+incompatible h1:WqqLRTsQic3apZUK9qC5sGNfXthmPXzUZ7nQPrNITa4=
+github.com/godbus/dbus v4.1.0+incompatible/go.mod h1:/YcGZj5zSblfDWMMoOzV4fas9FZnQYTkDnsGvmh2Grw=
+golang.org/x/net v0.0.0-20221002022538-bcab6841153b h1:6e93nYa3hNqAvLr0pD4PN1fFS+gKzp2zAXqrnTCstqU=
+golang.org/x/net v0.0.0-20221002022538-bcab6841153b/go.mod h1:YDH+HFinaLZZlnHAfSS6ZXJJ9M9t4Dl22yv3iI2vPwk=
