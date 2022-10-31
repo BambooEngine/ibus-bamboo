@@ -324,7 +324,6 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	if propName == PropKeyMacroEnabled {
 		if propState == ibus.PROP_STATE_CHECKED {
 			e.config.IBflags |= IBmacroEnabled
-			// e.config.IBflags |= IBautoCapitalizeMacro
 			e.macroTable.Enable(e.engineName)
 		} else {
 			e.config.IBflags &= ^IBmacroEnabled
