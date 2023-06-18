@@ -10,7 +10,7 @@ Version: 0.8.2
 Release: 1%{?dist}
 Summary: A Vietnamese input method for IBus
 
-License: GPLv3+
+License: GPL-3.0+
 URL: https://github.com/BambooEngine/ibus-bamboo
 Source0: %{name}-%{version}.tar.gz
 

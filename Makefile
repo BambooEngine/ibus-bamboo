@@ -82,8 +82,9 @@ src: clean
 	cp -f $(pkg_name).dsc $(DESTDIR)/
 	cp -f debian/changelog $(DESTDIR)/debian.changelog
 	cp -f debian/control $(DESTDIR)/debian.control
+	cp -f debian/compat $(DESTDIR)/debian.compat
 	cp -f debian/rules $(DESTDIR)/debian.rules
-	cp -f archlinux/PKGBUILD-release $(DESTDIR)/PKGBUILD
+	cp -f archlinux/PKGBUILD-obs $(DESTDIR)/PKGBUILD
 
 
 rpm: clean
