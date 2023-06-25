@@ -1,9 +1,4 @@
 #!/bin/bash
-if [[ $TRAVIS_TAG =~ ^v[0-9]+\.[0-9]+\.[0-9]+ ]]; then
-  echo "Release tag: $TRAVIS_TAG"
-else
-  exit 0
-fi
 echo "[general]" >> ~/.oscrc
 echo "apiurl = https://api.opensuse.org" >> ~/.oscrc
 echo "[https://api.opensuse.org]" >> ~/.oscrc

@@ -1,0 +1,14 @@
+name: Build ibus-bamboo
+run-name: ${{ github.actor }} is building on GitHub Actions 🚀
+on: [push]
+jobs:
+  Releaser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+        with:
+          fetch-depth: 1
+      - run: sudo apt-get update && sudo apt-get install -y make libx11-dev libxtst-dev libgtk-3-dev
+      - run: make build
+      - run: echo "🍏 This job's status is ${{ job.status }}."
+

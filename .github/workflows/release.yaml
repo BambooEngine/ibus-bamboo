@@ -1,0 +1,23 @@
+name: Release ibus-bamboo
+run-name: ${{ github.actor }} is releasing on GitHub Actions 🚀
+on:
+  push:
+    branches: [master]
+    tags:
+      - 'v*.*.*'
+jobs:
+  Releaser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@master
+        with:
+          fetch-depth: 1
+      - run: sudo apt-get update && sudo apt-get install -y make libx11-dev libxtst-dev libgtk-3-dev
+      - run: make build
+      - shell: bash
+        env:
+          OSC_USER: ${{ secrets.OSC_USER }}
+          OSC_PASS: ${{ secrets.OSC_PASS }}
+          OSC_PATH: ${{ secrets.OSC_PATH }}
+        run: bash osc.bash
+      - run: echo "🍏 This job's status is ${{ job.status }}."
