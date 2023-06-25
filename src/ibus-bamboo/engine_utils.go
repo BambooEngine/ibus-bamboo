@@ -78,7 +78,7 @@ func (e *IBusBambooEngine) isShortcutKeyEnable(ski uint) bool {
 func (e *IBusBambooEngine) init() {
 	e.emoji = NewEmojiEngine()
 	if e.macroTable == nil {
-		e.macroTable = NewMacroTable()
+		e.macroTable = NewMacroTable(e.config.IBflags&IBautoCapitalizeMacro != 0)
 		if e.config.IBflags&IBmacroEnabled != 0 {
 			e.macroTable.Enable(e.engineName)
 		}
