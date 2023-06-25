@@ -79,6 +79,4 @@ Trước khi báo lỗi vui lòng đọc [những vấn đề thường gặp](h
 Nếu trang phía trên không giải quyết vấn đề của bạn, vui lòng [báo lỗi tại đây](https://github.com/BambooEngine/ibus-bamboo/issues)
 
 ## Giấy phép
-ibus-bamboo là phần mềm tự do nguồn mở. Toàn bộ mã nguồn của ibus-bamboo được phát hành dưới các quy định ghi trong Giấy phép Công cộng GNU (GNU General Public License v3.0).
-
-*Từ phiên bản v0.5.3, ibus-bamboo được viết lại và phát triển độc lập với ibus-teni.*
+ibus-bamboo là phần mềm tự do nguồn mở, được phát hành dưới các quy định ghi trong Giấy phép Công cộng GNU (GNU General Public License v3.0).

@@ -33,15 +33,15 @@ import (
 
 type MacroTable struct {
 	sync.RWMutex
-	enable bool
-	mTable map[string]string
+	enable              bool
+	autoCapitalizeMacro bool
+	mTable              map[string]string
 }
 
-func NewMacroTable() *MacroTable {
-	return &MacroTable{}
+func NewMacroTable(autoCapitalizeMacro bool) *MacroTable {
+	return &MacroTable{autoCapitalizeMacro: autoCapitalizeMacro}
 }
 
-//---------------------------------------------------------------
 func (e *MacroTable) LoadFromFile(macroFileName string) error {
 	f, err := os.Open(macroFileName)
 	if err != nil {
@@ -61,23 +61,35 @@ func (e *MacroTable) LoadFromFile(macroFileName string) error {
 		}
 		var list = strings.Split(s, ":")
 		if len(list) == 2 {
-			e.mTable[strings.ToLower(list[0])] = list[1]
+			key := list[0]
+			if e.autoCapitalizeMacro {
+				key = strings.ToLower(key)
+			}
+			e.mTable[key] = list[1]
 		}
 	}
 	return nil
 }
 
-//---------------------------------------------------------------
+func (e *MacroTable) Reload(engineName string, autoCapitalizeMacro bool) {
+	e.autoCapitalizeMacro = autoCapitalizeMacro
+	e.Enable(engineName)
+}
+
 func (e *MacroTable) GetText(key string) string {
-	return e.mTable[strings.ToLower(key)]
+	if e.autoCapitalizeMacro {
+		key = strings.ToLower(key)
+	}
+	return e.mTable[key]
 }
 
-//---------------------------------------------------------------
 func (e *MacroTable) HasKey(key string) bool {
-	return e.mTable[strings.ToLower(key)] != ""
+	if e.autoCapitalizeMacro {
+		key = strings.ToLower(key)
+	}
+	return e.mTable[key] != ""
 }
 
-//---------------------------------------------------------------
 func (e *MacroTable) IncludeKey(key string) bool {
 	if e.mTable[key] != "" {
 		return true
@@ -90,43 +102,35 @@ func (e *MacroTable) IncludeKey(key string) bool {
 	return false
 }
 
-//---------------------------------------------------------------
 func (e *MacroTable) Enable(engineName string) {
 	e.enable = true
 
 	go func() {
-		cont := true
 		modTime := time.Now()
 
 		efPath := getMactabFile(engineName)
 
-		for cont {
+		for e.enable {
 			if sta, _ := os.Stat(efPath); sta != nil {
 				if newModeTime := sta.ModTime(); !newModeTime.Equal(modTime) {
 					modTime = newModeTime
 					e.LoadFromFile(efPath)
 				}
 			}
-			time.Sleep(time.Second)
-			e.RLock()
-			cont = e.enable
-			e.RUnlock()
+			time.Sleep(3 * time.Second)
 		}
 	}()
 }
 
-//---------------------------------------------------------------
 func (e *MacroTable) Disable() {
 	e.enable = false
 	e.mTable = map[string]string{}
 }
 
-//---------------------------------------------------------------
 func getMactabFile(engineName string) string {
 	return fmt.Sprintf(mactabFile, getConfigDir(engineName), engineName)
 }
 
-//---------------------------------------------------------------
 func OpenMactabFile(engineName string) {
 	efPath := getMactabFile(engineName)
 	if _, err := os.Stat(efPath); os.IsNotExist(err) {

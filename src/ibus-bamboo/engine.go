@@ -58,16 +58,20 @@ type IBusBambooEngine struct {
 	shouldRestoreKeyStrokes bool
 }
 
-/**
+/*
+*
 Implement IBus.Engine's process_key_event default signal handler.
 
 Args:
+
 	keyval - The keycode, transformed through a keymap, stays the
 		same for every keyboard
 	keycode - Keyboard-dependant key code
 	modifiers - The state of IBus.ModifierType keys like
 		Shift, Control, etc.
+
 Return:
+
 	True - if successfully process the keyevent
 	False - otherwise. The keyevent will be passed to X-Client
 
@@ -138,7 +142,7 @@ func (e *IBusBambooEngine) Disable() *dbus.Error {
 	return nil
 }
 
-//@method(in_signature="vuu")
+// @method(in_signature="vuu")
 func (e *IBusBambooEngine) SetSurroundingText(text dbus.Variant, cursorPos uint32, anchorPos uint32) *dbus.Error {
 	if !e.isSurroundingTextReady {
 		//fmt.Println("Surrounding Text is not ready yet.")
@@ -237,7 +241,7 @@ func (e *IBusBambooEngine) SetContentType(purpose uint32, hints uint32) *dbus.Er
 	return nil
 }
 
-//@method(in_signature="su")
+// @method(in_signature="su")
 func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *dbus.Error {
 	if propName == PropKeyAbout {
 		exec.Command("xdg-open", HomePage).Start()
@@ -349,6 +353,9 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 			e.config.IBflags |= IBautoCapitalizeMacro
 		} else {
 			e.config.IBflags &= ^IBautoCapitalizeMacro
+		}
+		if e.config.IBflags&IBmacroEnabled != 0 {
+			e.macroTable.Reload(e.engineName, e.config.IBflags&IBautoCapitalizeMacro != 0)
 		}
 	}
 
