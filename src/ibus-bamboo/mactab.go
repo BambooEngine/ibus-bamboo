@@ -61,11 +61,11 @@ func (e *MacroTable) LoadFromFile(macroFileName string) error {
 		}
 		var list = strings.Split(s, ":")
 		if len(list) == 2 {
-			key := list[0]
+			key := strings.TrimSpace(list[0])
 			if e.autoCapitalizeMacro {
 				key = strings.ToLower(key)
 			}
-			e.mTable[key] = list[1]
+			e.mTable[key] = strings.TrimSpace(list[1])
 		}
 	}
 	return nil
