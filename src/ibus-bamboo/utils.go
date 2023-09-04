@@ -161,22 +161,24 @@ func getConfigPath(engineName string) string {
 	return fmt.Sprintf(configFile, getConfigDir(engineName), engineName)
 }
 
-func loadConfig(engineName string) *Config {
-	var flags = IBstdFlags
-	var defaultIM = preeditIM
-	if engineName == "bamboous" {
-		defaultIM = usIM
-		flags = 0
-	}
-	var c = Config{
+func defaultCfg() Config {
+	return Config{
 		InputMethod:            "Telex",
 		OutputCharset:          "Unicode",
 		InputMethodDefinitions: bamboo.GetInputMethodDefinitions(),
 		Flags:                  bamboo.EstdFlags,
-		IBflags:                flags,
+		IBflags:                IBstdFlags,
 		Shortcuts:              [10]uint32{1, 126, 0, 0, 0, 0, 0, 0, 5, 117},
-		DefaultInputMode:       defaultIM,
+		DefaultInputMode:       preeditIM,
 		InputModeMapping:       map[string]int{},
+	}
+}
+
+func loadConfig(engineName string) *Config {
+	var c = defaultCfg()
+	if engineName == "bamboous" {
+		c.DefaultInputMode = usIM
+		c.Flags = 0
 	}
 
 	setupConfigDir(engineName)
@@ -218,6 +220,9 @@ func determineMacroCase(str string) uint8 {
 	} else {
 		for _, c := range chars[1:] {
 			if unicode.IsLower(c) {
+				return VnCaseNoChange
+			}
+			if bamboo.IsWordBreakSymbol(c) {
 				return VnCaseNoChange
 			}
 		}

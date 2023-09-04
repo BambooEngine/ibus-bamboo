@@ -26,6 +26,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 	"unicode"
 	"unicode/utf8"
@@ -44,15 +45,13 @@ func GetIBusEngineCreator() func(*dbus.Conn, string) dbus.ObjectPath {
 	return func(conn *dbus.Conn, ngName string) dbus.ObjectPath {
 		var ngGroupName = strings.Split(ngName, "::")[0]
 		var engineName = strings.ToLower(ngGroupName)
-		var engine = new(IBusBambooEngine)
 		var config = loadConfig(engineName)
 		var objectPath = dbus.ObjectPath(fmt.Sprintf("/org/freedesktop/IBus/Engine/%s/%d", engineName, time.Now().UnixNano()))
 		var inputMethod = bamboo.ParseInputMethod(config.InputMethodDefinitions, config.InputMethod)
-		engine.Engine = ibus.BaseEngine(conn, objectPath)
-		engine.engineName = engineName
-		engine.preeditor = bamboo.NewEngine(inputMethod, config.Flags)
-		engine.config = loadConfig(engineName)
+		baseEngine := ibus.BaseEngine(conn, objectPath)
+		var engine = NewIbusBambooEngine(engineName, loadConfig(engineName), &baseEngine, bamboo.NewEngine(inputMethod, config.Flags))
 		engine.propList = GetPropListByConfig(config)
+		engine.shouldEnqueuKeyStrokes = true
 		ibus.PublishEngine(conn, objectPath, engine)
 		if *gui {
 			engine.openShortcutsGUI()
@@ -83,7 +82,7 @@ func (e *IBusBambooEngine) init() {
 			e.macroTable.Enable(e.engineName)
 		}
 	}
-	keyPressHandler = e.keyPressHandler
+	keyPressHandler = e.keyPressForwardHandler
 
 	if e.config.IBflags&IBmouseCapturing != 0 {
 		startMouseCapturing()
@@ -121,14 +120,24 @@ func (e *IBusBambooEngine) init() {
 
 var keyPressHandler = func(keyVal, keyCode, state uint32) {}
 var keyPressChan = make(chan [3]uint32, 100)
-var isProcessing bool
+var lenKeyChan int32
 
 func keyPressCapturing() {
 	for keyEvents := range keyPressChan {
-		isProcessing = true
+		atomic.StoreInt32(&lenKeyChan, int32(len(keyPressChan)))
+
 		var keyVal, keyCode, state = keyEvents[0], keyEvents[1], keyEvents[2]
 		keyPressHandler(keyVal, keyCode, state)
-		isProcessing = false
+
+		atomic.AddInt32(&lenKeyChan, -1)
+	}
+}
+
+var sleep = func() {
+	var i = 0
+	for i < 10 && atomic.LoadInt32(&lenKeyChan) > 0 {
+		i++
+		time.Sleep(5 * time.Millisecond)
 	}
 }
 
@@ -201,8 +210,8 @@ func (e *IBusBambooEngine) processShortcutKey(keyVal, keyCode, state uint32) (bo
 	if e.config.DefaultInputMode == usIM {
 		return true, false
 	}
-	// fmt.Println("===== Process restoring key strokes")
 	if e.isShortcutKeyPressed(keyVal, state, KSRestoreKeyStrokes) {
+		// fmt.Println("===== Process restoring key strokes")
 		e.shouldRestoreKeyStrokes = true
 		return false, false
 	}
@@ -277,7 +286,7 @@ func (e *IBusBambooEngine) getInputMode() int {
 			return im
 		}
 	}
-	if imLookupTable[e.config.DefaultInputMode] != "" {
+	if _, ok := imLookupTable[e.config.DefaultInputMode]; ok {
 		return e.config.DefaultInputMode
 	}
 	return preeditIM
@@ -382,7 +391,7 @@ func (e *IBusBambooEngine) updateInputModeLT() {
 	e.UpdateLookupTable(e.inputModeLookupTable, visible)
 }
 
-func (e *IBusBambooEngine) isValidState(state uint32) bool {
+func isValidState(state uint32) bool {
 	if state&IBusControlMask != 0 ||
 		state&IBusMod1Mask != 0 ||
 		state&IBusIgnoredMask != 0 ||
@@ -394,8 +403,9 @@ func (e *IBusBambooEngine) isValidState(state uint32) bool {
 	return true
 }
 
-func (e *IBusBambooEngine) getCommitText(keyVal, keyCode, state uint32) (string, bool) {
+func (e *IBusBambooEngine) getCommitText(keyVal, keyCode, state uint32) (newText string, IsWordBreakSymbol bool) {
 	var keyRune = rune(keyVal)
+	isValidKey := isValidState(state) && e.isValidKeyVal(keyVal)
 	oldText := e.getPreeditString()
 	// restore key strokes by pressing Shift + Space
 	if e.shouldRestoreKeyStrokes {
@@ -403,7 +413,11 @@ func (e *IBusBambooEngine) getCommitText(keyVal, keyCode, state uint32) (string,
 		e.preeditor.RestoreLastWord(!bamboo.HasAnyVietnameseRune(oldText))
 		return e.getPreeditString(), false
 	}
-	if e.preeditor.CanProcessKey(keyRune) {
+	var keyS string
+	if isValidKey {
+		keyS = string(keyRune)
+	}
+	if isValidKey && e.preeditor.CanProcessKey(keyRune) {
 		if state&IBusLockMask != 0 {
 			keyRune = e.toUpper(keyRune)
 		}
@@ -420,7 +434,7 @@ func (e *IBusBambooEngine) getCommitText(keyVal, keyCode, state uint32) (string,
 				var ret = e.getPreeditString()
 				var lastRune = rune(ret[len(ret)-1])
 				var isWordBreakRune = bamboo.IsWordBreakSymbol(lastRune)
-				// TODO: THIS IS HACKING
+				// TODO: THIS IS A HACK
 				if isWordBreakRune {
 					e.preeditor.RemoveLastChar(false)
 					e.preeditor.ProcessKey(' ', bamboo.EnglishMode)
@@ -443,44 +457,43 @@ func (e *IBusBambooEngine) getCommitText(keyVal, keyCode, state uint32) (string,
 		} else {
 			return e.getPreeditString(), false
 		}
-	} else if bamboo.IsWordBreakSymbol(keyRune) {
-		var isWordBreakRune = true
+	} else if e.config.IBflags&IBmacroEnabled != 0 {
 		// macro processing
-		if e.config.IBflags&IBmacroEnabled != 0 {
-			isWordBreakRune = keyVal == IBusSpace
-			var keyS = string(keyRune)
-			if keyVal == IBusSpace && e.macroTable.HasKey(oldText) {
-				e.preeditor.Reset()
-				return e.expandMacro(oldText) + keyS, true
-			}
+		if e.macroTable.HasKey(oldText) {
+			return e.expandMacro(oldText) + keyS, true
 		}
-		if bamboo.HasAnyVietnameseRune(oldText) && e.mustFallbackToEnglish() {
-			e.preeditor.RestoreLastWord(false)
-			newText := e.preeditor.GetProcessedString(bamboo.PunctuationMode|bamboo.EnglishMode) + string(keyRune)
-			e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
-			return newText, isWordBreakRune
-		}
-		e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
-		return oldText + string(keyRune), isWordBreakRune
+		// in macro, special characters except space are still treated as not WBS
+		// in order to support the macro ( -->:arrow )
+		isWordBreakSymbol := !isValidKey || keyVal == IBusSpace
+		return e.handleNonVnWord(keyVal, keyCode, state, isWordBreakSymbol)
 	}
-	return "", true
+	return e.handleNonVnWord(keyVal, keyCode, state, true)
 }
 
-func (e *IBusBambooEngine) commitMacroText(keyRune rune) bool {
-	if e.config.IBflags&IBmacroEnabled == 0 {
-		return false
+func (e *IBusBambooEngine) handleNonVnWord(keyVal, keyCode, state uint32, isWordBreakSymbol bool) (string, bool) {
+	var (
+		keyS       string
+		keyRune    = rune(keyVal)
+		isValidKey = isValidState(state) && e.isValidKeyVal(keyVal)
+		oldText    = e.getPreeditString()
+	)
+	if isValidKey {
+		keyS = string(keyRune)
 	}
-	var keyS = string(keyRune)
-	var text = e.preeditor.GetProcessedString(bamboo.PunctuationMode)
-	if e.macroTable.HasKey(text) {
-		e.commitPreeditAndReset(e.expandMacro(text) + keyS)
-		return true
-	} else if e.macroTable.HasKey(text + keyS) {
-		e.preeditor.ProcessKey(keyRune, e.getBambooInputMode())
-		e.updatePreedit(text + keyS)
-		return true
+	if isWordBreakSymbol && bamboo.HasAnyVietnameseRune(oldText) && e.mustFallbackToEnglish() {
+		e.preeditor.RestoreLastWord(false)
+		newText := e.preeditor.GetProcessedString(bamboo.PunctuationMode|bamboo.EnglishMode) + keyS
+		if isValidKey {
+			e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
+		}
+		return newText, true
 	}
-	return false
+	if isValidKey {
+		e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
+		return oldText + keyS, isWordBreakSymbol
+	}
+	// Ctrl + A is treasted as a WBS
+	return oldText + keyS, true
 }
 
 func (e *IBusBambooEngine) getMacroText() (bool, string) {
@@ -494,27 +507,21 @@ func (e *IBusBambooEngine) getMacroText() (bool, string) {
 	return false, ""
 }
 
-func (e *IBusBambooEngine) getFakeBackspace() int {
-	return e.nFakeBackSpace
+func (e *IBusBambooEngine) getFakeBackspace() int32 {
+	return atomic.LoadInt32(&e.nFakeBackSpace)
 }
 
-var mtx sync.Mutex
-
-func (e *IBusBambooEngine) setFakeBackspace(n int) {
-	mtx.Lock()
-	e.nFakeBackSpace = n
-	mtx.Unlock()
+func (e *IBusBambooEngine) setFakeBackspace(n int32) {
+	atomic.StoreInt32(&e.nFakeBackSpace, n)
 }
 
-func (e *IBusBambooEngine) addFakeBackspace(n int) {
-	mtx.Lock()
-	e.nFakeBackSpace += n
-	mtx.Unlock()
+func (e *IBusBambooEngine) addFakeBackspace(n int32) {
+	atomic.AddInt32(&e.nFakeBackSpace, n)
 }
 
-func (e *IBusBambooEngine) canProcessKey(keyVal uint32) bool {
+func (e *IBusBambooEngine) isValidKeyVal(keyVal uint32) bool {
 	var keyRune = rune(keyVal)
-	if keyVal == IBusSpace || keyVal == IBusBackSpace || bamboo.IsWordBreakSymbol(keyRune) {
+	if keyVal == IBusBackSpace || bamboo.IsWordBreakSymbol(keyRune) {
 		return true
 	}
 	if ok, _ := e.getMacroText(); ok && keyVal == IBusTab {

@@ -28,8 +28,6 @@ version=0.8.2
 engine_dir=$(PREFIX)/share/$(pkg_name)
 ibus_dir=$(PREFIX)/share/ibus
 
-GOPATH=$(shell pwd)/vendor:$(shell pwd)
-
 GOLDFLAGS=-ldflags "-w -s -X main.Version=$(version)"
 
 rpm_src_dir=~/rpmbuild/SOURCES
@@ -46,6 +44,10 @@ build:
 	GOPATH=$(CURDIR) GO111MODULE=off go build $(GOLDFLAGS) -o $(ibus_e_name) ibus-$(engine_name)
 	gcc -o $(keyboard_shortcut_editor) setup-ui/$(keyboard_shortcut_editor).c `pkg-config --libs --cflags gtk+-3.0`
 	gcc -rdynamic -o $(macro_editor) setup-ui/$(macro_editor).c `pkg-config --libs --cflags gtk+-3.0`
+
+t:
+	GOPATH=$(CURDIR) GO111MODULE=off go test ./src/ibus-bamboo/...
+	GOPATH=$(CURDIR) GO111MODULE=off go test ./src/github.com/BambooEngine/bamboo-core/...
 
 clean:
 	rm -f ibus-engine-* *_linux *_cover.html go_test_* go_build_* test *.gz test

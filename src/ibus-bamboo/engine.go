@@ -34,28 +34,40 @@ import (
 
 type IBusBambooEngine struct {
 	sync.Mutex
-	ibus.Engine
-	preeditor               bamboo.IEngine
-	engineName              string
-	config                  *Config
-	propList                *ibus.PropList
-	englishMode             bool
-	macroTable              *MacroTable
-	wmClasses               string
-	isInputModeLTOpened     bool
-	isEmojiLTOpened         bool
-	isInHexadecimal         bool
-	emojiLookupTable        *ibus.LookupTable
-	inputModeLookupTable    *ibus.LookupTable
-	capabilities            uint32
-	keyPressDelay           int
-	nFakeBackSpace          int
-	isFirstTimeSendingBS    bool
-	emoji                   *EmojiEngine
-	isSurroundingTextReady  bool
-	lastKeyWithShift        bool
-	lastCommitText          int64
+	IEngine
+	preeditor              bamboo.IEngine
+	engineName             string
+	config                 *Config
+	propList               *ibus.PropList
+	englishMode            bool
+	macroTable             *MacroTable
+	wmClasses              string
+	isInputModeLTOpened    bool
+	isEmojiLTOpened        bool
+	isInHexadecimal        bool
+	emojiLookupTable       *ibus.LookupTable
+	inputModeLookupTable   *ibus.LookupTable
+	capabilities           uint32
+	keyPressDelay          int
+	nFakeBackSpace         int32
+	isFirstTimeSendingBS   bool
+	emoji                  *EmojiEngine
+	isSurroundingTextReady bool
+	lastKeyWithShift       bool
+	lastCommitText         int64
+	// restore key strokes by pressing Shift + Space
 	shouldRestoreKeyStrokes bool
+	// enqueue key strokes to process later
+	shouldEnqueuKeyStrokes bool
+}
+
+func NewIbusBambooEngine(name string, cfg *Config, base IEngine, preeditor bamboo.IEngine) *IBusBambooEngine {
+	return &IBusBambooEngine{
+		engineName: name,
+		IEngine:    base,
+		preeditor:  preeditor,
+		config:     cfg,
+	}
 }
 
 /*
@@ -85,6 +97,7 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 	fmt.Printf("\n")
 	log.Printf(">>>>ProcessKeyEvent >  %d | state %d keyVal 0x%04x | %c <<<<\n", len(keyPressChan), state, keyVal, rune(keyVal))
 	if ret, retValue := e.processShortcutKey(keyVal, keyCode, state); ret {
+		println("shortcut")
 		return retValue, nil
 	}
 	if e.inBackspaceWhiteList() {

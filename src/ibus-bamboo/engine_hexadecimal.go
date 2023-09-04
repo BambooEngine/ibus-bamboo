@@ -21,6 +21,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 
@@ -28,16 +29,15 @@ import (
 	"github.com/BambooEngine/goibus/ibus"
 )
 
-func (e *IBusBambooEngine) hexadecimalProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool) {
+func (e *IBusBambooEngine) hexadecimalProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) bool {
 	var rawKeyLen = e.getRawKeyLen()
-	if (keyVal >= 0xffb0 && keyVal <= 0xffb9) {
+	if keyVal >= 0xffb0 && keyVal <= 0xffb9 {
 		keyVal = keyVal - 0xffb0 + 0x0030
 	}
 	var keyRune = rune(keyVal)
 	var mode = bamboo.EnglishMode | bamboo.FullText
 	var oldText = e.getProcessedString(mode)
 	defer e.updateLastKeyWithShift(keyVal, state)
-
 
 	if rawKeyLen == 0 || oldText[0] != 'u' {
 		e.closeHexadecimalInput()
@@ -62,8 +62,8 @@ func (e *IBusBambooEngine) hexadecimalProcessKeyEvent(keyVal uint32, keyCode uin
 			if err != nil || value > 0x10ffff {
 				log.Println("Input is out of range")
 			} else {
-				log.Printf("Commit Text [%s]\n", string(value))
-				e.CommitText(ibus.NewText(string(value)))
+				log.Printf("Commit Text [%s]\n", fmt.Sprint(value))
+				e.CommitText(ibus.NewText(fmt.Sprint(value)))
 			}
 		}
 		e.closeHexadecimalInput()
@@ -71,7 +71,7 @@ func (e *IBusBambooEngine) hexadecimalProcessKeyEvent(keyVal uint32, keyCode uin
 	}
 
 	if (keyRune >= '0' && keyRune <= '9') || (keyRune >= 'A' && keyRune <= 'F') || (keyRune >= 'a' && keyRune <= 'f') {
-		if !e.isValidState(state) || !e.canProcessKey(keyVal) {
+		if !isValidState(state) || !e.isValidKeyVal(keyVal) {
 			return true
 		}
 		e.preeditor.ProcessKey(keyRune, mode)
@@ -87,7 +87,7 @@ func (e *IBusBambooEngine) setupHexadecimalProcessKeyEvent() {
 	var mode = bamboo.EnglishMode | bamboo.FullText
 	defer e.updateLastKeyWithShift(keyVal, state)
 
-	if e.canProcessKey(keyVal) {
+	if e.isValidKeyVal(keyVal) {
 		e.preeditor.ProcessKey(keyRune, mode)
 	}
 	e.updateHexadecimal(e.getProcessedString(mode))

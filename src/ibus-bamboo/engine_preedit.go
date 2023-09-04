@@ -35,13 +35,10 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	var oldText = e.getPreeditString()
 	defer e.updateLastKeyWithShift(keyVal, state)
 
-	// workaround for chrome's address bar and Google SpreadSheets
 	if !e.shouldRestoreKeyStrokes {
-		if !e.isValidState(state) || !e.canProcessKey(keyVal) ||
-			(e.config.IBflags&IBmacroEnabled == 0 && rawKeyLen == 0 && !e.preeditor.CanProcessKey(keyRune)) {
-			if rawKeyLen > 0 {
-				e.commitPreeditAndReset(e.getPreeditString())
-			}
+		if !e.preeditor.CanProcessKey(keyRune) && rawKeyLen == 0 && e.config.IBflags&IBmacroEnabled == 0 {
+			// don't process special characters if rawKeyLen == 0,
+			// workaround for Chrome's address bar and Google SpreadSheets
 			return false, nil
 		}
 	}
@@ -70,12 +67,13 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	}
 
 	newText, isWordBreakRune := e.getCommitText(keyVal, keyCode, state)
+	isValidKey := isValidState(state) && e.isValidKeyVal(keyVal)
 	if isWordBreakRune {
 		e.commitPreeditAndReset(newText)
-		return true, nil
+		return isValidKey, nil
 	}
 	e.updatePreedit(newText)
-	return true, nil
+	return isValidKey, nil
 }
 
 func (e *IBusBambooEngine) expandMacro(str string) string {

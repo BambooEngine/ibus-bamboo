@@ -33,15 +33,6 @@ import (
 const BACKSPACE_INTERVAL = 0
 
 func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
-	var sleep = func() {
-		var i = 0
-		log.Print("bsProcessKeyEvent sleeping....")
-		for i < 10 && (isProcessing || len(keyPressChan) > 0) {
-			i++
-			time.Sleep(5 * time.Millisecond)
-		}
-		log.Print("bsProcessKeyEvent awoke!")
-	}
 	if isMovementKey(keyVal) {
 		e.preeditor.Reset()
 		e.resetFakeBackspace()
@@ -49,69 +40,73 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		return false, nil
 	}
 	var keyRune = rune(keyVal)
-	// Caution: don't use ForwardKeyEvent api in XTestFakeKeyEvent and SurroundingText mode
-	if e.checkInputMode(xTestFakeKeyEventIM) || e.checkInputMode(surroundingTextIM) {
-		if keyVal == IBusLeft && state&IBusShiftMask != 0 {
-			return false, nil
-		}
-		if !e.isValidState(state) || !e.canProcessKey(keyVal) {
-			sleep()
-			e.preeditor.Reset()
-			e.resetFakeBackspace()
-			return false, nil
-		}
-		if keyVal == IBusBackSpace {
-			if e.getFakeBackspace() > 0 {
-				e.addFakeBackspace(-1)
-				return false, nil
-			} else {
-				sleep()
-				if e.getRawKeyLen() > 0 {
-					if e.shouldFallbackToEnglish(true) {
-						e.preeditor.RestoreLastWord(false)
-					}
-					e.preeditor.RemoveLastChar(false)
-				}
-			}
-			return false, nil
-		}
-		if keyVal == IBusTab {
-			sleep()
-			if ok, _ := e.getMacroText(); !ok {
-				e.preeditor.Reset()
-				return false, nil
-			}
-		}
-	}
 	if e.config.IBflags&IBmacroEnabled == 0 && len(keyPressChan) == 0 && e.getRawKeyLen() == 0 && !inKeyList(e.preeditor.GetInputMethod().AppendingKeys, keyRune) {
 		e.updateLastKeyWithShift(keyVal, state)
-		if e.preeditor.CanProcessKey(keyRune) && e.isValidState(state) {
+		if e.preeditor.CanProcessKey(keyRune) && isValidState(state) {
 			e.isFirstTimeSendingBS = true
 			if state&IBusLockMask != 0 {
 				keyRune = e.toUpper(keyRune)
 			}
 			e.preeditor.ProcessKey(keyRune, bamboo.VietnameseMode)
+			e.commitText(e.getPreeditString())
+			return true, nil
 		}
 		return false, nil
 	}
-	// if the main thread is busy processing, the keypress events come all mixed up
-	// so we enqueue these keypress events and process them sequentially on another thread
-	keyPressChan <- [3]uint32{keyVal, keyCode, state}
-	return true, nil
+
+	if e.shouldEnqueuKeyStrokes {
+		// WARNING: don't use ForwardKeyEvent api in XTestFakeKeyEvent/SurroundingText mode
+		if e.checkInputMode(xTestFakeKeyEventIM) || e.checkInputMode(surroundingTextIM) {
+			if keyVal == IBusBackSpace {
+				if e.getFakeBackspace() > 0 {
+					e.addFakeBackspace(-1)
+					return false, nil
+				} else {
+					sleep()
+					if e.getRawKeyLen() > 0 {
+						if e.shouldFallbackToEnglish(true) {
+							e.preeditor.RestoreLastWord(false)
+						}
+						e.preeditor.RemoveLastChar(false)
+					}
+				}
+				return false, nil
+			}
+			if keyVal == IBusTab {
+				sleep()
+				if ok, _ := e.getMacroText(); !ok {
+					e.preeditor.Reset()
+					return false, nil
+				}
+			}
+			isValidKey := isValidState(state) && e.isValidKeyVal(keyVal)
+			if !isValidKey {
+				sleep()
+				return e.keyPressHandler(keyVal, keyCode, state), nil
+			}
+		}
+		// if the main thread is busy processing, the keypress events come all mixed up
+		// so we enqueue these keypress events and process them sequentially on another thread
+		keyPressChan <- [3]uint32{keyVal, keyCode, state}
+		return true, nil
+	} else {
+		return e.keyPressHandler(keyVal, keyCode, state), nil
+	}
 }
 
-func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
-	fmt.Print("\n")
-	log.Printf(">>Backspace:ProcessKeyEvent >  %c | keyCode 0x%04x keyVal 0x%04x | %d\n", rune(keyVal), keyCode, keyVal, len(keyPressChan))
+func (e *IBusBambooEngine) keyPressForwardHandler(keyVal, keyCode, state uint32) {
+	ret := e.keyPressHandler(keyVal, keyCode, state)
+	if !ret {
+		e.ForwardKeyEvent(keyVal, keyCode, state)
+	}
+}
+
+func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) bool {
+	// log.Printf(">>Backspace:ProcessKeyEvent >  %c | keyCode 0x%04x keyVal 0x%04x | %d\n", rune(keyVal), keyCode, keyVal, len(keyPressChan))
 	defer e.updateLastKeyWithShift(keyVal, state)
 	if e.keyPressDelay > 0 {
 		time.Sleep(time.Duration(e.keyPressDelay) * time.Millisecond)
 		e.keyPressDelay = 0
-	}
-	if !e.isValidState(state) {
-		e.preeditor.Reset()
-		e.ForwardKeyEvent(keyVal, keyCode, state)
-		return
 	}
 	oldText := e.getPreeditString()
 	_, oldMacText := e.getMacroText()
@@ -119,31 +114,29 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 		if e.getRawKeyLen() > 0 {
 			if e.config.IBflags&IBautoNonVnRestore == 0 {
 				e.preeditor.RemoveLastChar(false)
-				e.ForwardKeyEvent(keyVal, keyCode, state)
-				return
+				return false
 			}
 			e.preeditor.RemoveLastChar(true)
 			var newText = e.getPreeditString()
 			var offset = e.getPreeditOffset([]rune(newText), []rune(oldText))
 			if oldText != "" && offset != len([]rune(newText)) {
 				e.updatePreviousText(oldText, newText)
-				return
+				return true
 			}
 		}
-		e.ForwardKeyEvent(keyVal, keyCode, state)
-		return
+		return false
 	}
 
 	if keyVal == IBusTab {
+		defer e.preeditor.Reset()
 		if oldMacText != "" {
 			e.updatePreviousText(oldText, oldMacText)
-		} else {
-			e.ForwardKeyEvent(keyVal, keyCode, state)
+			return true
 		}
-		e.preeditor.Reset()
-		return
+		return false
 	}
 
+	isValidKey := isValidState(state) && e.isValidKeyVal(keyVal)
 	newText, isWordBreakRune := e.getCommitText(keyVal, keyCode, state)
 	if len(newText) > 0 {
 		if e.shouldAppendDeadKey(newText, oldText) {
@@ -153,11 +146,10 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) {
 			e.isFirstTimeSendingBS = false
 			e.SendBackSpace(1)
 		}
-		e.batchUpdatePreviousText(oldText, newText, isWordBreakRune)
-		return
+		e.updatePreviousTextInBatch(oldText, newText, isWordBreakRune)
+		return isValidKey
 	}
-	e.preeditor.Reset()
-	e.ForwardKeyEvent(keyVal, keyCode, state)
+	return isValidKey
 }
 
 func (e *IBusBambooEngine) getPreeditOffset(newRunes, oldRunes []rune) int {
@@ -195,32 +187,35 @@ func (e *IBusBambooEngine) updatePreviousText(oldText, newText string) {
 	e.bsCommitText(offsetRunes)
 }
 
-func (e *IBusBambooEngine) batchUpdatePreviousText(oldText, newText string, isWordBreakRune bool) {
+func (e *IBusBambooEngine) updatePreviousTextInBatch(oldText, newText string, isWordBreakRune bool) {
 	offsetRunes, nBackSpace := e.getOffsetRunes(newText, oldText)
 	if nBackSpace > 0 {
 		e.SendBackSpace(nBackSpace)
 	}
 	var buffer = []string{string(offsetRunes)}
 	if isWordBreakRune {
+		e.preeditor.Reset()
 		buffer = append(buffer, "")
 	}
+	// isDirty means containing runes that are not committed
 	var isDirty = false
 	for i := 0; i < len(keyPressChan); i++ {
 		var keyEvents = <-keyPressChan
 		var keyVal, keyCode, state = keyEvents[0], keyEvents[1], keyEvents[2]
-		if !e.isValidState(state) || !e.canProcessKey(keyVal) {
-			if isDirty {
-				e.batchCommit(oldText, strings.Join(buffer, ""), nBackSpace, isWordBreakRune)
-				buffer = []string{""}
-			}
-			e.ForwardKeyEvent(keyVal, keyCode, state)
-		} else {
+		isValidKey := isValidState(state) && e.isValidKeyVal(keyVal)
+		if isValidKey {
 			var commitText, isWordBreakRune0 = e.getCommitText(keyVal, keyCode, state)
 			buffer[len(buffer)-1] = commitText
 			if isWordBreakRune0 {
 				buffer = append(buffer, "")
 			}
 			isDirty = true
+		} else {
+			if isDirty {
+				e.batchCommit(oldText, strings.Join(buffer, ""), nBackSpace, isWordBreakRune)
+				buffer = []string{""}
+			}
+			e.ForwardKeyEvent(keyVal, keyCode, state)
 		}
 	}
 	if isDirty {
@@ -231,27 +226,31 @@ func (e *IBusBambooEngine) batchUpdatePreviousText(oldText, newText string, isWo
 	e.bsCommitText(offsetRunes)
 }
 
+// batchCommit compares two given text and commit the right outer text, with backspaces if necessary
+// toi - tôi = ôi + 2 BS
+// <space> - tôi = tôi
 func (e *IBusBambooEngine) batchCommit(oldText string, newText string, nBackSpace int, isWordBreakRune bool) {
 	fullRunes := []rune(newText)
 	if len(fullRunes) == 0 {
 		return
 	}
-	offsetRunes0, nBackSpace0 := e.getOffsetRunes(newText, oldText)
+	patchedRunes, patchedBackSpace := e.getOffsetRunes(newText, oldText)
 	if isWordBreakRune {
-		e.bsCommitText(offsetRunes0)
+		e.bsCommitText(patchedRunes)
 		return
 	}
-	if nBackSpace0 > nBackSpace {
-		e.SendBackSpace(nBackSpace0 - nBackSpace)
-	} else if nBackSpace0 < nBackSpace {
+	if patchedBackSpace > nBackSpace {
+		e.SendBackSpace(patchedBackSpace - nBackSpace)
+	} else if patchedBackSpace < nBackSpace {
 		var offset = utf8.RuneCountInString(oldText) - nBackSpace
-		offsetRunes0 = fullRunes[offset:]
+		patchedRunes = fullRunes[offset:]
 	}
 	log.Printf("\nUpdating Previous Text %s ---> %s\n", oldText, newText)
 	fmt.Print("====================================\n\n")
-	e.bsCommitText(offsetRunes0)
+	e.bsCommitText(patchedRunes)
 }
 
+// getOffsetRunes returns the right outer text and number of pending backspaces
 func (e *IBusBambooEngine) getOffsetRunes(newText, oldText string) ([]rune, int) {
 	var oldRunes = []rune(oldText)
 	var newRunes = []rune(newText)
@@ -274,7 +273,7 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 		time.Sleep(time.Duration(delta) * time.Nanosecond)
 	}
 	if e.checkInputMode(xTestFakeKeyEventIM) {
-		e.setFakeBackspace(n)
+		e.setFakeBackspace(int32(n))
 		var sleep = func() {
 			var count = 0
 			for e.getFakeBackspace() > 0 && count < 10 {
