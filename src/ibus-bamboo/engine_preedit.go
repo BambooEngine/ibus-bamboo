@@ -198,10 +198,10 @@ func (e *IBusBambooEngine) resetPreedit() {
 }
 
 func (e *IBusBambooEngine) commitPreeditAndReset(s string) {
-	e.commitText(s)
 	e.HidePreeditText()
 	e.HideAuxiliaryText()
 	e.HideLookupTable()
+	e.commitText(s)
 	e.preeditor.Reset()
 }
 
