@@ -20,6 +20,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -69,7 +70,8 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	newText, isWordBreakRune := e.getCommitText(keyVal, keyCode, state)
 	isValidKey := isValidState(state) && e.isValidKeyVal(keyVal)
 	if isWordBreakRune {
-		e.commitPreeditAndReset(newText)
+		fmt.Printf("isWordBreakRune=%v isValidKey=%v\n", isWordBreakRune, isValidKey)
+		e.commitPreeditAndResetForWBS(newText, isValidKey)
 		return isValidKey, nil
 	}
 	e.updatePreedit(newText)
@@ -194,6 +196,19 @@ func (e *IBusBambooEngine) getPreeditString() string {
 func (e *IBusBambooEngine) resetPreedit() {
 	e.HidePreeditText()
 	e.HideAuxiliaryText()
+	e.preeditor.Reset()
+}
+
+func (e *IBusBambooEngine) commitPreeditAndResetForWBS(s string, isWBS bool) {
+	if isWBS {
+		e.commitText(s)
+		e.HidePreeditText()
+	} else {
+		e.HidePreeditText()
+		e.commitText(s)
+	}
+	e.HideAuxiliaryText()
+	e.HideLookupTable()
 	e.preeditor.Reset()
 }
 
