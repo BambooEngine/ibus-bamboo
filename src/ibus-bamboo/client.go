@@ -109,13 +109,11 @@ func NewZwlrForeignToplevelManagerV1(ctx *wl.Context) *ZwlrForeignToplevelManage
 
 // Stop will stop sending events.
 //
-//
 // Indicates the client no longer wishes to receive events for new toplevels.
 // However the compositor may emit further toplevel_created events, until
 // the finished event is emitted.
 //
 // The client must not send any more requests after this one.
-//
 func (p *ZwlrForeignToplevelManagerV1) Stop() error {
 	return p.Context().SendRequest(p, 0)
 }
@@ -447,56 +445,45 @@ func NewZwlrForeignToplevelHandleV1(ctx *wl.Context, pid wl.ProxyId) *ZwlrForeig
 
 // SetMaximized will requests that the toplevel be maximized.
 //
-//
 // Requests that the toplevel be maximized. If the maximized state actually
 // changes, this will be indicated by the state event.
-//
 func (p *ZwlrForeignToplevelHandleV1) SetMaximized() error {
 	return p.Context().SendRequest(p, 0)
 }
 
 // UnsetMaximized will requests that the toplevel be unmaximized.
 //
-//
 // Requests that the toplevel be unmaximized. If the maximized state actually
 // changes, this will be indicated by the state event.
-//
 func (p *ZwlrForeignToplevelHandleV1) UnsetMaximized() error {
 	return p.Context().SendRequest(p, 1)
 }
 
 // SetMinimized will requests that the toplevel be minimized.
 //
-//
 // Requests that the toplevel be minimized. If the minimized state actually
 // changes, this will be indicated by the state event.
-//
 func (p *ZwlrForeignToplevelHandleV1) SetMinimized() error {
 	return p.Context().SendRequest(p, 2)
 }
 
 // UnsetMinimized will requests that the toplevel be unminimized.
 //
-//
 // Requests that the toplevel be unminimized. If the minimized state actually
 // changes, this will be indicated by the state event.
-//
 func (p *ZwlrForeignToplevelHandleV1) UnsetMinimized() error {
 	return p.Context().SendRequest(p, 3)
 }
 
 // Activate will activate the toplevel.
 //
-//
 // Request that this toplevel be activated on the given seat.
 // There is no guarantee the toplevel will be actually activated.
-//
 func (p *ZwlrForeignToplevelHandleV1) Activate(seat *wl.Seat) error {
 	return p.Context().SendRequest(p, 4, seat)
 }
 
 // Close will request that the toplevel be closed.
-//
 //
 // Send a request to the toplevel to close itself. The compositor would
 // typically use a shell-specific method to carry out this request, for
@@ -504,13 +491,11 @@ func (p *ZwlrForeignToplevelHandleV1) Activate(seat *wl.Seat) error {
 // no guarantees the toplevel will actually be destroyed. If and when
 // this happens, the zwlr_foreign_toplevel_handle_v1.closed event will
 // be emitted.
-//
 func (p *ZwlrForeignToplevelHandleV1) Close() error {
 	return p.Context().SendRequest(p, 5)
 }
 
 // SetRectangle will the rectangle which represents the toplevel.
-//
 //
 // The rectangle of the surface specified in this request corresponds to
 // the place where the app using this protocol represents the given toplevel.
@@ -523,26 +508,22 @@ func (p *ZwlrForeignToplevelHandleV1) Close() error {
 //
 // The dimensions are given in surface-local coordinates.
 // Setting width=height=0 removes the already-set rectangle.
-//
 func (p *ZwlrForeignToplevelHandleV1) SetRectangle(surface *wl.Surface, x int32, y int32, width int32, height int32) error {
 	return p.Context().SendRequest(p, 6, surface, x, y, width, height)
 }
 
 // Destroy will destroy the zwlr_foreign_toplevel_handle_v1 object.
 //
-//
 // Destroys the zwlr_foreign_toplevel_handle_v1 object.
 //
 // This request should be called either when the client does not want to
 // use the toplevel anymore or after the closed event to finalize the
 // destruction of the object.
-//
 func (p *ZwlrForeignToplevelHandleV1) Destroy() error {
 	return p.Context().SendRequest(p, 7)
 }
 
 // SetFullscreen will request that the toplevel be fullscreened.
-//
 //
 // Requests that the toplevel be fullscreened on the given output. If the
 // fullscreen state and/or the outputs the toplevel is visible on actually
@@ -552,17 +533,14 @@ func (p *ZwlrForeignToplevelHandleV1) Destroy() error {
 // The output parameter is only a hint to the compositor. Also, if output
 // is NULL, the compositor should decide which output the toplevel will be
 // fullscreened on, if at all.
-//
 func (p *ZwlrForeignToplevelHandleV1) SetFullscreen(output *wl.Output) error {
 	return p.Context().SendRequest(p, 8, output)
 }
 
 // UnsetFullscreen will request that the toplevel be unfullscreened.
 //
-//
 // Requests that the toplevel be unfullscreened. If the fullscreen state
 // actually changes, this will be indicated by the state event.
-//
 func (p *ZwlrForeignToplevelHandleV1) UnsetFullscreen() error {
 	return p.Context().SendRequest(p, 9)
 }

@@ -40,7 +40,6 @@ func generateMetaKeyEvent(keys [3]uint32) func(expectedText ...string) keyEvent 
 
 var enter = generateMetaKeyEvent([3]uint32{0xff0d, 0xff0d, 0})
 var control = generateMetaKeyEvent([3]uint32{0xffe3, 0xffe3, 0})
-var space = generateMetaKeyEvent([3]uint32{0x0020, 0x0020, 0})
 
 type testCase struct {
 	name      string
@@ -134,6 +133,18 @@ func TestPreeditEngine(t *testing.T) {
 			name:      "macro_arrow_enter",
 			mTable:    map[string]string{"->": "arrow"},
 			keyEvents: generateKeyEvents("->", []string{"-", "->"}, enter("arrow")),
+		},
+		{
+			name:   "macro_csao_space",
+			mTable: map[string]string{"csao": "✪", "csao2": "✬"},
+			keyEvents: generateKeyEvents("csao", []string{"c", "cs", "csa", "csao"}, []keyEvent{
+				{keys: asciiToKeys(' '), canBeProcessed: true, expectedCommitText: "✪ "},
+			}...),
+		},
+		{
+			name:      "macro_csao2_enter",
+			mTable:    map[string]string{"csao": "✪", "csao2": "✬"},
+			keyEvents: generateKeyEvents("csao2", []string{"c", "cs", "csa", "csao", "csao2"}, enter("✬")),
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

@@ -96,72 +96,72 @@ func (e *fakeEngine) Reset() *dbus.Error {
 	return nil
 }
 
-//@method()
+// @method()
 func (e *fakeEngine) PageUp() *dbus.Error {
 	return nil
 }
 
-//@method()
+// @method()
 func (e *fakeEngine) PageDown() *dbus.Error {
 	return nil
 }
 
-//@method()
+// @method()
 func (e *fakeEngine) CursorUp() *dbus.Error {
 	return nil
 }
 
-//@method()
+// @method()
 func (e *fakeEngine) CursorDown() *dbus.Error {
 	return nil
 }
 
-//@method(in_signature="uuu")
+// @method(in_signature="uuu")
 func (e *fakeEngine) CandidateClicked(index uint32, button uint32, state uint32) *dbus.Error {
 	return nil
 }
 
-//@method()
+// @method()
 func (e *fakeEngine) Enable() *dbus.Error {
 	return nil
 }
 
-//@method()
+// @method()
 func (e *fakeEngine) Disable() *dbus.Error {
 	return nil
 }
 
-//@method(in_signature="su")
+// @method(in_signature="su")
 func (e *fakeEngine) PropertyActivate(prop_name string, prop_state uint32) *dbus.Error {
 	return nil
 }
 
-//@method(in_signature="s")
+// @method(in_signature="s")
 func (e *fakeEngine) PropertyShow(prop_name string) *dbus.Error {
 	return nil
 }
 
-//@method(in_signature="s")
+// @method(in_signature="s")
 func (e *fakeEngine) PropertyHide(prop_name string) *dbus.Error {
 	return nil
 }
 
-//@method()
+// @method()
 func (e *fakeEngine) Destroy() *dbus.Error {
 	return nil
 }
 
-//@signal(signature="v")
+// @signal(signature="v")
 func (e *fakeEngine) CommitText(text *ibus.Text) {
 	e.commitText += text.Text
 }
 
-//@signal(signature="uuu")
+// @signal(signature="uuu")
 func (e *fakeEngine) ForwardKeyEvent(keyval uint32, keycode uint32, state uint32) {
 	e.forwardKeyEvent = [3]uint32{keyval, keycode, state}
 }
 
-//@signal(signature="vubu")
+// @signal(signature="vubu")
 func (e *fakeEngine) UpdatePreeditText(text *ibus.Text, cursor_pos uint32, visible bool) {
 	e.preeditText = text.Text
 }
@@ -169,69 +169,69 @@ func (e *fakeEngine) UpdatePreeditTextWithMode(text *ibus.Text, cursor_pos uint3
 	e.preeditText = text.Text
 }
 
-//@signal()
+// @signal()
 func (e *fakeEngine) ShowPreeditText() {
 }
 
-//@signal()
+// @signal()
 func (e *fakeEngine) HidePreeditText() {
 	e.preeditText = ""
 	e.isHidePreeditText = true
 }
 
-//@signal(signature="vb")
+// @signal(signature="vb")
 func (e *fakeEngine) UpdateAuxiliaryText(text *ibus.Text, visible bool) {
 }
 
-//@signal()
+// @signal()
 func (e *fakeEngine) ShowAuxiliaryText() {
 	e.isHideAuxiliaryText = false
 }
 
-//@signal()
+// @signal()
 func (e *fakeEngine) HideAuxiliaryText() {
 	e.isHideAuxiliaryText = true
 }
 
-//@signal(signature="vb")
+// @signal(signature="vb")
 func (e *fakeEngine) UpdateLookupTable(lookup_table *ibus.LookupTable, visible bool) {
 }
 
-//@signal()
+// @signal()
 func (e *fakeEngine) ShowLookupTable() {
 	e.isHideLookupTable = false
 }
 
-//@signal()
+// @signal()
 func (e *fakeEngine) HideLookupTable() {
 	e.isHideLookupTable = true
 }
 
-//@signal()
+// @signal()
 func (e *fakeEngine) PageUpLookupTable() {
 }
 
-//@signal()
+// @signal()
 func (e *fakeEngine) PageDownLookupTable() {
 }
 
-//@signal()
+// @signal()
 func (e *fakeEngine) CursorUpLookupTable() {
 }
 
-//@signal()
+// @signal()
 func (e *fakeEngine) CursorDownLookupTable() {
 }
 
-//@signal(signature="v")
+// @signal(signature="v")
 func (e *fakeEngine) RegisterProperties(props *ibus.PropList) {
 }
 
-//@signal(signature="v")
+// @signal(signature="v")
 func (e *fakeEngine) UpdateProperty(prop *ibus.Property) {
 }
 
-//@signal(signature="iu")
+// @signal(signature="iu")
 func (e *fakeEngine) DeleteSurroundingText(offset_from_cursor int32, nchars uint32) {
 	s := []rune(e.commitText)
 	var txt string
@@ -241,6 +241,6 @@ func (e *fakeEngine) DeleteSurroundingText(offset_from_cursor int32, nchars uint
 	e.commitText = txt
 }
 
-//@signal()
+// @signal()
 func (e *fakeEngine) RequireSurroundingText() {
 }

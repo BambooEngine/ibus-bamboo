@@ -90,12 +90,12 @@ func (e *MacroTable) HasKey(key string) bool {
 	return e.mTable[key] != ""
 }
 
-func (e *MacroTable) IncludeKey(key string) bool {
+func (e *MacroTable) HasPrefix(key string) bool {
 	if e.mTable[key] != "" {
 		return true
 	}
 	for k := range e.mTable {
-		if strings.Contains(k, key) {
+		if strings.HasPrefix(k, key) {
 			return true
 		}
 	}

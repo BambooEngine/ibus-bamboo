@@ -20,7 +20,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -68,14 +67,14 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	}
 
 	newText, isWordBreakRune := e.getCommitText(keyVal, keyCode, state)
-	isValidKey := isValidState(state) && e.isValidKeyVal(keyVal)
+	isPrintableKey := e.isPrintableKey(state, keyVal)
 	if isWordBreakRune {
-		fmt.Printf("isWordBreakRune=%v isValidKey=%v\n", isWordBreakRune, isValidKey)
-		e.commitPreeditAndResetForWBS(newText, isValidKey)
-		return isValidKey, nil
+		// fmt.Printf("isWordBreakRune=%v isPrintable=%v\n", isWordBreakRune, isPrintableKey)
+		e.commitPreeditAndResetForWBS(newText, isPrintableKey)
+		return isPrintableKey, nil
 	}
 	e.updatePreedit(newText)
-	return isValidKey, nil
+	return isPrintableKey, nil
 }
 
 func (e *IBusBambooEngine) expandMacro(str string) string {

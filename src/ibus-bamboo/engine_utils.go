@@ -403,9 +403,13 @@ func isValidState(state uint32) bool {
 	return true
 }
 
+func (e *IBusBambooEngine) isPrintableKey(state, keyVal uint32) bool {
+	return isValidState(state) && e.isValidKeyVal(keyVal)
+}
+
 func (e *IBusBambooEngine) getCommitText(keyVal, keyCode, state uint32) (newText string, IsWordBreakSymbol bool) {
 	var keyRune = rune(keyVal)
-	isValidKey := isValidState(state) && e.isValidKeyVal(keyVal)
+	isPrintableKey := e.isPrintableKey(state, keyVal)
 	oldText := e.getPreeditString()
 	// restore key strokes by pressing Shift + Space
 	if e.shouldRestoreKeyStrokes {
@@ -414,10 +418,10 @@ func (e *IBusBambooEngine) getCommitText(keyVal, keyCode, state uint32) (newText
 		return e.getPreeditString(), false
 	}
 	var keyS string
-	if isValidKey {
+	if isPrintableKey {
 		keyS = string(keyRune)
 	}
-	if isValidKey && e.preeditor.CanProcessKey(keyRune) {
+	if isPrintableKey && e.preeditor.CanProcessKey(keyRune) {
 		if state&IBusLockMask != 0 {
 			keyRune = e.toUpper(keyRune)
 		}
@@ -459,41 +463,44 @@ func (e *IBusBambooEngine) getCommitText(keyVal, keyCode, state uint32) (newText
 		}
 	} else if e.config.IBflags&IBmacroEnabled != 0 {
 		// macro processing
-		if e.macroTable.HasKey(oldText) {
-			return e.expandMacro(oldText) + keyS, true
+		if isPrintableKey && e.macroTable.HasPrefix(oldText+keyS) {
+			e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
+			return oldText + keyS, false
 		}
-		// in macro, special characters except space are still treated as not WBS
-		// in order to support the macro ( -->:arrow )
-		isWordBreakSymbol := !isValidKey || keyVal == IBusSpace
-		return e.handleNonVnWord(keyVal, keyCode, state, isWordBreakSymbol)
+		if e.macroTable.HasKey(oldText) {
+			if isPrintableKey {
+				return e.expandMacro(oldText) + keyS, true
+			}
+			return e.expandMacro(oldText), true
+		}
 	}
-	return e.handleNonVnWord(keyVal, keyCode, state, true)
+	return e.handleNonVnWord(keyVal, keyCode, state), true
 }
 
-func (e *IBusBambooEngine) handleNonVnWord(keyVal, keyCode, state uint32, isWordBreakSymbol bool) (string, bool) {
+func (e *IBusBambooEngine) handleNonVnWord(keyVal, keyCode, state uint32) string {
 	var (
-		keyS       string
-		keyRune    = rune(keyVal)
-		isValidKey = isValidState(state) && e.isValidKeyVal(keyVal)
-		oldText    = e.getPreeditString()
+		keyS           string
+		keyRune        = rune(keyVal)
+		isPrintableKey = e.isPrintableKey(state, keyVal)
+		oldText        = e.getPreeditString()
 	)
-	if isValidKey {
+	if isPrintableKey {
 		keyS = string(keyRune)
 	}
-	if isWordBreakSymbol && bamboo.HasAnyVietnameseRune(oldText) && e.mustFallbackToEnglish() {
+	if bamboo.HasAnyVietnameseRune(oldText) && e.mustFallbackToEnglish() {
 		e.preeditor.RestoreLastWord(false)
 		newText := e.preeditor.GetProcessedString(bamboo.PunctuationMode|bamboo.EnglishMode) + keyS
-		if isValidKey {
+		if isPrintableKey {
 			e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
 		}
-		return newText, true
+		return newText
 	}
-	if isValidKey {
+	if isPrintableKey {
 		e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
-		return oldText + keyS, isWordBreakSymbol
+		return oldText + keyS
 	}
 	// Ctrl + A is treasted as a WBS
-	return oldText + keyS, true
+	return oldText + keyS
 }
 
 func (e *IBusBambooEngine) getMacroText() (bool, string) {
