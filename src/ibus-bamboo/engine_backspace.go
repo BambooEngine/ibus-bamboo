@@ -48,7 +48,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 				keyRune = e.toUpper(keyRune)
 			}
 			e.preeditor.ProcessKey(keyRune, bamboo.VietnameseMode)
-			e.commitText(e.getPreeditString())
+			e.bsCommitText([]rune(e.getPreeditString()))
 			return true, nil
 		}
 		return false, nil
