@@ -12,12 +12,13 @@ set_default() {
 }
 echo "Chọn phiên bản muốn cài:"
 echo "1. Bản release, cài đặt từ AUR (yay)"
-echo "2. Bản release, cài đặt từ AUR (pamac)"
-echo "3. Bản release, cài đặt từ Open Build Service (pacman)"
-echo "4. Bản release, cài đặt từ mã nguồn"
-echo "5. Bản git, cài đặt từ mã nguồn mới nhất lấy từ github"
-echo "6. Thoát"
-echo -n "Lựa chọn (1/2/3/4/5/6): "
+echo "2. Bản release, cài đặt từ chaotic-aur (pacman, nếu bạn dùng repo chaotic-aur)"
+echo "3. Bản release, cài đặt từ AUR (pamac)"
+echo "4. Bản release, cài đặt từ Open Build Service (pacman)"
+echo "5. Bản release, cài đặt từ mã nguồn"
+echo "6. Bản git, cài đặt từ mã nguồn mới nhất lấy từ github"
+echo "7. Thoát"
+echo -n "Lựa chọn (1/2/3/4/5/6/7): "
 read choice
 case $choice in
 	"1")
@@ -26,11 +27,18 @@ case $choice in
 		fi
 		exit -1;;
 	"2")
-		if pamac build ibus-bamboo; then
+		echo -n Password:
+		read -s szPassword
+		if echo $szPassword | echo && sudo -S pacman -S --noconfirm chaotic-aur/ibus-bamboo-git; then
 			set_default
 		fi
 		exit -1;;
 	"3")
+		if pamac build ibus-bamboo; then
+			set_default
+		fi
+		exit -1;;
+	"4")
 		echo -n Password:
 		read -s szPassword
 		echo $szPassword | sudo -S sh -c 'echo "[home_lamlng_Arch]" >> /etc/pacman.conf'
@@ -44,8 +52,8 @@ case $choice in
 			set_default
 		fi
 		exit -1;;
-	"4") VER="release";;
-	"5") VER="git";;
+	"5") VER="release";;
+	"6") VER="git";;
 	*) exit -1;;
 esac
 
