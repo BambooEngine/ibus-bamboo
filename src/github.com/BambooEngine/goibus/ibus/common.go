@@ -1,11 +1,15 @@
 package ibus
 
+/*
+#cgo pkg-config: ibus-1.0
+#include <ibus.h>
+#include <stdlib.h>
+*/
+import "C"
 import (
-	"fmt"
-	"io/ioutil"
 	"os"
 	"strconv"
-	"strings"
+	"unsafe"
 
 	"github.com/godbus/dbus"
 )
@@ -21,8 +25,8 @@ const (
 
 	IBUS_IFACE_PANEL          = "org.freedesktop.IBus.Panel"
 	IBUS_IFACE_CONFIG         = "org.freedesktop.IBus.Config"
-	IBUS_IFACE_SERVICE        = "org.freedesktop.IBus.Service"
 	IBUS_IFACE_ENGINE         = "org.freedesktop.IBus.Engine"
+	IBUS_IFACE_SERVICE        = "org.freedesktop.IBus.Service"
 	IBUS_IFACE_ENGINE_FACTORY = "org.freedesktop.IBus.Factory"
 	IBUS_IFACE_INPUT_CONTEXT  = "org.freedesktop.IBus.InputContext"
 	IBUS_IFACE_NOTIFICATIONS  = "org.freedesktop.IBus.Notifications"
@@ -57,85 +61,16 @@ const (
 )
 
 func GetAddress() string {
-	address := os.Getenv("IBUS_ADDRESS")
-	if address != "" {
-		return address
-	}
-	data, err := ioutil.ReadFile(GetSocketPath(true))
-	if err != nil {
-		data, err = ioutil.ReadFile(GetSocketPath(false))
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	for _, line := range strings.Split(string(data), "\n") {
-		if strings.Index(line, "IBUS_ADDRESS=") == 0 {
-			address = line[13:]
-		}
-	}
-	return address
+	cString := (*C.char)(unsafe.Pointer(C.ibus_get_address()))
+	// defer C.free(unsafe.Pointer(cString))
+	return C.GoString(cString)
 }
 
-func GetSocketPath(useWayland bool) string {
-	path := os.Getenv("IBUS_ADDRESS_FILE")
-	if path != "" {
-		return path
-	}
-	display := os.Getenv("WAYLAND_DISPLAY")
-	if display != "" && useWayland {
-		return GetWaylandSocketPath(display)
-	}
-	return GetX11SocketPath()
+func GetSocketPath() string {
+	cString := (*C.char)(unsafe.Pointer(C.ibus_get_socket_path()))
+	// defer C.free(unsafe.Pointer(cString))
+	return C.GoString(cString)
 }
-
-func GetX11SocketPath() string {
-	display := os.Getenv("DISPLAY")
-	if display == "" {
-		fmt.Fprintf(os.Stderr, "DISPLAY is empty! We use default DISPLAY (:0.0)")
-		display = ":0.0"
-	}
-	hostname := "unix"
-	displayNumber := ""
-	// format is {hostname}:{displaynumber}.{screennumber}
-	HDS := strings.SplitN(display, ":", 2)
-	DS := strings.SplitN(HDS[1], ".", 2)
-
-	if HDS[0] != "" {
-		hostname = HDS[0]
-	}
-	displayNumber = DS[0]
-	p := fmt.Sprintf("%s-%s-%s", GetLocalMachineId(), hostname, displayNumber)
-	return GetUserConfigDir() + "/ibus/bus/" + p
-}
-
-func GetWaylandSocketPath(display string) string {
-	hostname := "unix"
-	p := fmt.Sprintf("%s-%s-%s", GetLocalMachineId(), hostname, display)
-	return GetUserConfigDir() + "/ibus/bus/" + p
-}
-
-func GetLocalMachineId() string {
-	var mID []byte
-	var err error
-	mID, err = ioutil.ReadFile("/var/lib/dbus/machine-id")
-	if err != nil {
-		mID, err = ioutil.ReadFile("/etc/machine-id")
-		if err != nil {
-			panic(err)
-		}
-	}
-	return strings.TrimSpace(string(mID))
-}
-
-func GetUserConfigDir() string {
-	dir := os.Getenv("XDG_CONFIG_HOME")
-	if dir == "" {
-		return os.Getenv("HOME") + "/.config"
-	}
-	return dir
-}
-
 func GetUserAuth() []dbus.Auth {
 	uid := os.Getenv("DBUS_AUTH_UID")
 	if uid == "" {

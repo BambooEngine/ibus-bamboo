@@ -8,7 +8,7 @@ Architecture: any
 Version: 0.8.3-0
 Maintainer: Luong Thanh Lam <ltlam93@gmail.com>
 Homepage: https://github.com/BambooEngine/ibus-bamboo
-Build-Depends: debhelper (>= 9), golang, libx11-dev, libgtk-3-dev, libxt-dev, libxtst-dev
+Build-Depends: debhelper (>= 9), golang, libibus-1.0-dev, libx11-dev, libgtk-3-dev, libxt-dev, libxtst-dev
 Files:
  0 0 ibus-bamboo-0.8.3.tar.gz
 DEBTRANSFORM-TAR:
