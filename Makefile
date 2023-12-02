@@ -41,13 +41,13 @@ xml:
 	glib-compile-resources --generate-source setup-ui/keyboard.gresource.xml
 
 build:
-	GOPATH=$(CURDIR) GO111MODULE=off go build $(GOLDFLAGS) -o $(ibus_e_name) ibus-$(engine_name)
+	GOPATH=$(CURDIR) GO111MODULE=off CGO_ENABLED=1 go build $(GOLDFLAGS) -o $(ibus_e_name) ibus-$(engine_name)
 	gcc -o $(keyboard_shortcut_editor) setup-ui/$(keyboard_shortcut_editor).c `pkg-config --libs --cflags gtk+-3.0`
 	gcc -rdynamic -o $(macro_editor) setup-ui/$(macro_editor).c `pkg-config --libs --cflags gtk+-3.0`
 
 t:
-	GOPATH=$(CURDIR) GO111MODULE=off go test ./src/ibus-bamboo/...
-	GOPATH=$(CURDIR) GO111MODULE=off go test ./src/github.com/BambooEngine/bamboo-core/...
+	GOPATH=$(CURDIR) GO111MODULE=off CGO_ENABLED=1 go test ./src/ibus-bamboo/...
+	GOPATH=$(CURDIR) GO111MODULE=off CGO_ENABLED=1 go test ./src/github.com/BambooEngine/bamboo-core/...
 
 clean:
 	rm -f ibus-engine-* *_linux *_cover.html go_test_* go_build_* test *.gz test
