@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-PREFIX=/usr
+PREFIX=/usr/local
 
 engine_name=bamboo
 engine_gui_name=ibus-setup-Bamboo.desktop
@@ -29,6 +29,8 @@ engine_dir=$(PREFIX)/share/$(pkg_name)
 ibus_dir=$(PREFIX)/share/ibus
 
 GOLDFLAGS=-ldflags "-w -s -X main.Version=$(version)"
+#CGO_CFLAGS="-I/usr/local/include -std=gnu99"
+#CGO_LDFLAGS="-L/usr/local/lib -lX11 -lXtst -pthread"
 
 rpm_src_dir=~/rpmbuild/SOURCES
 tar_file=$(pkg_name)-$(version).tar.gz
@@ -41,7 +43,8 @@ xml:
 	glib-compile-resources --generate-source setup-ui/keyboard.gresource.xml
 
 build:
-	GOPATH=$(CURDIR) GO111MODULE=off CGO_ENABLED=1 go build $(GOLDFLAGS) -o $(ibus_e_name) ibus-$(engine_name)
+	cd ./src && CGO_ENABLED=1 go build $(GOLDFLAGS) -o $(ibus_e_name) ibus-$(engine_name)
+	#cd ./src && CGO_ENABLED=1 CGO_CFLAGS=$(CGO_CFLAGS) CGO_LDFLAGS=$(CGO_LDFLAGS) go build $(GOLDFLAGS) -o $(ibus_e_name) ibus-$(engine_name)
 	gcc -o $(keyboard_shortcut_editor) setup-ui/$(keyboard_shortcut_editor).c `pkg-config --libs --cflags gtk+-3.0`
 	gcc -rdynamic -o $(macro_editor) setup-ui/$(macro_editor).c `pkg-config --libs --cflags gtk+-3.0`
 
@@ -64,7 +67,7 @@ install: build
 	mkdir -p $(DESTDIR)$(PREFIX)/share/applications/
 
 	cp -R -f icons data $(DESTDIR)$(engine_dir)
-	cp -f $(ibus_e_name) $(DESTDIR)$(PREFIX)/lib/ibus-${engine_name}/
+	cp -f src/$(ibus_e_name) $(DESTDIR)$(PREFIX)/lib/ibus-${engine_name}/
 	cp -f $(keyboard_shortcut_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
 	cp -f $(macro_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
 	cp -f $(engine_name).xml $(DESTDIR)$(ibus_dir)/component/
