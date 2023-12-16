@@ -37,7 +37,7 @@ tar_file=$(pkg_name)-$(version).tar.gz
 rpm_src_tar=$(rpm_src_dir)/$(tar_file)
 tar_options_src=--transform "s/^\./$(pkg_name)-$(version)/" --exclude={"*.tar.gz",".git",".idea"} .
 
-all: xml build
+all: xml build install
 
 xml:
 	glib-compile-resources --generate-source setup-ui/keyboard.gresource.xml
@@ -60,7 +60,7 @@ clean:
 	rm -rf debian/ibus-bamboo*
 
 
-install: build
+install:
 	mkdir -p $(DESTDIR)$(engine_dir)
 	mkdir -p $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)
 	mkdir -p $(DESTDIR)$(ibus_dir)/component/
