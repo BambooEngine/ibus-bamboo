@@ -29,6 +29,7 @@ engine_dir=$(PREFIX)/share/$(pkg_name)
 ibus_dir=$(PREFIX)/share/ibus
 
 GOLDFLAGS=-ldflags "-w -s -X main.Version=$(version)"
+# FreeBSD
 #CGO_CFLAGS="-I/usr/local/include -std=gnu99"
 #CGO_LDFLAGS="-L/usr/local/lib -lX11 -lXtst -pthread"
 
@@ -37,7 +38,7 @@ tar_file=$(pkg_name)-$(version).tar.gz
 rpm_src_tar=$(rpm_src_dir)/$(tar_file)
 tar_options_src=--transform "s/^\./$(pkg_name)-$(version)/" --exclude={"*.tar.gz",".git",".idea"} .
 
-all: xml build install
+all: xml build
 
 xml:
 	glib-compile-resources --generate-source setup-ui/keyboard.gresource.xml
@@ -50,7 +51,6 @@ build:
 
 t:
 	GOPATH=$(CURDIR) GO111MODULE=off CGO_ENABLED=1 go test ./src/ibus-bamboo/...
-	GOPATH=$(CURDIR) GO111MODULE=off CGO_ENABLED=1 go test ./src/github.com/BambooEngine/bamboo-core/...
 
 clean:
 	rm -f ibus-engine-* *_linux *_cover.html go_test_* go_build_* test *.gz test
