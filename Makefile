@@ -29,9 +29,6 @@ engine_dir=$(PREFIX)/share/$(pkg_name)
 ibus_dir=$(PREFIX)/share/ibus
 
 GOLDFLAGS=-ldflags "-w -s -X main.Version=$(version)"
-# FreeBSD
-#CGO_CFLAGS="-I/usr/local/include -std=gnu99"
-#CGO_LDFLAGS="-L/usr/local/lib -lX11 -lXtst -pthread"
 
 rpm_src_dir=~/rpmbuild/SOURCES
 tar_file=$(pkg_name)-$(version).tar.gz
@@ -45,12 +42,11 @@ xml:
 
 build:
 	cd ./src && CGO_ENABLED=1 go build $(GOLDFLAGS) -o $(ibus_e_name) ibus-$(engine_name)
-	#cd ./src && CGO_ENABLED=1 CGO_CFLAGS=$(CGO_CFLAGS) CGO_LDFLAGS=$(CGO_LDFLAGS) go build $(GOLDFLAGS) -o $(ibus_e_name) ibus-$(engine_name)
 	gcc -o $(keyboard_shortcut_editor) setup-ui/$(keyboard_shortcut_editor).c `pkg-config --libs --cflags gtk+-3.0`
 	gcc -rdynamic -o $(macro_editor) setup-ui/$(macro_editor).c `pkg-config --libs --cflags gtk+-3.0`
 
 t:
-	GOPATH=$(CURDIR) GO111MODULE=off CGO_ENABLED=1 go test ./src/ibus-bamboo/...
+	CGO_ENABLED=1 go test ./src/...
 
 clean:
 	rm -f ibus-engine-* *_linux *_cover.html go_test_* go_build_* test *.gz test
