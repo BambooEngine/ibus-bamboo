@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-PREFIX=/usr/local
+PREFIX=/usr
 
 engine_name=bamboo
 engine_gui_name=ibus-setup-Bamboo.desktop
