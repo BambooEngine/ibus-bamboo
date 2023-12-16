@@ -46,7 +46,7 @@ build:
 	gcc -rdynamic -o $(macro_editor) setup-ui/$(macro_editor).c `pkg-config --libs --cflags gtk+-3.0`
 
 t:
-	CGO_ENABLED=1 go test ./src/...
+	cd ./src && CGO_ENABLED=1 go test
 
 clean:
 	rm -f ibus-engine-* *_linux *_cover.html go_test_* go_build_* test *.gz test
