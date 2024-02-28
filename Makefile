@@ -47,8 +47,7 @@ build:
 	$(CC) -rdynamic -o $(macro_editor) setup-ui/$(macro_editor).c `pkg-config --libs --cflags gtk+-3.0`
 
 t:
-	GOPATH=$(CURDIR) GO111MODULE=off CGO_ENABLED=1 go test ./src/ibus-bamboo/...
-	GOPATH=$(CURDIR) GO111MODULE=off CGO_ENABLED=1 go test ./src/github.com/BambooEngine/bamboo-core/...
+	cd ./src && CGO_ENABLED=1 go test
 
 clean:
 	rm -f ibus-engine-* *_linux *_cover.html go_test_* go_build_* test *.gz test
@@ -58,14 +57,14 @@ clean:
 	rm -rf debian/ibus-bamboo*
 
 
-install: build
+install:
 	mkdir -p $(DESTDIR)$(engine_dir)
 	mkdir -p $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)
 	mkdir -p $(DESTDIR)$(ibus_dir)/component/
 	mkdir -p $(DESTDIR)$(PREFIX)/share/applications/
 
 	cp -R -f icons data $(DESTDIR)$(engine_dir)
-	cp -f $(ibus_e_name) $(DESTDIR)$(PREFIX)/lib/ibus-${engine_name}/
+	cp -f src/$(ibus_e_name) $(DESTDIR)$(PREFIX)/lib/ibus-${engine_name}/
 	cp -f $(keyboard_shortcut_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
 	cp -f $(macro_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
 	cp -f $(engine_name).xml $(DESTDIR)$(ibus_dir)/component/
