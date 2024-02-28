@@ -16,6 +16,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 PREFIX=/usr
+CC=cc
 
 engine_name=bamboo
 engine_gui_name=ibus-setup-Bamboo.desktop
@@ -41,9 +42,9 @@ xml:
 	glib-compile-resources --generate-source setup-ui/keyboard.gresource.xml
 
 build:
-	cd ./src && CGO_ENABLED=1 go build $(GOLDFLAGS) -o $(ibus_e_name) ibus-$(engine_name)
-	gcc -o $(keyboard_shortcut_editor) setup-ui/$(keyboard_shortcut_editor).c `pkg-config --libs --cflags gtk+-3.0`
-	gcc -rdynamic -o $(macro_editor) setup-ui/$(macro_editor).c `pkg-config --libs --cflags gtk+-3.0`
+	GOPATH=$(CURDIR) GO111MODULE=off CGO_ENABLED=1 go build $(GOLDFLAGS) -o $(ibus_e_name) ibus-$(engine_name)
+	$(CC) -o $(keyboard_shortcut_editor) setup-ui/$(keyboard_shortcut_editor).c `pkg-config --libs --cflags gtk+-3.0`
+	$(CC) -rdynamic -o $(macro_editor) setup-ui/$(macro_editor).c `pkg-config --libs --cflags gtk+-3.0`
 
 t:
 	cd ./src && CGO_ENABLED=1 go test
