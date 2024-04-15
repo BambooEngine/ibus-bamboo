@@ -46,10 +46,6 @@ build:
 	$(CC) -o $(keyboard_shortcut_editor) setup-ui/$(keyboard_shortcut_editor).c `pkg-config --libs --cflags gtk+-3.0`
 	$(CC) -rdynamic -o $(macro_editor) setup-ui/$(macro_editor).c `pkg-config --libs --cflags gtk+-3.0`
 
-t:
-	GOPATH=$(CURDIR) GO111MODULE=off CGO_ENABLED=1 go test ./src/ibus-bamboo/...
-	GOPATH=$(CURDIR) GO111MODULE=off CGO_ENABLED=1 go test ./src/github.com/BambooEngine/bamboo-core/...
-
 clean:
 	rm -f ibus-engine-* *_linux *_cover.html go_test_* go_build_* test *.gz test
 	rm -f debian/files
