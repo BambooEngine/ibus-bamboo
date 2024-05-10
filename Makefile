@@ -51,7 +51,8 @@ t:
 	CGO_ENABLED=1 go test ./vendor/github.com/BambooEngine/bamboo-core/...
 
 clean:
-	rm -f ibus-engine-* *_linux *_cover.html go_test_* go_build_* test *.gz test
+	rm -f ibus-engine-bamboo keyboard-shortcut-editor macro-editor
+	rm -f *_linux *_cover.html go_test_* go_build_* test *.gz test
 	rm -f debian/files
 	rm -rf debian/debhelper*
 	rm -rf debian/.debhelper
@@ -69,7 +70,7 @@ install: build
 	cp -f $(keyboard_shortcut_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
 	cp -f $(macro_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
 	cp -f data/$(engine_name).xml $(DESTDIR)$(ibus_dir)/component/
-	cp -f $(engine_gui_name) $(DESTDIR)$(PREFIX)/share/applications/
+	cp -f data/$(engine_gui_name) $(DESTDIR)$(PREFIX)/share/applications/
 
 
 uninstall:
