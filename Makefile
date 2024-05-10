@@ -68,7 +68,7 @@ install: build
 	cp -f $(ibus_e_name) $(DESTDIR)$(PREFIX)/lib/ibus-${engine_name}/
 	cp -f $(keyboard_shortcut_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
 	cp -f $(macro_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
-	cp -f $(engine_name).xml $(DESTDIR)$(ibus_dir)/component/
+	cp -f data/$(engine_name).xml $(DESTDIR)$(ibus_dir)/component/
 	cp -f $(engine_gui_name) $(DESTDIR)$(PREFIX)/share/applications/
 
 
@@ -81,8 +81,8 @@ uninstall:
 
 src: clean
 	tar -zcf $(DESTDIR)/$(tar_file) $(tar_options_src)
-	cp -f $(pkg_name).spec $(DESTDIR)/
-	cp -f $(pkg_name).dsc $(DESTDIR)/
+	cp -f data/$(pkg_name).spec $(DESTDIR)/
+	cp -f data/$(pkg_name).dsc $(DESTDIR)/
 	cp -f debian/changelog $(DESTDIR)/debian.changelog
 	cp -f debian/control $(DESTDIR)/debian.control
 	cp -f debian/compat $(DESTDIR)/debian.compat
