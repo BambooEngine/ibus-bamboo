@@ -42,13 +42,13 @@ xml:
 	glib-compile-resources --generate-source setup-ui/keyboard.gresource.xml
 
 build:
-	GOPATH=$(CURDIR) GO111MODULE=off CGO_ENABLED=1 go build $(GOLDFLAGS) -o $(ibus_e_name) ibus-$(engine_name)
+	CGO_ENABLED=1 go build $(GOLDFLAGS) -o $(ibus_e_name) ibus-$(engine_name)
 	$(CC) -o $(keyboard_shortcut_editor) setup-ui/$(keyboard_shortcut_editor).c `pkg-config --libs --cflags gtk+-3.0`
 	$(CC) -rdynamic -o $(macro_editor) setup-ui/$(macro_editor).c `pkg-config --libs --cflags gtk+-3.0`
 
 t:
-	GOPATH=$(CURDIR) GO111MODULE=off CGO_ENABLED=1 go test ./src/ibus-bamboo/...
-	GOPATH=$(CURDIR) GO111MODULE=off CGO_ENABLED=1 go test ./src/github.com/BambooEngine/bamboo-core/...
+	CGO_ENABLED=1 go test ./...
+	CGO_ENABLED=1 go test ./vendor/github.com/BambooEngine/bamboo-core/...
 
 clean:
 	rm -f ibus-engine-* *_linux *_cover.html go_test_* go_build_* test *.gz test
@@ -68,7 +68,7 @@ install: build
 	cp -f $(ibus_e_name) $(DESTDIR)$(PREFIX)/lib/ibus-${engine_name}/
 	cp -f $(keyboard_shortcut_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
 	cp -f $(macro_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
-	cp -f $(engine_name).xml $(DESTDIR)$(ibus_dir)/component/
+	cp -f data/$(engine_name).xml $(DESTDIR)$(ibus_dir)/component/
 	cp -f $(engine_gui_name) $(DESTDIR)$(PREFIX)/share/applications/
 
 
@@ -81,8 +81,8 @@ uninstall:
 
 src: clean
 	tar -zcf $(DESTDIR)/$(tar_file) $(tar_options_src)
-	cp -f $(pkg_name).spec $(DESTDIR)/
-	cp -f $(pkg_name).dsc $(DESTDIR)/
+	cp -f data/$(pkg_name).spec $(DESTDIR)/
+	cp -f data/$(pkg_name).dsc $(DESTDIR)/
 	cp -f debian/changelog $(DESTDIR)/debian.changelog
 	cp -f debian/control $(DESTDIR)/debian.control
 	cp -f debian/compat $(DESTDIR)/debian.compat
