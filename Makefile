@@ -51,7 +51,8 @@ t:
 	CGO_ENABLED=1 go test ./vendor/github.com/BambooEngine/bamboo-core/...
 
 clean:
-	rm -f ibus-engine-* *_linux *_cover.html go_test_* go_build_* test *.gz test
+	rm -f ibus-engine-bamboo keyboard-shortcut-editor macro-editor
+	rm -f *_linux *_cover.html go_test_* go_build_* test *.gz test
 	rm -f debian/files
 	rm -rf debian/debhelper*
 	rm -rf debian/.debhelper
