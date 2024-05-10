@@ -55,6 +55,20 @@ env DCONF_PROFILE=ibus dconf write /desktop/ibus/general/preload-engines "['xkb:
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/BambooEngine/ibus-bamboo/master/archlinux/install.sh)"
 ```
 
+### NixOS
+`ibus-bamboo` is available on the main Nixpkgs repo. Make sure your NixOS configuration must contain this code to install it.
+
+```nix
+{
+ i18n.inputMethod = {
+  enabled = "ibus";
+  ibus.engines = with pkgs.ibus-engines; [
+    bamboo
+  ];
+ };
+}
+```
+
 ### Void Linux
 `ibus-bamboo` is available on the main Void Linux repo. You can install it directly.
 

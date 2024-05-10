@@ -52,6 +52,20 @@ env DCONF_PROFILE=ibus dconf write /desktop/ibus/general/preload-engines "['Bamb
 bash -c "$(curl -fsSL https://raw.githubusercontent.com/BambooEngine/ibus-bamboo/master/archlinux/install.sh)"
 ```
 
+### NixOS
+`ibus-bamboo` đã có mặt trên repo chính của Nixpkgs. Để cài đặt hãy chắc chắn  rằng code sau đã có trong file cấu hình NixOS của bạn.
+
+```nix
+{
+ i18n.inputMethod = {
+  enabled = "ibus";
+  ibus.engines = with pkgs.ibus-engines; [
+    bamboo
+  ];
+ };
+}
+```
+
 ### Void Linux
 `ibus-bamboo` đã có mặt trên repo chính của Void Linux. Các bạn có thể cài đặt trực tiếp.
 
