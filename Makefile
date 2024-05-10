@@ -70,7 +70,7 @@ install: build
 	cp -f $(keyboard_shortcut_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
 	cp -f $(macro_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
 	cp -f data/$(engine_name).xml $(DESTDIR)$(ibus_dir)/component/
-	cp -f $(engine_gui_name) $(DESTDIR)$(PREFIX)/share/applications/
+	cp -f data/$(engine_gui_name) $(DESTDIR)$(PREFIX)/share/applications/
 
 
 uninstall:
