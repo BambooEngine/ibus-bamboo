@@ -23,7 +23,6 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/user"
@@ -182,7 +181,7 @@ func loadConfig(engineName string) *Config {
 	}
 
 	setupConfigDir(engineName)
-	data, err := ioutil.ReadFile(getConfigPath(engineName))
+	data, err := os.ReadFile(getConfigPath(engineName))
 	if err == nil {
 		json.Unmarshal(data, &c)
 	}
@@ -196,7 +195,7 @@ func saveConfig(c *Config, engineName string) {
 		return
 	}
 
-	err = ioutil.WriteFile(fmt.Sprintf(configFile, getConfigDir(engineName), engineName), data, 0644)
+	err = os.WriteFile(fmt.Sprintf(configFile, getConfigDir(engineName), engineName), data, 0644)
 	if err != nil {
 		log.Println(err)
 	}

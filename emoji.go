@@ -21,7 +21,7 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -37,7 +37,7 @@ type EmojiOne struct {
 func loadEmojiOne(dataFile string) (*TrieNode, error) {
 	var trie = NewTrie()
 	var c = map[string]EmojiOne{}
-	var data, err = ioutil.ReadFile(dataFile)
+	var data, err = os.ReadFile(dataFile)
 	if err != nil {
 		return nil, err
 	}
