@@ -22,7 +22,6 @@ package main
 import (
 	"bufio"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -135,9 +134,9 @@ func OpenMactabFile(engineName string) {
 	efPath := getMactabFile(engineName)
 	if _, err := os.Stat(efPath); os.IsNotExist(err) {
 		sampleFile := getEngineSubFile(sampleMactabFile)
-		sample, err := ioutil.ReadFile(sampleFile)
+		sample, err := os.ReadFile(sampleFile)
 		log.Println(err)
-		ioutil.WriteFile(efPath, sample, 0644)
+		os.WriteFile(efPath, sample, 0644)
 	}
 
 	err := exec.Command("/usr/lib/ibus-bamboo/macro-editor", efPath).Start()
