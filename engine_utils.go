@@ -621,6 +621,11 @@ func (e *IBusBambooEngine) parseShortcuts(s string) {
 		n, err := strconv.Atoi(list[i])
 		if err != nil {
 			fmt.Printf("ERR: failed to parse shortcut keys: %s\n", err)
+			return
+		}
+		if n < 0 || n > int(^uint32(0)) { // int(^uint32(0)) gives the maximum value for uint32
+			fmt.Printf("ERR: value out of range for uint32: %d\n", n)
+			return
 		}
 		e.config.Shortcuts[i] = uint32(n)
 	}
