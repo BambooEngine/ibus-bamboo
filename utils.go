@@ -21,11 +21,7 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
-	"fmt"
-	"log"
 	"os"
-	"os/user"
 	"path/filepath"
 	"sort"
 	"strings"
@@ -55,16 +51,6 @@ const (
 	sampleMactabFile = "data/macro.tpl.txt"
 )
 
-const (
-	preeditIM = iota + 1
-	surroundingTextIM
-	backspaceForwardingIM
-	shiftLeftForwardingIM
-	forwardAsCommitIM
-	xTestFakeKeyEventIM
-	usIM
-)
-
 // Keyboard Shortcuts with keyVal-mask position
 const (
 	KSInputModeSwitch uint = iota * 2
@@ -72,30 +58,6 @@ const (
 	KSViEnSwitch
 	KSEmojiDialog
 	KSHexadecimal
-)
-
-const (
-	IBautoCommitWithVnNotMatch uint = 1 << iota
-	IBmacroEnabled
-	_IBautoCommitWithVnFullMatch //deprecated
-	_IBautoCommitWithVnWordBreak //deprecated
-	IBspellCheckEnabled
-	IBautoNonVnRestore
-	IBddFreeStyle
-	IBnoUnderline
-	IBspellCheckWithRules
-	IBspellCheckWithDicts
-	IBautoCommitWithDelay
-	IBautoCommitWithMouseMovement
-	_IBemojiDisabled //deprecated
-	IBpreeditElimination
-	_IBinputModeLookupTableEnabled //deprecated
-	IBautoCapitalizeMacro
-	_IBimQuickSwitchEnabled     //deprecated
-	_IBrestoreKeyStrokesEnabled //deprecated
-	IBmouseCapturing
-	IBstdFlags = IBspellCheckEnabled | IBspellCheckWithRules | IBautoNonVnRestore | IBddFreeStyle |
-		IBmouseCapturing | IBautoCapitalizeMacro | IBnoUnderline
 )
 
 var enabledAuxiliaryTextList = []string{
@@ -113,94 +75,6 @@ var DefaultBrowserList = []string{
 	"chromium-browser:Chromium-browser",
 }
 
-var imLookupTable = map[int]string{
-	preeditIM:             "Cấu hình mặc định (Pre-edit)",
-	surroundingTextIM:     "Sửa lỗi gạch chân (Surrounding Text)",
-	backspaceForwardingIM: "Sửa lỗi gạch chân (ForwardKeyEvent I)",
-	shiftLeftForwardingIM: "Sửa lỗi gạch chân (ForwardKeyEvent II)",
-	forwardAsCommitIM:     "Sửa lỗi gạch chân (Forward as commit)",
-	xTestFakeKeyEventIM:   "Sửa lỗi gạch chân (XTestFakeKeyEvent)",
-	usIM:                  "Thêm vào danh sách loại trừ",
-}
-
-var imBackspaceList = []int{
-	surroundingTextIM,
-	backspaceForwardingIM,
-	shiftLeftForwardingIM,
-	forwardAsCommitIM,
-	xTestFakeKeyEventIM,
-}
-
-type Config struct {
-	InputMethod            string
-	InputMethodDefinitions map[string]bamboo.InputMethodDefinition
-	OutputCharset          string
-	Flags                  uint
-	IBflags                uint
-	Shortcuts              [10]uint32
-	DefaultInputMode       int
-	InputModeMapping       map[string]int
-}
-
-func getConfigDir(ngName string) string {
-	u, err := user.Current()
-	if err == nil {
-		return fmt.Sprintf(configDir, u.HomeDir, "bamboo")
-	}
-	return fmt.Sprintf(configDir, "~", "bamboo")
-}
-
-func setupConfigDir(ngName string) {
-	if sta, err := os.Stat(getConfigDir(ngName)); err != nil || !sta.IsDir() {
-		os.Mkdir(getConfigDir(ngName), 0777)
-	}
-}
-
-func getConfigPath(engineName string) string {
-	return fmt.Sprintf(configFile, getConfigDir(engineName), engineName)
-}
-
-func defaultCfg() Config {
-	return Config{
-		InputMethod:            "Telex",
-		OutputCharset:          "Unicode",
-		InputMethodDefinitions: bamboo.GetInputMethodDefinitions(),
-		Flags:                  bamboo.EstdFlags,
-		IBflags:                IBstdFlags,
-		Shortcuts:              [10]uint32{1, 126, 0, 0, 0, 0, 0, 0, 5, 117},
-		DefaultInputMode:       preeditIM,
-		InputModeMapping:       map[string]int{},
-	}
-}
-
-func loadConfig(engineName string) *Config {
-	var c = defaultCfg()
-	if engineName == "bamboous" {
-		c.DefaultInputMode = usIM
-		c.Flags = 0
-	}
-
-	setupConfigDir(engineName)
-	data, err := os.ReadFile(getConfigPath(engineName))
-	if err == nil {
-		json.Unmarshal(data, &c)
-	}
-
-	return &c
-}
-
-func saveConfig(c *Config, engineName string) {
-	data, err := json.MarshalIndent(c, "", "  ")
-	if err != nil {
-		return
-	}
-
-	err = os.WriteFile(fmt.Sprintf(configFile, getConfigDir(engineName), engineName), data, 0644)
-	if err != nil {
-		log.Println(err)
-	}
-
-}
 
 func getEngineSubFile(fileName string) string {
 	if _, err := os.Stat(fileName); err == nil {

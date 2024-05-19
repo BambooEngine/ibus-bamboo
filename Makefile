@@ -21,8 +21,6 @@ CC=cc
 engine_name=bamboo
 engine_gui_name=ibus-setup-Bamboo.desktop
 ibus_e_name=ibus-engine-$(engine_name)
-keyboard_shortcut_editor=keyboard-shortcut-editor
-macro_editor=macro-editor
 pkg_name=ibus-$(engine_name)
 version=0.8.3
 
@@ -36,19 +34,13 @@ tar_file=$(pkg_name)-$(version).tar.gz
 rpm_src_tar=$(rpm_src_dir)/$(tar_file)
 tar_options_src=--transform "s/^\./$(pkg_name)-$(version)/" --exclude={"*.tar.gz",".git",".idea"} .
 
-all: xml build
-
-xml:
-	glib-compile-resources --generate-source setup-ui/keyboard.gresource.xml
+all: build
 
 build:
-	CGO_ENABLED=1 go build $(GOLDFLAGS) -o $(ibus_e_name) ibus-$(engine_name)
-	$(CC) -o $(keyboard_shortcut_editor) setup-ui/$(keyboard_shortcut_editor).c `pkg-config --libs --cflags gtk+-3.0`
-	$(CC) -rdynamic -o $(macro_editor) setup-ui/$(macro_editor).c `pkg-config --libs --cflags gtk+-3.0`
+	CGO_ENABLED=1 go build $(GOLDFLAGS) -o $(ibus_e_name)
 
 t:
 	CGO_ENABLED=1 go test ./...
-	CGO_ENABLED=1 go test ./vendor/github.com/BambooEngine/bamboo-core/...
 
 clean:
 	rm -f ibus-engine-bamboo keyboard-shortcut-editor macro-editor

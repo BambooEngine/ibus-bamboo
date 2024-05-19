@@ -20,6 +20,7 @@
 package main
 
 import (
+	"ibus-bamboo/config"
 	"log"
 	"strings"
 	"time"
@@ -36,7 +37,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	defer e.updateLastKeyWithShift(keyVal, state)
 
 	if !e.shouldRestoreKeyStrokes {
-		if !e.preeditor.CanProcessKey(keyRune) && rawKeyLen == 0 && e.config.IBflags&IBmacroEnabled == 0 {
+		if !e.preeditor.CanProcessKey(keyRune) && rawKeyLen == 0 && e.config.IBflags&config.IBmacroEnabled == 0 {
 			// don't process special characters if rawKeyLen == 0,
 			// workaround for Chrome's address bar and Google SpreadSheets
 			return false, nil
@@ -79,7 +80,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 
 func (e *IBusBambooEngine) expandMacro(str string) string {
 	var macroText = e.macroTable.GetText(str)
-	if e.config.IBflags&IBautoCapitalizeMacro != 0 {
+	if e.config.IBflags&config.IBautoCapitalizeMacro != 0 {
 		switch determineMacroCase(str) {
 		case VnCaseAllSmall:
 			return strings.ToLower(macroText)
@@ -92,7 +93,7 @@ func (e *IBusBambooEngine) expandMacro(str string) string {
 
 func (e *IBusBambooEngine) updatePreedit(processedStr string) {
 	defer func() {
-		if e.config.IBflags&IBmouseCapturing != 0 {
+		if e.config.IBflags&config.IBmouseCapturing != 0 {
 			mouseCaptureUnlock()
 		}
 	}()
@@ -110,7 +111,7 @@ func (e *IBusBambooEngine) updatePreedit(processedStr string) {
 		return
 	}
 
-	if e.config.IBflags&IBnoUnderline != 0 {
+	if e.config.IBflags&config.IBnoUnderline != 0 {
 		ibusText.AppendAttr(ibus.IBUS_ATTR_TYPE_NONE, ibus.IBUS_ATTR_UNDERLINE_SINGLE, 0, preeditLen)
 	} else {
 		ibusText.AppendAttr(ibus.IBUS_ATTR_TYPE_UNDERLINE, ibus.IBUS_ATTR_UNDERLINE_SINGLE, 0, preeditLen)
@@ -126,7 +127,7 @@ func (e *IBusBambooEngine) getBambooInputMode() bamboo.Mode {
 }
 
 func (e *IBusBambooEngine) shouldFallbackToEnglish(checkVnRune bool) bool {
-	if e.config.IBflags&IBautoNonVnRestore == 0 {
+	if e.config.IBflags&config.IBautoNonVnRestore == 0 {
 		return false
 	}
 	var vnSeq = e.getProcessedString(bamboo.VietnameseMode | bamboo.LowerCase)
@@ -138,7 +139,7 @@ func (e *IBusBambooEngine) shouldFallbackToEnglish(checkVnRune bool) bool {
 		return false
 	}
 	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation
-	if e.config.IBflags&IBddFreeStyle != 0 && !bamboo.HasAnyVietnameseVower(vnSeq) &&
+	if e.config.IBflags&config.IBddFreeStyle != 0 && !bamboo.HasAnyVietnameseVower(vnSeq) &&
 		(vnRunes[len(vnRunes)-1] == 'd' || strings.ContainsRune(vnSeq, 'đ')) {
 		return false
 	}
@@ -149,7 +150,7 @@ func (e *IBusBambooEngine) shouldFallbackToEnglish(checkVnRune bool) bool {
 }
 
 func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
-	if e.config.IBflags&IBautoNonVnRestore == 0 {
+	if e.config.IBflags&config.IBautoNonVnRestore == 0 {
 		return false
 	}
 	var vnSeq = e.getProcessedString(bamboo.VietnameseMode | bamboo.LowerCase)
@@ -158,10 +159,10 @@ func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
 		return false
 	}
 	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation
-	if e.config.IBflags&IBddFreeStyle != 0 && strings.ContainsRune(vnSeq, 'đ') {
+	if e.config.IBflags&config.IBddFreeStyle != 0 && strings.ContainsRune(vnSeq, 'đ') {
 		return false
 	}
-	if e.config.IBflags&IBspellCheckWithDicts != 0 {
+	if e.config.IBflags&config.IBspellCheckWithDicts != 0 {
 		return !dictionary[vnSeq]
 	}
 	return !e.preeditor.IsValid(true)
@@ -183,7 +184,7 @@ func (e *IBusBambooEngine) getProcessedString(mode bamboo.Mode) string {
 }
 
 func (e *IBusBambooEngine) getPreeditString() string {
-	if e.config.IBflags&IBmacroEnabled != 0 {
+	if e.config.IBflags&config.IBmacroEnabled != 0 {
 		return e.getProcessedString(bamboo.PunctuationMode)
 	}
 	if e.shouldFallbackToEnglish(true) {

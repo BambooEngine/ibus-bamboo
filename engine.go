@@ -30,6 +30,9 @@ import (
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
 	"github.com/godbus/dbus"
+
+	"ibus-bamboo/config"
+	"ibus-bamboo/ui"
 )
 
 type IBusBambooEngine struct {
@@ -37,7 +40,7 @@ type IBusBambooEngine struct {
 	IEngine
 	preeditor              bamboo.IEngine
 	engineName             string
-	config                 *Config
+	config                 *config.Config
 	propList               *ibus.PropList
 	englishMode            bool
 	macroTable             *MacroTable
@@ -61,7 +64,7 @@ type IBusBambooEngine struct {
 	shouldEnqueuKeyStrokes bool
 }
 
-func NewIbusBambooEngine(name string, cfg *Config, base IEngine, preeditor bamboo.IEngine) *IBusBambooEngine {
+func NewIbusBambooEngine(name string, cfg *config.Config, base IEngine, preeditor bamboo.IEngine) *IBusBambooEngine {
 	return &IBusBambooEngine{
 		engineName: name,
 		IEngine:    base,
@@ -119,12 +122,12 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 			panic(fmt.Sprintf("failed to load emojiTrie from %s: %s", DictEmojiOne, err))
 		}
 	}
-	if e.config.IBflags&IBspellCheckWithDicts != 0 && len(dictionary) == 0 {
+	if e.config.IBflags&config.IBspellCheckWithDicts != 0 && len(dictionary) == 0 {
 		dictionary, _ = loadDictionary(DictVietnameseCm)
 	}
 	if inStringList(disabledMouseCapturingList, e.getWmClass()) {
 		stopMouseCapturing()
-	} else if e.config.IBflags&IBmouseCapturing != 0 {
+	} else if e.config.IBflags&config.IBmouseCapturing != 0 {
 		startMouseCapturing()
 	}
 	fmt.Printf("WM_CLASS=(%s)\n", e.getWmClass())
@@ -138,7 +141,7 @@ func (e *IBusBambooEngine) FocusOut() *dbus.Error {
 
 func (e *IBusBambooEngine) Reset() *dbus.Error {
 	fmt.Print("Reset.\n")
-	if e.checkInputMode(preeditIM) {
+	if e.checkInputMode(config.PreeditIM) {
 		e.commitPreeditAndReset(e.getPreeditString())
 	}
 	return nil
@@ -265,27 +268,28 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		return nil
 	}
 	if propName == PropKeyConfiguration {
-		exec.Command("/usr/lib/ibus-bamboo/macro-editor", getConfigPath(e.engineName)).Start()
+		ui.OpenGUI(e.engineName)
 		return nil
 	}
 	if propName == PropKeyInputModeLookupTableShortcut {
-		e.openShortcutsGUI()
+		ui.OpenGUI(e.engineName)
+		return nil
 	}
 	if propName == PropKeyMacroTable {
-		OpenMactabFile(e.engineName)
+		ui.OpenGUI(e.engineName)
 		return nil
 	}
 
 	turnSpellChecking := func(on bool) {
 		if on {
-			e.config.IBflags |= IBspellCheckEnabled
-			e.config.IBflags |= IBautoNonVnRestore
-			if e.config.IBflags&IBspellCheckWithDicts == 0 {
-				e.config.IBflags |= IBspellCheckWithRules
+			e.config.IBflags |= config.IBspellCheckEnabled
+			e.config.IBflags |= config.IBautoNonVnRestore
+			if e.config.IBflags&config.IBspellCheckWithDicts == 0 {
+				e.config.IBflags |= config.IBspellCheckWithRules
 			}
 		} else {
-			e.config.IBflags &= ^IBspellCheckEnabled
-			e.config.IBflags &= ^IBautoNonVnRestore
+			e.config.IBflags &= ^config.IBspellCheckEnabled
+			e.config.IBflags &= ^config.IBautoNonVnRestore
 		}
 	}
 
@@ -312,63 +316,63 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	}
 	if propName == PropKeySpellCheckByRules {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBspellCheckWithRules
+			e.config.IBflags |= config.IBspellCheckWithRules
 			turnSpellChecking(true)
 		} else {
-			e.config.IBflags &= ^IBspellCheckWithRules
+			e.config.IBflags &= ^config.IBspellCheckWithRules
 		}
 	}
 	if propName == PropKeySpellCheckByDicts {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBspellCheckWithDicts
+			e.config.IBflags |= config.IBspellCheckWithDicts
 			turnSpellChecking(true)
 			dictionary, _ = loadDictionary(DictVietnameseCm)
 		} else {
-			e.config.IBflags &= ^IBspellCheckWithDicts
+			e.config.IBflags &= ^config.IBspellCheckWithDicts
 		}
 	}
 	if propName == PropKeyMouseCapturing {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBmouseCapturing
+			e.config.IBflags |= config.IBmouseCapturing
 			startMouseCapturing()
 			startMouseRecording()
 		} else {
-			e.config.IBflags &= ^IBmouseCapturing
+			e.config.IBflags &= ^config.IBmouseCapturing
 			stopMouseCapturing()
 			stopMouseRecording()
 		}
 	}
 	if propName == PropKeyMacroEnabled {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBmacroEnabled
+			e.config.IBflags |= config.IBmacroEnabled
 			e.macroTable.Enable(e.engineName)
 		} else {
-			e.config.IBflags &= ^IBmacroEnabled
+			e.config.IBflags &= ^config.IBmacroEnabled
 			e.macroTable.Disable()
 		}
 	}
 	if propName == PropKeyPreeditInvisibility {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBnoUnderline
+			e.config.IBflags |= config.IBnoUnderline
 		} else {
-			e.config.IBflags &= ^IBnoUnderline
+			e.config.IBflags &= ^config.IBnoUnderline
 		}
 	}
 	if propName == PropKeyPreeditElimination {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBpreeditElimination
+			e.config.IBflags |= config.IBpreeditElimination
 		} else {
-			e.config.IBflags &= ^IBpreeditElimination
+			e.config.IBflags &= ^config.IBpreeditElimination
 		}
 	}
 	if propName == PropKeyAutoCapitalizeMacro {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= IBautoCapitalizeMacro
+			e.config.IBflags |= config.IBautoCapitalizeMacro
 		} else {
-			e.config.IBflags &= ^IBautoCapitalizeMacro
+			e.config.IBflags &= ^config.IBautoCapitalizeMacro
 		}
-		if e.config.IBflags&IBmacroEnabled != 0 {
-			e.macroTable.Reload(e.engineName, e.config.IBflags&IBautoCapitalizeMacro != 0)
+		if e.config.IBflags&config.IBmacroEnabled != 0 {
+			e.macroTable.Reload(e.engineName, e.config.IBflags&config.IBautoCapitalizeMacro != 0)
 		}
 	}
 
@@ -384,7 +388,7 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		e.config.InputMethod = propName
 	}
 	if propName != "-" {
-		saveConfig(e.config, e.engineName)
+		config.SaveConfig(e.config, e.engineName)
 	}
 	e.propList = GetPropListByConfig(e.config)
 

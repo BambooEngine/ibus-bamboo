@@ -21,10 +21,8 @@ package main
 
 import (
 	"bufio"
-	"fmt"
-	"log"
+	"ibus-bamboo/config"
 	"os"
-	"os/exec"
 	"strings"
 	"sync"
 	"time"
@@ -107,7 +105,7 @@ func (e *MacroTable) Enable(engineName string) {
 	go func() {
 		modTime := time.Now()
 
-		efPath := getMactabFile(engineName)
+		efPath := config.GetMacroPath(engineName)
 
 		for e.enable {
 			if sta, _ := os.Stat(efPath); sta != nil {
@@ -124,23 +122,4 @@ func (e *MacroTable) Enable(engineName string) {
 func (e *MacroTable) Disable() {
 	e.enable = false
 	e.mTable = map[string]string{}
-}
-
-func getMactabFile(engineName string) string {
-	return fmt.Sprintf(mactabFile, getConfigDir(engineName), engineName)
-}
-
-func OpenMactabFile(engineName string) {
-	efPath := getMactabFile(engineName)
-	if _, err := os.Stat(efPath); os.IsNotExist(err) {
-		sampleFile := getEngineSubFile(sampleMactabFile)
-		sample, err := os.ReadFile(sampleFile)
-		log.Println(err)
-		os.WriteFile(efPath, sample, 0644)
-	}
-
-	err := exec.Command("/usr/lib/ibus-bamboo/macro-editor", efPath).Start()
-	if err != nil {
-		_ = exec.Command("./macro-editor", efPath).Start()
-	}
 }
