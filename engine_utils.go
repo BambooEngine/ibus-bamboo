@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"ibus-bamboo/config"
 	"ibus-bamboo/ui"
+	"io/ioutil"
 	"os"
 	"strconv"
 	"strings"
@@ -130,11 +131,11 @@ func initConfigFiles(engineName string) {
 	macroPath := config.GetMacroPath(engineName)
 	if _, err := os.Stat(macroPath); os.IsNotExist(err) {
 		sampleFile := getEngineSubFile(sampleMactabFile)
-		sample, err := os.ReadFile(sampleFile)
+		sample, err := ioutil.ReadFile(sampleFile)
 		if err != nil {
 			panic(err)
 		}
-		err = os.WriteFile(macroPath, sample, 0644)
+		err = ioutil.WriteFile(macroPath, sample, 0644)
 		if err != nil {
 			panic(err)
 		}
