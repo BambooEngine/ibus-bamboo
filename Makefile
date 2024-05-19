@@ -37,7 +37,7 @@ tar_options_src=--transform "s/^\./$(pkg_name)-$(version)/" --exclude=.git --exc
 all: build
 
 build:
-	CGO_ENABLED=1 go build $(GOLDFLAGS) -o $(ibus_e_name)
+	CGO_ENABLED=1 go build $(GOLDFLAGS) -o $(ibus_e_name) -mod=vendor
 
 t:
 	CGO_ENABLED=1 go test ./...

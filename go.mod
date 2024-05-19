@@ -1,6 +1,6 @@
 module ibus-bamboo
 
-go 1.18
+go 1.13
 
 require (
 	github.com/BambooEngine/bamboo-core v0.0.0-20220521074724-f0ca534819fa
