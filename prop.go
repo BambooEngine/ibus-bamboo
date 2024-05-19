@@ -20,7 +20,7 @@
 package main
 
 import (
-	"strconv"
+	"ibus-bamboo/config"
 
 	"github.com/BambooEngine/bamboo-core"
 	"github.com/BambooEngine/goibus/ibus"
@@ -61,12 +61,12 @@ var IBusSeparator = &ibus.Property{
 	SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 }
 
-func GetPropListByConfig(c *Config) *ibus.PropList {
+func GetPropListByConfig(c *config.Config) *ibus.PropList {
 	var aboutText = "IBus " + EngineName + " " + Version
 	if !*embedded {
 		aboutText += " (Debug)"
 	}
-	if c.DefaultInputMode == usIM {
+	if c.DefaultInputMode == config.UsIM {
 		return ibus.NewPropList(
 			&ibus.Property{
 				Name:      "IBusProperty",
@@ -160,18 +160,6 @@ func GetPropListByConfig(c *Config) *ibus.PropList {
 			Name:      "IBusProperty",
 			Key:       "-",
 			Type:      ibus.PROP_TYPE_MENU,
-			Label:     dbus.MakeVariant(ibus.NewText("Chế độ gõ mặc định")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("Chế độ gõ mặc định")),
-			Sensitive: true,
-			Visible:   true,
-			Icon:      "preferences-other",
-			Symbol:    dbus.MakeVariant(ibus.NewText("")),
-			SubProps:  dbus.MakeVariant(GetDefaultModePropListByConfig(c)),
-		},
-		&ibus.Property{
-			Name:      "IBusProperty",
-			Key:       "-",
-			Type:      ibus.PROP_TYPE_MENU,
 			Label:     dbus.MakeVariant(ibus.NewText("Cấu hình khác")),
 			Tooltip:   dbus.MakeVariant(ibus.NewText("Cấu hình khác")),
 			Sensitive: true,
@@ -195,7 +183,7 @@ func GetPropListByConfig(c *Config) *ibus.PropList {
 	)
 }
 
-func GetCharsetPropListByConfig(c *Config) *ibus.PropList {
+func GetCharsetPropListByConfig(c *config.Config) *ibus.PropList {
 	var charsetProperties []*ibus.Property
 	charsetProperties = append(charsetProperties,
 		&ibus.Property{
@@ -232,7 +220,7 @@ func GetCharsetPropListByConfig(c *Config) *ibus.PropList {
 	return ibus.NewPropList(charsetProperties...)
 }
 
-func GetIMPropListByConfig(c *Config) *ibus.PropList {
+func GetIMPropListByConfig(c *config.Config) *ibus.PropList {
 	var imProperties []*ibus.Property
 	imProperties = append(imProperties,
 		&ibus.Property{
@@ -270,14 +258,14 @@ func GetIMPropListByConfig(c *Config) *ibus.PropList {
 	return ibus.NewPropList(imProperties...)
 }
 
-func GetMacroPropListByConfig(c *Config) *ibus.PropList {
+func GetMacroPropListByConfig(c *config.Config) *ibus.PropList {
 	macroChecked := ibus.PROP_STATE_UNCHECKED
 	autoCapitalizeMacro := ibus.PROP_STATE_UNCHECKED
 
-	if c.IBflags&IBmacroEnabled != 0 {
+	if c.IBflags&config.IBmacroEnabled != 0 {
 		macroChecked = ibus.PROP_STATE_CHECKED
 	}
-	if c.IBflags&IBautoCapitalizeMacro != 0 {
+	if c.IBflags&config.IBautoCapitalizeMacro != 0 {
 		autoCapitalizeMacro = ibus.PROP_STATE_CHECKED
 	}
 	return ibus.NewPropList(
@@ -319,19 +307,19 @@ func GetMacroPropListByConfig(c *Config) *ibus.PropList {
 	)
 }
 
-func GetSpellCheckingPropListByConfig(c *Config) *ibus.PropList {
+func GetSpellCheckingPropListByConfig(c *config.Config) *ibus.PropList {
 	spellCheckByRules := ibus.PROP_STATE_UNCHECKED
 	spellCheckByDicts := ibus.PROP_STATE_UNCHECKED
 
 	// spelling
 	spellingChecked := ibus.PROP_STATE_UNCHECKED
-	if c.IBflags&IBspellCheckEnabled != 0 {
+	if c.IBflags&config.IBspellCheckEnabled != 0 {
 		spellingChecked = ibus.PROP_STATE_CHECKED
 	}
-	if c.IBflags&IBspellCheckWithRules != 0 {
+	if c.IBflags&config.IBspellCheckWithRules != 0 {
 		spellCheckByRules = ibus.PROP_STATE_CHECKED
 	}
-	if c.IBflags&IBspellCheckWithDicts != 0 {
+	if c.IBflags&config.IBspellCheckWithDicts != 0 {
 		spellCheckByDicts = ibus.PROP_STATE_CHECKED
 	}
 	return ibus.NewPropList(
@@ -375,14 +363,14 @@ func GetSpellCheckingPropListByConfig(c *Config) *ibus.PropList {
 	)
 }
 
-func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
+func GetOptionsPropListByConfig(c *config.Config) *ibus.PropList {
 	// tone
 	toneStdChecked := ibus.PROP_STATE_UNCHECKED
 	toneFreeMarkingChecked := ibus.PROP_STATE_UNCHECKED
 	preeditInvisibilityChecked := ibus.PROP_STATE_UNCHECKED
 	x11FakeBackspaceChecked := ibus.PROP_STATE_UNCHECKED
 	mouseCapturingChecked := ibus.PROP_STATE_UNCHECKED
-	if c.IBflags&IBmouseCapturing != 0 {
+	if c.IBflags&config.IBmouseCapturing != 0 {
 		mouseCapturingChecked = ibus.PROP_STATE_CHECKED
 	}
 
@@ -392,10 +380,10 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 	if c.Flags&bamboo.EfreeToneMarking != 0 {
 		toneFreeMarkingChecked = ibus.PROP_STATE_CHECKED
 	}
-	if c.IBflags&IBnoUnderline != 0 {
+	if c.IBflags&config.IBnoUnderline != 0 {
 		preeditInvisibilityChecked = ibus.PROP_STATE_CHECKED
 	}
-	if c.IBflags&IBpreeditElimination != 0 {
+	if c.IBflags&config.IBpreeditElimination != 0 {
 		x11FakeBackspaceChecked = ibus.PROP_STATE_CHECKED
 	}
 
@@ -461,38 +449,4 @@ func GetOptionsPropListByConfig(c *Config) *ibus.PropList {
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
 	)
-}
-
-func GetDefaultModePropListByConfig(c *Config) *ibus.PropList {
-	var inputModes = []string{
-		"1. Pre-edit (có gạch chân)",
-		"2. Surrounding Text (không gạch chân)",
-		"3. ForwardKeyEvent I (không gạch chân)",
-		"4. ForwardKeyEvent II (không gạch chân)",
-		"5. Forward as Commit (không gạch chân)",
-		"6. XTestFakeKeyEvent (không gạch chân)",
-	}
-	var imProperties []*ibus.Property
-	for i, label := range inputModes {
-		var state = ibus.PROP_STATE_UNCHECKED
-		var im = i + 1
-		var ims = strconv.Itoa(im)
-		if im == c.DefaultInputMode {
-			state = ibus.PROP_STATE_CHECKED
-		}
-		var imProp = &ibus.Property{
-			Name:      "IBusProperty",
-			Key:       "InputMode::" + ims,
-			Type:      ibus.PROP_TYPE_RADIO,
-			Label:     dbus.MakeVariant(ibus.NewText(label)),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("InputMode: " + ims)),
-			Sensitive: true,
-			Visible:   true,
-			State:     state,
-			Symbol:    dbus.MakeVariant(ibus.NewText("U")),
-			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
-		}
-		imProperties = append(imProperties, imProp)
-	}
-	return ibus.NewPropList(imProperties...)
 }

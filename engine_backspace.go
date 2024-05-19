@@ -21,6 +21,7 @@ package main
 
 import (
 	"fmt"
+	"ibus-bamboo/config"
 	"log"
 	"strings"
 	"time"
@@ -40,7 +41,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		return false, nil
 	}
 	var keyRune = rune(keyVal)
-	if e.config.IBflags&IBmacroEnabled == 0 && len(keyPressChan) == 0 && e.getRawKeyLen() == 0 && !inKeyList(e.preeditor.GetInputMethod().AppendingKeys, keyRune) {
+	if e.config.IBflags&config.IBmacroEnabled == 0 && len(keyPressChan) == 0 && e.getRawKeyLen() == 0 && !inKeyList(e.preeditor.GetInputMethod().AppendingKeys, keyRune) {
 		e.updateLastKeyWithShift(keyVal, state)
 		if e.preeditor.CanProcessKey(keyRune) && isValidState(state) {
 			e.isFirstTimeSendingBS = true
@@ -56,7 +57,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 
 	if e.shouldEnqueuKeyStrokes {
 		// WARNING: don't use ForwardKeyEvent api in XTestFakeKeyEvent/SurroundingText mode
-		if e.checkInputMode(xTestFakeKeyEventIM) || e.checkInputMode(surroundingTextIM) {
+		if e.checkInputMode(config.XTestFakeKeyEventIM) || e.checkInputMode(config.SurroundingTextIM) {
 			if keyVal == IBusBackSpace {
 				if e.getFakeBackspace() > 0 {
 					e.addFakeBackspace(-1)
@@ -112,7 +113,7 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) bool {
 	_, oldMacText := e.getMacroText()
 	if keyVal == IBusBackSpace {
 		if e.getRawKeyLen() > 0 {
-			if e.config.IBflags&IBautoNonVnRestore == 0 {
+			if e.config.IBflags&config.IBautoNonVnRestore == 0 {
 				e.preeditor.RemoveLastChar(false)
 				return false
 			}
@@ -172,7 +173,7 @@ func (e *IBusBambooEngine) shouldAppendDeadKey(newText, oldText string) bool {
 
 	// workaround for chrome and firefox's address bar
 	if e.isFirstTimeSendingBS && offset < len(newRunes) && offset < len(oldRunes) && e.inBrowserList() &&
-		!e.checkInputMode(shiftLeftForwardingIM) {
+		!e.checkInputMode(config.ShiftLeftForwardingIM) {
 		return true
 	}
 	return false
@@ -272,7 +273,7 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 	if delta > 0 {
 		time.Sleep(time.Duration(delta) * time.Nanosecond)
 	}
-	if e.checkInputMode(xTestFakeKeyEventIM) {
+	if e.checkInputMode(config.XTestFakeKeyEventIM) {
 		e.setFakeBackspace(int32(n))
 		var sleep = func() {
 			var count = 0
@@ -286,12 +287,12 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 		x11SendBackspace(n, 0)
 		sleep()
 		time.Sleep(time.Duration(n) * (10 + BACKSPACE_INTERVAL) * time.Millisecond)
-	} else if e.checkInputMode(surroundingTextIM) {
+	} else if e.checkInputMode(config.SurroundingTextIM) {
 		time.Sleep(20 * time.Millisecond)
 		log.Printf("Sendding %d backspace via SurroundingText\n", n)
 		e.DeleteSurroundingText(-int32(n), uint32(n))
 		time.Sleep(20 * time.Millisecond)
-	} else if e.checkInputMode(forwardAsCommitIM) {
+	} else if e.checkInputMode(config.ForwardAsCommitIM) {
 		time.Sleep(20 * time.Millisecond)
 		log.Printf("Sendding %d backspace via forwardAsCommitIM\n", n)
 		for i := 0; i < n; i++ {
@@ -299,7 +300,7 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 			e.ForwardKeyEvent(IBusBackSpace, XkBackspace-8, IBusReleaseMask)
 		}
 		time.Sleep(time.Duration(n) * (20 + BACKSPACE_INTERVAL) * time.Millisecond)
-	} else if e.checkInputMode(shiftLeftForwardingIM) {
+	} else if e.checkInputMode(config.ShiftLeftForwardingIM) {
 		time.Sleep(30 * time.Millisecond)
 		log.Printf("Sendding %d Shift+Left via shiftLeftForwardingIM\n", n)
 
@@ -308,7 +309,7 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 			e.ForwardKeyEvent(IBusLeft, XkLeft-8, IBusReleaseMask)
 		}
 		time.Sleep(time.Duration(n) * (30 + BACKSPACE_INTERVAL) * time.Millisecond)
-	} else if e.checkInputMode(backspaceForwardingIM) {
+	} else if e.checkInputMode(config.BackspaceForwardingIM) {
 		time.Sleep(30 * time.Millisecond)
 		log.Printf("Sendding %d backspace via backspaceForwardingIM\n", n)
 
@@ -330,7 +331,7 @@ func (e *IBusBambooEngine) bsCommitText(rs []rune) {
 	if len(rs) == 0 {
 		return
 	}
-	if e.checkInputMode(forwardAsCommitIM) {
+	if e.checkInputMode(config.ForwardAsCommitIM) {
 		log.Println("Forward as commit", string(rs))
 		for _, chr := range rs {
 			var keyVal = vnSymMapping[chr]

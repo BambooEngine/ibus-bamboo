@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ibus-bamboo/config"
 	"testing"
 
 	"github.com/BambooEngine/bamboo-core"
@@ -148,7 +149,7 @@ func TestPreeditEngine(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.inputMode = preeditIM
+			tc.inputMode = config.PreeditIM
 			assertEngine(t, tc, func(t testing.TB, fe *fakeEngine, e IEngine) {
 				for _, ev := range tc.keyEvents {
 					keys := ev.keys
@@ -266,7 +267,7 @@ func TestBsEngine(t *testing.T) {
 		},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			tc.inputMode = surroundingTextIM
+			tc.inputMode = config.SurroundingTextIM
 			assertEngine(t, tc, func(t testing.TB, fe *fakeEngine, e IEngine) {
 				for _, ev := range tc.keyEvents {
 					keys := ev.keys
@@ -287,11 +288,11 @@ func TestBsEngine(t *testing.T) {
 func assertEngine(t testing.TB, tc testCase, assertFn func(testing.TB, *fakeEngine, IEngine)) {
 	fe := NewFakeEngine()
 	engineName := "test"
-	var cfg = defaultCfg()
+	var cfg = config.DefaultCfg()
 	cfg.DefaultInputMode = tc.inputMode
 	inputMethod := bamboo.ParseInputMethod(cfg.InputMethodDefinitions, cfg.InputMethod)
 	if tc.mTable != nil {
-		cfg.IBflags |= IBmacroEnabled
+		cfg.IBflags |= config.IBmacroEnabled
 	}
 	e := NewIbusBambooEngine(engineName, &cfg, fe, bamboo.NewEngine(inputMethod, cfg.Flags))
 	if tc.mTable != nil {

@@ -21,8 +21,9 @@ package main
 
 import (
 	"fmt"
+	"ibus-bamboo/config"
+	"ibus-bamboo/ui"
 	"os"
-	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
@@ -45,17 +46,17 @@ func GetIBusEngineCreator() func(*dbus.Conn, string) dbus.ObjectPath {
 	return func(conn *dbus.Conn, ngName string) dbus.ObjectPath {
 		var ngGroupName = strings.Split(ngName, "::")[0]
 		var engineName = strings.ToLower(ngGroupName)
-		var config = loadConfig(engineName)
+		fmt.Printf("Got engine name: %s", engineName)
+		var cfg = config.LoadConfig(engineName)
 		var objectPath = dbus.ObjectPath(fmt.Sprintf("/org/freedesktop/IBus/Engine/%s/%d", engineName, time.Now().UnixNano()))
-		var inputMethod = bamboo.ParseInputMethod(config.InputMethodDefinitions, config.InputMethod)
+		var inputMethod = bamboo.ParseInputMethod(cfg.InputMethodDefinitions, cfg.InputMethod)
 		baseEngine := ibus.BaseEngine(conn, objectPath)
-		var engine = NewIbusBambooEngine(engineName, loadConfig(engineName), &baseEngine, bamboo.NewEngine(inputMethod, config.Flags))
-		engine.propList = GetPropListByConfig(config)
+		var engine = NewIbusBambooEngine(engineName, config.LoadConfig(engineName), &baseEngine, bamboo.NewEngine(inputMethod, cfg.Flags))
+		engine.propList = GetPropListByConfig(cfg)
 		engine.shouldEnqueuKeyStrokes = true
 		ibus.PublishEngine(conn, objectPath, engine)
 		if *gui {
-			engine.openShortcutsGUI()
-			saveConfig(engine.config, engine.engineName)
+			ui.OpenGUI(engine.engineName)
 			os.Exit(0)
 		}
 		go engine.init()
@@ -75,16 +76,17 @@ func (e *IBusBambooEngine) isShortcutKeyEnable(ski uint) bool {
 }
 
 func (e *IBusBambooEngine) init() {
+	initConfigFiles(e.engineName)
 	e.emoji = NewEmojiEngine()
 	if e.macroTable == nil {
-		e.macroTable = NewMacroTable(e.config.IBflags&IBautoCapitalizeMacro != 0)
-		if e.config.IBflags&IBmacroEnabled != 0 {
+		e.macroTable = NewMacroTable(e.config.IBflags&config.IBautoCapitalizeMacro != 0)
+		if e.config.IBflags&config.IBmacroEnabled != 0 {
 			e.macroTable.Enable(e.engineName)
 		}
 	}
 	keyPressHandler = e.keyPressForwardHandler
 
-	if e.config.IBflags&IBmouseCapturing != 0 {
+	if e.config.IBflags&config.IBmouseCapturing != 0 {
 		startMouseCapturing()
 		startMouseRecording()
 	}
@@ -92,7 +94,7 @@ func (e *IBusBambooEngine) init() {
 	onMouseMove = func() {
 		mouseMutex.Lock()
 		defer mouseMutex.Unlock()
-		if e.checkInputMode(preeditIM) {
+		if e.checkInputMode(config.PreeditIM) {
 			if e.getRawKeyLen() == 0 {
 				return
 			}
@@ -114,6 +116,27 @@ func (e *IBusBambooEngine) init() {
 				e.isSurroundingTextReady = true
 				e.keyPressDelay = KeypressDelayMs * 10
 			}
+		}
+	}
+}
+
+func initConfigFiles(engineName string) {
+	if sta, err := os.Stat(config.GetConfigDir(engineName)); err != nil || !sta.IsDir() {
+		err = os.Mkdir(config.GetConfigDir(engineName), 0777)
+		if err != nil {
+			panic(err)
+		}
+	}
+	macroPath := config.GetMacroPath(engineName)
+	if _, err := os.Stat(macroPath); os.IsNotExist(err) {
+		sampleFile := getEngineSubFile(sampleMactabFile)
+		sample, err := os.ReadFile(sampleFile)
+		if err != nil {
+			panic(err)
+		}
+		err = os.WriteFile(macroPath, sample, 0644)
+		if err != nil {
+			panic(err)
 		}
 	}
 }
@@ -145,7 +168,7 @@ func (e *IBusBambooEngine) resetBuffer() {
 	if e.getRawKeyLen() == 0 {
 		return
 	}
-	if e.checkInputMode(preeditIM) {
+	if e.checkInputMode(config.PreeditIM) {
 		e.commitPreeditAndReset(e.getPreeditString())
 	} else {
 		e.preeditor.Reset()
@@ -207,7 +230,7 @@ func (e *IBusBambooEngine) processShortcutKey(keyVal, keyCode, state uint32) (bo
 		return true, e.hexadecimalProcessKeyEvent(keyVal, keyCode, state)
 	}
 
-	if e.config.DefaultInputMode == usIM {
+	if e.config.DefaultInputMode == config.UsIM {
 		return true, false
 	}
 	if e.isShortcutKeyPressed(keyVal, state, KSRestoreKeyStrokes) {
@@ -237,7 +260,7 @@ func (e *IBusBambooEngine) processShortcutKey(keyVal, keyCode, state uint32) (bo
 	if keyVal == IBusShiftL || keyVal == IBusShiftR {
 		return true, false
 	}
-	if e.checkInputMode(usIM) {
+	if e.checkInputMode(config.UsIM) {
 		if e.isInputModeLTOpened && e.isShortcutKeyPressed(keyVal, state, KSInputModeSwitch) {
 			return false, false
 		}
@@ -282,14 +305,14 @@ func (e *IBusBambooEngine) runeCount() int {
 
 func (e *IBusBambooEngine) getInputMode() int {
 	if e.getWmClass() != "" {
-		if im, ok := e.config.InputModeMapping[e.getWmClass()]; ok && imLookupTable[im] != "" {
+		if im, ok := e.config.InputModeMapping[e.getWmClass()]; ok && config.ImLookupTable[im] != "" {
 			return im
 		}
 	}
-	if _, ok := imLookupTable[e.config.DefaultInputMode]; ok {
+	if _, ok := config.ImLookupTable[e.config.DefaultInputMode]; ok {
 		return e.config.DefaultInputMode
 	}
-	return preeditIM
+	return config.PreeditIM
 }
 
 func (e *IBusBambooEngine) openLookupTable() {
@@ -302,19 +325,19 @@ func (e *IBusBambooEngine) openLookupTable() {
 	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (1/2/3/4/5/6/7) để lưu tùy chọn của bạn"), true)
 
 	lt := ibus.NewLookupTable()
-	lt.PageSize = uint32(len(imLookupTable))
+	lt.PageSize = uint32(len(config.ImLookupTable))
 	lt.Orientation = IBusOrientationVertical
-	for im := 1; im <= len(imLookupTable); im++ {
+	for im := 1; im <= len(config.ImLookupTable); im++ {
 		if e.getInputMode() == im {
 			lt.AppendLabel("*")
 			lt.SetCursorPos(uint32(im - 1))
 		} else {
 			lt.AppendLabel(strconv.Itoa(im))
 		}
-		if im == usIM {
-			lt.AppendCandidate(imLookupTable[im] + " (" + wmClass + ")")
+		if im == config.UsIM {
+			lt.AppendCandidate(config.ImLookupTable[im] + " (" + wmClass + ")")
 		} else {
-			lt.AppendCandidate(imLookupTable[im])
+			lt.AppendCandidate(config.ImLookupTable[im])
 		}
 	}
 	e.inputModeLookupTable = lt
@@ -372,7 +395,7 @@ func (e *IBusBambooEngine) commitInputModeCandidate() {
 	var im = e.inputModeLookupTable.CursorPos + 1
 	e.config.InputModeMapping[e.getWmClass()] = int(im)
 
-	saveConfig(e.config, e.engineName)
+	config.SaveConfig(e.config, e.engineName)
 	e.propList = GetPropListByConfig(e.config)
 	e.RegisterProperties(e.propList)
 }
@@ -456,12 +479,12 @@ func (e *IBusBambooEngine) getCommitText(keyVal, keyCode, state uint32) (newText
 				// ] => o?
 				return e.getPreeditString(), false
 			}
-		} else if e.config.IBflags&IBmacroEnabled != 0 {
+		} else if e.config.IBflags&config.IBmacroEnabled != 0 {
 			return e.getProcessedString(bamboo.PunctuationMode), false
 		} else {
 			return e.getPreeditString(), false
 		}
-	} else if e.config.IBflags&IBmacroEnabled != 0 {
+	} else if e.config.IBflags&config.IBmacroEnabled != 0 {
 		// macro processing
 		if isPrintableKey && e.macroTable.HasPrefix(oldText+keyS) {
 			e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
@@ -504,7 +527,7 @@ func (e *IBusBambooEngine) handleNonVnWord(keyVal, keyCode, state uint32) string
 }
 
 func (e *IBusBambooEngine) getMacroText() (bool, string) {
-	if e.config.IBflags&IBmacroEnabled == 0 {
+	if e.config.IBflags&config.IBmacroEnabled == 0 {
 		return false, ""
 	}
 	var text = e.preeditor.GetProcessedString(bamboo.PunctuationMode)
@@ -539,7 +562,7 @@ func (e *IBusBambooEngine) isValidKeyVal(keyVal uint32) bool {
 
 func (e *IBusBambooEngine) inBackspaceWhiteList() bool {
 	var inputMode = e.getInputMode()
-	for _, im := range imBackspaceList {
+	for _, im := range config.ImBackspaceList {
 		if im == inputMode {
 			return true
 		}
@@ -591,45 +614,4 @@ func notify(enMode bool) {
 	if call.Err != nil {
 		fmt.Println(call.Err)
 	}
-}
-
-func (e *IBusBambooEngine) openShortcutsGUI() {
-	cmd := exec.Command("/usr/lib/ibus-bamboo/keyboard-shortcut-editor", e.getShortcutString(), strconv.Itoa(e.config.DefaultInputMode))
-	cmd.Env = os.Environ()
-	cmd.Env = append(cmd.Env, "GTK_IM_MODULE=gtk-im-context-simple")
-	out, err := cmd.Output()
-	if err != nil {
-		out, err = exec.Command("./keyboard-shortcut-editor", e.getShortcutString(), strconv.Itoa(e.config.DefaultInputMode)).Output()
-		if err != nil {
-			return
-		}
-	}
-	if len(out) > 0 {
-		e.parseShortcuts(string(out))
-	} else if err != nil {
-		fmt.Println("execute keyboard-shortcut-editor: ", err)
-	}
-}
-
-func (e *IBusBambooEngine) parseShortcuts(s string) {
-	fmt.Printf("output=(%s)\n", s)
-	list := strings.Split(s, ",")
-	if len(list) < len(e.config.Shortcuts) {
-		return
-	}
-	for i := 0; i < len(e.config.Shortcuts); i++ {
-		n, err := strconv.Atoi(list[i])
-		if err != nil {
-			fmt.Printf("ERR: failed to parse shortcut keys: %s\n", err)
-		}
-		e.config.Shortcuts[i] = uint32(n)
-	}
-}
-
-func (e *IBusBambooEngine) getShortcutString() string {
-	var s [len(e.config.Shortcuts)]string
-	for i, c := range e.config.Shortcuts {
-		s[i] = strconv.Itoa(int(c))
-	}
-	return strings.Join(s[0:], ",")
 }

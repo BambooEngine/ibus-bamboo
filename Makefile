@@ -21,10 +21,8 @@ CC=cc
 engine_name=bamboo
 engine_gui_name=ibus-setup-Bamboo.desktop
 ibus_e_name=ibus-engine-$(engine_name)
-keyboard_shortcut_editor=keyboard-shortcut-editor
-macro_editor=macro-editor
 pkg_name=ibus-$(engine_name)
-version=0.8.3
+version=0.8.4
 
 engine_dir=$(PREFIX)/share/$(pkg_name)
 ibus_dir=$(PREFIX)/share/ibus
@@ -34,24 +32,19 @@ GOLDFLAGS=-ldflags "-w -s -X main.Version=$(version)"
 rpm_src_dir=~/rpmbuild/SOURCES
 tar_file=$(pkg_name)-$(version).tar.gz
 rpm_src_tar=$(rpm_src_dir)/$(tar_file)
-tar_options_src=--transform "s/^\./$(pkg_name)-$(version)/" --exclude={"*.tar.gz",".git",".idea"} .
+tar_options_src=--transform "s/^\./$(pkg_name)-$(version)/" --exclude=.git --exclude="*.tar.gz" .
 
-all: xml build
-
-xml:
-	glib-compile-resources --generate-source setup-ui/keyboard.gresource.xml
+all: build
 
 build:
-	CGO_ENABLED=1 go build $(GOLDFLAGS) -o $(ibus_e_name) ibus-$(engine_name)
-	$(CC) -o $(keyboard_shortcut_editor) setup-ui/$(keyboard_shortcut_editor).c `pkg-config --libs --cflags gtk+-3.0`
-	$(CC) -rdynamic -o $(macro_editor) setup-ui/$(macro_editor).c `pkg-config --libs --cflags gtk+-3.0`
+	CGO_ENABLED=1 go build $(GOLDFLAGS) -o $(ibus_e_name)
 
 t:
 	CGO_ENABLED=1 go test ./...
-	CGO_ENABLED=1 go test ./vendor/github.com/BambooEngine/bamboo-core/...
+	CGO_ENABLED=1 go test ./vendor/...
 
 clean:
-	rm -f ibus-engine-bamboo keyboard-shortcut-editor macro-editor
+	rm -f ibus-engine-bamboo
 	rm -f *_linux *_cover.html go_test_* go_build_* test *.gz test
 	rm -f debian/files
 	rm -rf debian/debhelper*
@@ -67,8 +60,6 @@ install: build
 
 	cp -R -f icons data $(DESTDIR)$(engine_dir)
 	cp -f $(ibus_e_name) $(DESTDIR)$(PREFIX)/lib/ibus-${engine_name}/
-	cp -f $(keyboard_shortcut_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
-	cp -f $(macro_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
 	cp -f data/$(engine_name).xml $(DESTDIR)$(ibus_dir)/component/
 	cp -f data/$(engine_gui_name) $(DESTDIR)$(PREFIX)/share/applications/
 
