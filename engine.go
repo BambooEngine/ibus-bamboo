@@ -269,14 +269,17 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	}
 	if propName == PropKeyConfiguration {
 		ui.OpenGUI(e.engineName)
+		e.config = config.LoadConfig(e.engineName)
 		return nil
 	}
 	if propName == PropKeyInputModeLookupTableShortcut {
 		ui.OpenGUI(e.engineName)
+		e.config = config.LoadConfig(e.engineName)
 		return nil
 	}
 	if propName == PropKeyMacroTable {
 		ui.OpenGUI(e.engineName)
+		e.config = config.LoadConfig(e.engineName)
 		return nil
 	}
 

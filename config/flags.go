@@ -49,7 +49,7 @@ const (
 	_IBrestoreKeyStrokesEnabled //deprecated
 	IBmouseCapturing
 	IBworkaroundForFBMessenger
+	IBworkaroundForWPS
 	IBstdFlags = IBspellCheckEnabled | IBspellCheckWithRules | IBautoNonVnRestore | IBddFreeStyle |
-		IBmouseCapturing | IBautoCapitalizeMacro | IBnoUnderline
+		IBmouseCapturing | IBautoCapitalizeMacro | IBnoUnderline | IBworkaroundForWPS
 )
-
