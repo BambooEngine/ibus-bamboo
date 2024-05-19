@@ -10,7 +10,9 @@ import "C"
 import (
 	"encoding/json"
 	"ibus-bamboo/config"
+	"io/ioutil"
 	"os"
+	"reflect"
 	"unsafe"
 )
 
@@ -32,7 +34,7 @@ func saveConfigText(text *C.char) {
 		cfgText = C.GoString(text)
 		cfgFn   = config.GetConfigPath(engineName)
 	)
-	err := os.WriteFile(cfgFn, []byte(cfgText), 0644)
+	err := ioutil.WriteFile(cfgFn, []byte(cfgText), 0644)
 	if err != nil {
 		panic(err)
 	}
@@ -44,7 +46,7 @@ func saveMacroText(text *C.char) {
 		macroText = C.GoString(text)
 		macroFP   = config.GetMacroPath(engineName)
 	)
-	err := os.WriteFile(macroFP, []byte(macroText), 0644)
+	err := ioutil.WriteFile(macroFP, []byte(macroText), 0644)
 	if err != nil {
 		panic(err)
 	}
@@ -69,6 +71,7 @@ func saveShortcuts(ptr *C.int, length int) {
 	config.SaveConfig(cfg, engineName)
 }
 
+/*
 func makeSliceFromPtr(ptr *C.int, length int) [10]uint32 {
 	slice := unsafe.Slice(ptr, length)
 	var ret [10]uint32
@@ -76,6 +79,16 @@ func makeSliceFromPtr(ptr *C.int, length int) [10]uint32 {
 		ret[i] = uint32(elem)
 	}
 	return ret
+}
+*/
+
+func makeSliceFromPtr(ptr *C.int, length int) [10]uint32 {
+	var oids [10]uint32
+	sliceHeader := (*reflect.SliceHeader)((unsafe.Pointer(&oids)))
+	sliceHeader.Cap = length
+	sliceHeader.Len = length
+	sliceHeader.Data = uintptr(unsafe.Pointer(ptr))
+	return oids
 }
 
 func OpenGUI(engName string) {
@@ -87,7 +100,7 @@ func OpenGUI(engName string) {
 		size          = len(shortcuts)
 		macroFilePath = config.GetMacroPath(engineName)
 	)
-	mText, err := os.ReadFile(macroFilePath)
+	mText, err := ioutil.ReadFile(macroFilePath)
 	if err != nil {
 		panic(err)
 	}

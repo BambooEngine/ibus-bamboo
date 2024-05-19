@@ -3,8 +3,8 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
-	"os"
 	"os/user"
 
 	"github.com/BambooEngine/bamboo-core"
@@ -64,7 +64,7 @@ func LoadConfig(engineName string) *Config {
 		c.Flags = 0
 	}
 
-	data, err := os.ReadFile(GetConfigPath(engineName))
+	data, err := ioutil.ReadFile(GetConfigPath(engineName))
 	if err == nil {
 		json.Unmarshal(data, &c)
 	}
@@ -78,7 +78,7 @@ func SaveConfig(c *Config, engineName string) {
 		return
 	}
 
-	err = os.WriteFile(fmt.Sprintf(configFile, GetConfigDir(engineName), engineName), data, 0644)
+	err = ioutil.WriteFile(fmt.Sprintf(configFile, GetConfigDir(engineName), engineName), data, 0644)
 	if err != nil {
 		log.Println(err)
 	}
