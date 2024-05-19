@@ -32,7 +32,7 @@ GOLDFLAGS=-ldflags "-w -s -X main.Version=$(version)"
 rpm_src_dir=~/rpmbuild/SOURCES
 tar_file=$(pkg_name)-$(version).tar.gz
 rpm_src_tar=$(rpm_src_dir)/$(tar_file)
-tar_options_src=--transform "s/^\./$(pkg_name)-$(version)/" --exclude={"*.tar.gz",".git",".idea"} .
+tar_options_src=--transform "s/^\./$(pkg_name)-$(version)/" --exclude=.git --exclude="*.tar.gz" .
 
 all: build
 
@@ -41,9 +41,10 @@ build:
 
 t:
 	CGO_ENABLED=1 go test ./...
+	CGO_ENABLED=1 go test ./vendor/...
 
 clean:
-	rm -f ibus-engine-bamboo keyboard-shortcut-editor macro-editor
+	rm -f ibus-engine-bamboo
 	rm -f *_linux *_cover.html go_test_* go_build_* test *.gz test
 	rm -f debian/files
 	rm -rf debian/debhelper*
@@ -59,8 +60,6 @@ install: build
 
 	cp -R -f icons data $(DESTDIR)$(engine_dir)
 	cp -f $(ibus_e_name) $(DESTDIR)$(PREFIX)/lib/ibus-${engine_name}/
-	cp -f $(keyboard_shortcut_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
-	cp -f $(macro_editor) $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
 	cp -f data/$(engine_name).xml $(DESTDIR)$(ibus_dir)/component/
 	cp -f data/$(engine_gui_name) $(DESTDIR)$(PREFIX)/share/applications/
 
