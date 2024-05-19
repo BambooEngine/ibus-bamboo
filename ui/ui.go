@@ -4,7 +4,7 @@ package ui
 #cgo pkg-config: gtk+-3.0
 #include <gtk/gtk.h>
 
-extern int openGUI(guint64 flags, int mode, guint32 *s, int size, char *mtext, char *cfgtext);
+extern int openGUI(guint flags, int mode, guint32 *s, int size, char *mtext, char *cfgtext);
 */
 import "C"
 import (
@@ -16,17 +16,13 @@ import (
 
 var engineName string
 
-//export fixFB
-func fixFB(active int) {
+//export saveFlags
+func saveFlags(flags C.guint) {
 	var (
 		cfg = config.LoadConfig(engineName)
 	)
 	config.SaveConfig(cfg, engineName)
-	if active == 1 {
-		cfg.IBflags |= config.IBworkaroundForFBMessenger
-	} else {
-		cfg.IBflags &= ^config.IBworkaroundForFBMessenger
-	}
+	cfg.IBflags = uint(flags)
 	config.SaveConfig(cfg, engineName)
 }
 
@@ -100,5 +96,5 @@ func OpenGUI(engName string) {
 		panic(err)
 	}
 	os.Setenv("GTK_IM_MODULE", "gtk-im-context-simple")
-	C.openGUI(C.guint64(cfg.IBflags), C.int(cfg.DefaultInputMode), s, C.int(size), C.CString(string(mText)), C.CString(string(data)))
+	C.openGUI(C.guint(cfg.IBflags), C.int(cfg.DefaultInputMode), s, C.int(size), C.CString(string(mText)), C.CString(string(data)))
 }

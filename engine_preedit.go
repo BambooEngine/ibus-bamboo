@@ -70,7 +70,6 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	newText, isWordBreakRune := e.getCommitText(keyVal, keyCode, state)
 	isPrintableKey := e.isPrintableKey(state, keyVal)
 	if isWordBreakRune {
-		// fmt.Printf("isWordBreakRune=%v isPrintable=%v\n", isWordBreakRune, isPrintableKey)
 		e.commitPreeditAndResetForWBS(newText, isPrintableKey)
 		return isPrintableKey, nil
 	}
@@ -106,7 +105,7 @@ func (e *IBusBambooEngine) updatePreedit(processedStr string) {
 		return
 	}
 	var ibusText = ibus.NewText(encodedStr)
-	if inStringList(enabledAuxiliaryTextList, e.getWmClass()) {
+	if inStringList(enabledAuxiliaryTextList, e.getWmClass()) && e.config.IBflags&config.IBworkaroundForWPS != 0 {
 		e.UpdateAuxiliaryText(ibusText, true)
 		return
 	}
@@ -200,7 +199,9 @@ func (e *IBusBambooEngine) resetPreedit() {
 }
 
 func (e *IBusBambooEngine) commitPreeditAndResetForWBS(s string, isWBS bool) {
-	if isWBS {
+	if e.config.IBflags&config.IBworkaroundForFBMessenger != 0 || isWBS {
+		// Fix missing the first word while typing in FB Messager as FB prefers
+		// committing text before hiding preedit
 		e.commitText(s)
 		e.HidePreeditText()
 	} else {
