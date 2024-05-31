@@ -12,7 +12,6 @@ import (
 	"ibus-bamboo/config"
 	"io/ioutil"
 	"os"
-	"reflect"
 	"unsafe"
 )
 
@@ -62,7 +61,7 @@ func saveInputMode(mode int) {
 }
 
 //export saveShortcuts
-func saveShortcuts(ptr *C.int, length int) {
+func saveShortcuts(ptr *C.guint32, length int) {
 	var (
 		cfg = config.LoadConfig(engineName)
 	)
@@ -71,24 +70,13 @@ func saveShortcuts(ptr *C.int, length int) {
 	config.SaveConfig(cfg, engineName)
 }
 
-/*
-func makeSliceFromPtr(ptr *C.int, length int) [10]uint32 {
-	slice := unsafe.Slice(ptr, length)
-	var ret [10]uint32
-	for i, elem := range slice {
-		ret[i] = uint32(elem)
+func makeSliceFromPtr(ptr *C.guint32, size int) [10]uint32 {
+	var out [10]uint32
+	slice := (*[1 << 28]C.guint32)(unsafe.Pointer(ptr))[:size:size]
+	for i, elem := range slice[:size] {
+		out[i] = uint32(elem)
 	}
-	return ret
-}
-*/
-
-func makeSliceFromPtr(ptr *C.int, length int) [10]uint32 {
-	var oids [10]uint32
-	sliceHeader := (*reflect.SliceHeader)((unsafe.Pointer(&oids)))
-	sliceHeader.Cap = length
-	sliceHeader.Len = length
-	sliceHeader.Data = uintptr(unsafe.Pointer(ptr))
-	return oids
+	return out
 }
 
 func OpenGUI(engName string) {
