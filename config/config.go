@@ -61,7 +61,7 @@ func LoadConfig(engineName string) *Config {
 	var c = DefaultCfg()
 	if engineName == "bamboous" {
 		c.DefaultInputMode = UsIM
-		c.Flags = 0
+		c.IBflags = IBUsStdFlags
 	}
 
 	data, err := ioutil.ReadFile(GetConfigPath(engineName))

@@ -52,4 +52,5 @@ const (
 	IBworkaroundForWPS
 	IBstdFlags = IBspellCheckEnabled | IBspellCheckWithRules | IBautoNonVnRestore | IBddFreeStyle |
 		IBmouseCapturing | IBautoCapitalizeMacro | IBnoUnderline | IBworkaroundForWPS
+	IBUsStdFlags = 0
 )
