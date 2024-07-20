@@ -78,11 +78,14 @@ var DefaultBrowserList = []string{
 
 func getEngineSubFile(fileName string) string {
 	if _, err := os.Stat(fileName); err == nil {
+		// return source code data/macro.tpl.txt path
 		if absPath, err := filepath.Abs(fileName); err == nil {
 			return absPath
 		}
 	}
 
+	// return installation data/macro.tpl.txt path
+	fileName = "../../share/ibus-bamboo/" + fileName
 	return filepath.Join(filepath.Dir(os.Args[0]), fileName)
 }
 
