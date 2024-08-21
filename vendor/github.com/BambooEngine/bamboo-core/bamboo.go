@@ -78,18 +78,6 @@ func (e *BambooEngine) GetFlag(flag uint) uint {
 	return e.flags
 }
 
-func (e *BambooEngine) isSuperKey(lowerKey rune) bool {
-	return inKeyList(e.GetInputMethod().SuperKeys, lowerKey)
-}
-
-func (e *BambooEngine) isToneKey(key rune) bool {
-	return inKeyList(e.GetInputMethod().ToneKeys, key)
-}
-
-func (e *BambooEngine) isEffectiveKey(key rune) bool {
-	return inKeyList(e.GetInputMethod().Keys, key)
-}
-
 func (e *BambooEngine) IsValid(inputIsFullComplete bool) bool {
 	var _, last = extractLastWord(e.composition, e.GetInputMethod().Keys)
 	return isValid(last, inputIsFullComplete)
@@ -151,7 +139,7 @@ func (e *BambooEngine) generateTransformations(composition []*Transformation, lo
 	return transformations
 }
 
-func (e *BambooEngine) newComposition(composition []*Transformation, key rune, isUpperCase bool) ([]*Transformation) {
+func (e *BambooEngine) newComposition(composition []*Transformation, key rune, isUpperCase bool) []*Transformation {
 	// Just process the key stroke on the last syllable
 	var previousTransformations, lastSyllable = extractLastSyllable(composition)
 
