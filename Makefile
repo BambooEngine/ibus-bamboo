@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
-PREFIX=/usr
+
 CC=cc
 
 engine_name=bamboo
@@ -27,7 +27,7 @@ version=0.8.4
 engine_dir=$(PREFIX)/share/$(pkg_name)
 ibus_dir=$(PREFIX)/share/ibus
 
-GOLDFLAGS=-ldflags "-w -s -X main.Version=$(version)"
+GOLDFLAGS=-ldflags "-w -s -X main.Version=$(version)
 
 rpm_src_dir=~/rpmbuild/SOURCES
 tar_file=$(pkg_name)-$(version).tar.gz
@@ -37,11 +37,10 @@ tar_options_src=--transform "s/^\./$(pkg_name)-$(version)/" --exclude=.git --exc
 all: build
 
 build:
-	CGO_ENABLED=1 go build $(GOLDFLAGS) -o $(ibus_e_name) -mod=vendor
+	bash build.bash
 
 t:
-	CGO_ENABLED=1 go test ./...
-	CGO_ENABLED=1 go test ./vendor/github.com/BambooEngine/bamboo-core/... -mod=vendor
+	bash test.bash	
 
 clean:
 	rm -f ibus-engine-bamboo
@@ -53,22 +52,13 @@ clean:
 
 
 install: build
-	mkdir -p $(DESTDIR)$(engine_dir)
-	mkdir -p $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)
-	mkdir -p $(DESTDIR)$(ibus_dir)/component/
-	mkdir -p $(DESTDIR)$(PREFIX)/share/applications/
-
-	cp -R -f icons data $(DESTDIR)$(engine_dir)
-	cp -f $(ibus_e_name) $(DESTDIR)$(PREFIX)/lib/ibus-${engine_name}/
-	cp -f data/$(engine_name).xml $(DESTDIR)$(ibus_dir)/component/
-	cp -f data/$(engine_gui_name) $(DESTDIR)$(PREFIX)/share/applications/
-
+	bash install.bash ${PREFIX} ${DESTDIR}
 
 uninstall:
-	sudo rm -rf $(DESTDIR)$(engine_dir)
-	sudo rm -rf $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
-	sudo rm -f $(DESTDIR)$(ibus_dir)/component/$(engine_name).xml
-	sudo rm -rf $(DESTDIR)$(PREFIX)/share/applications/$(engine_gui_name)
+	rm -rf $(DESTDIR)$(engine_dir)
+	rm -rf $(DESTDIR)$(PREFIX)/lib/ibus-$(engine_name)/
+	rm -f $(DESTDIR)$(ibus_dir)/component/$(engine_name).xml
+	rm -rf $(DESTDIR)$(PREFIX)/share/applications/$(engine_gui_name)
 
 
 src: clean
