@@ -1,11 +1,11 @@
 github.com/BambooEngine/bamboo-core v0.0.0-20220521074724-f0ca534819fa h1:Ql7UXMW6XR5EvAKMhEO3ToYwFIOM4IVSGjj4uFYgXlc=
 github.com/BambooEngine/bamboo-core v0.0.0-20220521074724-f0ca534819fa/go.mod h1:OxsVN3QJM/OrAVsnsSrSTC2SOudVOrb0vTw1dJrcOK4=
-github.com/BambooEngine/goibus v0.0.0-20200430030917-ea4df577c5d6 h1:duAh0Z56MHQpHoIZDQGGcYjLNFQljPLUlcy2pI2PWbg=
-github.com/BambooEngine/goibus v0.0.0-20200430030917-ea4df577c5d6/go.mod h1:k0Sa2NLxVGrxYttQnbmJN0YxKtpPr+0x1Aql5FlD6QU=
+github.com/BambooEngine/goibus v0.0.0-20240724150421-cfe61b2f8f77 h1:gCwm/sU1uaaUJe3E93CNigsKaX9dneiNhx+ElKrD0fM=
+github.com/BambooEngine/goibus v0.0.0-20240724150421-cfe61b2f8f77/go.mod h1:6VXFP/0WXorUWDU7y9Ejyg6GGCflBuNvWPBmfI3k2s4=
 github.com/dkolbly/wl v0.0.0-20180220001605-b06f57e7e2e6 h1:boaySJl2jhPwf+lSBRugRERVEZ0ovAwppOBx73P6zoM=
 github.com/dkolbly/wl v0.0.0-20180220001605-b06f57e7e2e6/go.mod h1:fUuzU55URBTyjoKP2pYoAoeZd1SvdjJP4IkYoT21xZg=
-github.com/godbus/dbus v4.1.0+incompatible h1:WqqLRTsQic3apZUK9qC5sGNfXthmPXzUZ7nQPrNITa4=
-github.com/godbus/dbus v4.1.0+incompatible/go.mod h1:/YcGZj5zSblfDWMMoOzV4fas9FZnQYTkDnsGvmh2Grw=
+github.com/godbus/dbus/v5 v5.1.0 h1:4KLkAxT3aOY8Li4FRJe/KvhoNFFxo0m6fNuFUO8QJUk=
+github.com/godbus/dbus/v5 v5.1.0/go.mod h1:xhWf0FNVPg57R7Z0UbKHbJfkEywrmjJnf7w5xrFpKfA=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/crypto v0.0.0-20210921155107-089bfa567519/go.mod h1:GvvjBRRGRdwPK5ydBHafDWAxML/pGHZbMvKqRZ5+Abc=

@@ -23,8 +23,8 @@ import (
 	"ibus-bamboo/config"
 
 	"github.com/BambooEngine/bamboo-core"
-	"github.com/BambooEngine/goibus/ibus"
-	"github.com/godbus/dbus"
+	ibus "github.com/BambooEngine/goibus"
+	"github.com/godbus/dbus/v5"
 )
 
 const (

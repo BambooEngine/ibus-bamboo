@@ -26,7 +26,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/BambooEngine/goibus/ibus"
+	ibus "github.com/BambooEngine/goibus"
 )
 
 const (

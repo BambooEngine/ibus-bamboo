@@ -26,8 +26,8 @@ import (
 	"time"
 
 	"github.com/BambooEngine/bamboo-core"
-	"github.com/BambooEngine/goibus/ibus"
-	"github.com/godbus/dbus"
+	ibus "github.com/BambooEngine/goibus"
+	"github.com/godbus/dbus/v5"
 )
 
 func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {

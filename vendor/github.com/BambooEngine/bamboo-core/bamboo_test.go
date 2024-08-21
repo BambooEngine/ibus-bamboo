@@ -9,7 +9,6 @@
 package bamboo
 
 import (
-	"log"
 	"testing"
 )
 
@@ -642,7 +641,6 @@ func TestDoubleTyping(t *testing.T) {
 	if ng.GetProcessedString(VietnameseMode) != "t" {
 		t.Errorf("Process [tôi）t], got %s expected t", ng.GetProcessedString(VietnameseMode))
 	}
-	log.Print("===============end")
 	ng.Reset()
 }
 

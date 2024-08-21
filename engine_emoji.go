@@ -23,7 +23,7 @@ import (
 	"strconv"
 
 	"github.com/BambooEngine/bamboo-core"
-	"github.com/BambooEngine/goibus/ibus"
+	ibus "github.com/BambooEngine/goibus"
 )
 
 const EmojiMaxPageSize = 9

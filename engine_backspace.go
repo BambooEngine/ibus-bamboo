@@ -28,7 +28,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/BambooEngine/bamboo-core"
-	"github.com/godbus/dbus"
+	"github.com/godbus/dbus/v5"
 )
 
 const BACKSPACE_INTERVAL = 0
