@@ -2,6 +2,23 @@ name: Release ibus-bamboo
 run-name: ${{ github.actor }} is triggering on GitHub Actions 🚀
 on: [push]
 jobs:
+  Build-test-freebsd:
+    runs-on: ubuntu-latest
+    name: Build and Test in FreeBSD
+    steps:
+      - uses: actions/checkout@master
+        with:
+          fetch-depth: 1
+      - name: Setup VM, download dependencies to build and test in FreeBSD
+        id: test
+        uses: vmactions/freebsd-vm@v1
+        with:
+          usesh: true
+          prepare: |
+            pkg install -y bash gmake go gcc pkgconf libX11 libXtst gtk3
+          run: |
+            gmake t && gmake build
+
   Releaser:
     runs-on: ubuntu-latest
     steps:
