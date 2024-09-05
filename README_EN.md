@@ -89,6 +89,7 @@ To switch between typing modes, simply click on an input box (a box to enter tex
  - Typing modes are saved separately for each software (`firefox` is probably using mode 5, while `libreoffice` is using mode 2).
  - You can use `Add to the exclusion list` mode to not type Vietnamese in a certain program.
  - To type the character `~`, press the combination <kbd>Shift</kbd>+<kbd>~</kbd> twice.
+ - Support for Wayland in IBus is not yet ideal. For a better typing experience, please use Xorg.
 
 ## Bug reports
 Before submitting a question or bug report, please ensure you have read through [these common issues](https://github.com/BambooEngine/ibus-bamboo/wiki/C%C3%A1c-v%E1%BA%A5n-%C4%91%E1%BB%81-th%C6%B0%E1%BB%9Dng-g%E1%BA%B7p) and see if you can resolve the problem on your own. If you still encounter issues after trying these steps, or you don't see something similar to your issue listed, please submit a bug report in the [Bamboo issue tracker](https://github.com/BambooEngine/ibus-bamboo/issues)
