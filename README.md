@@ -93,5 +93,11 @@ Trước khi báo lỗi vui lòng đọc [những vấn đề thường gặp](h
 
 Nếu trang phía trên không giải quyết vấn đề của bạn, vui lòng [báo lỗi tại đây](https://github.com/BambooEngine/ibus-bamboo/issues)
 
+## Đóng góp cho dự án
+
+Nếu bạn muốn hiểu thêm về dự án có thể xem thêm ở file này. [HACKING.md](./docs/HACKING.adoc)
+
+Đừng ngần ngại nếu bạn có 1 Pull Requests hữu dụng. Hãy gửi lại nếu bạn muốn đóng góp cho dự án.
+
 ## Giấy phép
 ibus-bamboo là phần mềm tự do nguồn mở, được phát hành dưới các quy định ghi trong Giấy phép Công cộng GNU (GNU General Public License v3.0).
