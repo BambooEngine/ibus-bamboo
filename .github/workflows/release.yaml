@@ -19,6 +19,16 @@ jobs:
           run: |
             gmake t && gmake build
 
+  Build-test-nix-flake:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: cachix/install-nix-action@v27
+    - name: Build flake
+      run: nix build
+    - name: Use flake devShell
+      run: nix develop
+
   Releaser:
     runs-on: ubuntu-latest
     steps:
