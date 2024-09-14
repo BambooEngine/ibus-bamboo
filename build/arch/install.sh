@@ -69,7 +69,7 @@ fi
 
 mkdir ibus-bamboo
 cd ibus-bamboo
-wget "https://raw.githubusercontent.com/BambooEngine/ibus-bamboo/master/archlinux/PKGBUILD-$VER" -O PKGBUILD
+wget "https://raw.githubusercontent.com/BambooEngine/ibus-bamboo/master/build/arch/PKGBUILD-$VER" -O PKGBUILD
 makepkg -si
 
 cd ..
