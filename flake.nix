@@ -29,12 +29,19 @@
 
             nativeBuildInputs = [
               pkgs.pkg-config
-              pkgs.wrapGAppsHook3
-              pkgs.go
+              pkgs.wrapGAppsHook
+              pkgs.git
             ];
 
             buildInputs = [
+              pkgs.go
               pkgs.xorg.libXtst
+		          pkgs.gtk4
+		          pkgs.glib
+		          pkgs.librsvg
+		          pkgs.gdk-pixbuf
+		          pkgs.gobject-introspection
+		          pkgs.hicolor-icon-theme
             ];
 
             preConfigure = ''
@@ -63,10 +70,15 @@
               pkgs.pkg-config
               pkgs.wrapGAppsHook3
               pkgs.go
+              pkgs.gopls
             ];
 
             buildInputs = [
               pkgs.xorg.libXtst
+              pkgs.gtk4
+              pkgs.graphene
+              pkgs.glib
+              pkgs.gobject-introspection
             ];
           };
         }
