@@ -51,9 +51,7 @@ env DCONF_PROFILE=ibus dconf write /desktop/ibus/general/preload-engines "['xkb:
 ```
 
 ### Arch Linux and derivatives
-```
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/BambooEngine/ibus-bamboo/master/archlinux/install.sh)"
-```
+`ibus-bamboo` is now available on the [AUR](https://aur.archlinux.org/packages/ibus-bamboo). Don't forget to leave a vote for the maintainers so that one day it can be included in the official Arch repository!
 
 ### NixOS
 `ibus-bamboo` is available on the main Nixpkgs repo. Make sure your NixOS configuration must contain this code to install it.
