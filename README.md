@@ -48,9 +48,7 @@ env DCONF_PROFILE=ibus dconf write /desktop/ibus/general/preload-engines "['Bamb
 ```
 
 ### Arch Linux và các distro tương tự
-```
-bash -c "$(curl -fsSL https://raw.githubusercontent.com/BambooEngine/ibus-bamboo/master/archlinux/install.sh)"
-```
+`ibus-bamboo` hiện đã có mặt trên [AUR](https://aur.archlinux.org/packages/ibus-bamboo). Đừng quên để lại 1 vote cho các maintainer để 1 ngày không xa nó được vào kho repo chính thức của Arch nhé!
 
 ### NixOS
 `ibus-bamboo` đã có mặt trên repo chính của Nixpkgs. Để cài đặt hãy chắc chắn  rằng code sau đã có trong file cấu hình NixOS của bạn.
@@ -97,7 +95,7 @@ Nếu trang phía trên không giải quyết vấn đề của bạn, vui lòng
 
 Nếu bạn muốn hiểu thêm về dự án có thể xem thêm ở file này. [HACKING.md](./docs/HACKING.adoc)
 
-Đừng ngần ngại nếu bạn có 1 Pull Requests hữu dụng. Hãy gửi lại nếu bạn muốn đóng góp cho dự án.
+Đừng ngần ngại nếu bạn có 1 Pull Request hữu dụng. Hãy gửi lại nếu bạn muốn đóng góp cho dự án.
 
 ## Giấy phép
 ibus-bamboo là phần mềm tự do nguồn mở, được phát hành dưới các quy định ghi trong Giấy phép Công cộng GNU (GNU General Public License v3.0).
