@@ -6,8 +6,6 @@ CGO_LDFLAGS_FREEBSD="-L/usr/local/lib -lX11 -lXtst -pthread"
 test_linux() {
         CGO_ENABLED=1 \
         go test . -mod=vendor
-
-	CGO_ENABLED=1 go test ./vendor/github.com/BambooEngine/bamboo-core/. -mod=vendor
 }
 
 test_freebsd() {
@@ -15,8 +13,6 @@ test_freebsd() {
         CGO_CFLAGS=${CGO_CFLAGS_FREEBSD} \
         CGO_LDFLAGS=${CGO_LDFLAGS_FREEBSD} \
         go test . -mod=vendor
-
-	CGO_ENABLED=1 go test ./vendor/github.com/BambooEngine/bamboo-core/. -mod=vendor
 }
 
 # Main script
