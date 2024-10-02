@@ -37,10 +37,10 @@ tar_options_src=--transform "s/^\./$(pkg_name)-$(version)/" --exclude=.git --exc
 all: build
 
 build:
-	bash build.bash
+	bash scripts/build.bash
 
-t:
-	bash test.bash	
+test:
+	bash scripts/test.bash	
 
 clean:
 	rm -f ibus-engine-bamboo
@@ -52,7 +52,7 @@ clean:
 
 
 install: build
-	bash install.bash ${PREFIX} ${DESTDIR}
+	bash scripts/install.bash ${PREFIX} ${DESTDIR}
 
 uninstall:
 	rm -rf $(DESTDIR)$(engine_dir)
