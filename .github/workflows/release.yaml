@@ -17,7 +17,7 @@ jobs:
           prepare: |
             pkg install -y bash gmake go gcc pkgconf libX11 libXtst gtk3
           run: |
-            gmake t && gmake build
+            gmake test && gmake build
 
   Build-test-nix-flake:
     runs-on: ubuntu-latest
@@ -36,7 +36,7 @@ jobs:
         with:
           fetch-depth: 1
       - run: sudo apt-get update && sudo apt-get install -y make libibus-1.0-dev libx11-dev libxtst-dev libgtk-3-dev osc
-      - run: make t && make build
+      - run: make test && make build
       - shell: bash
         env:
           OSC_USER: ${{ secrets.OSC_USER }}
@@ -44,6 +44,6 @@ jobs:
           OSC_PATH: ${{ secrets.OSC_PATH }}
           GH_TAG: ${{ github.ref_name }}
         run: |
-          chmod +x osc.bash
-          ./osc.bash
+          chmod +x scripts/osc.bash
+          ./scripts/osc.bash
       - run: echo "🍏 This job's status is ${{ job.status }}."
