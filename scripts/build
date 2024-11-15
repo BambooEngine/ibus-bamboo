@@ -1,0 +1,24 @@
+# Ibus bamboo
+ibus_e_name="ibus-engine-bamboo"
+version="0.8.4"
+
+# Go flags
+LDFLAGS="-w -s -X main.Version=${version}"
+
+# Go flags for FreeBSD
+CGO_CFLAGS_FREEBSD="-I/usr/local/include -std=gnu99"
+CGO_LDFLAGS_FREEBSD="-L/usr/local/lib -lX11 -lXtst -pthread"
+
+case $(uname) in
+	"Linux") CGO_ENABLED=1 \
+		go build -o ${ibus_e_name} -ldflags "${LDFLAGS}" -mod=vendor
+		;;
+
+	"FreeBSD") CGO_ENABLED=1 \
+		CGO_CFLAGS=${CGO_CFLAGS_FREEBSD} \
+		CGO_LDFLAGS=${CGO_LDFLAGS_FREEBSD} \
+		go build -o ${ibus_e_name} -ldflags "${LDFLAGS}" -mod=vendor
+		;;
+	*) echo "Hiện tại chưa hỗ trợ hệ điều hành này!"
+		;;
+esac
