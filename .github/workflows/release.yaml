@@ -15,9 +15,9 @@ jobs:
         with:
           usesh: true
           prepare: |
-            pkg install -y bash gmake go gcc pkgconf libX11 libXtst gtk3
+            pkg install -y go pkgconf libX11 libXtst gtk3
           run: |
-            gmake test && gmake build
+            make test && make build
 
   Build-test-nix-flake:
     runs-on: ubuntu-latest
