@@ -17,7 +17,7 @@
 #
 
 CC=cc
-BINSH=/bin/sh
+SHELL=sh
 
 engine_name=bamboo
 engine_gui_name=ibus-setup-Bamboo.desktop
@@ -38,10 +38,10 @@ tar_options_src=--transform "s/^\./$(pkg_name)-$(version)/" --exclude=.git --exc
 all: build
 
 build:
-	$(BINSH) scripts/build
+	$(SHELL) scripts/build
 
 test:
-	$(BINSH) scripts/test
+	$(SHELL) scripts/test
 
 clean:
 	rm -f ibus-engine-bamboo
@@ -53,7 +53,7 @@ clean:
 
 
 install: build
-	$(BINSH) scripts/install ${PREFIX} ${DESTDIR}
+	$(SHELL) scripts/install ${PREFIX} ${DESTDIR}
 
 uninstall:
 	rm -rf $(DESTDIR)$(engine_dir)
