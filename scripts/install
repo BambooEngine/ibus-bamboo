@@ -1,0 +1,36 @@
+PREFIX="$1"
+DESTDIR="$2"
+
+engine_name="bamboo"
+engine_gui_name="ibus-setup-Bamboo.desktop"
+ibus_e_name="ibus-engine-${engine_name}"
+pkg_name="ibus-${engine_name}"
+version="0.8.4"
+
+engine_dir=${PREFIX}/share/${pkg_name}
+ibus_dir=${PREFIX}/share/ibus
+
+# Main script
+case $(uname) in
+	"Linux") mkdir -p ${DESTDIR}${engine_dir} \
+		${DESTDIR}${PREFIX}/lib/ibus-${engine_name} \
+		${DESTDIR}${ibus_dir}/component/ \
+		${DESTDIR}${PREFIX}/share/applications/
+		cp -R -f icons data ${DESTDIR}${engine_dir}
+		cp -f ${ibus_e_name} ${DESTDIR}${PREFIX}/lib/ibus-${engine_name}/
+		cp -f data/${engine_name}.xml ${DESTDIR}${ibus_dir}/component/
+		cp -f data/${engine_gui_name} ${DESTDIR}${PREFIX}/share/applications/
+		;;
+	"FreeBSD") mkdir -p ${DESTDIR}${engine_dir} \
+		${DESTDIR}${PREFIX}/lib/ibus-${engine_name} \
+		${DESTDIR}${ibus_dir}/component/ \
+		${DESTDIR}${PREFIX}/share/applications/
+
+		cp -R -f icons data ${DESTDIR}${engine_dir}
+		cp -f ${ibus_e_name} ${DESTDIR}${PREFIX}/lib/ibus-${engine_name}/
+		cp -f data/${engine_name}-freebsd.xml ${DESTDIR}${ibus_dir}/component/
+		cp -f data/${engine_gui_name} ${DESTDIR}${PREFIX}/share/applications/
+		;;
+	*)	echo "Hiện tại chưa hỗ trợ hệ điều hành này!"
+		;;
+esac
