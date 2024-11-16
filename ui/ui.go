@@ -1,101 +1,173 @@
 package ui
 
-/*
-#cgo pkg-config: gtk+-3.0
-#include <gtk/gtk.h>
-
-extern int openGUI(guint flags, int mode, guint32 *s, int size, char *mtext, char *cfgtext);
-*/
-import "C"
 import (
-	"encoding/json"
-	"ibus-bamboo/config"
-	"io/ioutil"
 	"os"
-	"unsafe"
+
+	"github.com/diamondburned/gotk4/pkg/gio/v2"
+	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
-var engineName string
+const APP_ID = "ibus-bamboo.mode-options"
 
-//export saveFlags
-func saveFlags(flags C.guint) {
-	var (
-		cfg = config.LoadConfig(engineName)
-	)
-	config.SaveConfig(cfg, engineName)
-	cfg.IBflags = uint(flags)
-	config.SaveConfig(cfg, engineName)
+var modeOptions = []string{
+	"1. Pre-edit (có gạch chân)",
+	"2. Surrounding Text (không gạch chân)",
+	"3. ForwardKeyEvent I (không gạch chân)",
+	"4. ForwardKeyEvent II (không gạch chân)",
+	"5. Forward as Commit (không gạch chân)",
+	"6. XTestFakeKeyEvent (không gạch chân)",
 }
 
-//export saveConfigText
-func saveConfigText(text *C.char) {
-	var (
-		cfgText = C.GoString(text)
-		cfgFn   = config.GetConfigPath(engineName)
-	)
-	err := ioutil.WriteFile(cfgFn, []byte(cfgText), 0644)
-	if err != nil {
-		panic(err)
+func saveShortCut() error {
+	return nil
+}
+
+func renderShortcut(window *gtk.ApplicationWindow) *gtk.Box {
+	// Button
+	buttonClose := gtk.NewButtonWithLabel("Đóng")
+	buttonClose.ConnectClicked(func() {
+		window.Close()
+	})
+	buttonReset := gtk.NewButtonWithLabel("Đặt lại")
+	buttonSave := gtk.NewButtonWithLabel("Lưu")
+
+	// Box
+	buttonBox := gtk.NewBox(gtk.OrientationHorizontal, 10)
+	buttonBox.SetHAlign(gtk.AlignEnd)
+	buttonBox.SetHExpand(true)
+	buttonBox.Append(buttonClose)
+	buttonBox.Append(buttonReset)
+	buttonBox.Append(buttonSave)
+
+	// MainBox
+	mainBox := gtk.NewBox(gtk.OrientationVertical, 10)
+	mainBox.SetMarginTop(10)
+	mainBox.SetMarginBottom(10)
+	mainBox.SetMarginStart(10)
+	mainBox.SetMarginEnd(10)
+	mainBox.Append(buttonBox)
+
+	return mainBox
+}
+
+func saveInputTextView() error {
+	return nil
+}
+
+func renderInputTextView() *gtk.Box {
+	// TextView
+	textView := gtk.NewTextView()
+	textView.SetWrapMode(gtk.WrapNone)
+	textView.SetVExpand(true)
+	textView.SetHExpand(true)
+	textView.SetTopMargin(10)
+	textView.SetBottomMargin(10)
+	textView.SetLeftMargin(10)
+	textView.SetRightMargin(10)
+
+	// CSS for textView
+	textView.AddCSSClass("bordered-textview")
+	css := `
+	.bordered-textview text {
+		border: 1px solid #999999;
+		border-radius: 5px;
+		padding: 5px;
 	}
+	`
+	cssProvider := gtk.NewCSSProvider()
+	cssProvider.LoadFromString(css)
+	gtk.StyleContextAddProviderForDisplay(textView.Display(), cssProvider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+	// ScrollView for TextView input
+	scrollView := gtk.NewScrolledWindow()
+	scrollView.SetVExpand(true)
+	scrollView.SetMinContentHeight(200)
+	scrollView.SetChild(textView)
+
+	// Button
+	buttonSave := gtk.NewButtonWithLabel("Lưu")
+	buttonBox := gtk.NewBox(gtk.OrientationHorizontal, 0)
+	buttonBox.SetMarginBottom(10)
+	buttonBox.SetMarginEnd(10)
+	buttonBox.SetHAlign(gtk.AlignEnd)
+	buttonBox.SetHExpand(true)
+	buttonBox.Append(buttonSave)
+
+	// MainBox
+	mainBox := gtk.NewBox(gtk.OrientationVertical, 10)
+	mainBox.SetMarginTop(10)
+	mainBox.SetMarginBottom(10)
+	mainBox.SetMarginStart(10)
+	mainBox.SetMarginEnd(10)
+	mainBox.Append(scrollView)
+	mainBox.Append(buttonBox)
+
+	return mainBox
 }
 
-//export saveMacroText
-func saveMacroText(text *C.char) {
-	var (
-		macroText = C.GoString(text)
-		macroFP   = config.GetMacroPath(engineName)
-	)
-	err := ioutil.WriteFile(macroFP, []byte(macroText), 0644)
-	if err != nil {
-		panic(err)
-	}
-}
+func renderOther(window *gtk.ApplicationWindow) *gtk.Box {
+	// Mode Choose
+	labelDefaultMode := gtk.NewLabel("Chế độ gõ mặc định")
+	dropdownMode := gtk.NewDropDownFromStrings(modeOptions)
+	modeBox := gtk.NewBox(gtk.OrientationHorizontal, 10)
+	modeBox.Append(labelDefaultMode)
+	modeBox.Append(dropdownMode)
 
-//export saveInputMode
-func saveInputMode(mode int) {
-	var (
-		cfg = config.LoadConfig(engineName)
-	)
-	cfg.DefaultInputMode = mode
-	config.SaveConfig(cfg, engineName)
-}
+	// Checkbox
+	checkboxFixFB := gtk.NewCheckButtonWithLabel("Sửa lỗi lặp chữ trong FB")
+	checkboxFixWPS := gtk.NewCheckButtonWithLabel("Sửa lỗi không hiện chữ trong WPS")
 
-//export saveShortcuts
-func saveShortcuts(ptr *C.guint32, length int) {
-	var (
-		cfg = config.LoadConfig(engineName)
-	)
-	codes := makeSliceFromPtr(ptr, length)
-	cfg.Shortcuts = codes
-	config.SaveConfig(cfg, engineName)
-}
+	// Button
+	buttonClose := gtk.NewButtonWithLabel("Đóng")
+	buttonClose.ConnectClicked(func() {
+		window.Close()
+	})
+	buttonBox := gtk.NewBox(gtk.OrientationHorizontal, 10)
+	buttonBox.Append(buttonClose)
+	buttonBox.SetHAlign(gtk.AlignEnd)
+	buttonBox.SetHExpand(true)
 
-func makeSliceFromPtr(ptr *C.guint32, size int) [10]uint32 {
-	var out [10]uint32
-	slice := (*[1 << 28]C.guint32)(unsafe.Pointer(ptr))[:size:size]
-	for i, elem := range slice[:size] {
-		out[i] = uint32(elem)
-	}
-	return out
+	// MainBox
+	mainBox := gtk.NewBox(gtk.OrientationVertical, 10)
+	mainBox.SetMarginTop(10)
+	mainBox.SetMarginBottom(10)
+	mainBox.SetMarginStart(10)
+	mainBox.SetMarginEnd(10)
+	mainBox.Append(modeBox)
+	mainBox.Append(checkboxFixFB)
+	mainBox.Append(checkboxFixWPS)
+	mainBox.Append(buttonBox)
+
+	return mainBox
 }
 
 func OpenGUI(engName string) {
-	engineName = engName
-	var (
-		cfg           = config.LoadConfig(engineName)
-		shortcuts     = cfg.Shortcuts[:]
-		s             = (*C.guint32)(&shortcuts[0])
-		size          = len(shortcuts)
-		macroFilePath = config.GetMacroPath(engineName)
-	)
-	mText, err := ioutil.ReadFile(macroFilePath)
-	if err != nil {
-		panic(err)
+	app := gtk.NewApplication(APP_ID, gio.ApplicationDefaultFlags)
+	app.ConnectActivate(func() {
+		// Main app
+		window := gtk.NewApplicationWindow(app)
+		window.SetTitle("ibus-bamboo shortcut options")
+		window.SetDecorated(true)
+		window.SetDefaultSize(600, 300)
+
+		// Tabs Notebook
+		notebook := gtk.NewNotebook()
+		notebook.AppendPage(renderShortcut(window), gtk.NewLabel("Phím tắt"))
+		notebook.AppendPage(renderInputTextView(), gtk.NewLabel("Gõ tắt"))
+		notebook.AppendPage(renderInputTextView(), gtk.NewLabel("Tự định nghĩa kiểu gõ"))
+		notebook.AppendPage(renderOther(window), gtk.NewLabel("Khác"))
+		window.SetChild(notebook)
+
+		window.ConnectCloseRequest(func() bool {
+			window.Destroy()
+			app.Quit()
+			return true
+		})
+
+		window.SetVisible(true)
+	})
+
+	if code := app.Run(os.Args); code > 0 {
+		os.Exit(code)
 	}
-	data, err := json.MarshalIndent(cfg, "", "  ")
-	if err != nil {
-		panic(err)
-	}
-	os.Setenv("GTK_IM_MODULE", "gtk-im-context-simple")
-	C.openGUI(C.guint(cfg.IBflags), C.int(cfg.DefaultInputMode), s, C.int(size), C.CString(string(mText)), C.CString(string(data)))
 }
