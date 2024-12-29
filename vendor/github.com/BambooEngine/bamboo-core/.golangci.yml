@@ -1,0 +1,14 @@
+linters:
+  enable:
+    - errcheck
+    - gosimple
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+  disable:
+    - gocyclo
+issues:
+  exclude-rules:
+    - path: _test\.go
+      text: "error message to ignore"
