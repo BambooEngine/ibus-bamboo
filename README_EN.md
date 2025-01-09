@@ -54,6 +54,9 @@ env DCONF_PROFILE=ibus dconf write /desktop/ibus/general/preload-engines "['xkb:
 `ibus-bamboo` is now available on the [AUR](https://aur.archlinux.org/packages/ibus-bamboo). Don't forget to leave a vote for the maintainers so that one day it can be included in the official Arch repository!
 
 ### NixOS
+
+#### Nixpkgs
+
 `ibus-bamboo` is available on the main Nixpkgs repo. Make sure your NixOS configuration must contain this code to install it.
 
 ```nix
@@ -66,6 +69,65 @@ env DCONF_PROFILE=ibus dconf write /desktop/ibus/general/preload-engines "['xkb:
  };
 }
 ```
+
+#### Ibus-bamboo flake
+
+If you don't like to use package from Nixpkgs, you can use latest version flake package from Ibus-bamboo repo. Note that this approach only work for flake.
+
+First, make sure you have added repo path in your nixos flake config.
+
+Example code at `flake.nix`
+```nix
+{
+  inputs = {
+    nixpkgs = {
+      url = "github:nixos/nixpkgs/nixos-24.05";
+    };
+
+    ibus-bamboo = {
+      url = "github:BambooEngine/ibus-bamboo";
+    };
+  };
+
+  outputs = {
+    self,
+    nixpkgs,
+    ibus-bamboo
+  }@inputs:
+  let
+    inherit (self) outputs;
+
+    system = "x86_64-linux";
+
+    pkgs = import nixpkgs {
+      inherit system;
+      config.allowUnfree = true;
+    };
+  in
+  {
+    overlays = import ./overlays { inherit inputs pkgs system; };
+
+    # Some nixos config
+  }
+}
+```
+
+Next, you need to override value of ibus-bamboo package in Nixpkgs package to ibus-bamboo flake package with overlays.
+
+Example code at `overlays/default.nix`
+```nix
+{ inputs, system, ... }:
+
+{
+  custom-packages = final: prev: {
+    ibus-bamboo = inputs.ibus-bamboo.packages."${system}".default;
+
+    # Some overlays package code
+  };
+}
+```
+
+Final step is update flake and switch your system to new config.
 
 ### Void Linux
 `ibus-bamboo` is available on the main Void Linux repo. You can install it directly.

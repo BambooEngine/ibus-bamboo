@@ -51,7 +51,10 @@ env DCONF_PROFILE=ibus dconf write /desktop/ibus/general/preload-engines "['Bamb
 `ibus-bamboo` hiện đã có mặt trên [AUR](https://aur.archlinux.org/packages/ibus-bamboo). Đừng quên để lại 1 vote cho các maintainer để 1 ngày không xa nó được vào kho repo chính thức của Arch nhé!
 
 ### NixOS
-`ibus-bamboo` đã có mặt trên repo chính của Nixpkgs. Để cài đặt hãy chắc chắn  rằng code sau đã có trong file cấu hình NixOS của bạn.
+
+#### Nixpkgs
+
+`ibus-bamboo` đã có mặt trên repo chính của Nixpkgs. Để cài đặt hãy chắc chắn rằng code sau đã có trong file cấu hình NixOS của bạn.
 
 ```nix
 {
@@ -63,6 +66,65 @@ env DCONF_PROFILE=ibus dconf write /desktop/ibus/general/preload-engines "['Bamb
  };
 }
 ```
+
+#### Ibus-bamboo flake
+
+Nếu bạn không thích sử dụng package từ Nixpkgs, bạn có thể sử dụng bản mới nhất flake từ repo ibus-bamboo. Lưu ý rằng phương pháp này chỉ hoạt động với flake.
+
+Đầu tiên hãy chắc chắn rằng bạn đã thêm repo path vào trong nixos flake của bạn.
+
+Code ví dụ ở `flake.nix`:
+```nix
+{
+  inputs = {
+    nixpkgs = {
+      url = "github:nixos/nixpkgs/nixos-24.05";
+    };
+
+    ibus-bamboo = {
+      url = "github:BambooEngine/ibus-bamboo";
+    };
+  };
+
+  outputs = {
+    self,
+    nixpkgs,
+    ibus-bamboo
+  }@inputs:
+  let
+    inherit (self) outputs;
+
+    system = "x86_64-linux";
+
+    pkgs = import nixpkgs {
+      inherit system;
+      config.allowUnfree = true;
+    };
+  in
+  {
+    overlays = import ./overlays { inherit inputs pkgs system; };
+
+    # Some nixos config
+  }
+}
+```
+
+Tiếp bạn hãy ghi đè giá trị package ibus-bamboo của Nixpkgs thành package default trong ibus-bamboo repo flake với overlays.
+
+Code ví dụ ở `overlays/default.nix`:
+```nix
+{ inputs, system, ... }:
+
+{
+  custom-packages = final: prev: {
+    ibus-bamboo = inputs.ibus-bamboo.packages."${system}".default;
+
+    # Some overlays package code
+  };
+}
+```
+
+Bước cuối cùng là cập nhập lại flake và chuyển đổi hệ thống sang cấu hình mới là xong.
 
 ### Void Linux
 `ibus-bamboo` đã có mặt trên repo chính của Void Linux. Các bạn có thể cài đặt trực tiếp.
