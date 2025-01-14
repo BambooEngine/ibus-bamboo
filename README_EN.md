@@ -98,31 +98,35 @@ Example code at `flake.nix`
     inherit (self) outputs;
 
     system = "x86_64-linux";
-
-    pkgs = import nixpkgs {
-      inherit system;
-      config.allowUnfree = true;
-    };
   in
   {
-    overlays = import ./overlays { inherit inputs pkgs system; };
+    nixosConfigurations = {
+      nixos = nixpkgs.lib.nixosSystem {
+        specialArgs = { inherit inputs outputs system; };
 
-    # Some nixos config
+        # Some nixos config
+      };
+    };
   }
+}
 }
 ```
 
-Next, you need to override value of ibus-bamboo package in Nixpkgs package to ibus-bamboo flake package with overlays.
+Next, you need to declare a variable and add it to `ibus.engines`
 
-Example code at `overlays/default.nix`
+Example code at `input-method.nix`
 ```nix
 { inputs, system, ... }:
 
+let
+  bamboo = inputs.ibus-bamboo.packages."${system}".default;
+in
 {
-  custom-packages = final: prev: {
-    ibus-bamboo = inputs.ibus-bamboo.packages."${system}".default;
-
-    # Some overlays package code
+  i18n.inputMethod = {
+    enabled = "ibus";
+    ibus.engines = [
+      bamboo
+    ];
   };
 }
 ```
