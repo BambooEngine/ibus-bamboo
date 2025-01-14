@@ -45,6 +45,10 @@
             makeFlags = [
               "PREFIX=${placeholder "out"}"
             ];
+
+            meta = {
+              isIbusEngine = true;
+            };
           };
         }
       );

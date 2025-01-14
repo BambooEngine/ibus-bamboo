@@ -95,31 +95,34 @@ Code ví dụ ở `flake.nix`:
     inherit (self) outputs;
 
     system = "x86_64-linux";
-
-    pkgs = import nixpkgs {
-      inherit system;
-      config.allowUnfree = true;
-    };
   in
   {
-    overlays = import ./overlays { inherit inputs pkgs system; };
+    nixosConfigurations = {
+      nixos = nixpkgs.lib.nixosSystem {
+        specialArgs = { inherit inputs outputs system; };
 
-    # Some nixos config
+        # Some nixos config
+      };
+    };
   }
 }
 ```
 
-Tiếp bạn hãy ghi đè giá trị package ibus-bamboo của Nixpkgs thành package default trong ibus-bamboo repo flake với overlays.
+Tiếp theo bạn hãy tạo biến và thêm nó vào `ibus.engines`
 
-Code ví dụ ở `overlays/default.nix`:
+Code ví dụ ở `input-method.nix`:
 ```nix
 { inputs, system, ... }:
 
+let
+  bamboo = inputs.ibus-bamboo.packages."${system}".default;
+in
 {
-  custom-packages = final: prev: {
-    ibus-bamboo = inputs.ibus-bamboo.packages."${system}".default;
-
-    # Some overlays package code
+  i18n.inputMethod = {
+    enabled = "ibus";
+    ibus.engines = [
+      bamboo
+    ];
   };
 }
 ```
