@@ -1,9 +1,6 @@
 package ui
 
 import (
-	"os"
-
-	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
@@ -22,7 +19,7 @@ func saveShortCut() error {
 	return nil
 }
 
-func renderShortcut(window *gtk.ApplicationWindow) *gtk.Box {
+func RenderShortcut(window *gtk.ApplicationWindow) *gtk.Box {
 	// Button
 	buttonClose := gtk.NewButtonWithLabel("Đóng")
 	buttonClose.ConnectClicked(func() {
@@ -54,7 +51,7 @@ func saveInputTextView() error {
 	return nil
 }
 
-func renderInputTextView() *gtk.Box {
+func RenderInputTextView() *gtk.Box {
 	// TextView
 	textView := gtk.NewTextView()
 	textView.SetWrapMode(gtk.WrapNone)
@@ -105,7 +102,7 @@ func renderInputTextView() *gtk.Box {
 	return mainBox
 }
 
-func renderOther(window *gtk.ApplicationWindow) *gtk.Box {
+func RenderOther(window *gtk.ApplicationWindow) *gtk.Box {
 	// Mode Choose
 	labelDefaultMode := gtk.NewLabel("Chế độ gõ mặc định")
 	dropdownMode := gtk.NewDropDownFromStrings(modeOptions)
@@ -139,35 +136,4 @@ func renderOther(window *gtk.ApplicationWindow) *gtk.Box {
 	mainBox.Append(buttonBox)
 
 	return mainBox
-}
-
-func OpenGUI(engName string) {
-	app := gtk.NewApplication(APP_ID, gio.ApplicationDefaultFlags)
-	app.ConnectActivate(func() {
-		// Main app
-		window := gtk.NewApplicationWindow(app)
-		window.SetTitle("ibus-bamboo shortcut options")
-		window.SetDecorated(true)
-		window.SetDefaultSize(600, 300)
-
-		// Tabs Notebook
-		notebook := gtk.NewNotebook()
-		notebook.AppendPage(renderShortcut(window), gtk.NewLabel("Phím tắt"))
-		notebook.AppendPage(renderInputTextView(), gtk.NewLabel("Gõ tắt"))
-		notebook.AppendPage(renderInputTextView(), gtk.NewLabel("Tự định nghĩa kiểu gõ"))
-		notebook.AppendPage(renderOther(window), gtk.NewLabel("Khác"))
-		window.SetChild(notebook)
-
-		window.ConnectCloseRequest(func() bool {
-			window.Destroy()
-			app.Quit()
-			return true
-		})
-
-		window.SetVisible(true)
-	})
-
-	if code := app.Run(os.Args); code > 0 {
-		os.Exit(code)
-	}
 }
