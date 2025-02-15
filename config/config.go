@@ -15,6 +15,7 @@ const (
 	configFile       = "%s/ibus-%s.config.json"
 	mactabFile       = "%s/ibus-%s.macro.text"
 	sampleMactabFile = "data/macro.tpl.txt"
+	APP_ID           = "ibus-bamboo.ui-shortcut-options"
 )
 
 type Config struct {
