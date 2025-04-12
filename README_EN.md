@@ -14,6 +14,7 @@ IBus Bamboo is a Vietnamese input method engine for IBus that translates key str
 - [Installation](#installation)
 	- [Ubuntu, Mint and derivatives](#ubuntu-and-derivatives)
 	- [Arch Linux and derivatives](#arch-linux-and-derivatives)
+	- [NixOS](#nixos)
 	- [Void Linux](#void-linux)
 	- [Install from OpenBuildService](#install-from-openbuildservice)
 	- [Install from source](https://github.com/BambooEngine/ibus-bamboo/wiki/H%C6%B0%E1%BB%9Bng-d%E1%BA%ABn-c%C3%A0i-%C4%91%E1%BA%B7t-t%E1%BB%AB-m%C3%A3-ngu%E1%BB%93n)
