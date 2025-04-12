@@ -3,7 +3,7 @@ run-name: ${{ github.actor }} is triggering on GitHub Actions 🚀
 on: [push]
 jobs:
   Build-test-freebsd:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     name: Build and Test in FreeBSD
     steps:
       - uses: actions/checkout@master
@@ -16,12 +16,12 @@ jobs:
           release: "15.0"
           usesh: true
           prepare: |
-            pkg install -y go pkgconf libX11 libXtst gtk3
+            pkg install -y go pkgconf libX11 libXtst gtk4
           run: |
             make test && make build
 
   Build-test-nix-flake:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
     - uses: cachix/install-nix-action@v27
@@ -31,12 +31,12 @@ jobs:
       run: nix develop
 
   Releaser:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@master
         with:
           fetch-depth: 1
-      - run: sudo apt-get update && sudo apt-get install -y make libibus-1.0-dev libx11-dev libxtst-dev libgtk-3-dev osc
+      - run: sudo apt-get update && sudo apt-get install -y make pkgconf libibus-1.0-dev libx11-dev libxtst-dev osc libgtk-4-dev libglib2.0-dev gobject-introspection
       - run: make test && make build
       - shell: bash
         env:

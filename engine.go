@@ -22,6 +22,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"os"
 	"os/exec"
 	"reflect"
 	"strconv"
@@ -29,6 +30,8 @@ import (
 
 	"github.com/BambooEngine/bamboo-core"
 	ibus "github.com/BambooEngine/goibus"
+	"github.com/diamondburned/gotk4/pkg/gio/v2"
+	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/godbus/dbus/v5"
 
 	"ibus-bamboo/config"
@@ -62,15 +65,26 @@ type IBusBambooEngine struct {
 	shouldRestoreKeyStrokes bool
 	// enqueue key strokes to process later
 	shouldEnqueuKeyStrokes bool
+	// UI shortcut options
+	appShortcutOptions     *gtk.Application
+	windowShortcutOptions  *gtk.ApplicationWindow
 }
 
 func NewIbusBambooEngine(name string, cfg *config.Config, base IEngine, preeditor bamboo.IEngine) *IBusBambooEngine {
-	return &IBusBambooEngine{
+	engine := &IBusBambooEngine{
 		engineName: name,
 		IEngine:    base,
 		preeditor:  preeditor,
 		config:     cfg,
 	}
+	engine.appShortcutOptions = gtk.NewApplication(config.APP_ID, gio.ApplicationDefaultFlags)
+
+	engine.appShortcutOptions.ConnectActivate(func() {
+		engine.activateUIOptions()
+	})
+	_ = engine.appShortcutOptions.Run(os.Args)
+
+	return engine
 }
 
 /*
@@ -267,17 +281,20 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		return nil
 	}
 	if propName == PropKeyConfiguration {
-		ui.OpenGUI(e.engineName)
+		//ui.OpenGUI(e.engineName)
+		e.ShowUIOptions()
 		e.config = config.LoadConfig(e.engineName)
 		return nil
 	}
 	if propName == PropKeyInputModeLookupTableShortcut {
-		ui.OpenGUI(e.engineName)
+		//ui.OpenGUI(e.engineName)
+		e.ShowUIOptions()
 		e.config = config.LoadConfig(e.engineName)
 		return nil
 	}
 	if propName == PropKeyMacroTable {
-		ui.OpenGUI(e.engineName)
+		//ui.OpenGUI(e.engineName)
+		e.ShowUIOptions()
 		e.config = config.LoadConfig(e.engineName)
 		return nil
 	}
@@ -398,4 +415,38 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	e.preeditor = bamboo.NewEngine(inputMethod, e.config.Flags)
 	e.RegisterProperties(e.propList)
 	return nil
+}
+
+/* UI Shortcut Options */
+func (e *IBusBambooEngine) activateUIOptions() {
+	// Main app
+	e.windowShortcutOptions = gtk.NewApplicationWindow(e.appShortcutOptions)
+	e.windowShortcutOptions.SetTitle("ibus-bamboo shortcut options")
+	e.windowShortcutOptions.SetDecorated(true)
+	e.windowShortcutOptions.SetDefaultSize(600, 300)
+
+	// Tabs Notebook
+	notebook := gtk.NewNotebook()
+	notebook.AppendPage(ui.RenderShortcut(e.windowShortcutOptions), gtk.NewLabel("Phím tắt"))
+	notebook.AppendPage(ui.RenderInputTextView(), gtk.NewLabel("Gõ tắt"))
+	notebook.AppendPage(ui.RenderInputTextView(), gtk.NewLabel("Tự định nghĩa kiểu gõ"))
+	notebook.AppendPage(ui.RenderOther(e.windowShortcutOptions), gtk.NewLabel("Khác"))
+	e.windowShortcutOptions.SetChild(notebook)
+
+	e.windowShortcutOptions.ConnectCloseRequest(func() bool {
+		e.windowShortcutOptions.SetVisible(false)
+		return true
+	})
+}
+
+func (e *IBusBambooEngine) ShowUIOptions() {
+	if e.windowShortcutOptions != nil {
+		e.windowShortcutOptions.SetVisible(true)
+	}
+}
+
+func (e *IBusBambooEngine) HideUIOptions() {
+	if e.windowShortcutOptions != nil {
+		e.windowShortcutOptions.SetVisible(false)
+	}
 }
