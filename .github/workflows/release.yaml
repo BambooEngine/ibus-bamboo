@@ -13,6 +13,7 @@ jobs:
         id: test
         uses: vmactions/freebsd-vm@v1
         with:
+          release: "15.0"
           usesh: true
           prepare: |
             pkg install -y go pkgconf libX11 libXtst gtk3
