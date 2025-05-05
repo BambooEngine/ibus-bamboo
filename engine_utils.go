@@ -22,7 +22,7 @@ package main
 import (
 	"fmt"
 	"ibus-bamboo/config"
-	"ibus-bamboo/ui"
+	_ "ibus-bamboo/ui"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -57,7 +57,8 @@ func GetIBusEngineCreator() func(*dbus.Conn, string) dbus.ObjectPath {
 		engine.shouldEnqueuKeyStrokes = true
 		ibus.PublishEngine(conn, objectPath, engine)
 		if *gui {
-			ui.OpenGUI(engine.engineName)
+			//ui.OpenGUI(engine.engineName)
+			engine.ShowUIOptions()
 			os.Exit(0)
 		}
 		go engine.init()
