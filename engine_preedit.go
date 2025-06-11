@@ -61,7 +61,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	newText, isWordBreakRune := e.getCommitText(keyVal, keyCode, state)
 	isPrintableKey := e.isPrintableKey(state, keyVal)
 	if isWordBreakRune {
-		e.commitPreeditAndResetForWBS(newText)
+		e.commitPreeditAndReset(newText)
 		return isPrintableKey, nil
 	}
 	e.updatePreedit(newText)
@@ -189,21 +189,11 @@ func (e *IBusBambooEngine) resetPreedit() {
 	e.preeditor.Reset()
 }
 
-func (e *IBusBambooEngine) commitPreeditAndResetForWBS(s string) {
-	// Fix typing problem on Facebook/Messenger by committing the preedit text first then hide preedit text
-	e.commitText(s)
-	e.HidePreeditText()
-	//
-	e.HideAuxiliaryText()
-	e.HideLookupTable()
-	e.preeditor.Reset()
-}
-
 func (e *IBusBambooEngine) commitPreeditAndReset(s string) {
+	e.commitText(s)
 	e.HidePreeditText()
 	e.HideAuxiliaryText()
 	e.HideLookupTable()
-	e.commitText(s)
 	e.preeditor.Reset()
 }
 
