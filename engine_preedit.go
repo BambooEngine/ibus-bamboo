@@ -32,17 +32,8 @@ import (
 
 func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
 	var rawKeyLen = e.getRawKeyLen()
-	var keyRune = rune(keyVal)
 	var oldText = e.getPreeditString()
 	defer e.updateLastKeyWithShift(keyVal, state)
-
-	if !e.shouldRestoreKeyStrokes {
-		if !e.preeditor.CanProcessKey(keyRune) && rawKeyLen == 0 && e.config.IBflags&config.IBmacroEnabled == 0 {
-			// don't process special characters if rawKeyLen == 0,
-			// workaround for Chrome's address bar and Google SpreadSheets
-			return false, nil
-		}
-	}
 
 	if keyVal == IBusBackSpace {
 		if e.runeCount() == 1 {
@@ -70,7 +61,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	newText, isWordBreakRune := e.getCommitText(keyVal, keyCode, state)
 	isPrintableKey := e.isPrintableKey(state, keyVal)
 	if isWordBreakRune {
-		e.commitPreeditAndResetForWBS(newText, isPrintableKey)
+		e.commitPreeditAndResetForWBS(newText)
 		return isPrintableKey, nil
 	}
 	e.updatePreedit(newText)
@@ -198,16 +189,11 @@ func (e *IBusBambooEngine) resetPreedit() {
 	e.preeditor.Reset()
 }
 
-func (e *IBusBambooEngine) commitPreeditAndResetForWBS(s string, isWBS bool) {
-	if e.config.IBflags&config.IBworkaroundForFBMessenger != 0 || isWBS {
-		// Fix missing the first word while typing in FB Messager as FB prefers
-		// committing text before hiding preedit
-		e.commitText(s)
-		e.HidePreeditText()
-	} else {
-		e.HidePreeditText()
-		e.commitText(s)
-	}
+func (e *IBusBambooEngine) commitPreeditAndResetForWBS(s string) {
+	// Fix typing problem on Facebook/Messenger by committing the preedit text first then hide preedit text
+	e.commitText(s)
+	e.HidePreeditText()
+	//
 	e.HideAuxiliaryText()
 	e.HideLookupTable()
 	e.preeditor.Reset()
