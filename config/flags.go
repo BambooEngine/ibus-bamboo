@@ -48,9 +48,7 @@ const (
 	_IBimQuickSwitchEnabled     //deprecated
 	_IBrestoreKeyStrokesEnabled //deprecated
 	IBmouseCapturing
-	IBworkaroundForFBMessenger
-	IBworkaroundForWPS
 	IBstdFlags = IBspellCheckEnabled | IBspellCheckWithRules | IBautoNonVnRestore | IBddFreeStyle |
-		IBmouseCapturing | IBautoCapitalizeMacro | IBnoUnderline | IBworkaroundForWPS
+		IBmouseCapturing | IBautoCapitalizeMacro | IBnoUnderline
 	IBUsStdFlags = 0
 )

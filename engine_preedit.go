@@ -96,10 +96,6 @@ func (e *IBusBambooEngine) updatePreedit(processedStr string) {
 		return
 	}
 	var ibusText = ibus.NewText(encodedStr)
-	if inStringList(enabledAuxiliaryTextList, e.getWmClass()) && e.config.IBflags&config.IBworkaroundForWPS != 0 {
-		e.UpdateAuxiliaryText(ibusText, true)
-		return
-	}
 
 	if e.config.IBflags&config.IBnoUnderline != 0 {
 		ibusText.AppendAttr(ibus.IBUS_ATTR_TYPE_NONE, ibus.IBUS_ATTR_UNDERLINE_SINGLE, 0, preeditLen)

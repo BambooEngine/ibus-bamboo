@@ -4,8 +4,6 @@
 
 #define TOTAL_ROWS 5
 #define TOTAL_MASKS_PER_ROW 4
-#define IBworkaroundForFBMessenger 1<<19
-#define IBworkaroundForWPS 1<<20
 
 int row = 0;
 int col = 0;
@@ -286,36 +284,6 @@ static void set_margin ( GtkWidget *vbox, gint hmargin, gint vmargin )
   gtk_widget_set_margin_end(vbox, hmargin);
   gtk_widget_set_margin_top(vbox, vmargin);
   gtk_widget_set_margin_bottom(vbox, vmargin);
-}
-
-static void on_toggle_fix_wps_clicked (GtkWidget *checkbox, gpointer data)
-{
-  guint flags = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(checkbox), "flags"));
-  gboolean active = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkbox));
-  if (active) {
-    if (data != NULL) {
-      show_input_mode_alert((char*)data);
-    }
-		flags |= IBworkaroundForWPS;
-  } else {
-		flags &= ~(IBworkaroundForWPS);
-  }
-  saveFlags(flags);
-}
-
-static void on_toggle_fix_address_bar_clicked (GtkWidget *checkbox, gpointer data)
-{
-  guint flags = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(checkbox), "flags"));
-  gboolean active = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkbox));
-  if (active) {
-    if (data != NULL) {
-      show_input_mode_alert((char*)data);
-    }
-		flags |= IBworkaroundForFBMessenger;
-  } else {
-		flags &= ~(IBworkaroundForFBMessenger);
-  }
-  saveFlags(flags);
 }
 
 static void
