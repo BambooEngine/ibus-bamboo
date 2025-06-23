@@ -39,6 +39,7 @@ var version = flag.Bool("version", false, "Show version")
 var gui = flag.Bool("gui", false, "Show GUI")
 var isWayland = false
 var isGnome = false
+var isWaylandKde = false
 
 func hasGnome(env string) bool {
 	return strings.Contains(strings.ToLower(os.Getenv(env)), "gnome")
@@ -47,6 +48,9 @@ func hasGnome(env string) bool {
 func main() {
 	if os.Getenv("WAYLAND_DISPLAY") != "" {
 		isWayland = true
+		if os.Getenv("XDG_CURRENT_DESKTOP") == "KDE" {
+			isWaylandKde = true
+		}
 	}
 	if hasGnome("XDG_CURRENT_DESKTOP") || hasGnome("DESKTOP_SESSION") || hasGnome("GDMSESSION") {
 		isGnome = true

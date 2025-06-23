@@ -20,11 +20,14 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"ibus-bamboo/config"
 	"ibus-bamboo/ui"
 	"io/ioutil"
+	"log"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"sync"
@@ -584,7 +587,12 @@ func (e *IBusBambooEngine) getLatestWmClass() string {
 	if isGnome {
 		wmClass, _ = gnomeGetFocusWindowClass()
 	} else if isWayland {
-		wmClass = wlAppId
+		if isWaylandKde {
+			wmClass, _ = kdeGetActiveWindowClass()
+		}
+		if wmClass == "" {
+			wmClass = wlAppId
+		}
 	}
 	if wmClass == "" {
 		wmClass = x11GetFocusWindowClass()
@@ -615,4 +623,24 @@ func notify(enMode bool) {
 	if call.Err != nil {
 		fmt.Println(call.Err)
 	}
+}
+
+func kdeGetActiveWindowClass() (string, error) {
+	cmd := exec.Command("kdotool", "getactivewindow", "getwindowclassname")
+	var out bytes.Buffer
+	cmd.Stdout = &out
+	cmd.Stderr = nil // Suppress errors to handle gracefully
+
+	err := cmd.Run()
+	if err != nil {
+		log.Printf("Failed to get window class: %v", err)
+		return "", err
+	}
+
+	// Trim whitespace and newline from output
+	class := strings.TrimSpace(out.String())
+	if class == "" {
+		return "", nil // No class found
+	}
+	return class, nil
 }
