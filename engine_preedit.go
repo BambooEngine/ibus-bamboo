@@ -82,11 +82,6 @@ func (e *IBusBambooEngine) expandMacro(str string) string {
 }
 
 func (e *IBusBambooEngine) updatePreedit(processedStr string) {
-	defer func() {
-		if e.config.IBflags&config.IBmouseCapturing != 0 {
-			mouseCaptureUnlock()
-		}
-	}()
 	var encodedStr = e.encodeText(processedStr)
 	var preeditLen = uint32(len([]rune(encodedStr)))
 	if preeditLen == 0 {

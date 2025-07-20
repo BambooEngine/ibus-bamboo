@@ -47,8 +47,7 @@ const (
 	IBautoCapitalizeMacro
 	_IBimQuickSwitchEnabled     //deprecated
 	_IBrestoreKeyStrokesEnabled //deprecated
-	IBmouseCapturing
-	IBstdFlags = IBspellCheckEnabled | IBspellCheckWithRules | IBautoNonVnRestore | IBddFreeStyle |
-		IBmouseCapturing | IBautoCapitalizeMacro | IBnoUnderline
+	IBstdFlags                  = IBspellCheckEnabled | IBspellCheckWithRules | IBautoNonVnRestore | IBddFreeStyle |
+		IBautoCapitalizeMacro | IBnoUnderline
 	IBUsStdFlags = 0
 )
