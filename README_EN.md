@@ -8,6 +8,11 @@ IBus Bamboo is a Vietnamese input method engine for IBus that translates key str
 
    ![ibus-bamboo](https://github.com/BambooEngine/ibus-bamboo/raw/gh-resources/demo.gif)
 
+## Note 🚧:
+The project has been stalled for quite a long time and may not be maintained in the future. You can use fcitx5-unikey as an alternative solution (almost all features are complete and it supports Wayland better).
+
+If you want to revive ibus-bamboo or discuss the project's future, please visit https://github.com/BambooEngine/ibus-bamboo/issues/590.
+
 ## Getting Started
 
 - [Features](#features)
