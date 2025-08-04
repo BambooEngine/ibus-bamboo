@@ -124,11 +124,6 @@ func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 	if e.config.IBflags&config.IBspellCheckWithDicts != 0 && len(dictionary) == 0 {
 		dictionary, _ = loadDictionary(DictVietnameseCm)
 	}
-	if inStringList(disabledMouseCapturingList, e.getWmClass()) {
-		stopMouseCapturing()
-	} else if e.config.IBflags&config.IBmouseCapturing != 0 {
-		startMouseCapturing()
-	}
 	fmt.Printf("WM_CLASS=(%s)\n", e.getWmClass())
 	return nil
 }
@@ -141,7 +136,7 @@ func (e *IBusBambooEngine) FocusOut() *dbus.Error {
 func (e *IBusBambooEngine) Reset() *dbus.Error {
 	fmt.Print("Reset.\n")
 	if e.checkInputMode(config.PreeditIM) {
-		e.commitPreeditAndReset(e.getPreeditString())
+		e.preeditor.Reset()
 	}
 	return nil
 }
@@ -331,17 +326,6 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 			dictionary, _ = loadDictionary(DictVietnameseCm)
 		} else {
 			e.config.IBflags &= ^config.IBspellCheckWithDicts
-		}
-	}
-	if propName == PropKeyMouseCapturing {
-		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= config.IBmouseCapturing
-			startMouseCapturing()
-			startMouseRecording()
-		} else {
-			e.config.IBflags &= ^config.IBmouseCapturing
-			stopMouseCapturing()
-			stopMouseRecording()
 		}
 	}
 	if propName == PropKeyMacroEnabled {

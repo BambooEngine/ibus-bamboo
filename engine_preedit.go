@@ -32,17 +32,8 @@ import (
 
 func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
 	var rawKeyLen = e.getRawKeyLen()
-	var keyRune = rune(keyVal)
 	var oldText = e.getPreeditString()
 	defer e.updateLastKeyWithShift(keyVal, state)
-
-	if !e.shouldRestoreKeyStrokes {
-		if !e.preeditor.CanProcessKey(keyRune) && rawKeyLen == 0 && e.config.IBflags&config.IBmacroEnabled == 0 {
-			// don't process special characters if rawKeyLen == 0,
-			// workaround for Chrome's address bar and Google SpreadSheets
-			return false, nil
-		}
-	}
 
 	if keyVal == IBusBackSpace {
 		if e.runeCount() == 1 {
@@ -70,7 +61,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	newText, isWordBreakRune := e.getCommitText(keyVal, keyCode, state)
 	isPrintableKey := e.isPrintableKey(state, keyVal)
 	if isWordBreakRune {
-		e.commitPreeditAndResetForWBS(newText, isPrintableKey)
+		e.commitPreeditAndReset(newText)
 		return isPrintableKey, nil
 	}
 	e.updatePreedit(newText)
@@ -91,11 +82,6 @@ func (e *IBusBambooEngine) expandMacro(str string) string {
 }
 
 func (e *IBusBambooEngine) updatePreedit(processedStr string) {
-	defer func() {
-		if e.config.IBflags&config.IBmouseCapturing != 0 {
-			mouseCaptureUnlock()
-		}
-	}()
 	var encodedStr = e.encodeText(processedStr)
 	var preeditLen = uint32(len([]rune(encodedStr)))
 	if preeditLen == 0 {
@@ -105,10 +91,6 @@ func (e *IBusBambooEngine) updatePreedit(processedStr string) {
 		return
 	}
 	var ibusText = ibus.NewText(encodedStr)
-	if inStringList(enabledAuxiliaryTextList, e.getWmClass()) && e.config.IBflags&config.IBworkaroundForWPS != 0 {
-		e.UpdateAuxiliaryText(ibusText, true)
-		return
-	}
 
 	if e.config.IBflags&config.IBnoUnderline != 0 {
 		ibusText.AppendAttr(ibus.IBUS_ATTR_TYPE_NONE, ibus.IBUS_ATTR_UNDERLINE_SINGLE, 0, preeditLen)
@@ -198,26 +180,11 @@ func (e *IBusBambooEngine) resetPreedit() {
 	e.preeditor.Reset()
 }
 
-func (e *IBusBambooEngine) commitPreeditAndResetForWBS(s string, isWBS bool) {
-	if e.config.IBflags&config.IBworkaroundForFBMessenger != 0 || isWBS {
-		// Fix missing the first word while typing in FB Messager as FB prefers
-		// committing text before hiding preedit
-		e.commitText(s)
-		e.HidePreeditText()
-	} else {
-		e.HidePreeditText()
-		e.commitText(s)
-	}
-	e.HideAuxiliaryText()
-	e.HideLookupTable()
-	e.preeditor.Reset()
-}
-
 func (e *IBusBambooEngine) commitPreeditAndReset(s string) {
+	e.commitText(s)
 	e.HidePreeditText()
 	e.HideAuxiliaryText()
 	e.HideLookupTable()
-	e.commitText(s)
 	e.preeditor.Reset()
 }
 

@@ -4,8 +4,6 @@
 
 #define TOTAL_ROWS 5
 #define TOTAL_MASKS_PER_ROW 4
-#define IBworkaroundForFBMessenger 1<<19
-#define IBworkaroundForWPS 1<<20
 
 int row = 0;
 int col = 0;
@@ -288,36 +286,6 @@ static void set_margin ( GtkWidget *vbox, gint hmargin, gint vmargin )
   gtk_widget_set_margin_bottom(vbox, vmargin);
 }
 
-static void on_toggle_fix_wps_clicked (GtkWidget *checkbox, gpointer data)
-{
-  guint flags = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(checkbox), "flags"));
-  gboolean active = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkbox));
-  if (active) {
-    if (data != NULL) {
-      show_input_mode_alert((char*)data);
-    }
-		flags |= IBworkaroundForWPS;
-  } else {
-		flags &= ~(IBworkaroundForWPS);
-  }
-  saveFlags(flags);
-}
-
-static void on_toggle_fix_address_bar_clicked (GtkWidget *checkbox, gpointer data)
-{
-  guint flags = GPOINTER_TO_UINT(g_object_get_data(G_OBJECT(checkbox), "flags"));
-  gboolean active = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(checkbox));
-  if (active) {
-    if (data != NULL) {
-      show_input_mode_alert((char*)data);
-    }
-		flags |= IBworkaroundForFBMessenger;
-  } else {
-		flags &= ~(IBworkaroundForFBMessenger);
-  }
-  saveFlags(flags);
-}
-
 static void
 combo_changed_cb (GtkComboBox *combo, gpointer  data)
 {
@@ -411,18 +379,6 @@ static void add_page_other_settings_content(GtkWidget *parent, GtkWidget *w, gui
 
   dropdown1 = create_new_dropdown(mode, input_mode_alert, options, 7-1);
   gtk_grid_attach(GTK_GRID(grid), dropdown1, 1, 0, 1, 1);
-
-  checkbox2 = gtk_check_button_new_with_label("Sửa lỗi lặp chữ trong FB");
-  gtk_grid_attach(GTK_GRID(grid), checkbox2, 0, 1, 1, 1);
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbox2), flags&IBworkaroundForFBMessenger);
-  g_object_set_data(G_OBJECT(checkbox2), "flags", GUINT_TO_POINTER(flags));
-  g_signal_connect(checkbox2, "toggled", G_CALLBACK(on_toggle_fix_address_bar_clicked), fix_fb_alert);
-
-  checkbox3 = gtk_check_button_new_with_label("Sửa lỗi không hiện chữ trong WPS");
-  gtk_grid_attach(GTK_GRID(grid), checkbox3, 0, 2, 1, 1);
-  g_object_set_data(G_OBJECT(checkbox3), "flags", GUINT_TO_POINTER(flags));
-  gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkbox3), flags&IBworkaroundForWPS);
-  g_signal_connect(checkbox3, "toggled", G_CALLBACK(on_toggle_fix_wps_clicked), NULL);
 
   // Set consistent padding for all rows
   gtk_grid_set_row_spacing(GTK_GRID(grid),  10);
