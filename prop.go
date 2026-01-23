@@ -36,7 +36,6 @@ const (
 	PropKeySpellCheckByDicts            = "spell_check_by_dicts"
 	PropKeyPreeditInvisibility          = "preedit_invisibility"
 	PropKeyVnCharsetConvert             = "charset_convert_page"
-	PropKeyMouseCapturing               = "mouse_capturing"
 	PropKeyMacroEnabled                 = "macro_enabled"
 	PropKeyMacroTable                   = "open_macro_table"
 	PropKeyEmojiEnabled                 = "emoji_enabled"
@@ -369,10 +368,6 @@ func GetOptionsPropListByConfig(c *config.Config) *ibus.PropList {
 	toneFreeMarkingChecked := ibus.PROP_STATE_UNCHECKED
 	preeditInvisibilityChecked := ibus.PROP_STATE_UNCHECKED
 	x11FakeBackspaceChecked := ibus.PROP_STATE_UNCHECKED
-	mouseCapturingChecked := ibus.PROP_STATE_UNCHECKED
-	if c.IBflags&config.IBmouseCapturing != 0 {
-		mouseCapturingChecked = ibus.PROP_STATE_CHECKED
-	}
 
 	if c.Flags&bamboo.EstdToneStyle != 0 {
 		toneStdChecked = ibus.PROP_STATE_CHECKED
@@ -422,18 +417,6 @@ func GetOptionsPropListByConfig(c *config.Config) *ibus.PropList {
 			Visible:   true,
 			State:     preeditInvisibilityChecked,
 			Symbol:    dbus.MakeVariant(ibus.NewText("P")),
-			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
-		},
-		&ibus.Property{
-			Name:      "IBusProperty",
-			Key:       PropKeyMouseCapturing,
-			Type:      ibus.PROP_TYPE_TOGGLE,
-			Label:     dbus.MakeVariant(ibus.NewText("Bắt sự kiện chuột")),
-			Tooltip:   dbus.MakeVariant(ibus.NewText("Mouse capturing")),
-			Sensitive: true,
-			Visible:   true,
-			State:     mouseCapturingChecked,
-			Symbol:    dbus.MakeVariant(ibus.NewText("F")),
 			SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 		},
 		&ibus.Property{
