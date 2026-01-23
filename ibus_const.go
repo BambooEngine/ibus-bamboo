@@ -24,6 +24,7 @@ const (
 	IBusLockMask    = 1 << 1
 	IBusControlMask = 1 << 2
 	IBusMod1Mask    = 1 << 3
+	IBusMod4Mask    = 1 << 6
 
 	/* The next few modifiers are used by XKB so we skip to the end.
 	 * Bits 15 - 23 are currently unused. Bit 29 is used internally.
@@ -41,7 +42,7 @@ const (
 	IBusReleaseMask = 1 << 30
 
 	IBusModifierMask   = 0x5f001fff
-	IBusDefaultModMask = IBusControlMask | IBusShiftMask | IBusMod1Mask | IBusSuperMask | IBusHyperMask | IBusMetaMask
+	IBusDefaultModMask = IBusControlMask | IBusShiftMask | IBusMod1Mask | IBusMod4Mask | IBusSuperMask | IBusHyperMask | IBusMetaMask | 0xffeb
 )
 
 const (

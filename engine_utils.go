@@ -418,6 +418,7 @@ func (e *IBusBambooEngine) updateInputModeLT() {
 func isValidState(state uint32) bool {
 	if state&IBusControlMask != 0 ||
 		state&IBusMod1Mask != 0 ||
+		state&IBusMod4Mask != 0 ||
 		state&IBusIgnoredMask != 0 ||
 		state&IBusSuperMask != 0 ||
 		state&IBusHyperMask != 0 ||
