@@ -40,12 +40,14 @@ const (
 	IBspellCheckWithRules
 	IBspellCheckWithDicts
 	IBautoCommitWithDelay
-	_IBemojiDisabled //deprecated
+	_IBautoCommitWithMouseMovement //deprecated
+	_IBemojiDisabled               //deprecated
 	IBpreeditElimination
 	_IBinputModeLookupTableEnabled //deprecated
 	IBautoCapitalizeMacro
 	_IBimQuickSwitchEnabled     //deprecated
 	_IBrestoreKeyStrokesEnabled //deprecated
+	_IBmouseCapturing           //deprecated
 	IBworkaroundForFBMessenger
 	IBworkaroundForWPS
 	IBstdFlags = IBspellCheckEnabled | IBspellCheckWithRules | IBautoNonVnRestore | IBddFreeStyle |
