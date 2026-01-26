@@ -110,9 +110,7 @@ func (e *IBusBambooEngine) updatePreedit(processedStr string) {
 		return
 	}
 
-	if e.config.IBflags&config.IBnoUnderline != 0 {
-		ibusText.AppendAttr(ibus.IBUS_ATTR_TYPE_NONE, ibus.IBUS_ATTR_UNDERLINE_SINGLE, 0, preeditLen)
-	} else {
+	if e.config.IBflags&config.IBnoUnderline == 0 {
 		ibusText.AppendAttr(ibus.IBUS_ATTR_TYPE_UNDERLINE, ibus.IBUS_ATTR_UNDERLINE_SINGLE, 0, preeditLen)
 	}
 	e.UpdatePreeditTextWithMode(ibusText, preeditLen, true, ibus.IBUS_ENGINE_PREEDIT_COMMIT)
