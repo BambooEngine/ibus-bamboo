@@ -75,6 +75,11 @@ var DefaultBrowserList = []string{
 	"chromium-browser:Chromium-browser",
 }
 
+var ChromiumBrowserList = []string{
+	"google-chrome:Google-chrome",
+	"chromium-browser:Chromium-browser",
+}
+
 
 func getEngineSubFile(fileName string) string {
 	if _, err := os.Stat(fileName); err == nil {

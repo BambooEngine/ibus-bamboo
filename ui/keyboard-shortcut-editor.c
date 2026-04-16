@@ -12,7 +12,7 @@ int col = 0;
 const int KEYVAL = 1;
 const int MASK = 0;
 guint32 *key_pairs_tmp;
-char *input_mode_alert = "Ibus-bamboo cung cấp nhiều chế độ gõ khác nhau (1 chế độ gõ có gạch chân và 5 chế độ gõ không gạch chân; tránh nhầm lẫn chế độ gõ với kiểu gõ, các kiểu gõ bao gồm telex, vni, ...).\n\n\
+char *input_mode_alert = "Ibus-bamboo cung cấp nhiều chế độ gõ khác nhau (1 chế độ gõ có gạch chân và 6 chế độ gõ không gạch chân; tránh nhầm lẫn chế độ gõ với kiểu gõ, các kiểu gõ bao gồm telex, vni, ...).\n\n\
 Một số lưu ý:\n\
 - Một ứng dụng có thể hoạt động tốt với chế độ gõ này trong khi không hoạt động tốt với chế độ gõ khác.\n\
 - Các chế độ gõ được lưu riêng biệt cho mỗi phần mềm (firefox có thể đang dùng chế độ 3, trong khi libreoffice thì lại dùng chế độ 2).\n\
@@ -334,16 +334,17 @@ combo_changed_cb (GtkComboBox *combo, gpointer  data)
       if (effect > 0 && data != NULL) {
         show_input_mode_alert((char*)data);
       }
-      saveInputMode(effect+1);
+      saveInputMode(effect);
     }
 }
 
-GtkWidget* create_new_dropdown(int mode, char *alert, char **options, int n) {
+GtkWidget* create_new_dropdown(int mode, char *alert, char **options, int *values, int n) {
   GtkListStore *store;
   GtkTreeIter iter;
   GtkWidget *combobox;
   GtkTreeModel *model;
   GtkCellRenderer *renderer;
+  int active_idx = 0;
 
   combobox = gtk_combo_box_new ();
 
@@ -351,14 +352,17 @@ GtkWidget* create_new_dropdown(int mode, char *alert, char **options, int n) {
 
   for (int i=0; i < n; i++) {
     gtk_list_store_append(GTK_LIST_STORE(store),&iter);
-    gtk_list_store_set(store,&iter,0,options[i],1, i, -1);
+    gtk_list_store_set(store,&iter,0,options[i],1, values[i], -1);
+    if (values[i] == mode) {
+      active_idx = i;
+    }
   }
 
   gtk_combo_box_set_model(GTK_COMBO_BOX(combobox), GTK_TREE_MODEL(store));
 
   /* by default, this is blank, so set the first */
   gtk_combo_box_set_active ( GTK_COMBO_BOX (combobox),
-			       mode-1 );
+			       active_idx );
   g_signal_connect (combobox, "changed",
                     G_CALLBACK (combo_changed_cb),
                     alert);
@@ -391,7 +395,10 @@ char *options[] = {
   "4. ForwardKeyEvent II (không gạch chân)",
   "5. Forward as Commit (không gạch chân)",
   "6. XTestFakeKeyEvent (không gạch chân)",
+  "8. Adaptive Commit (thử nghiệm)",
 };
+
+int option_values[] = {1, 2, 3, 4, 5, 6, 8};
 
 static void add_page_other_settings_content(GtkWidget *parent, GtkWidget *w, guint flags, int mode)
 {
@@ -409,7 +416,7 @@ static void add_page_other_settings_content(GtkWidget *parent, GtkWidget *w, gui
   label1 = gtk_label_new("Chế độ gõ mặc định");
   gtk_grid_attach(GTK_GRID(grid), label1, 0, 0, 1, 1); // column, row, width, height
 
-  dropdown1 = create_new_dropdown(mode, input_mode_alert, options, 7-1);
+  dropdown1 = create_new_dropdown(mode, input_mode_alert, options, option_values, 7);
   gtk_grid_attach(GTK_GRID(grid), dropdown1, 1, 0, 1, 1);
 
   checkbox2 = gtk_check_button_new_with_label("Sửa lỗi lặp chữ trong FB");
@@ -530,4 +537,3 @@ int openGUI(guint flags, int mode, guint32 *s, int size, char *mtext, char *cfg_
 
   gtk_main();
 }
-

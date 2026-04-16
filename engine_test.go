@@ -285,6 +285,99 @@ func TestBsEngine(t *testing.T) {
 	}
 }
 
+func TestForwardAsCommitEngine(t *testing.T) {
+	for _, tc := range []testCase{
+		{
+			name:      "duowidro",
+			keyEvents: generateKeyEvents("duowidro", []string{"d", "du", "duo", "dươ", "dươi", "đươi", "đưởi", "đuổi"}),
+		},
+		{
+			name:      "macro_vn_dot",
+			mTable:    map[string]string{"vn": "việt nam"},
+			keyEvents: generateKeyEvents("vn.", []string{"v", "vn", "việt nam."}),
+		},
+		{
+			name:      "macro_vn_enter",
+			mTable:    map[string]string{"vn": "việt nam"},
+			keyEvents: generateKeyEvents("vn", []string{"v", "vn"}, enter("việt nam")),
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.inputMode = config.ForwardAsCommitIM
+			assertEngine(t, tc, func(t testing.TB, fe *fakeEngine, e IEngine) {
+				for _, ev := range tc.keyEvents {
+					keys := ev.keys
+					t.Logf("Processing key %c %v", rune(keys[0]), keys)
+					ret, _ := e.ProcessKeyEvent(keys[0], keys[1], keys[2])
+					if ret != ev.canBeProcessed {
+						t.Errorf("Is key can be processed? expected (%v), got (%v).", ev.canBeProcessed, ret)
+					}
+					if fe.commitText != ev.expectedCommitText {
+						t.Errorf("Commit text, expected (%s), got (%s).", ev.expectedCommitText, fe.commitText)
+					}
+				}
+			})
+		})
+	}
+}
+
+func TestAdaptiveCommitEngine(t *testing.T) {
+	for _, tc := range []testCase{
+		{
+			name:      "duowidro",
+			keyEvents: generateKeyEvents("duowidro", []string{"d", "du", "duo", "dươ", "dươi", "đươi", "đưởi", "đuổi"}),
+		},
+		{
+			name:      "macro_vn_dot",
+			mTable:    map[string]string{"vn": "việt nam"},
+			keyEvents: generateKeyEvents("vn.", []string{"v", "vn", "việt nam."}),
+		},
+		{
+			name:      "macro_vn_enter",
+			mTable:    map[string]string{"vn": "việt nam"},
+			keyEvents: generateKeyEvents("vn", []string{"v", "vn"}, enter("việt nam")),
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			tc.inputMode = config.AdaptiveCommitIM
+			assertEngine(t, tc, func(t testing.TB, fe *fakeEngine, e IEngine) {
+				_ = e.SetCapabilities(IBusCapSurroundingText)
+				for _, ev := range tc.keyEvents {
+					keys := ev.keys
+					t.Logf("Processing key %c %v", rune(keys[0]), keys)
+					ret, _ := e.ProcessKeyEvent(keys[0], keys[1], keys[2])
+					if ret != ev.canBeProcessed {
+						t.Errorf("Is key can be processed? expected (%v), got (%v).", ev.canBeProcessed, ret)
+					}
+					if fe.commitText != ev.expectedCommitText {
+						t.Errorf("Commit text, expected (%s), got (%s).", ev.expectedCommitText, fe.commitText)
+					}
+				}
+			})
+		})
+	}
+}
+
+func TestShouldAppendDeadKeyInChromium(t *testing.T) {
+	cfg := config.DefaultCfg()
+	inputMethod := bamboo.ParseInputMethod(cfg.InputMethodDefinitions, cfg.InputMethod)
+	e := NewIbusBambooEngine("test", &cfg, NewFakeEngine(), bamboo.NewEngine(inputMethod, cfg.Flags))
+	e.isFirstTimeSendingBS = true
+	e.wmClasses = "google-chrome:Google-chrome"
+
+	if e.shouldAppendDeadKey("á", "") {
+		t.Fatal("should not append deadkey for the first composed word in Chromium-like browsers")
+	}
+	if e.shouldAppendDeadKey("cá", "ca") {
+		t.Fatal("should not append deadkey in Chromium-like browsers")
+	}
+
+	e.wmClasses = "Navigator:Firefox"
+	if !e.shouldAppendDeadKey("cá", "ca") {
+		t.Fatal("should keep browser deadkey workaround for Firefox")
+	}
+}
+
 func assertEngine(t testing.TB, tc testCase, assertFn func(testing.TB, *fakeEngine, IEngine)) {
 	fe := NewFakeEngine()
 	engineName := "test"

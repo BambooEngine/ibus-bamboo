@@ -8,6 +8,7 @@ const (
 	ForwardAsCommitIM
 	XTestFakeKeyEventIM
 	UsIM
+	AdaptiveCommitIM
 )
 
 var ImLookupTable = map[int]string{
@@ -18,6 +19,7 @@ var ImLookupTable = map[int]string{
 	ForwardAsCommitIM:     "Sửa lỗi gạch chân (Forward as commit)",
 	XTestFakeKeyEventIM:   "Sửa lỗi gạch chân (XTestFakeKeyEvent)",
 	UsIM:                  "Thêm vào danh sách loại trừ",
+	AdaptiveCommitIM:      "Sửa lỗi gạch chân (Adaptive commit)",
 }
 
 var ImBackspaceList = []int{
@@ -26,6 +28,7 @@ var ImBackspaceList = []int{
 	ShiftLeftForwardingIM,
 	ForwardAsCommitIM,
 	XTestFakeKeyEventIM,
+	AdaptiveCommitIM,
 }
 
 const (

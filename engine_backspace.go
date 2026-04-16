@@ -32,6 +32,8 @@ import (
 )
 
 const BACKSPACE_INTERVAL = 0
+const AdaptiveCommitCooldown = 5 * 1000 * 1000
+const AdaptiveCommitBackspaceDelay = 2 * time.Millisecond
 
 func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
 	if isMovementKey(keyVal) {
@@ -172,6 +174,12 @@ func (e *IBusBambooEngine) shouldAppendDeadKey(newText, oldText string) bool {
 	var offset = e.getPreeditOffset(newRunes, oldRunes)
 
 	// workaround for chrome and firefox's address bar
+	if e.checkInputMode(config.AdaptiveCommitIM) {
+		return false
+	}
+	if e.inChromiumLikeBrowser() {
+		return false
+	}
 	if e.isFirstTimeSendingBS && offset < len(newRunes) && offset < len(oldRunes) && e.inBrowserList() &&
 		!e.checkInputMode(config.ShiftLeftForwardingIM) {
 		return true
@@ -269,7 +277,11 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 	// and normal string committing, so we'll not commit right now
 	// but delay until all the sent backspaces got processed.
 	var now = time.Now()
-	var delta = 50*1000*1000 - (now.UnixNano() - e.lastCommitText)
+	var cooldown int64 = 50 * 1000 * 1000
+	if e.checkInputMode(config.AdaptiveCommitIM) {
+		cooldown = AdaptiveCommitCooldown
+	}
+	var delta = cooldown - (now.UnixNano() - e.lastCommitText)
 	if delta > 0 {
 		time.Sleep(time.Duration(delta) * time.Nanosecond)
 	}
@@ -300,6 +312,13 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 			e.ForwardKeyEvent(IBusBackSpace, XkBackspace-8, IBusReleaseMask)
 		}
 		time.Sleep(time.Duration(n) * (20 + BACKSPACE_INTERVAL) * time.Millisecond)
+	} else if e.checkInputMode(config.AdaptiveCommitIM) {
+		log.Printf("Sendding %d backspace via adaptive ForwardKeyEvent\n", n)
+		for i := 0; i < n; i++ {
+			e.ForwardKeyEvent(IBusBackSpace, XkBackspace-8, 0)
+			e.ForwardKeyEvent(IBusBackSpace, XkBackspace-8, IBusReleaseMask)
+		}
+		time.Sleep(AdaptiveCommitBackspaceDelay)
 	} else if e.checkInputMode(config.ShiftLeftForwardingIM) {
 		time.Sleep(30 * time.Millisecond)
 		log.Printf("Sendding %d Shift+Left via shiftLeftForwardingIM\n", n)
@@ -331,17 +350,9 @@ func (e *IBusBambooEngine) bsCommitText(rs []rune) {
 	if len(rs) == 0 {
 		return
 	}
-	if e.checkInputMode(config.ForwardAsCommitIM) {
-		log.Println("Forward as commit", string(rs))
-		for _, chr := range rs {
-			var keyVal = vnSymMapping[chr]
-			if keyVal == 0 {
-				keyVal = uint32(chr)
-			}
-			e.ForwardKeyEvent(keyVal, 0, 0)
-			e.ForwardKeyEvent(keyVal, 0, IBusReleaseMask)
-		}
-		time.Sleep(time.Duration(len(rs)) * 5 * time.Millisecond)
+	if e.checkInputMode(config.ForwardAsCommitIM) || e.checkInputMode(config.AdaptiveCommitIM) {
+		log.Println("Direct commit", string(rs))
+		e.commitText(string(rs))
 		return
 	}
 	e.commitText(string(rs))

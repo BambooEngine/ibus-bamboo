@@ -159,6 +159,15 @@ func (e *fakeEngine) CommitText(text *ibus.Text) {
 // @signal(signature="uuu")
 func (e *fakeEngine) ForwardKeyEvent(keyval uint32, keycode uint32, state uint32) {
 	e.forwardKeyEvent = [3]uint32{keyval, keycode, state}
+	if state&IBusReleaseMask != 0 {
+		return
+	}
+	if keyval == IBusBackSpace {
+		s := []rune(e.commitText)
+		if len(s) > 0 {
+			e.commitText = string(s[:len(s)-1])
+		}
+	}
 }
 
 // @signal(signature="vubu")

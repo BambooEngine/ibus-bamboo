@@ -323,7 +323,7 @@ func (e *IBusBambooEngine) openLookupTable() {
 		wmClass = wmClasses[1]
 	}
 
-	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (1/2/3/4/5/6/7) để lưu tùy chọn của bạn"), true)
+	e.UpdateAuxiliaryText(ibus.NewText("Nhấn (1/2/3/4/5/6/7/8) để lưu tùy chọn của bạn"), true)
 
 	lt := ibus.NewLookupTable()
 	lt.PageSize = uint32(len(config.ImLookupTable))
@@ -375,7 +375,7 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 		e.closeInputModeCandidates()
 		return true, true
 	}
-	if keyRune >= '1' && keyRune <= '7' {
+	if keyRune >= '1' && keyRune <= '8' {
 		if pos, err := strconv.Atoi(string(keyRune)); err == nil {
 			if e.inputModeLookupTable.SetCursorPos(uint32(pos - 1)) {
 				e.commitInputModeCandidate()
@@ -573,6 +573,10 @@ func (e *IBusBambooEngine) inBackspaceWhiteList() bool {
 
 func (e *IBusBambooEngine) inBrowserList() bool {
 	return inStringList(DefaultBrowserList, e.getWmClass())
+}
+
+func (e *IBusBambooEngine) inChromiumLikeBrowser() bool {
+	return inStringList(ChromiumBrowserList, e.getWmClass())
 }
 
 func (e *IBusBambooEngine) getWmClass() string {
