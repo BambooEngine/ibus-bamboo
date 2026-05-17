@@ -64,17 +64,11 @@ var enabledAuxiliaryTextList = []string{
 	"wpsoffice:wpsoffice",
 }
 
-var disabledMouseCapturingList = []string{
-	"DesktopEditors",                //onlyoffice
-	"DesktopEditors:DesktopEditors", //onlyoffice
-}
-
 var DefaultBrowserList = []string{
 	"Navigator:Firefox",
 	"google-chrome:Google-chrome",
 	"chromium-browser:Chromium-browser",
 }
-
 
 func getEngineSubFile(fileName string) string {
 	if _, err := os.Stat(fileName); err == nil {

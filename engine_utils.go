@@ -27,7 +27,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"time"
 	"unicode"
@@ -86,39 +85,6 @@ func (e *IBusBambooEngine) init() {
 		}
 	}
 	keyPressHandler = e.keyPressForwardHandler
-
-	if e.config.IBflags&config.IBmouseCapturing != 0 {
-		startMouseCapturing()
-		startMouseRecording()
-	}
-	var mouseMutex sync.Mutex
-	onMouseMove = func() {
-		mouseMutex.Lock()
-		defer mouseMutex.Unlock()
-		if e.checkInputMode(config.PreeditIM) {
-			if e.getRawKeyLen() == 0 {
-				return
-			}
-			e.commitPreeditAndReset(e.getPreeditString())
-		}
-	}
-	onMouseClick = func() {
-		mouseMutex.Lock()
-		defer mouseMutex.Unlock()
-		if e.isEmojiLTOpened {
-			e.refreshEmojiCandidate()
-		} else {
-			e.resetFakeBackspace()
-			e.resetBuffer()
-			e.keyPressDelay = KeypressDelayMs
-			if e.capabilities&IBusCapSurroundingText != 0 {
-				//e.ForwardKeyEvent(IBUS_Shift_R, XK_Shift_R-8, 0)
-				x11SendShiftR()
-				e.isSurroundingTextReady = true
-				e.keyPressDelay = KeypressDelayMs * 10
-			}
-		}
-	}
 }
 
 func initConfigFiles(engineName string) {
@@ -418,6 +384,7 @@ func (e *IBusBambooEngine) updateInputModeLT() {
 func isValidState(state uint32) bool {
 	if state&IBusControlMask != 0 ||
 		state&IBusMod1Mask != 0 ||
+		state&IBusMod4Mask != 0 ||
 		state&IBusIgnoredMask != 0 ||
 		state&IBusSuperMask != 0 ||
 		state&IBusHyperMask != 0 ||

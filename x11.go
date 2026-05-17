@@ -29,12 +29,6 @@ extern void x11Paste(int);
 extern void clipboard_init();
 extern void clipboard_exit();
 extern void x11ClipboardReset();
-extern void mouse_capture_init();
-extern void mouse_capture_exit();
-extern void mouse_capture_unlock();
-extern void mouse_capture_start_or_unlock();
-extern void mouse_recording_init();
-extern void mouse_recording_exit();
 extern void x11SendBackspace(int n, int timeout);
 extern void x11SendShiftR();
 extern void x11SendShiftLeft(int n, int r, int timeout);
@@ -58,67 +52,12 @@ func init() {
 	C.setXIgnoreErrorHandler()
 }
 
-//export mouse_move_handler
-func mouse_move_handler() {
-	onMouseMove()
-}
-
-//export mouse_click_handler
-func mouse_click_handler() {
-	onMouseClick()
-}
-
-var onMouseMove func()
-var onMouseClick func()
-
 func x11StartWindowInspector() {
 	C.x11StartWindowInspector()
 }
 
 func x11StopWindowInspector() {
 	C.x11StopWindowInspector()
-}
-
-func startMouseRecording() {
-	C.mouse_recording_init()
-}
-
-func stopMouseRecording() {
-	C.mouse_recording_exit()
-}
-
-func startMouseCapturing() {
-	mcapMutex.Lock()
-	defer mcapMutex.Unlock()
-	if !mcapRunning {
-		C.mouse_capture_init()
-		mcapRunning = true
-	}
-}
-
-func stopMouseCapturing() {
-	mcapMutex.RLock()
-	defer mcapMutex.RUnlock()
-	if mcapRunning {
-		C.mouse_capture_exit()
-	}
-}
-
-func mouseCaptureStartOrUnlock() {
-	mcapMutex.Lock()
-	defer mcapMutex.Unlock()
-	if !mcapRunning {
-		C.mouse_capture_start_or_unlock()
-		mcapRunning = true
-	}
-}
-
-func mouseCaptureUnlock() {
-	mcapMutex.RLock()
-	defer mcapMutex.RUnlock()
-	if mcapRunning {
-		C.mouse_capture_unlock()
-	}
 }
 
 func x11Copy(str string) {

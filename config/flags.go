@@ -40,17 +40,17 @@ const (
 	IBspellCheckWithRules
 	IBspellCheckWithDicts
 	IBautoCommitWithDelay
-	IBautoCommitWithMouseMovement
-	_IBemojiDisabled //deprecated
+	_IBautoCommitWithMouseMovement //deprecated
+	_IBemojiDisabled               //deprecated
 	IBpreeditElimination
 	_IBinputModeLookupTableEnabled //deprecated
 	IBautoCapitalizeMacro
 	_IBimQuickSwitchEnabled     //deprecated
 	_IBrestoreKeyStrokesEnabled //deprecated
-	IBmouseCapturing
+	_IBmouseCapturing           //deprecated
 	IBworkaroundForFBMessenger
 	IBworkaroundForWPS
 	IBstdFlags = IBspellCheckEnabled | IBspellCheckWithRules | IBautoNonVnRestore | IBddFreeStyle |
-		IBmouseCapturing | IBautoCapitalizeMacro | IBnoUnderline | IBworkaroundForWPS
+		IBautoCapitalizeMacro | IBnoUnderline | IBworkaroundForWPS
 	IBUsStdFlags = 0
 )
