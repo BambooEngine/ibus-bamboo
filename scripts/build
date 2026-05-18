@@ -1,6 +1,6 @@
 # Ibus bamboo
 ibus_e_name="ibus-engine-bamboo"
-version="0.8.4"
+version="0.8.5"
 
 # Go flags
 LDFLAGS="-w -s -X main.Version=${version}"

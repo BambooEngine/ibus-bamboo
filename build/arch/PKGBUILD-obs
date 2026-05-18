@@ -17,13 +17,13 @@
 #
 # Maintainer: Luong Thanh Lam <ltlam93@gmail.com>
 pkgname=ibus-bamboo
-pkgver=0.8.4
+pkgver=0.8.5
 pkgrel=1
 pkgdesc='A Vietnamese IME for IBus'
 arch=(any)
 license=(GPL3)
 url="https://github.com/BambooEngine/ibus-bamboo"
-optdepends=('ibus')
+depends=('ibus')
 makedepends=('go' 'libibus' 'libx11' 'gtk3' 'libxtst')
 source=("$pkgname-$pkgver.tar.gz")
 md5sums=('SKIP')

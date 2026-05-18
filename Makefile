@@ -23,7 +23,7 @@ engine_name=bamboo
 engine_gui_name=ibus-setup-Bamboo.desktop
 ibus_e_name=ibus-engine-$(engine_name)
 pkg_name=ibus-$(engine_name)
-version=0.8.4
+version=0.8.5
 
 engine_dir=$(PREFIX)/share/$(pkg_name)
 ibus_dir=$(PREFIX)/share/ibus
@@ -64,14 +64,14 @@ uninstall:
 
 src: clean
 	tar -zcf $(DESTDIR)/$(tar_file) $(tar_options_src)
-	cp -f data/$(pkg_name).spec $(DESTDIR)/
-	cp -f data/$(pkg_name).dsc $(DESTDIR)/
+	cp -f build/rpm/$(pkg_name).spec $(DESTDIR)/
 	cp -r build/deb debian
+	cp -f debian/$(pkg_name).dsc $(DESTDIR)/
 	cp -f debian/changelog $(DESTDIR)/debian.changelog
 	cp -f debian/control $(DESTDIR)/debian.control
 	cp -f debian/compat $(DESTDIR)/debian.compat
 	cp -f debian/rules $(DESTDIR)/debian.rules
-	cp -f archlinux/PKGBUILD-obs $(DESTDIR)/PKGBUILD
+	cp -f build/arch/PKGBUILD-obs $(DESTDIR)/PKGBUILD
 
 
 rpm: clean

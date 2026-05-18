@@ -6,7 +6,7 @@
 %define _unpackaged_files_terminate_build 0
 
 Name: ibus-bamboo
-Version: 0.8.4
+Version: 0.8.5
 Release: 1%{?dist}
 Summary: A Vietnamese input method for IBus
 
@@ -29,7 +29,7 @@ Bộ gõ tiếng Việt mã nguồn mở hỗ trợ hầu hết các bảng mã 
 make build
 
 %install
-make DESTDIR=%{buildroot} install
+make PREFIX=%{_prefix} DESTDIR=%{buildroot} install
 
 %files
 %defattr(-,root,root)

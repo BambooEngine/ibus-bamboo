@@ -23,3 +23,6 @@ export GOCACHE = /tmp/.cache
 # This forces Debhelper to execute: make install DESTDIR=... PREFIX=/usr
 override_dh_auto_install:
 	dh_auto_install -- PREFIX=/usr
+
+override_dh_auto_test:
+	CGO_ENABLED=0 dh_auto_test
