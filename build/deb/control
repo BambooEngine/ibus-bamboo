@@ -17,7 +17,7 @@
 #
 Source: ibus-bamboo
 Section: utils
-Priority: extra
+Priority: optional
 Maintainer: Luong Thanh Lam <ltlam93@gmail.com>
 Build-Depends: debhelper, golang, libibus-1.0-dev, libx11-dev, libxtst-dev, libgtk-3-dev
 Standards-Version: 0.8.4
@@ -25,7 +25,7 @@ Homepage: https://github.com/BambooEngine/ibus-bamboo
 
 Package: ibus-bamboo
 Architecture: any
-Depends: ibus, libgtk-3-0
+Depends: ${shlibs:Depends}, ${misc:Depends}, ibus, libgtk-3-0
 Description: A Vietnamese IME for IBus using Bamboo Engine.
  Bộ gõ tiếng Việt mã nguồn mở hỗ trợ hầu hết các bảng mã thông dụng,
  các kiểu gõ tiếng Việt phổ biến, bỏ dấu thông minh, kiểm tra chính tả, gõ tắt,...

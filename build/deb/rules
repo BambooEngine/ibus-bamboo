@@ -19,3 +19,7 @@
 export GOCACHE = /tmp/.cache
 %:
 	dh $@
+
+# This forces Debhelper to execute: make install DESTDIR=... PREFIX=/usr
+override_dh_auto_install:
+	dh_auto_install -- PREFIX=/usr

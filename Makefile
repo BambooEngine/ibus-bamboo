@@ -66,6 +66,7 @@ src: clean
 	tar -zcf $(DESTDIR)/$(tar_file) $(tar_options_src)
 	cp -f data/$(pkg_name).spec $(DESTDIR)/
 	cp -f data/$(pkg_name).dsc $(DESTDIR)/
+	cp -r build/deb debian
 	cp -f debian/changelog $(DESTDIR)/debian.changelog
 	cp -f debian/control $(DESTDIR)/debian.control
 	cp -f debian/compat $(DESTDIR)/debian.compat
@@ -78,7 +79,8 @@ rpm: clean
 	rpmbuild $(pkg_name).spec -ba
 
 deb: clean
+	cp -r build/deb debian
 	dpkg-buildpackage
-
+	rm -rf debian
 
 .PHONY: build clean build install uninstall src rpm deb
