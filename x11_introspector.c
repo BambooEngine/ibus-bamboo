@@ -99,6 +99,9 @@ char * x11GetFocusWindowClassByDpy(Display *display) {
 char * x11GetFocusWindowClass() {
     Display * dpy;
     dpy = XOpenDisplay(NULL);
+    if (dpy == NULL) {
+        return NULL;
+    }
     char * wm = x11GetFocusWindowClassByDpy(dpy);
     XCloseDisplay(dpy);
     return wm;

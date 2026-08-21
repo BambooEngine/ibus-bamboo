@@ -18,3 +18,11 @@ func TestSortStringList(t *testing.T) {
 		t.Errorf("Sorting strings, expected %s, got %s", "ca", data[0])
 	}
 }
+
+func TestX11GetFocusWindowClassWithoutDisplay(t *testing.T) {
+	t.Setenv("DISPLAY", "")
+
+	if wmClass := x11GetFocusWindowClass(); wmClass != "" {
+		t.Fatalf("expected no window class without an X display, got %q", wmClass)
+	}
+}
