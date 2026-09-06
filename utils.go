@@ -199,7 +199,7 @@ func loadDictionary(dataFiles ...string) (map[string]bool, error) {
 }
 
 func isMovementKey(keyVal uint32) bool {
-	var list = []uint32{IBusLeft, IBusRight, IBusUp, IBusDown, IBusPageDown, IBusPageUp, IBusEnd}
+	var list = []uint32{IBusLeft, IBusRight, IBusUp, IBusDown, IBusPageDown, IBusPageUp, IBusHome, IBusEnd}
 	for _, item := range list {
 		if item == keyVal {
 			return true

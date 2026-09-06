@@ -158,11 +158,11 @@ func TestPreeditEngine(t *testing.T) {
 					if ret != ev.canBeProcessed {
 						t.Errorf("Is key can be processed? expected (%v), got (%v).", ev.canBeProcessed, ret)
 					}
-					if ev.canBeProcessed && fe.preeditText != ev.expectedPreeditText {
-						t.Errorf("Preedit text, expected (%s), got (%s).", ev.expectedPreeditText, fe.preeditText)
+					if ev.canBeProcessed && fe.getPreeditText() != ev.expectedPreeditText {
+						t.Errorf("Preedit text, expected (%s), got (%s).", ev.expectedPreeditText, fe.getPreeditText())
 					}
-					if !ev.canBeProcessed && ev.expectedCommitText != fe.commitText {
-						t.Errorf("Commit text, expected (%s), got (%s).", ev.expectedCommitText, fe.commitText)
+					if !ev.canBeProcessed && ev.expectedCommitText != fe.getCommitText() {
+						t.Errorf("Commit text, expected (%s), got (%s).", ev.expectedCommitText, fe.getCommitText())
 					}
 				}
 			})
@@ -276,8 +276,8 @@ func TestBsEngine(t *testing.T) {
 					if ret != ev.canBeProcessed {
 						t.Errorf("Is key can be processed? expected (%v), got (%v).", ev.canBeProcessed, ret)
 					}
-					if fe.commitText != ev.expectedCommitText {
-						t.Errorf("Commit text, expected (%s), got (%s).", ev.expectedCommitText, fe.commitText)
+					if fe.getCommitText() != ev.expectedCommitText {
+						t.Errorf("Commit text, expected (%s), got (%s).", ev.expectedCommitText, fe.getCommitText())
 					}
 				}
 			})

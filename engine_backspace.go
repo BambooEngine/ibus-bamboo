@@ -37,7 +37,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 	if isMovementKey(keyVal) {
 		e.preeditor.Reset()
 		e.resetFakeBackspace()
-		e.isSurroundingTextReady = true
+		e.surroundingTextReady = true
 		return false, nil
 	}
 	var keyRune = rune(keyVal)
