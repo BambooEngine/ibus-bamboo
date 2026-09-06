@@ -60,6 +60,7 @@ const (
 )
 const (
 	IBusTab             = 0xff09
+	IBusHome            = 0xff50
 	IBusEnd             = 0xff57
 	IBusColon           = 0x03a
 	IBusLeft            = 0xFF51

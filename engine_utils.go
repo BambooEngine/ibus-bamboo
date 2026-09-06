@@ -41,8 +41,6 @@ var dictionary = map[string]bool{}
 var emojiTrie = NewTrie()
 
 func GetIBusEngineCreator() func(*dbus.Conn, string) dbus.ObjectPath {
-	go keyPressCapturing()
-
 	return func(conn *dbus.Conn, ngName string) dbus.ObjectPath {
 		var ngGroupName = strings.Split(ngName, "::")[0]
 		var engineName = strings.ToLower(ngGroupName)
@@ -51,7 +49,7 @@ func GetIBusEngineCreator() func(*dbus.Conn, string) dbus.ObjectPath {
 		var objectPath = dbus.ObjectPath(fmt.Sprintf("/org/freedesktop/IBus/Engine/%s/%d", engineName, time.Now().UnixNano()))
 		var inputMethod = bamboo.ParseInputMethod(cfg.InputMethodDefinitions, cfg.InputMethod)
 		baseEngine := ibus.BaseEngine(conn, objectPath)
-		var engine = NewIbusBambooEngine(engineName, config.LoadConfig(engineName), &baseEngine, bamboo.NewEngine(inputMethod, cfg.Flags))
+		var engine = NewIbusBambooEngine(engineName, cfg, &baseEngine, bamboo.NewEngine(inputMethod, cfg.Flags))
 		engine.propList = GetPropListByConfig(cfg)
 		engine.shouldEnqueuKeyStrokes = true
 		ibus.PublishEngine(conn, objectPath, engine)
@@ -77,14 +75,6 @@ func (e *IBusBambooEngine) isShortcutKeyEnable(ski uint) bool {
 
 func (e *IBusBambooEngine) init() {
 	initConfigFiles(e.engineName)
-	e.emoji = NewEmojiEngine()
-	if e.macroTable == nil {
-		e.macroTable = NewMacroTable(e.config.IBflags&config.IBautoCapitalizeMacro != 0)
-		if e.config.IBflags&config.IBmacroEnabled != 0 {
-			e.macroTable.Enable(e.engineName)
-		}
-	}
-	keyPressHandler = e.keyPressForwardHandler
 }
 
 func initConfigFiles(engineName string) {
@@ -108,24 +98,30 @@ func initConfigFiles(engineName string) {
 	}
 }
 
-var keyPressHandler = func(keyVal, keyCode, state uint32) {}
-var keyPressChan = make(chan [3]uint32, 100)
-var lenKeyChan int32
-
-func keyPressCapturing() {
-	for keyEvents := range keyPressChan {
-		atomic.StoreInt32(&lenKeyChan, int32(len(keyPressChan)))
-
+// keyPressCapturing drains this engine's own queue sequentially. The lock
+// is taken per key, never across channel operations, so a producer blocked
+// on a full queue can always make progress via a lock-free receive here.
+func (e *IBusBambooEngine) keyPressCapturing() {
+	for keyEvents := range e.keyPressChan {
 		var keyVal, keyCode, state = keyEvents[0], keyEvents[1], keyEvents[2]
-		keyPressHandler(keyVal, keyCode, state)
-
-		atomic.AddInt32(&lenKeyChan, -1)
+		e.Lock()
+		e.keyPressForwardHandler(keyVal, keyCode, state)
+		e.Unlock()
+		atomic.AddInt32(&e.keyQueueLen, -1)
 	}
 }
 
-var sleep = func() {
+func (e *IBusBambooEngine) enqueueKeyPress(keyVal, keyCode, state uint32) {
+	atomic.AddInt32(&e.keyQueueLen, 1)
+	e.keyPressChan <- [3]uint32{keyVal, keyCode, state}
+}
+
+// waitForQueueDrain pauses until keys queued ahead of the current one are
+// handled. It only performs bounded atomic loads, so it is safe to call
+// with the engine lock held.
+func (e *IBusBambooEngine) waitForQueueDrain() {
 	var i = 0
-	for i < 10 && atomic.LoadInt32(&lenKeyChan) > 0 {
+	for i < 10 && atomic.LoadInt32(&e.keyQueueLen) > 0 {
 		i++
 		time.Sleep(5 * time.Millisecond)
 	}
