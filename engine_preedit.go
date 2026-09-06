@@ -155,7 +155,8 @@ func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
 		return false
 	}
 	if e.config.IBflags&config.IBspellCheckWithDicts != 0 {
-		return !dictionary[vnSeq]
+		dict, _ := dictionary.Load().(map[string]bool)
+		return !dict[vnSeq]
 	}
 	return !e.preeditor.IsValid(true)
 }

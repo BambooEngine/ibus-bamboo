@@ -53,7 +53,9 @@ func main() {
 	}
 	flag.Parse()
 	if *embedded {
-		os.Chdir(DataDir)
+		if err := os.Chdir(DataDir); err != nil {
+			log.Printf("chdir %s: %s (continuing)", DataDir, err)
+		}
 	}
 	if isWayland && !isGnome {
 		go wlGetFocusWindowClass()
@@ -63,7 +65,9 @@ func main() {
 	} else if *embedded {
 		engine := GetIBusEngineCreator()
 		bus := ibus.NewBus()
-		bus.RequestName(ComponentName, 0)
+		if _, err := bus.RequestName(ComponentName, 0); err != nil {
+			log.Printf("RequestName %s: %s", ComponentName, err)
+		}
 
 		conn := bus.GetDbusConn()
 		ibus.NewFactory(conn, engine)
@@ -87,7 +91,9 @@ func main() {
 		conn := bus.GetDbusConn()
 		ibus.NewFactory(conn, GetIBusEngineCreator())
 
-		bus.CallMethod("SetGlobalEngine", 0, EngineName+"Standalone")
+		if call := bus.CallMethod("SetGlobalEngine", 0, EngineName+"Standalone"); call.Err != nil {
+			log.Printf("SetGlobalEngine: %s", call.Err)
+		}
 
 		select {}
 	}

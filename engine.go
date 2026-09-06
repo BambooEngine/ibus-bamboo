@@ -26,6 +26,7 @@ import (
 	"reflect"
 	"strconv"
 	"sync"
+	"sync/atomic"
 
 	"github.com/BambooEngine/bamboo-core"
 	ibus "github.com/BambooEngine/goibus"
@@ -35,42 +36,62 @@ import (
 	"ibus-bamboo/ui"
 )
 
+// Locking convention: IBus invokes engine methods on D-Bus threads while a
+// per-engine goroutine drains keyPressChan. Every method that touches the
+// preeditor or composition state must hold e's mutex, except helpers
+// documented as requiring the caller to hold it. Slow or blocking work
+// (X11/Wayland lookups, GUI, notifications) stays outside the lock.
 type IBusBambooEngine struct {
 	sync.Mutex
 	IEngine
-	preeditor              bamboo.IEngine
-	engineName             string
-	config                 *config.Config
-	propList               *ibus.PropList
-	englishMode            bool
-	macroTable             *MacroTable
-	wmClasses              string
-	isInputModeLTOpened    bool
-	isEmojiLTOpened        bool
-	isInHexadecimal        bool
-	emojiLookupTable       *ibus.LookupTable
-	inputModeLookupTable   *ibus.LookupTable
-	capabilities           uint32
-	keyPressDelay          int
-	nFakeBackSpace         int32
-	isFirstTimeSendingBS   bool
-	emoji                  *EmojiEngine
-	isSurroundingTextReady bool
-	lastKeyWithShift       bool
-	lastCommitText         int64
+	preeditor            bamboo.IEngine
+	engineName           string
+	config               *config.Config
+	propList             *ibus.PropList
+	englishMode          bool
+	macroTable           *MacroTable
+	wmClasses            string
+	isInputModeLTOpened  bool
+	isEmojiLTOpened      bool
+	isInHexadecimal      bool
+	emojiLookupTable     *ibus.LookupTable
+	inputModeLookupTable *ibus.LookupTable
+	capabilities         uint32
+	keyPressDelay        int
+	nFakeBackSpace       int32
+	isFirstTimeSendingBS bool
+	emoji                *EmojiEngine
+	surroundingTextReady bool
+	lastKeyWithShift     bool
+	lastCommitText       int64
 	// restore key strokes by pressing Shift + Space
 	shouldRestoreKeyStrokes bool
 	// enqueue key strokes to process later
 	shouldEnqueuKeyStrokes bool
+	// per-engine key queue; replaces the former process-wide globals so
+	// concurrently created engines (Bamboo, BambooUs, variants, daemon
+	// re-initialization) can never consume each other's keystrokes.
+	keyPressChan chan [3]uint32
+	keyQueueLen  int32 // atomically counted pending queue items
 }
 
 func NewIbusBambooEngine(name string, cfg *config.Config, base IEngine, preeditor bamboo.IEngine) *IBusBambooEngine {
-	return &IBusBambooEngine{
+	e := &IBusBambooEngine{
 		engineName: name,
 		IEngine:    base,
 		preeditor:  preeditor,
 		config:     cfg,
 	}
+	// Initialized here (not in the async init) so no key/focus/property
+	// handler can observe a nil emoji engine or macro table on startup.
+	e.emoji = NewEmojiEngine()
+	e.macroTable = NewMacroTable(cfg.IBflags&config.IBautoCapitalizeMacro != 0)
+	if cfg.IBflags&config.IBmacroEnabled != 0 {
+		e.macroTable.Enable(name)
+	}
+	e.keyPressChan = make(chan [3]uint32, 100)
+	go e.keyPressCapturing()
+	return e
 }
 
 /*
@@ -97,8 +118,10 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 		// fmt.Println("Ignore key-up event")
 		return false, nil
 	}
+	e.Lock()
+	defer e.Unlock()
 	fmt.Printf("\n")
-	log.Printf(">>>>ProcessKeyEvent >  %d | state %d keyVal 0x%04x | %c <<<<\n", len(keyPressChan), state, keyVal, rune(keyVal))
+	log.Printf(">>>>ProcessKeyEvent >  %d | state %d keyVal 0x%04x | %c <<<<\n", atomic.LoadInt32(&e.keyQueueLen), state, keyVal, rune(keyVal))
 	if ret, retValue := e.processShortcutKey(keyVal, keyCode, state); ret {
 		return retValue, nil
 	}
@@ -110,83 +133,149 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 
 func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 	log.Print("FocusIn.")
+	// Slow lookups stay outside the engine lock.
 	var latestWm = e.getLatestWmClass()
+	e.Lock()
 	e.checkWmClass(latestWm)
-	e.RegisterProperties(e.propList)
+	propList := e.propList
+	emojiShortcut := e.isShortcutKeyEnable(KSEmojiDialog)
+	ibflags := e.config.IBflags
+	e.surroundingTextReady = true
+	e.Unlock()
+	e.RegisterProperties(propList)
 	e.RequireSurroundingText()
-	if e.isShortcutKeyEnable(KSEmojiDialog) && emojiTrie != nil && len(emojiTrie.Children) == 0 {
-		var err error
-		emojiTrie, err = loadEmojiOne(DictEmojiOne)
-		if err != nil {
-			panic(fmt.Sprintf("failed to load emojiTrie from %s: %s", DictEmojiOne, err))
-		}
-	}
-	if e.config.IBflags&config.IBspellCheckWithDicts != 0 && len(dictionary) == 0 {
-		dictionary, _ = loadDictionary(DictVietnameseCm)
-	}
-	fmt.Printf("WM_CLASS=(%s)\n", e.getWmClass())
+	e.ensureLazyData(emojiShortcut, ibflags)
+	fmt.Printf("WM_CLASS=(%s)\n", latestWm)
 	return nil
 }
 
 func (e *IBusBambooEngine) FocusOut() *dbus.Error {
 	log.Print("FocusOut.")
+	e.Lock()
+	defer e.Unlock()
+	// Commit pending preedit to the losing window now; otherwise the next
+	// FocusIn would commit it into the newly focused window.
+	e.resetBuffer()
+	e.resetFakeBackspace()
+	if e.isEmojiLTOpened {
+		e.closeEmojiCandidates()
+	}
+	if e.isInHexadecimal {
+		e.closeHexadecimalInput()
+	}
+	if e.isInputModeLTOpened {
+		e.closeInputModeCandidates()
+	}
 	return nil
 }
 
 func (e *IBusBambooEngine) Reset() *dbus.Error {
 	fmt.Print("Reset.\n")
-	if e.checkInputMode(config.PreeditIM) {
-		e.preeditor.Reset()
-	}
+	e.Lock()
+	defer e.Unlock()
+	// Reset must clear the composition buffer in every input mode; in
+	// backspace modes the buffer would otherwise leak into the next word.
+	e.preeditor.Reset()
+	e.resetFakeBackspace()
+	e.HidePreeditText()
+	e.HideAuxiliaryText()
 	return nil
 }
 
 func (e *IBusBambooEngine) Enable() *dbus.Error {
 	fmt.Print("Enable.")
+	e.Lock()
+	e.surroundingTextReady = true
+	e.Unlock()
 	e.RequireSurroundingText()
 	return nil
 }
 
 func (e *IBusBambooEngine) Disable() *dbus.Error {
 	fmt.Print("Disable.")
+	e.Lock()
+	defer e.Unlock()
+	// Drop pending state without committing: the user explicitly stopped
+	// the engine, so nothing may leak into the next Enable.
+	e.preeditor.Reset()
+	e.resetFakeBackspace()
+	e.HidePreeditText()
+	e.HideAuxiliaryText()
 	return nil
+}
+
+// extractSurroundingString decodes the text payload of IBus
+// SetSurroundingText, tolerating the shapes godbus may deliver: a plain
+// string, a nested variant, the raw (text, attrs) tuple, or a goibus Text.
+func extractSurroundingString(v interface{}) (string, bool) {
+	if v == nil {
+		return "", false
+	}
+	if s, ok := v.(string); ok {
+		return s, true
+	}
+	if vv, ok := v.(dbus.Variant); ok {
+		return extractSurroundingString(vv.Value())
+	}
+	rv := reflect.ValueOf(v)
+	switch rv.Kind() {
+	case reflect.Slice, reflect.Array:
+		if rv.Len() > 2 {
+			return extractSurroundingString(rv.Index(2).Interface())
+		}
+	case reflect.Struct:
+		// goibus.Text carries the string in its third field.
+		if rv.NumField() > 2 {
+			if f := rv.Field(2); f.Kind() == reflect.String {
+				return f.String(), true
+			} else if f.CanInterface() {
+				return extractSurroundingString(f.Interface())
+			}
+		}
+	}
+	return "", false
 }
 
 // @method(in_signature="vuu")
 func (e *IBusBambooEngine) SetSurroundingText(text dbus.Variant, cursorPos uint32, anchorPos uint32) *dbus.Error {
-	if !e.isSurroundingTextReady {
+	e.Lock()
+	defer e.Unlock()
+	if !e.surroundingTextReady {
 		//fmt.Println("Surrounding Text is not ready yet.")
 		return nil
 	}
-	e.Lock()
-	defer func() {
-		e.Unlock()
-		e.isSurroundingTextReady = false
-		if err := recover(); err != nil {
-			fmt.Println(err)
+	e.surroundingTextReady = false
+	if anchorPos != cursorPos {
+		// A selection is active; don't guess the buffer from one side of it.
+		return nil
+	}
+	if !e.inBackspaceWhiteList() {
+		return nil
+	}
+	str, ok := extractSurroundingString(text.Value())
+	if !ok {
+		return nil
+	}
+	var s = []rune(str)
+	if len(s) < int(cursorPos) {
+		return nil
+	}
+	var cs = s[:cursorPos]
+	fmt.Println("Surrounding Text: ", string(cs))
+	e.preeditor.Reset()
+	for i := len(cs) - 1; i >= 0; i-- {
+		// workaround for spell checking
+		if bamboo.IsPunctuationMark(cs[i]) && e.preeditor.CanProcessKey(cs[i]) {
+			cs[i] = ' '
 		}
-	}()
-	if e.inBackspaceWhiteList() {
-		var str = reflect.ValueOf(reflect.ValueOf(text.Value()).Index(2).Interface()).String()
-		var s = []rune(str)
-		if len(s) < int(cursorPos) {
-			return nil
-		}
-		var cs = s[:cursorPos]
-		fmt.Println("Surrounding Text: ", string(cs))
-		e.preeditor.Reset()
-		for i := len(cs) - 1; i >= 0; i-- {
-			// workaround for spell checking
-			if bamboo.IsPunctuationMark(cs[i]) && e.preeditor.CanProcessKey(cs[i]) {
-				cs[i] = ' '
-			}
-			e.preeditor.ProcessKey(cs[i], bamboo.EnglishMode|bamboo.InReverseOrder)
-		}
+		e.preeditor.ProcessKey(cs[i], bamboo.EnglishMode|bamboo.InReverseOrder)
 	}
 	return nil
 }
 
 func (e *IBusBambooEngine) PageUp() *dbus.Error {
+	e.Lock()
+	defer e.Unlock()
 	if e.isEmojiLTOpened && e.emojiLookupTable.PageUp() {
 		e.updateEmojiLookupTable()
 	}
@@ -197,6 +286,8 @@ func (e *IBusBambooEngine) PageUp() *dbus.Error {
 }
 
 func (e *IBusBambooEngine) PageDown() *dbus.Error {
+	e.Lock()
+	defer e.Unlock()
 	if e.isEmojiLTOpened && e.emojiLookupTable.PageDown() {
 		e.updateEmojiLookupTable()
 	}
@@ -207,6 +298,8 @@ func (e *IBusBambooEngine) PageDown() *dbus.Error {
 }
 
 func (e *IBusBambooEngine) CursorUp() *dbus.Error {
+	e.Lock()
+	defer e.Unlock()
 	if e.isEmojiLTOpened && e.emojiLookupTable.CursorUp() {
 		e.updateEmojiLookupTable()
 	}
@@ -217,6 +310,8 @@ func (e *IBusBambooEngine) CursorUp() *dbus.Error {
 }
 
 func (e *IBusBambooEngine) CursorDown() *dbus.Error {
+	e.Lock()
+	defer e.Unlock()
 	if e.isEmojiLTOpened && e.emojiLookupTable.CursorDown() {
 		e.updateEmojiLookupTable()
 	}
@@ -227,6 +322,8 @@ func (e *IBusBambooEngine) CursorDown() *dbus.Error {
 }
 
 func (e *IBusBambooEngine) CandidateClicked(index uint32, button uint32, state uint32) *dbus.Error {
+	e.Lock()
+	defer e.Unlock()
 	if e.isEmojiLTOpened && e.updateCursorPosInEmojiTable(index) {
 		e.commitEmojiCandidate()
 		e.closeEmojiCandidates()
@@ -239,7 +336,9 @@ func (e *IBusBambooEngine) CandidateClicked(index uint32, button uint32, state u
 }
 
 func (e *IBusBambooEngine) SetCapabilities(cap uint32) *dbus.Error {
+	e.Lock()
 	e.capabilities = cap
+	e.Unlock()
 	return nil
 }
 
@@ -263,19 +362,27 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	}
 	if propName == PropKeyConfiguration {
 		ui.OpenGUI(e.engineName)
+		e.Lock()
 		e.config = config.LoadConfig(e.engineName)
+		e.Unlock()
 		return nil
 	}
 	if propName == PropKeyInputModeLookupTableShortcut {
 		ui.OpenGUI(e.engineName)
+		e.Lock()
 		e.config = config.LoadConfig(e.engineName)
+		e.Unlock()
 		return nil
 	}
 	if propName == PropKeyMacroTable {
 		ui.OpenGUI(e.engineName)
+		e.Lock()
 		e.config = config.LoadConfig(e.engineName)
+		e.Unlock()
 		return nil
 	}
+	e.Lock()
+	defer e.Unlock()
 
 	turnSpellChecking := func(on bool) {
 		if on {
@@ -323,7 +430,11 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		if propState == ibus.PROP_STATE_CHECKED {
 			e.config.IBflags |= config.IBspellCheckWithDicts
 			turnSpellChecking(true)
-			dictionary, _ = loadDictionary(DictVietnameseCm)
+			if d, err := loadDictionary(DictVietnameseCm); err != nil {
+				log.Printf("failed to load dictionary from %s: %s", DictVietnameseCm, err)
+			} else {
+				dictionary.Store(d)
+			}
 		} else {
 			e.config.IBflags &= ^config.IBspellCheckWithDicts
 		}
