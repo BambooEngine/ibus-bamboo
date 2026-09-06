@@ -31,6 +31,7 @@ import (
 type MacroTable struct {
 	sync.RWMutex
 	enable              bool
+	watching            bool
 	autoCapitalizeMacro bool
 	mTable              map[string]string
 }
@@ -45,6 +46,8 @@ func (e *MacroTable) LoadFromFile(macroFileName string) error {
 		return err
 	}
 	defer f.Close()
+	e.Lock()
+	defer e.Unlock()
 	e.mTable = map[string]string{}
 	rd := bufio.NewReader(f)
 	for {
@@ -69,11 +72,15 @@ func (e *MacroTable) LoadFromFile(macroFileName string) error {
 }
 
 func (e *MacroTable) Reload(engineName string, autoCapitalizeMacro bool) {
+	e.Lock()
 	e.autoCapitalizeMacro = autoCapitalizeMacro
+	e.Unlock()
 	e.Enable(engineName)
 }
 
 func (e *MacroTable) GetText(key string) string {
+	e.RLock()
+	defer e.RUnlock()
 	if e.autoCapitalizeMacro {
 		key = strings.ToLower(key)
 	}
@@ -81,6 +88,8 @@ func (e *MacroTable) GetText(key string) string {
 }
 
 func (e *MacroTable) HasKey(key string) bool {
+	e.RLock()
+	defer e.RUnlock()
 	if e.autoCapitalizeMacro {
 		key = strings.ToLower(key)
 	}
@@ -88,6 +97,8 @@ func (e *MacroTable) HasKey(key string) bool {
 }
 
 func (e *MacroTable) HasPrefix(key string) bool {
+	e.RLock()
+	defer e.RUnlock()
 	if e.mTable[key] != "" {
 		return true
 	}
@@ -99,15 +110,35 @@ func (e *MacroTable) HasPrefix(key string) bool {
 	return false
 }
 
+func (e *MacroTable) isEnabled() bool {
+	e.RLock()
+	defer e.RUnlock()
+	return e.enable
+}
+
 func (e *MacroTable) Enable(engineName string) {
+	e.Lock()
 	e.enable = true
+	alreadyWatching := e.watching
+	if !alreadyWatching {
+		e.watching = true
+	}
+	e.Unlock()
+	if alreadyWatching {
+		return
+	}
 
 	go func() {
+		defer func() {
+			e.Lock()
+			e.watching = false
+			e.Unlock()
+		}()
 		modTime := time.Now()
 
 		efPath := config.GetMacroPath(engineName)
 
-		for e.enable {
+		for e.isEnabled() {
 			if sta, _ := os.Stat(efPath); sta != nil {
 				if newModeTime := sta.ModTime(); !newModeTime.Equal(modTime) {
 					modTime = newModeTime
@@ -120,6 +151,8 @@ func (e *MacroTable) Enable(engineName string) {
 }
 
 func (e *MacroTable) Disable() {
+	e.Lock()
+	defer e.Unlock()
 	e.enable = false
 	e.mTable = map[string]string{}
 }
