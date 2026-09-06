@@ -50,16 +50,22 @@ char* uchar2char(unsigned char* uc, unsigned long len) {
  }
 
 char * x11GetStringProperty(Display *display, Window window, char * propName) {
-    Atom actualType, filterAtom, XA_STRING = 31, XA_ATOM = 4;
+    Atom actualType, filterAtom;
     int status, actualFormat = 0;
     unsigned long len, bytesAfter;
     unsigned char * uc = NULL;
 
+    if (display == NULL) {
+        return NULL;
+    }
     filterAtom = XInternAtom(display, propName, True);
     status = XGetWindowProperty(display, window, filterAtom, 0, MaxPropertyLen, False, AnyPropertyType,
         &actualType, &actualFormat, &len, &bytesAfter, &uc);
-    if (status == Success) {
+    if (status == Success && uc != NULL) {
         return uchar2char(uc, len);
+    }
+    if (uc != NULL) {
+        XFree(uc);
     }
     return NULL;
 }
@@ -67,18 +73,24 @@ char * x11GetStringProperty(Display *display, Window window, char * propName) {
 char * x11GetFocusWindowClassByProp(Display *display, char * propName) {
     Window w;
     int revertTo;
+    if (display == NULL) {
+        return NULL;
+    }
     XGetInputFocus(display, &w, &revertTo);
     for (int i=0; i<MaxWmClassesLen; i++) {
         char * strClass = x11GetStringProperty(display, w, propName);
         if (strClass != NULL && strstr(strClass, "FocusProxy") == NULL) {
             return strClass;
         }
-        Window * childrenWindows;
+        if (strClass != NULL) {
+            XFree(strClass);
+        }
+        Window * childrenWindows = NULL;
         Window parentWindow, rootWindow;
         unsigned int nChild = 0;
         XQueryTree(display, w, &rootWindow, &parentWindow, &childrenWindows, &nChild);
         if (childrenWindows != NULL) {
-            //XFree(childrenWindows);
+            XFree(childrenWindows);
         }
         if (rootWindow == parentWindow) {
             break;
@@ -99,6 +111,10 @@ char * x11GetFocusWindowClassByDpy(Display *display) {
 char * x11GetFocusWindowClass() {
     Display * dpy;
     dpy = XOpenDisplay(NULL);
+    if (dpy == NULL) {
+        // No X display (e.g. pure Wayland session): no class to report.
+        return NULL;
+    }
     char * wm = x11GetFocusWindowClassByDpy(dpy);
     XCloseDisplay(dpy);
     return wm;
@@ -122,11 +138,12 @@ static void* thread_input_watching(void* data)
     int revertTo;
     XGetInputFocus(dpy, &w, &revertTo);
     XSelectInput(dpy, w, FocusChangeMask);
-    char * name;
+    char * name = NULL;
     text = (char*)calloc(MAX_TEXT_LEN, sizeof(char));
     char * cl = x11GetFocusWindowClassByDpy(dpy);
     if (cl != NULL) {
-      strcpy(text, cl);
+      strncpy(text, cl, MAX_TEXT_LEN - 1);
+      XFree(cl);
     }
     while (input_watching == 1) {
         XNextEvent(dpy, &event);
@@ -135,14 +152,16 @@ static void* thread_input_watching(void* data)
         if (event.type == FocusIn) {
             cl = x11GetFocusWindowClassByDpy(dpy);
             if (cl != NULL) {
-                strcpy(text, cl);
+                strncpy(text, cl, MAX_TEXT_LEN - 1);
+                XFree(cl);
             }
         }
         XSync(dpy, 0);
         XGetInputFocus(dpy, &w, &revertTo);
-        XFetchName(dpy, w, &name);
-        /* printf("window:%lu name:%s class:%s\n", w, name, text); */
-        XFree(name);
+        if (XFetchName(dpy, w, &name) != 0 && name != NULL) {
+            XFree(name);
+            name = NULL;
+        }
         XSelectInput(dpy, w, FocusChangeMask);
     }
     input_watching = 0;

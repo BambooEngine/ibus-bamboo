@@ -6,17 +6,15 @@ import (
 	"github.com/godbus/dbus/v5"
 )
 
+// Note: dbus.SessionBus is a process-shared connection: it must neither be
+// re-helloed nor closed here. The previous code did both on every FocusIn,
+// churning (or leaking) a bus connection per focus event on GNOME.
 func gnomeGetFocusWindowClass() (string, error) {
 	conn, err := dbus.SessionBus()
 	var s string
 	if err != nil {
 		return s, err
 	}
-	defer func() {
-		if err = conn.Hello(); err == nil {
-			conn.Close()
-		}
-	}()
 
 	js_code := "global.get_window_actors().find(window => !Main.overview.visible && window.meta_window.has_focus()).get_meta_window().get_wm_class()"
 	obj := conn.Object("org.gnome.Shell", "/org/gnome/Shell")

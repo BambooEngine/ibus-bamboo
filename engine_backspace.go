@@ -24,6 +24,7 @@ import (
 	"ibus-bamboo/config"
 	"log"
 	"strings"
+	"sync/atomic"
 	"time"
 	"unicode/utf8"
 
@@ -31,17 +32,20 @@ import (
 	"github.com/godbus/dbus/v5"
 )
 
+// bsProcessKeyEvent, keyPressForwardHandler and keyPressHandler below must
+// be called with the engine lock held (see IBusBambooEngine).
+
 const BACKSPACE_INTERVAL = 0
 
 func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
 	if isMovementKey(keyVal) {
 		e.preeditor.Reset()
 		e.resetFakeBackspace()
-		e.isSurroundingTextReady = true
+		e.surroundingTextReady = true
 		return false, nil
 	}
 	var keyRune = rune(keyVal)
-	if e.config.IBflags&config.IBmacroEnabled == 0 && len(keyPressChan) == 0 && e.getRawKeyLen() == 0 && !inKeyList(e.preeditor.GetInputMethod().AppendingKeys, keyRune) {
+	if e.config.IBflags&config.IBmacroEnabled == 0 && atomic.LoadInt32(&e.keyQueueLen) == 0 && e.getRawKeyLen() == 0 && !inKeyList(e.preeditor.GetInputMethod().AppendingKeys, keyRune) {
 		e.updateLastKeyWithShift(keyVal, state)
 		if e.preeditor.CanProcessKey(keyRune) && isValidState(state) {
 			e.isFirstTimeSendingBS = true
@@ -63,7 +67,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 					e.addFakeBackspace(-1)
 					return false, nil
 				} else {
-					sleep()
+					e.waitForQueueDrain()
 					if e.getRawKeyLen() > 0 {
 						if e.shouldFallbackToEnglish(true) {
 							e.preeditor.RestoreLastWord(false)
@@ -74,7 +78,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 				return false, nil
 			}
 			if keyVal == IBusTab {
-				sleep()
+				e.waitForQueueDrain()
 				if ok, _ := e.getMacroText(); !ok {
 					e.preeditor.Reset()
 					return false, nil
@@ -82,13 +86,18 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 			}
 			isValidKey := isValidState(state) && e.isValidKeyVal(keyVal)
 			if !isValidKey {
-				sleep()
+				e.waitForQueueDrain()
 				return e.keyPressHandler(keyVal, keyCode, state), nil
 			}
 		}
 		// if the main thread is busy processing, the keypress events come all mixed up
-		// so we enqueue these keypress events and process them sequentially on another thread
-		keyPressChan <- [3]uint32{keyVal, keyCode, state}
+		// so we enqueue these keypress events and process them sequentially on another thread.
+		// The engine lock is released across the send: the consumer needs it
+		// to drain, and the send may briefly block when the queue is full.
+		// No state is touched after re-locking, so this is safe.
+		e.Unlock()
+		e.enqueueKeyPress(keyVal, keyCode, state)
+		e.Lock()
 		return true, nil
 	} else {
 		return e.keyPressHandler(keyVal, keyCode, state), nil
@@ -103,7 +112,7 @@ func (e *IBusBambooEngine) keyPressForwardHandler(keyVal, keyCode, state uint32)
 }
 
 func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) bool {
-	// log.Printf(">>Backspace:ProcessKeyEvent >  %c | keyCode 0x%04x keyVal 0x%04x | %d\n", rune(keyVal), keyCode, keyVal, len(keyPressChan))
+	// log.Printf(">>Backspace:ProcessKeyEvent >  %c | keyCode 0x%04x keyVal 0x%04x | %d\n", rune(keyVal), keyCode, keyVal, atomic.LoadInt32(&e.keyQueueLen))
 	defer e.updateLastKeyWithShift(keyVal, state)
 	if e.keyPressDelay > 0 {
 		time.Sleep(time.Duration(e.keyPressDelay) * time.Millisecond)
@@ -200,8 +209,8 @@ func (e *IBusBambooEngine) updatePreviousTextInBatch(oldText, newText string, is
 	}
 	// isDirty means containing runes that are not committed
 	var isDirty = false
-	for i := 0; i < len(keyPressChan); i++ {
-		var keyEvents = <-keyPressChan
+	for i := 0; i < len(e.keyPressChan); i++ {
+		var keyEvents = <-e.keyPressChan
 		var keyVal, keyCode, state = keyEvents[0], keyEvents[1], keyEvents[2]
 		isValidKey := isValidState(state) && e.isValidKeyVal(keyVal)
 		if isValidKey {

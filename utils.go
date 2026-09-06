@@ -85,6 +85,9 @@ func getEngineSubFile(fileName string) string {
 
 func determineMacroCase(str string) uint8 {
 	var chars = []rune(str)
+	if len(chars) == 0 {
+		return VnCaseNoChange
+	}
 	if unicode.IsLower(chars[0]) {
 		return VnCaseAllSmall
 	} else {
@@ -180,26 +183,25 @@ func loadDictionary(dataFiles ...string) (map[string]bool, error) {
 		if err != nil {
 			return nil, err
 		}
-		rd := bufio.NewReader(f)
-		for {
-			line, _, err := rd.ReadLine()
-			if err != nil {
-				break
-			}
-			if len(line) == 0 {
+		scanner := bufio.NewScanner(f)
+		scanner.Buffer(make([]byte, 64*1024), 1024*1024)
+		for scanner.Scan() {
+			line := strings.TrimSpace(scanner.Text())
+			if line == "" {
 				continue
 			}
-			var tmp = []byte(strings.ToLower(string(line)))
-			data[string(tmp)] = true
-			//bamboo.AddTrie(rootWordTrie, []rune(string(line)), false)
+			data[strings.ToLower(line)] = true
 		}
 		f.Close()
+		if err := scanner.Err(); err != nil {
+			return nil, err
+		}
 	}
 	return data, nil
 }
 
 func isMovementKey(keyVal uint32) bool {
-	var list = []uint32{IBusLeft, IBusRight, IBusUp, IBusDown, IBusPageDown, IBusPageUp, IBusEnd}
+	var list = []uint32{IBusLeft, IBusRight, IBusUp, IBusDown, IBusPageDown, IBusPageUp, IBusHome, IBusEnd}
 	for _, item := range list {
 		if item == keyVal {
 			return true

@@ -101,6 +101,9 @@ func x11SendBackspace(n int, timeout int) {
 func x11GetFocusWindowClass() string {
 	var wmClass = C.x11GetFocusWindowClass()
 	if wmClass != nil {
+		// The C side returns heap memory per call (every FocusIn);
+		// it must be released here to avoid leaking per focus event.
+		defer C.free(unsafe.Pointer(wmClass))
 		return C.GoString(wmClass)
 	}
 	return ""

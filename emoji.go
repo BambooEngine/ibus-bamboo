@@ -69,14 +69,14 @@ func NewEmojiEngine() *EmojiEngine {
 }
 
 func (be *EmojiEngine) MatchString(s string) bool {
-	var lookup = FindPrefix(emojiTrie, s)
+	var lookup = FindPrefix(currentEmojiTrie(), s)
 	return lookup != nil
 }
 
 func (be *EmojiEngine) Filter(s string) []string {
 	var codePoints []string
 	var keys []string
-	var lookup = FindPrefix(emojiTrie, s)
+	var lookup = FindPrefix(currentEmojiTrie(), s)
 	for key := range lookup {
 		keys = append(keys, key)
 	}

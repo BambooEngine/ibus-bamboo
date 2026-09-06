@@ -116,14 +116,20 @@ void x11ClipboardReset() {
     if (text == NULL) {
         text = (char*)calloc(MAX_TEXT_LEN, sizeof(char));
     }
-    strcpy(text, "");
+    if (text != NULL) {
+        text[0] = '\0';
+    }
 }
 
 void x11Copy(char *str) {
     if (text == NULL) {
         text = (char*)calloc(MAX_TEXT_LEN, sizeof(char));
     }
-    strcpy(text, str);
+    if (text == NULL || str == NULL) {
+        return;
+    }
+    strncpy(text, str, MAX_TEXT_LEN - 1);
+    text[MAX_TEXT_LEN - 1] = '\0';
     done = 0;
     fprintf(stderr, "...x11Clipboard text=%s, clipboard_running=%d\n", text, clipboard_running);
     if (clipboard_running == 0) {
