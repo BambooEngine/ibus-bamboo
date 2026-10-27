@@ -40,6 +40,11 @@ import (
 var dictionary = map[string]bool{}
 var emojiTrie = NewTrie()
 
+// sessionInputMode is the mode chosen while the focused window class is
+// unavailable. It lasts for this ibus-bamboo process and is kept out of
+// Config.InputModeMapping, which stores per-application modes.
+var sessionInputMode int32
+
 func GetIBusEngineCreator() func(*dbus.Conn, string) dbus.ObjectPath {
 	go keyPressCapturing()
 
@@ -213,10 +218,13 @@ func (e *IBusBambooEngine) processShortcutKey(keyVal, keyCode, state uint32) (bo
 		return true, true
 	}
 	// fmt.Println("====== Process shortcut for input mode switch")
+	// Open the table even when the window class is empty. On current GNOME,
+	// org.gnome.Shell.Eval is blocked, so getWmClass() stays empty and the
+	// shortcut would otherwise never run. Per-application lookup still
+	// requires a class; see getInputMode.
 	if e.isInputModeLTOpened {
 		return e.ltProcessKeyEvent(keyVal, keyCode, state)
-	} else if e.isShortcutKeyPressed(keyVal, state, KSInputModeSwitch) &&
-		e.getWmClass() != "" {
+	} else if e.isShortcutKeyPressed(keyVal, state, KSInputModeSwitch) {
 		e.resetBuffer()
 		e.isInputModeLTOpened = true
 		e.lastKeyWithShift = true
@@ -275,6 +283,8 @@ func (e *IBusBambooEngine) getInputMode() int {
 		if im, ok := e.config.InputModeMapping[e.getWmClass()]; ok && config.ImLookupTable[im] != "" {
 			return im
 		}
+	} else if im := int(atomic.LoadInt32(&sessionInputMode)); config.ImLookupTable[im] != "" {
+		return im
 	}
 	if _, ok := config.ImLookupTable[e.config.DefaultInputMode]; ok {
 		return e.config.DefaultInputMode
@@ -302,7 +312,14 @@ func (e *IBusBambooEngine) openLookupTable() {
 			lt.AppendLabel(strconv.Itoa(im))
 		}
 		if im == config.UsIM {
-			lt.AppendCandidate(config.ImLookupTable[im] + " (" + wmClass + ")")
+			label := config.ImLookupTable[im]
+			if e.getInputMode() == config.UsIM {
+				label = config.UsIMRemoveLabel
+			}
+			if wmClass != "" {
+				label += " (" + wmClass + ")"
+			}
+			lt.AppendCandidate(label)
 		} else {
 			lt.AppendCandidate(config.ImLookupTable[im])
 		}
@@ -312,12 +329,8 @@ func (e *IBusBambooEngine) openLookupTable() {
 }
 
 func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, bool) {
-	var wmClasses = e.getWmClass()
 	// e.HideLookupTable()
 	// e.HideAuxiliaryText()
-	if wmClasses == "" {
-		return true, true
-	}
 	if e.isShortcutKeyPressed(keyVal, state, KSInputModeSwitch) {
 		e.closeInputModeCandidates()
 		return true, false
@@ -359,12 +372,34 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 }
 
 func (e *IBusBambooEngine) commitInputModeCandidate() {
-	var im = e.inputModeLookupTable.CursorPos + 1
-	e.config.InputModeMapping[e.getWmClass()] = int(im)
+	var im = int(e.inputModeLookupTable.CursorPos + 1)
+	if im == config.UsIM && e.getInputMode() == config.UsIM {
+		e.removeInputModeExclusion()
+	} else if wmClass := e.getWmClass(); wmClass != "" {
+		e.config.InputModeMapping[wmClass] = im
+		config.SaveConfig(e.config, e.engineName)
+	} else {
+		// Remember the choice for this process. An empty class must not be
+		// written into InputModeMapping: getInputMode ignores that entry,
+		// so the selection would be dropped as soon as the table closes.
+		atomic.StoreInt32(&sessionInputMode, int32(im))
+	}
 
-	config.SaveConfig(e.config, e.engineName)
 	e.propList = GetPropListByConfig(e.config)
 	e.RegisterProperties(e.propList)
+}
+
+// removeInputModeExclusion drops UsIM for the focused app, or for this
+// process when the window class is unknown. The next lookup uses the
+// default input mode.
+func (e *IBusBambooEngine) removeInputModeExclusion() {
+	if wmClass := e.getWmClass(); wmClass != "" {
+		delete(e.config.InputModeMapping, wmClass)
+		config.SaveConfig(e.config, e.engineName)
+	}
+	if int(atomic.LoadInt32(&sessionInputMode)) == config.UsIM {
+		atomic.StoreInt32(&sessionInputMode, 0)
+	}
 }
 
 func (e *IBusBambooEngine) closeInputModeCandidates() {

@@ -20,6 +20,9 @@ var ImLookupTable = map[int]string{
 	UsIM:                  "Thêm vào danh sách loại trừ",
 }
 
+// UsIMRemoveLabel is shown for the exclusion row while that mode is active.
+const UsIMRemoveLabel = "Xóa khỏi danh sách loại trừ"
+
 var ImBackspaceList = []int{
 	SurroundingTextIM,
 	BackspaceForwardingIM,

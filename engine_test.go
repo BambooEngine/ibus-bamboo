@@ -2,9 +2,12 @@ package main
 
 import (
 	"ibus-bamboo/config"
+	"os"
+	"sync/atomic"
 	"testing"
 
 	"github.com/BambooEngine/bamboo-core"
+	ibus "github.com/BambooEngine/goibus"
 )
 
 type keyEvent struct {
@@ -283,6 +286,145 @@ func TestBsEngine(t *testing.T) {
 			})
 		})
 	}
+}
+
+func TestInputModeSwitchWithoutWmClass(t *testing.T) {
+	atomic.StoreInt32(&sessionInputMode, 0)
+	defer atomic.StoreInt32(&sessionInputMode, 0)
+
+	e := newTestEngine(config.PreeditIM)
+	if e.getWmClass() != "" {
+		t.Fatalf("wm class = %q, want empty", e.getWmClass())
+	}
+
+	handled, err := e.ProcessKeyEvent('~', '~', IBusShiftMask)
+	if err != nil || !handled || !e.isInputModeLTOpened || e.inputModeLookupTable == nil {
+		t.Fatalf("Shift+~ should open the mode table without a wm class: handled=%v opened=%v err=%v", handled, e.isInputModeLTOpened, err)
+	}
+	if len(e.inputModeLookupTable.Candidates) != len(config.ImLookupTable) {
+		t.Fatalf("candidate count = %d, want %d", len(e.inputModeLookupTable.Candidates), len(config.ImLookupTable))
+	}
+	us := e.inputModeLookupTable.Candidates[config.UsIM-1].Value().(ibus.Text)
+	if us.Text != config.ImLookupTable[config.UsIM] {
+		t.Fatalf("exclusion label = %q, want %q", us.Text, config.ImLookupTable[config.UsIM])
+	}
+
+	handled, err = e.ProcessKeyEvent('2', '2', 0)
+	if err != nil || !handled || e.isInputModeLTOpened {
+		t.Fatalf("selecting a mode failed: handled=%v opened=%v err=%v", handled, e.isInputModeLTOpened, err)
+	}
+	if _, saved := e.config.InputModeMapping[""]; saved || len(e.config.InputModeMapping) != 0 {
+		t.Fatalf("per-application map = %#v, want empty", e.config.InputModeMapping)
+	}
+	if got := e.getInputMode(); got != config.SurroundingTextIM {
+		t.Fatalf("mode after the table closed = %d, want %d", got, config.SurroundingTextIM)
+	}
+
+	other := newTestEngine(config.PreeditIM)
+	if got := other.getInputMode(); got != config.SurroundingTextIM {
+		t.Fatalf("session mode on a later engine = %d, want %d", got, config.SurroundingTextIM)
+	}
+}
+
+func TestExclusionListTogglesOff(t *testing.T) {
+	atomic.StoreInt32(&sessionInputMode, 0)
+	defer atomic.StoreInt32(&sessionInputMode, 0)
+
+	e := newTestEngine(config.PreeditIM)
+	openModeTable(t, e)
+	selectMode(t, e, '7')
+	if got := e.getInputMode(); got != config.UsIM {
+		t.Fatalf("mode after adding an exclusion = %d, want %d", got, config.UsIM)
+	}
+
+	openModeTable(t, e)
+	row := e.inputModeLookupTable.Candidates[config.UsIM-1].Value().(ibus.Text)
+	if row.Text != config.UsIMRemoveLabel {
+		t.Fatalf("exclusion label = %q, want %q", row.Text, config.UsIMRemoveLabel)
+	}
+	selectMode(t, e, '7')
+	if got := e.getInputMode(); got != config.PreeditIM {
+		t.Fatalf("mode after removing the exclusion = %d, want %d", got, config.PreeditIM)
+	}
+	if got := int(atomic.LoadInt32(&sessionInputMode)); got != 0 {
+		t.Fatalf("session mode = %d, want cleared", got)
+	}
+
+	const wmClass = "org.gnome.Ptyxis"
+	e.wmClasses = wmClass
+	e.engineName = "input-mode-exclusion-test"
+	e.config.InputModeMapping[wmClass] = config.UsIM
+	defer os.Remove(config.GetConfigPath(e.engineName))
+	openModeTable(t, e)
+	labeled := e.inputModeLookupTable.Candidates[config.UsIM-1].Value().(ibus.Text)
+	if labeled.Text != config.UsIMRemoveLabel+" ("+wmClass+")" {
+		t.Fatalf("per-app exclusion label = %q", labeled.Text)
+	}
+	selectMode(t, e, '7')
+	if _, still := e.config.InputModeMapping[wmClass]; still {
+		t.Fatalf("excluded app stayed in the map: %#v", e.config.InputModeMapping)
+	}
+	if got := e.getInputMode(); got != config.PreeditIM {
+		t.Fatalf("mode for an unlisted app = %d, want %d", got, config.PreeditIM)
+	}
+}
+
+func openModeTable(t *testing.T, e *IBusBambooEngine) {
+	t.Helper()
+	handled, err := e.ProcessKeyEvent('~', '~', IBusShiftMask)
+	if err != nil || !handled || !e.isInputModeLTOpened {
+		t.Fatalf("Shift+~ should open the mode table: handled=%v opened=%v err=%v", handled, e.isInputModeLTOpened, err)
+	}
+}
+
+func selectMode(t *testing.T, e *IBusBambooEngine, key rune) {
+	t.Helper()
+	handled, err := e.ProcessKeyEvent(uint32(key), uint32(key), 0)
+	if err != nil || !handled || e.isInputModeLTOpened {
+		t.Fatalf("selecting mode %c failed: handled=%v opened=%v err=%v", key, handled, e.isInputModeLTOpened, err)
+	}
+}
+
+func TestInputModeSwitchKeepsPerAppMapping(t *testing.T) {
+	atomic.StoreInt32(&sessionInputMode, int32(config.SurroundingTextIM))
+	defer atomic.StoreInt32(&sessionInputMode, 0)
+
+	const wmClass = "org.gnome.TextEditor"
+	e := newTestEngine(config.PreeditIM)
+	e.engineName = "input-mode-fallback-test"
+	e.wmClasses = wmClass
+	defer os.Remove(config.GetConfigPath(e.engineName))
+
+	handled, err := e.ProcessKeyEvent('~', '~', IBusShiftMask)
+	if err != nil || !handled || !e.isInputModeLTOpened {
+		t.Fatalf("Shift+~ should open the mode table when a wm class is known: handled=%v opened=%v err=%v", handled, e.isInputModeLTOpened, err)
+	}
+	handled, err = e.ProcessKeyEvent('3', '3', 0)
+	if err != nil || !handled {
+		t.Fatalf("selecting a per-application mode failed: handled=%v err=%v", handled, err)
+	}
+	if e.config.InputModeMapping[wmClass] != config.BackspaceForwardingIM {
+		t.Fatalf("mapped mode = %d, want %d", e.config.InputModeMapping[wmClass], config.BackspaceForwardingIM)
+	}
+	if got := int(atomic.LoadInt32(&sessionInputMode)); got != config.SurroundingTextIM {
+		t.Fatalf("session mode = %d, want %d", got, config.SurroundingTextIM)
+	}
+	if got := e.getInputMode(); got != config.BackspaceForwardingIM {
+		t.Fatalf("mode for a known class = %d, want %d", got, config.BackspaceForwardingIM)
+	}
+
+	e.wmClasses = "other.app"
+	if got := e.getInputMode(); got != config.PreeditIM {
+		t.Fatalf("mode for an unmapped class = %d, want default %d", got, config.PreeditIM)
+	}
+}
+
+func newTestEngine(inputMode int) *IBusBambooEngine {
+	fe := NewFakeEngine()
+	cfg := config.DefaultCfg()
+	cfg.DefaultInputMode = inputMode
+	inputMethod := bamboo.ParseInputMethod(cfg.InputMethodDefinitions, cfg.InputMethod)
+	return NewIbusBambooEngine("test", &cfg, fe, bamboo.NewEngine(inputMethod, cfg.Flags))
 }
 
 func assertEngine(t testing.TB, tc testCase, assertFn func(testing.TB, *fakeEngine, IEngine)) {
