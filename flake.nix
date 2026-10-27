@@ -7,7 +7,7 @@
 
   outputs = { self, nixpkgs }:
     let
-      version = "v0.8.5";
+      version = "v" + nixpkgs.lib.trim (builtins.readFile ./data/bamboo-version);
 
       supportedSystems = [ "x86_64-linux" "aarch64-linux" ];
 
@@ -31,6 +31,7 @@
               pkgs.pkg-config
               pkgs.wrapGAppsHook3
               pkgs.go
+              pkgs.python3
             ];
 
             buildInputs = [
@@ -39,7 +40,7 @@
 
             preConfigure = ''
               export GOCACHE="$TMPDIR/go-cache"
-              sed -i "s,/usr,$out," data/bamboo.xml
+              sed -i "s,/usr,$out," data/bamboo.xml.template
             '';
 
             makeFlags = [

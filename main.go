@@ -26,7 +26,11 @@ import (
 	"os"
 	"strings"
 
+	"github.com/BambooEngine/bamboo-core"
 	ibus "github.com/BambooEngine/goibus"
+	"ibus-bamboo/config"
+	"ibus-bamboo/introspectors"
+	"ibus-bamboo/types"
 )
 
 const (
@@ -37,30 +41,69 @@ const (
 var embedded = flag.Bool("ibus", false, "Run the embedded ibus component")
 var version = flag.Bool("version", false, "Show version")
 var gui = flag.Bool("gui", false, "Show GUI")
-var isWayland = false
-var isGnome = false
+var engineRef *IBusBambooEngine
+var introspector types.BambooIntrospector
 
-func hasGnome(env string) bool {
-	return strings.Contains(strings.ToLower(os.Getenv(env)), "gnome")
+func validateConfig(cfg *types.Config) error {
+	resolved, ok := introspectors.IntrospectorByName[string(cfg.Introspector)]
+	if !ok {
+		return fmt.Errorf("unknown introspector %q", cfg.Introspector)
+	}
+	cfg.Introspector = resolved
+	if cfg.Introspector == introspectors.IntrospectorCommand && cfg.IntrospectorCommand == "" {
+		return fmt.Errorf("introspector %q requires IntrospectorCommand", cfg.Introspector)
+	}
+	if _, ok := cfg.InputMethodDefinitions[cfg.InputMethod]; !ok {
+		return fmt.Errorf("unknown input method %q", cfg.InputMethod)
+	}
+	for _, cs := range bamboo.GetCharsetNames() {
+		if cs == cfg.OutputCharset {
+			return nil
+		}
+	}
+	return fmt.Errorf("unknown output charset %q", cfg.OutputCharset)
 }
 
 func main() {
-	if os.Getenv("WAYLAND_DISPLAY") != "" {
-		isWayland = true
-	}
-	if hasGnome("XDG_CURRENT_DESKTOP") || hasGnome("DESKTOP_SESSION") || hasGnome("GDMSESSION") {
-		isGnome = true
-	}
 	flag.Parse()
+
+	/// Print the version and exit
+	if *version {
+		fmt.Println(Version)
+		return
+	}
+
 	if *embedded {
 		os.Chdir(DataDir)
 	}
-	if isWayland && !isGnome {
-		go wlGetFocusWindowClass()
+
+	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+
+	cfg := config.LoadConfig(strings.ToLower(EngineName))
+
+	/// Show configuration that are loaded for debugging
+	fmt.Print("Configuration loaded\n")
+	fmt.Printf("Config: %s\n", config.GetConfigPath(strings.ToLower(EngineName)))
+	fmt.Printf("InputMethod: %s\n", cfg.InputMethod)
+	fmt.Printf("InputMethodDefinitions: %d definitions\n", len(cfg.InputMethodDefinitions))
+	fmt.Printf("OutputCharset: %s\n", cfg.OutputCharset)
+	fmt.Printf("Flags: %d\n", cfg.Flags)
+	fmt.Printf("IBflags: %d\n", cfg.IBflags)
+	fmt.Printf("Shortcuts: %v\n", cfg.Shortcuts)
+	fmt.Printf("DefaultInputMode: %d\n", cfg.DefaultInputMode)
+	fmt.Printf("InputModeMapping: %v\n", cfg.InputModeMapping)
+	fmt.Printf("Introspector: %v\n", cfg.Introspector)
+	fmt.Printf("IntrospectorCommand: %q\n", cfg.IntrospectorCommand)
+
+	if err := validateConfig(cfg); err != nil {
+		log.Fatalf("Invalid config %s: %v", config.GetConfigPath(strings.ToLower(EngineName)), err)
 	}
-	if *version {
-		fmt.Println(Version)
-	} else if *embedded {
+	introspectors.BootstrapIntrospector(cfg)
+	introspector = cfg.Introspector
+	log.Printf("Using introspector: %s", introspector)
+
+	if *embedded {
+		log.Println("IbusBamboo running in embedded mode")
 		engine := GetIBusEngineCreator()
 		bus := ibus.NewBus()
 		bus.RequestName(ComponentName, 0)
@@ -70,7 +113,7 @@ func main() {
 
 		select {}
 	} else {
-		log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+		log.Println("IbusBamboo running in IBus mode")
 		bus := ibus.NewBus()
 		log.Println("Got Bus, Running Standalone")
 		component := &ibus.Component{

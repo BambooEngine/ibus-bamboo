@@ -17,35 +17,28 @@
  *
  */
 
-package main
+package mactab
 
 import (
 	"bufio"
 	"ibus-bamboo/config"
+	"ibus-bamboo/types"
 	"os"
 	"strings"
-	"sync"
 	"time"
 )
 
-type MacroTable struct {
-	sync.RWMutex
-	enable              bool
-	autoCapitalizeMacro bool
-	mTable              map[string]string
+func NewMacroTable(autoCapitalizeMacro bool) *types.MacroTable {
+	return &types.MacroTable{AutoCapitalizeMacro: autoCapitalizeMacro}
 }
 
-func NewMacroTable(autoCapitalizeMacro bool) *MacroTable {
-	return &MacroTable{autoCapitalizeMacro: autoCapitalizeMacro}
-}
-
-func (e *MacroTable) LoadFromFile(macroFileName string) error {
+func LoadFromFile(e *types.MacroTable, macroFileName string) error {
 	f, err := os.Open(macroFileName)
 	if err != nil {
 		return err
 	}
 	defer f.Close()
-	e.mTable = map[string]string{}
+	e.MTable = map[string]string{}
 	rd := bufio.NewReader(f)
 	for {
 		line, _, err := rd.ReadLine()
@@ -59,39 +52,39 @@ func (e *MacroTable) LoadFromFile(macroFileName string) error {
 		var list = strings.Split(s, ":")
 		if len(list) == 2 {
 			key := strings.TrimSpace(list[0])
-			if e.autoCapitalizeMacro {
+			if e.AutoCapitalizeMacro {
 				key = strings.ToLower(key)
 			}
-			e.mTable[key] = strings.TrimSpace(list[1])
+			e.MTable[key] = strings.TrimSpace(list[1])
 		}
 	}
 	return nil
 }
 
-func (e *MacroTable) Reload(engineName string, autoCapitalizeMacro bool) {
-	e.autoCapitalizeMacro = autoCapitalizeMacro
-	e.Enable(engineName)
+func Reload(e *types.MacroTable, engineName string, autoCapitalizeMacro bool) {
+	e.AutoCapitalizeMacro = autoCapitalizeMacro
+	Enable(e, engineName)
 }
 
-func (e *MacroTable) GetText(key string) string {
-	if e.autoCapitalizeMacro {
+func GetText(e *types.MacroTable, key string) string {
+	if e.AutoCapitalizeMacro {
 		key = strings.ToLower(key)
 	}
-	return e.mTable[key]
+	return e.MTable[key]
 }
 
-func (e *MacroTable) HasKey(key string) bool {
-	if e.autoCapitalizeMacro {
+func HasKey(e *types.MacroTable, key string) bool {
+	if e.AutoCapitalizeMacro {
 		key = strings.ToLower(key)
 	}
-	return e.mTable[key] != ""
+	return e.MTable[key] != ""
 }
 
-func (e *MacroTable) HasPrefix(key string) bool {
-	if e.mTable[key] != "" {
+func HasPrefix(e *types.MacroTable, key string) bool {
+	if e.MTable[key] != "" {
 		return true
 	}
-	for k := range e.mTable {
+	for k := range e.MTable {
 		if strings.HasPrefix(k, key) {
 			return true
 		}
@@ -99,19 +92,19 @@ func (e *MacroTable) HasPrefix(key string) bool {
 	return false
 }
 
-func (e *MacroTable) Enable(engineName string) {
-	e.enable = true
+func Enable(e *types.MacroTable, engineName string) {
+	e.Enable = true
 
 	go func() {
 		modTime := time.Now()
 
 		efPath := config.GetMacroPath(engineName)
 
-		for e.enable {
+		for e.Enable {
 			if sta, _ := os.Stat(efPath); sta != nil {
 				if newModeTime := sta.ModTime(); !newModeTime.Equal(modTime) {
 					modTime = newModeTime
-					e.LoadFromFile(efPath)
+					LoadFromFile(e, efPath)
 				}
 			}
 			time.Sleep(3 * time.Second)
@@ -119,7 +112,7 @@ func (e *MacroTable) Enable(engineName string) {
 	}()
 }
 
-func (e *MacroTable) Disable() {
-	e.enable = false
-	e.mTable = map[string]string{}
+func Disable(e *types.MacroTable) {
+	e.Enable = false
+	e.MTable = map[string]string{}
 }

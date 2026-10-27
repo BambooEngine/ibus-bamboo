@@ -8,6 +8,8 @@ import (
 	"os/user"
 
 	"github.com/BambooEngine/bamboo-core"
+	"ibus-bamboo/introspectors"
+	"ibus-bamboo/types"
 )
 
 const (
@@ -16,17 +18,6 @@ const (
 	mactabFile       = "%s/ibus-%s.macro.text"
 	sampleMactabFile = "data/macro.tpl.txt"
 )
-
-type Config struct {
-	InputMethod            string
-	InputMethodDefinitions map[string]bamboo.InputMethodDefinition
-	OutputCharset          string
-	Flags                  uint
-	IBflags                uint
-	Shortcuts              [10]uint32
-	DefaultInputMode       int
-	InputModeMapping       map[string]int
-}
 
 func GetConfigDir(ngName string) string {
 	u, err := user.Current()
@@ -44,8 +35,8 @@ func GetConfigPath(engineName string) string {
 	return fmt.Sprintf(configFile, GetConfigDir(engineName), engineName)
 }
 
-func DefaultCfg() Config {
-	return Config{
+func DefaultCfg() types.Config {
+	return types.Config{
 		InputMethod:            "Telex",
 		OutputCharset:          "Unicode",
 		InputMethodDefinitions: bamboo.GetInputMethodDefinitions(),
@@ -54,10 +45,12 @@ func DefaultCfg() Config {
 		Shortcuts:              [10]uint32{1, 126, 0, 0, 0, 0, 0, 0, 5, 117},
 		DefaultInputMode:       PreeditIM,
 		InputModeMapping:       map[string]int{},
+		Introspector:           introspectors.IntrospectorAuto,
+		IntrospectorCommand:    "",
 	}
 }
 
-func LoadConfig(engineName string) *Config {
+func LoadConfig(engineName string) *types.Config {
 	var c = DefaultCfg()
 	if engineName == "bamboous" {
 		c.DefaultInputMode = UsIM
@@ -65,7 +58,8 @@ func LoadConfig(engineName string) *Config {
 		return &c
 	}
 
-	data, err := ioutil.ReadFile(GetConfigPath(engineName))
+	var configPath = GetConfigPath(engineName)
+	data, err := ioutil.ReadFile(configPath)
 	if err == nil {
 		json.Unmarshal(data, &c)
 	}
@@ -73,7 +67,7 @@ func LoadConfig(engineName string) *Config {
 	return &c
 }
 
-func SaveConfig(c *Config, engineName string) {
+func SaveConfig(c *types.Config, engineName string) {
 	data, err := json.MarshalIndent(c, "", "  ")
 	if err != nil {
 		return

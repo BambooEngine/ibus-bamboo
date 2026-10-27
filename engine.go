@@ -17,6 +17,7 @@
  *
  */
 
+// / This is public API for IBus, these functionalities has to be methods to work with IBus
 package main
 
 import (
@@ -25,52 +26,30 @@ import (
 	"os/exec"
 	"reflect"
 	"strconv"
-	"sync"
 
 	"github.com/BambooEngine/bamboo-core"
 	ibus "github.com/BambooEngine/goibus"
 	"github.com/godbus/dbus/v5"
 
 	"ibus-bamboo/config"
+	"ibus-bamboo/emoji"
+	"ibus-bamboo/introspectors"
+	"ibus-bamboo/mactab"
+	"ibus-bamboo/types"
 	"ibus-bamboo/ui"
 )
 
 type IBusBambooEngine struct {
-	sync.Mutex
-	IEngine
-	preeditor              bamboo.IEngine
-	engineName             string
-	config                 *config.Config
-	propList               *ibus.PropList
-	englishMode            bool
-	macroTable             *MacroTable
-	wmClasses              string
-	isInputModeLTOpened    bool
-	isEmojiLTOpened        bool
-	isInHexadecimal        bool
-	emojiLookupTable       *ibus.LookupTable
-	inputModeLookupTable   *ibus.LookupTable
-	capabilities           uint32
-	keyPressDelay          int
-	nFakeBackSpace         int32
-	isFirstTimeSendingBS   bool
-	emoji                  *EmojiEngine
-	isSurroundingTextReady bool
-	lastKeyWithShift       bool
-	lastCommitText         int64
-	// restore key strokes by pressing Shift + Space
-	shouldRestoreKeyStrokes bool
-	// enqueue key strokes to process later
-	shouldEnqueuKeyStrokes bool
+	*types.IBusBambooEngineState
 }
 
-func NewIbusBambooEngine(name string, cfg *config.Config, base IEngine, preeditor bamboo.IEngine) *IBusBambooEngine {
-	return &IBusBambooEngine{
-		engineName: name,
+func NewIbusBambooEngine(name string, cfg *types.Config, base types.IEngine, preeditor bamboo.IEngine) *IBusBambooEngine {
+	return &IBusBambooEngine{&types.IBusBambooEngineState{
+		EngineName: name,
 		IEngine:    base,
-		preeditor:  preeditor,
-		config:     cfg,
-	}
+		Preeditor:  preeditor,
+		Config:     cfg,
+	}}
 }
 
 /*
@@ -110,18 +89,18 @@ func (e *IBusBambooEngine) ProcessKeyEvent(keyVal uint32, keyCode uint32, state 
 
 func (e *IBusBambooEngine) FocusIn() *dbus.Error {
 	log.Print("FocusIn.")
-	var latestWm = e.getLatestWmClass()
+	var latestWm = introspectors.GetLatestAppId(introspector)
 	e.checkWmClass(latestWm)
-	e.RegisterProperties(e.propList)
+	e.RegisterProperties(e.PropList)
 	e.RequireSurroundingText()
-	if e.isShortcutKeyEnable(KSEmojiDialog) && emojiTrie != nil && len(emojiTrie.Children) == 0 {
+	if e.isShortcutKeyEnable(KSEmojiDialog) && emoji.Trie != nil && len(emoji.Trie.Children) == 0 {
 		var err error
-		emojiTrie, err = loadEmojiOne(DictEmojiOne)
+		emoji.Trie, err = emoji.LoadEmojiOne(DictEmojiOne)
 		if err != nil {
 			panic(fmt.Sprintf("failed to load emojiTrie from %s: %s", DictEmojiOne, err))
 		}
 	}
-	if e.config.IBflags&config.IBspellCheckWithDicts != 0 && len(dictionary) == 0 {
+	if e.Config.IBflags&config.IBspellCheckWithDicts != 0 && len(dictionary) == 0 {
 		dictionary, _ = loadDictionary(DictVietnameseCm)
 	}
 	fmt.Printf("WM_CLASS=(%s)\n", e.getWmClass())
@@ -136,7 +115,7 @@ func (e *IBusBambooEngine) FocusOut() *dbus.Error {
 func (e *IBusBambooEngine) Reset() *dbus.Error {
 	fmt.Print("Reset.\n")
 	if e.checkInputMode(config.PreeditIM) {
-		e.preeditor.Reset()
+		e.Preeditor.Reset()
 	}
 	return nil
 }
@@ -154,14 +133,14 @@ func (e *IBusBambooEngine) Disable() *dbus.Error {
 
 // @method(in_signature="vuu")
 func (e *IBusBambooEngine) SetSurroundingText(text dbus.Variant, cursorPos uint32, anchorPos uint32) *dbus.Error {
-	if !e.isSurroundingTextReady {
+	if !e.IsSurroundingTextReady {
 		//fmt.Println("Surrounding Text is not ready yet.")
 		return nil
 	}
 	e.Lock()
 	defer func() {
 		e.Unlock()
-		e.isSurroundingTextReady = false
+		e.IsSurroundingTextReady = false
 		if err := recover(); err != nil {
 			fmt.Println(err)
 		}
@@ -174,64 +153,64 @@ func (e *IBusBambooEngine) SetSurroundingText(text dbus.Variant, cursorPos uint3
 		}
 		var cs = s[:cursorPos]
 		fmt.Println("Surrounding Text: ", string(cs))
-		e.preeditor.Reset()
+		e.Preeditor.Reset()
 		for i := len(cs) - 1; i >= 0; i-- {
 			// workaround for spell checking
-			if bamboo.IsPunctuationMark(cs[i]) && e.preeditor.CanProcessKey(cs[i]) {
+			if bamboo.IsPunctuationMark(cs[i]) && e.Preeditor.CanProcessKey(cs[i]) {
 				cs[i] = ' '
 			}
-			e.preeditor.ProcessKey(cs[i], bamboo.EnglishMode|bamboo.InReverseOrder)
+			e.Preeditor.ProcessKey(cs[i], bamboo.EnglishMode|bamboo.InReverseOrder)
 		}
 	}
 	return nil
 }
 
 func (e *IBusBambooEngine) PageUp() *dbus.Error {
-	if e.isEmojiLTOpened && e.emojiLookupTable.PageUp() {
+	if e.IsEmojiLTOpened && e.EmojiLookupTable.PageUp() {
 		e.updateEmojiLookupTable()
 	}
-	if e.isInputModeLTOpened && e.inputModeLookupTable.PageUp() {
+	if e.IsInputModeLTOpened && e.InputModeLookupTable.PageUp() {
 		e.updateInputModeLT()
 	}
 	return nil
 }
 
 func (e *IBusBambooEngine) PageDown() *dbus.Error {
-	if e.isEmojiLTOpened && e.emojiLookupTable.PageDown() {
+	if e.IsEmojiLTOpened && e.EmojiLookupTable.PageDown() {
 		e.updateEmojiLookupTable()
 	}
-	if e.isInputModeLTOpened && e.inputModeLookupTable.PageDown() {
+	if e.IsInputModeLTOpened && e.InputModeLookupTable.PageDown() {
 		e.updateInputModeLT()
 	}
 	return nil
 }
 
 func (e *IBusBambooEngine) CursorUp() *dbus.Error {
-	if e.isEmojiLTOpened && e.emojiLookupTable.CursorUp() {
+	if e.IsEmojiLTOpened && e.EmojiLookupTable.CursorUp() {
 		e.updateEmojiLookupTable()
 	}
-	if e.isInputModeLTOpened && e.inputModeLookupTable.CursorUp() {
+	if e.IsInputModeLTOpened && e.InputModeLookupTable.CursorUp() {
 		e.updateInputModeLT()
 	}
 	return nil
 }
 
 func (e *IBusBambooEngine) CursorDown() *dbus.Error {
-	if e.isEmojiLTOpened && e.emojiLookupTable.CursorDown() {
+	if e.IsEmojiLTOpened && e.EmojiLookupTable.CursorDown() {
 		e.updateEmojiLookupTable()
 	}
-	if e.isInputModeLTOpened && e.inputModeLookupTable.CursorDown() {
+	if e.IsInputModeLTOpened && e.InputModeLookupTable.CursorDown() {
 		e.updateInputModeLT()
 	}
 	return nil
 }
 
 func (e *IBusBambooEngine) CandidateClicked(index uint32, button uint32, state uint32) *dbus.Error {
-	if e.isEmojiLTOpened && e.updateCursorPosInEmojiTable(index) {
+	if e.IsEmojiLTOpened && e.updateCursorPosInEmojiTable(index) {
 		e.commitEmojiCandidate()
 		e.closeEmojiCandidates()
 	}
-	if e.isInputModeLTOpened && e.inputModeLookupTable.SetCursorPos(index) {
+	if e.IsInputModeLTOpened && e.InputModeLookupTable.SetCursorPos(index) {
 		e.commitInputModeCandidate()
 		e.closeInputModeCandidates()
 	}
@@ -239,7 +218,7 @@ func (e *IBusBambooEngine) CandidateClicked(index uint32, button uint32, state u
 }
 
 func (e *IBusBambooEngine) SetCapabilities(cap uint32) *dbus.Error {
-	e.capabilities = cap
+	e.Capabilities = cap
 	return nil
 }
 
@@ -262,46 +241,46 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 		return nil
 	}
 	if propName == PropKeyConfiguration {
-		ui.OpenGUI(e.engineName)
-		e.config = config.LoadConfig(e.engineName)
+		ui.OpenGUI(e.EngineName)
+		e.Config = config.LoadConfig(e.EngineName)
 		return nil
 	}
 	if propName == PropKeyInputModeLookupTableShortcut {
-		ui.OpenGUI(e.engineName)
-		e.config = config.LoadConfig(e.engineName)
+		ui.OpenGUI(e.EngineName)
+		e.Config = config.LoadConfig(e.EngineName)
 		return nil
 	}
 	if propName == PropKeyMacroTable {
-		ui.OpenGUI(e.engineName)
-		e.config = config.LoadConfig(e.engineName)
+		ui.OpenGUI(e.EngineName)
+		e.Config = config.LoadConfig(e.EngineName)
 		return nil
 	}
 
 	turnSpellChecking := func(on bool) {
 		if on {
-			e.config.IBflags |= config.IBspellCheckEnabled
-			e.config.IBflags |= config.IBautoNonVnRestore
-			if e.config.IBflags&config.IBspellCheckWithDicts == 0 {
-				e.config.IBflags |= config.IBspellCheckWithRules
+			e.Config.IBflags |= config.IBspellCheckEnabled
+			e.Config.IBflags |= config.IBautoNonVnRestore
+			if e.Config.IBflags&config.IBspellCheckWithDicts == 0 {
+				e.Config.IBflags |= config.IBspellCheckWithRules
 			}
 		} else {
-			e.config.IBflags &= ^config.IBspellCheckEnabled
-			e.config.IBflags &= ^config.IBautoNonVnRestore
+			e.Config.IBflags &= ^config.IBspellCheckEnabled
+			e.Config.IBflags &= ^config.IBautoNonVnRestore
 		}
 	}
 
 	if propName == PropKeyStdToneStyle {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.Flags |= bamboo.EstdToneStyle
+			e.Config.Flags |= bamboo.EstdToneStyle
 		} else {
-			e.config.Flags &= ^bamboo.EstdToneStyle
+			e.Config.Flags &= ^bamboo.EstdToneStyle
 		}
 	}
 	if propName == PropKeyFreeToneMarking {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.Flags |= bamboo.EfreeToneMarking
+			e.Config.Flags |= bamboo.EfreeToneMarking
 		} else {
-			e.config.Flags &= ^bamboo.EfreeToneMarking
+			e.Config.Flags &= ^bamboo.EfreeToneMarking
 		}
 	}
 	if propName == PropKeyEnableSpellCheck {
@@ -313,73 +292,73 @@ func (e *IBusBambooEngine) PropertyActivate(propName string, propState uint32) *
 	}
 	if propName == PropKeySpellCheckByRules {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= config.IBspellCheckWithRules
+			e.Config.IBflags |= config.IBspellCheckWithRules
 			turnSpellChecking(true)
 		} else {
-			e.config.IBflags &= ^config.IBspellCheckWithRules
+			e.Config.IBflags &= ^config.IBspellCheckWithRules
 		}
 	}
 	if propName == PropKeySpellCheckByDicts {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= config.IBspellCheckWithDicts
+			e.Config.IBflags |= config.IBspellCheckWithDicts
 			turnSpellChecking(true)
 			dictionary, _ = loadDictionary(DictVietnameseCm)
 		} else {
-			e.config.IBflags &= ^config.IBspellCheckWithDicts
+			e.Config.IBflags &= ^config.IBspellCheckWithDicts
 		}
 	}
 	if propName == PropKeyMacroEnabled {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= config.IBmacroEnabled
-			e.macroTable.Enable(e.engineName)
+			e.Config.IBflags |= config.IBmacroEnabled
+			mactab.Enable(e.MacroTable, e.EngineName)
 		} else {
-			e.config.IBflags &= ^config.IBmacroEnabled
-			e.macroTable.Disable()
+			e.Config.IBflags &= ^config.IBmacroEnabled
+			mactab.Disable(e.MacroTable)
 		}
 	}
 	if propName == PropKeyPreeditInvisibility {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= config.IBnoUnderline
+			e.Config.IBflags |= config.IBnoUnderline
 		} else {
-			e.config.IBflags &= ^config.IBnoUnderline
+			e.Config.IBflags &= ^config.IBnoUnderline
 		}
 	}
 	if propName == PropKeyPreeditElimination {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= config.IBpreeditElimination
+			e.Config.IBflags |= config.IBpreeditElimination
 		} else {
-			e.config.IBflags &= ^config.IBpreeditElimination
+			e.Config.IBflags &= ^config.IBpreeditElimination
 		}
 	}
 	if propName == PropKeyAutoCapitalizeMacro {
 		if propState == ibus.PROP_STATE_CHECKED {
-			e.config.IBflags |= config.IBautoCapitalizeMacro
+			e.Config.IBflags |= config.IBautoCapitalizeMacro
 		} else {
-			e.config.IBflags &= ^config.IBautoCapitalizeMacro
+			e.Config.IBflags &= ^config.IBautoCapitalizeMacro
 		}
-		if e.config.IBflags&config.IBmacroEnabled != 0 {
-			e.macroTable.Reload(e.engineName, e.config.IBflags&config.IBautoCapitalizeMacro != 0)
+		if e.Config.IBflags&config.IBmacroEnabled != 0 {
+			mactab.Reload(e.MacroTable, e.EngineName, e.Config.IBflags&config.IBautoCapitalizeMacro != 0)
 		}
 	}
 
 	var im, foundIm = getValueFromPropKey(propName, "InputMode")
 	if foundIm && propState == ibus.PROP_STATE_CHECKED {
-		e.config.DefaultInputMode, _ = strconv.Atoi(im)
+		e.Config.DefaultInputMode, _ = strconv.Atoi(im)
 	}
 	var charset, foundCs = getValueFromPropKey(propName, "OutputCharset")
 	if foundCs && isValidCharset(charset) && propState == ibus.PROP_STATE_CHECKED {
-		e.config.OutputCharset = charset
+		e.Config.OutputCharset = charset
 	}
-	if _, found := e.config.InputMethodDefinitions[propName]; found && propState == ibus.PROP_STATE_CHECKED {
-		e.config.InputMethod = propName
+	if _, found := e.Config.InputMethodDefinitions[propName]; found && propState == ibus.PROP_STATE_CHECKED {
+		e.Config.InputMethod = propName
 	}
 	if propName != "-" {
-		config.SaveConfig(e.config, e.engineName)
+		config.SaveConfig(e.Config, e.EngineName)
 	}
-	e.propList = GetPropListByConfig(e.config)
+	e.PropList = GetPropListByConfig(e.Config)
 
-	var inputMethod = bamboo.ParseInputMethod(e.config.InputMethodDefinitions, e.config.InputMethod)
-	e.preeditor = bamboo.NewEngine(inputMethod, e.config.Flags)
-	e.RegisterProperties(e.propList)
+	var inputMethod = bamboo.ParseInputMethod(e.Config.InputMethodDefinitions, e.Config.InputMethod)
+	e.Preeditor = bamboo.NewEngine(inputMethod, e.Config.Flags)
+	e.RegisterProperties(e.PropList)
 	return nil
 }

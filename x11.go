@@ -32,13 +32,10 @@ extern void x11ClipboardReset();
 extern void x11SendBackspace(int n, int timeout);
 extern void x11SendShiftR();
 extern void x11SendShiftLeft(int n, int r, int timeout);
-extern void setXIgnoreErrorHandler();
-extern char* x11GetFocusWindowClass();
-extern void x11StartWindowInspector();
-extern void x11StopWindowInspector();
 */
 import "C"
 import (
+	"ibus-bamboo/introspectors"
 	"sync"
 	"unsafe"
 )
@@ -49,15 +46,15 @@ var (
 )
 
 func init() {
-	C.setXIgnoreErrorHandler()
+	introspectors.SetXIgnoreErrorHandler()
 }
 
 func x11StartWindowInspector() {
-	C.x11StartWindowInspector()
+	introspectors.X11StartWindowInspector()
 }
 
 func x11StopWindowInspector() {
-	C.x11StopWindowInspector()
+	introspectors.X11StopWindowInspector()
 }
 
 func x11Copy(str string) {
@@ -99,9 +96,5 @@ func x11SendBackspace(n int, timeout int) {
 }
 
 func x11GetFocusWindowClass() string {
-	var wmClass = C.x11GetFocusWindowClass()
-	if wmClass != nil {
-		return C.GoString(wmClass)
-	}
-	return ""
+	return introspectors.X11GetFocusWindowClass()
 }

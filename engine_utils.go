@@ -22,6 +22,8 @@ package main
 import (
 	"fmt"
 	"ibus-bamboo/config"
+	"ibus-bamboo/emoji"
+	"ibus-bamboo/mactab"
 	"ibus-bamboo/ui"
 	"io/ioutil"
 	"os"
@@ -38,7 +40,6 @@ import (
 )
 
 var dictionary = map[string]bool{}
-var emojiTrie = NewTrie()
 
 func GetIBusEngineCreator() func(*dbus.Conn, string) dbus.ObjectPath {
 	go keyPressCapturing()
@@ -52,11 +53,12 @@ func GetIBusEngineCreator() func(*dbus.Conn, string) dbus.ObjectPath {
 		var inputMethod = bamboo.ParseInputMethod(cfg.InputMethodDefinitions, cfg.InputMethod)
 		baseEngine := ibus.BaseEngine(conn, objectPath)
 		var engine = NewIbusBambooEngine(engineName, config.LoadConfig(engineName), &baseEngine, bamboo.NewEngine(inputMethod, cfg.Flags))
-		engine.propList = GetPropListByConfig(cfg)
-		engine.shouldEnqueuKeyStrokes = true
+		engineRef = engine
+		engine.PropList = GetPropListByConfig(cfg)
+		engine.ShouldEnqueuKeyStrokes = true
 		ibus.PublishEngine(conn, objectPath, engine)
 		if *gui {
-			ui.OpenGUI(engine.engineName)
+			ui.OpenGUI(engine.EngineName)
 			os.Exit(0)
 		}
 		go engine.init()
@@ -68,20 +70,20 @@ func GetIBusEngineCreator() func(*dbus.Conn, string) dbus.ObjectPath {
 const KeypressDelayMs = 10
 
 func (e *IBusBambooEngine) isShortcutKeyEnable(ski uint) bool {
-	if int(ski+2) > len(e.config.Shortcuts) {
+	if int(ski+2) > len(e.Config.Shortcuts) {
 		return false
 	}
-	l := e.config.Shortcuts[ski : ski+2]
+	l := e.Config.Shortcuts[ski : ski+2]
 	return l[1] > 0
 }
 
 func (e *IBusBambooEngine) init() {
-	initConfigFiles(e.engineName)
-	e.emoji = NewEmojiEngine()
-	if e.macroTable == nil {
-		e.macroTable = NewMacroTable(e.config.IBflags&config.IBautoCapitalizeMacro != 0)
-		if e.config.IBflags&config.IBmacroEnabled != 0 {
-			e.macroTable.Enable(e.engineName)
+	initConfigFiles(e.EngineName)
+	e.Emoji = emoji.NewEmojiEngine()
+	if e.MacroTable == nil {
+		e.MacroTable = mactab.NewMacroTable(e.Config.IBflags&config.IBautoCapitalizeMacro != 0)
+		if e.Config.IBflags&config.IBmacroEnabled != 0 {
+			mactab.Enable(e.MacroTable, e.EngineName)
 		}
 	}
 	keyPressHandler = e.keyPressForwardHandler
@@ -138,13 +140,13 @@ func (e *IBusBambooEngine) resetBuffer() {
 	if e.checkInputMode(config.PreeditIM) {
 		e.commitPreeditAndReset(e.getPreeditString())
 	} else {
-		e.preeditor.Reset()
+		e.Preeditor.Reset()
 	}
 }
 
 func (e *IBusBambooEngine) checkWmClass(newId string) {
-	if e.wmClasses != newId {
-		e.wmClasses = newId
+	if e.WmClasses != newId {
+		e.WmClasses = newId
 		e.resetBuffer()
 		e.resetFakeBackspace()
 	}
@@ -156,11 +158,11 @@ func (e *IBusBambooEngine) isShortcutKeyPressed(keyVal, state uint32, shortcut u
 	}
 	realState := state & IBusDefaultModMask
 	lowerKey := uint32(unicode.ToLower(rune(keyVal)))
-	shortcuts := e.config.Shortcuts[shortcut : shortcut+2]
+	shortcuts := e.Config.Shortcuts[shortcut : shortcut+2]
 	ret := shortcuts[0] == realState && shortcuts[1] == lowerKey
-	// fmt.Println("...isShortcutKeyPressed=", ret, ret && !e.lastKeyWithShift, shortcuts)
+	// fmt.Println("...isShortcutKeyPressed=", ret, ret && !e.LastKeyWithShift, shortcuts)
 	if realState == 1 && shortcut == KSViEnSwitch {
-		return ret && !e.lastKeyWithShift
+		return ret && !e.LastKeyWithShift
 	}
 	return ret
 }
@@ -171,24 +173,24 @@ func (e *IBusBambooEngine) processShortcutKey(keyVal, keyCode, state uint32) (bo
 	}
 	// fmt.Println("===Process shortcut for emoji selector")
 	if e.isShortcutKeyPressed(keyVal, state, KSEmojiDialog) &&
-		!e.isEmojiLTOpened {
+		!e.IsEmojiLTOpened {
 		e.resetBuffer()
-		e.isEmojiLTOpened = true
-		e.lastKeyWithShift = true
+		e.IsEmojiLTOpened = true
+		e.LastKeyWithShift = true
 		e.openEmojiList()
 		return true, true
 	}
-	if e.isEmojiLTOpened {
+	if e.IsEmojiLTOpened {
 		return true, e.emojiProcessKeyEvent(keyVal, keyCode, state)
 	}
 	// fmt.Println("====== Process hexadecimal key pressed")
 	if e.isShortcutKeyPressed(keyVal, state, KSHexadecimal) {
 		e.resetBuffer()
-		e.isInHexadecimal = true
+		e.IsInHexadecimal = true
 		e.setupHexadecimalProcessKeyEvent()
 		return true, true
 	}
-	if e.isInHexadecimal {
+	if e.IsInHexadecimal {
 		if e.isShortcutKeyPressed(keyVal, state, KSHexadecimal) {
 			e.closeHexadecimalInput()
 			e.updateLastKeyWithShift(keyVal, state)
@@ -197,29 +199,29 @@ func (e *IBusBambooEngine) processShortcutKey(keyVal, keyCode, state uint32) (bo
 		return true, e.hexadecimalProcessKeyEvent(keyVal, keyCode, state)
 	}
 
-	if e.config.DefaultInputMode == config.UsIM {
+	if e.Config.DefaultInputMode == config.UsIM {
 		return true, false
 	}
 	if e.isShortcutKeyPressed(keyVal, state, KSRestoreKeyStrokes) {
 		// fmt.Println("===== Process restoring key strokes")
-		e.shouldRestoreKeyStrokes = true
+		e.ShouldRestoreKeyStrokes = true
 		return false, false
 	}
 	// fmt.Println("===Process shortcut for input method switcher")
 	if e.isShortcutKeyPressed(keyVal, state, KSViEnSwitch) {
-		e.englishMode = !e.englishMode
-		notify(e.englishMode)
+		e.EnglishMode = !e.EnglishMode
+		notify(e.EnglishMode)
 		e.resetBuffer()
 		return true, true
 	}
 	// fmt.Println("====== Process shortcut for input mode switch")
-	if e.isInputModeLTOpened {
+	if e.IsInputModeLTOpened {
 		return e.ltProcessKeyEvent(keyVal, keyCode, state)
 	} else if e.isShortcutKeyPressed(keyVal, state, KSInputModeSwitch) &&
 		e.getWmClass() != "" {
 		e.resetBuffer()
-		e.isInputModeLTOpened = true
-		e.lastKeyWithShift = true
+		e.IsInputModeLTOpened = true
+		e.LastKeyWithShift = true
 		e.openLookupTable()
 		return true, true
 	}
@@ -228,12 +230,12 @@ func (e *IBusBambooEngine) processShortcutKey(keyVal, keyCode, state uint32) (bo
 		return true, false
 	}
 	if e.checkInputMode(config.UsIM) {
-		if e.isInputModeLTOpened && e.isShortcutKeyPressed(keyVal, state, KSInputModeSwitch) {
+		if e.IsInputModeLTOpened && e.isShortcutKeyPressed(keyVal, state, KSInputModeSwitch) {
 			return false, false
 		}
 		return true, false
 	}
-	if e.englishMode {
+	if e.EnglishMode {
 		e.updateLastKeyWithShift(keyVal, state)
 		return true, false
 	}
@@ -248,22 +250,22 @@ func (e *IBusBambooEngine) toUpper(keyRune rune) rune {
 		'}': ']',
 	}
 
-	if upperSpecialKey, found := keyMapping[keyRune]; found && inKeyList(e.preeditor.GetInputMethod().AppendingKeys, keyRune) {
+	if upperSpecialKey, found := keyMapping[keyRune]; found && inKeyList(e.Preeditor.GetInputMethod().AppendingKeys, keyRune) {
 		keyRune = upperSpecialKey
 	}
 	return keyRune
 }
 
 func (e *IBusBambooEngine) updateLastKeyWithShift(keyVal, state uint32) {
-	if e.preeditor.CanProcessKey(rune(keyVal)) {
-		e.lastKeyWithShift = state&IBusShiftMask != 0
+	if e.Preeditor.CanProcessKey(rune(keyVal)) {
+		e.LastKeyWithShift = state&IBusShiftMask != 0
 	} else {
-		e.lastKeyWithShift = false
+		e.LastKeyWithShift = false
 	}
 }
 
 func (e *IBusBambooEngine) getRawKeyLen() int {
-	return len(e.preeditor.GetProcessedString(bamboo.EnglishMode | bamboo.FullText))
+	return len(e.Preeditor.GetProcessedString(bamboo.EnglishMode | bamboo.FullText))
 }
 
 func (e *IBusBambooEngine) runeCount() int {
@@ -272,12 +274,12 @@ func (e *IBusBambooEngine) runeCount() int {
 
 func (e *IBusBambooEngine) getInputMode() int {
 	if e.getWmClass() != "" {
-		if im, ok := e.config.InputModeMapping[e.getWmClass()]; ok && config.ImLookupTable[im] != "" {
+		if im, ok := e.Config.InputModeMapping[e.getWmClass()]; ok && config.ImLookupTable[im] != "" {
 			return im
 		}
 	}
-	if _, ok := config.ImLookupTable[e.config.DefaultInputMode]; ok {
-		return e.config.DefaultInputMode
+	if _, ok := config.ImLookupTable[e.Config.DefaultInputMode]; ok {
+		return e.Config.DefaultInputMode
 	}
 	return config.PreeditIM
 }
@@ -307,7 +309,7 @@ func (e *IBusBambooEngine) openLookupTable() {
 			lt.AppendCandidate(config.ImLookupTable[im])
 		}
 	}
-	e.inputModeLookupTable = lt
+	e.InputModeLookupTable = lt
 	e.UpdateLookupTable(lt, true)
 }
 
@@ -343,7 +345,7 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 	}
 	if keyRune >= '1' && keyRune <= '7' {
 		if pos, err := strconv.Atoi(string(keyRune)); err == nil {
-			if e.inputModeLookupTable.SetCursorPos(uint32(pos - 1)) {
+			if e.InputModeLookupTable.SetCursorPos(uint32(pos - 1)) {
 				e.commitInputModeCandidate()
 				e.closeInputModeCandidates()
 				return true, true
@@ -359,26 +361,26 @@ func (e *IBusBambooEngine) ltProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 }
 
 func (e *IBusBambooEngine) commitInputModeCandidate() {
-	var im = e.inputModeLookupTable.CursorPos + 1
-	e.config.InputModeMapping[e.getWmClass()] = int(im)
+	var im = e.InputModeLookupTable.CursorPos + 1
+	e.Config.InputModeMapping[e.getWmClass()] = int(im)
 
-	config.SaveConfig(e.config, e.engineName)
-	e.propList = GetPropListByConfig(e.config)
-	e.RegisterProperties(e.propList)
+	config.SaveConfig(e.Config, e.EngineName)
+	e.PropList = GetPropListByConfig(e.Config)
+	e.RegisterProperties(e.PropList)
 }
 
 func (e *IBusBambooEngine) closeInputModeCandidates() {
-	e.inputModeLookupTable = nil
+	e.InputModeLookupTable = nil
 	e.UpdateLookupTable(ibus.NewLookupTable(), true) // workaround for issue #18
 	e.HidePreeditText()
 	e.HideLookupTable()
 	e.HideAuxiliaryText()
-	e.isInputModeLTOpened = false
+	e.IsInputModeLTOpened = false
 }
 
 func (e *IBusBambooEngine) updateInputModeLT() {
-	var visible = len(e.inputModeLookupTable.Candidates) > 0
-	e.UpdateLookupTable(e.inputModeLookupTable, visible)
+	var visible = len(e.InputModeLookupTable.Candidates) > 0
+	e.UpdateLookupTable(e.InputModeLookupTable, visible)
 }
 
 func isValidState(state uint32) bool {
@@ -403,62 +405,62 @@ func (e *IBusBambooEngine) getCommitText(keyVal, keyCode, state uint32) (newText
 	isPrintableKey := e.isPrintableKey(state, keyVal)
 	oldText := e.getPreeditString()
 	// restore key strokes by pressing Shift + Space
-	if e.shouldRestoreKeyStrokes {
-		e.shouldRestoreKeyStrokes = false
-		e.preeditor.RestoreLastWord(!bamboo.HasAnyVietnameseRune(oldText))
+	if e.ShouldRestoreKeyStrokes {
+		e.ShouldRestoreKeyStrokes = false
+		e.Preeditor.RestoreLastWord(!bamboo.HasAnyVietnameseRune(oldText))
 		return e.getPreeditString(), false
 	}
 	var keyS string
 	if isPrintableKey {
 		keyS = string(keyRune)
 	}
-	if isPrintableKey && e.preeditor.CanProcessKey(keyRune) {
+	if isPrintableKey && e.Preeditor.CanProcessKey(keyRune) {
 		if state&IBusLockMask != 0 {
 			keyRune = e.toUpper(keyRune)
 		}
-		e.preeditor.ProcessKey(keyRune, e.getBambooInputMode())
-		if inKeyList(e.preeditor.GetInputMethod().AppendingKeys, keyRune) {
+		e.Preeditor.ProcessKey(keyRune, e.getBambooInputMode())
+		if inKeyList(e.Preeditor.GetInputMethod().AppendingKeys, keyRune) {
 			var newText string
 			if e.shouldFallbackToEnglish(true) {
 				newText = e.getProcessedString(bamboo.EnglishMode)
 			} else {
 				newText = e.getProcessedString(bamboo.VietnameseMode)
 			}
-			if fullSeq := e.preeditor.GetProcessedString(bamboo.VietnameseMode); len(fullSeq) > 0 && rune(fullSeq[len(fullSeq)-1]) == keyRune {
+			if fullSeq := e.Preeditor.GetProcessedString(bamboo.VietnameseMode); len(fullSeq) > 0 && rune(fullSeq[len(fullSeq)-1]) == keyRune {
 				// [[ => [
 				var ret = e.getPreeditString()
 				var lastRune = rune(ret[len(ret)-1])
 				var isWordBreakRune = bamboo.IsWordBreakSymbol(lastRune)
 				// TODO: THIS IS A HACK
 				if isWordBreakRune {
-					e.preeditor.RemoveLastChar(false)
-					e.preeditor.ProcessKey(' ', bamboo.EnglishMode)
+					e.Preeditor.RemoveLastChar(false)
+					e.Preeditor.ProcessKey(' ', bamboo.EnglishMode)
 				}
 				return ret, isWordBreakRune
 			} else if l := []rune(newText); len(l) > 0 && keyRune == l[len(l)-1] {
 				// f] => f]
 				var isWordBreakRune = bamboo.IsWordBreakSymbol(keyRune)
 				if isWordBreakRune {
-					e.preeditor.RemoveLastChar(false)
-					e.preeditor.ProcessKey(' ', bamboo.EnglishMode)
+					e.Preeditor.RemoveLastChar(false)
+					e.Preeditor.ProcessKey(' ', bamboo.EnglishMode)
 				}
 				return oldText + string(keyRune), isWordBreakRune
 			} else {
 				// ] => o?
 				return e.getPreeditString(), false
 			}
-		} else if e.config.IBflags&config.IBmacroEnabled != 0 {
+		} else if e.Config.IBflags&config.IBmacroEnabled != 0 {
 			return e.getProcessedString(bamboo.PunctuationMode), false
 		} else {
 			return e.getPreeditString(), false
 		}
-	} else if e.config.IBflags&config.IBmacroEnabled != 0 {
+	} else if e.Config.IBflags&config.IBmacroEnabled != 0 {
 		// macro processing
-		if isPrintableKey && e.macroTable.HasPrefix(oldText+keyS) {
-			e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
+		if isPrintableKey && mactab.HasPrefix(e.MacroTable, oldText+keyS) {
+			e.Preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
 			return oldText + keyS, false
 		}
-		if e.macroTable.HasKey(oldText) {
+		if mactab.HasKey(e.MacroTable, oldText) {
 			if isPrintableKey {
 				return e.expandMacro(oldText) + keyS, true
 			}
@@ -479,15 +481,15 @@ func (e *IBusBambooEngine) handleNonVnWord(keyVal, keyCode, state uint32) string
 		keyS = string(keyRune)
 	}
 	if bamboo.HasAnyVietnameseRune(oldText) && e.mustFallbackToEnglish() {
-		e.preeditor.RestoreLastWord(false)
-		newText := e.preeditor.GetProcessedString(bamboo.PunctuationMode|bamboo.EnglishMode) + keyS
+		e.Preeditor.RestoreLastWord(false)
+		newText := e.Preeditor.GetProcessedString(bamboo.PunctuationMode|bamboo.EnglishMode) + keyS
 		if isPrintableKey {
-			e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
+			e.Preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
 		}
 		return newText
 	}
 	if isPrintableKey {
-		e.preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
+		e.Preeditor.ProcessKey(keyRune, bamboo.EnglishMode)
 		return oldText + keyS
 	}
 	// Ctrl + A is treasted as a WBS
@@ -495,26 +497,26 @@ func (e *IBusBambooEngine) handleNonVnWord(keyVal, keyCode, state uint32) string
 }
 
 func (e *IBusBambooEngine) getMacroText() (bool, string) {
-	if e.config.IBflags&config.IBmacroEnabled == 0 {
+	if e.Config.IBflags&config.IBmacroEnabled == 0 {
 		return false, ""
 	}
-	var text = e.preeditor.GetProcessedString(bamboo.PunctuationMode)
-	if e.macroTable.HasKey(text) {
+	var text = e.Preeditor.GetProcessedString(bamboo.PunctuationMode)
+	if mactab.HasKey(e.MacroTable, text) {
 		return true, e.expandMacro(text)
 	}
 	return false, ""
 }
 
 func (e *IBusBambooEngine) getFakeBackspace() int32 {
-	return atomic.LoadInt32(&e.nFakeBackSpace)
+	return atomic.LoadInt32(&e.NFakeBackSpace)
 }
 
 func (e *IBusBambooEngine) setFakeBackspace(n int32) {
-	atomic.StoreInt32(&e.nFakeBackSpace, n)
+	atomic.StoreInt32(&e.NFakeBackSpace, n)
 }
 
 func (e *IBusBambooEngine) addFakeBackspace(n int32) {
-	atomic.AddInt32(&e.nFakeBackSpace, n)
+	atomic.AddInt32(&e.NFakeBackSpace, n)
 }
 
 func (e *IBusBambooEngine) isValidKeyVal(keyVal uint32) bool {
@@ -525,7 +527,7 @@ func (e *IBusBambooEngine) isValidKeyVal(keyVal uint32) bool {
 	if ok, _ := e.getMacroText(); ok && keyVal == IBusTab {
 		return true
 	}
-	return e.preeditor.CanProcessKey(keyRune)
+	return e.Preeditor.CanProcessKey(keyRune)
 }
 
 func (e *IBusBambooEngine) inBackspaceWhiteList() bool {
@@ -543,21 +545,7 @@ func (e *IBusBambooEngine) inBrowserList() bool {
 }
 
 func (e *IBusBambooEngine) getWmClass() string {
-	return e.wmClasses
-}
-
-func (e *IBusBambooEngine) getLatestWmClass() string {
-	var wmClass string
-	if isGnome {
-		wmClass, _ = gnomeGetFocusWindowClass()
-	} else if isWayland {
-		wmClass = wlAppId
-	}
-	if wmClass == "" {
-		wmClass = x11GetFocusWindowClass()
-	}
-	wmClass = strings.Replace(wmClass, "\"", "", -1)
-	return wmClass
+	return e.WmClasses
 }
 
 func (e *IBusBambooEngine) checkInputMode(im int) bool {

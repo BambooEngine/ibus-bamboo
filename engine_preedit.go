@@ -21,6 +21,7 @@ package main
 
 import (
 	"ibus-bamboo/config"
+	"ibus-bamboo/mactab"
 	"log"
 	"strings"
 	"time"
@@ -36,8 +37,8 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 	var oldText = e.getPreeditString()
 	defer e.updateLastKeyWithShift(keyVal, state)
 
-	if !e.shouldRestoreKeyStrokes {
-		if !e.preeditor.CanProcessKey(keyRune) && rawKeyLen == 0 && e.config.IBflags&config.IBmacroEnabled == 0 {
+	if !e.ShouldRestoreKeyStrokes {
+		if !e.Preeditor.CanProcessKey(keyRune) && rawKeyLen == 0 && e.Config.IBflags&config.IBmacroEnabled == 0 {
 			// don't process special characters if rawKeyLen == 0,
 			// workaround for Chrome's address bar and Google SpreadSheets
 			return false, nil
@@ -50,7 +51,7 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 			return true, nil
 		}
 		if rawKeyLen > 0 {
-			e.preeditor.RemoveLastChar(true)
+			e.Preeditor.RemoveLastChar(true)
 			e.updatePreedit(e.getPreeditString())
 			return true, nil
 		} else {
@@ -78,8 +79,8 @@ func (e *IBusBambooEngine) preeditProcessKeyEvent(keyVal uint32, keyCode uint32,
 }
 
 func (e *IBusBambooEngine) expandMacro(str string) string {
-	var macroText = e.macroTable.GetText(str)
-	if e.config.IBflags&config.IBautoCapitalizeMacro != 0 {
+	var macroText = mactab.GetText(e.MacroTable, str)
+	if e.Config.IBflags&config.IBautoCapitalizeMacro != 0 {
 		switch determineMacroCase(str) {
 		case VnCaseAllSmall:
 			return strings.ToLower(macroText)
@@ -100,12 +101,12 @@ func (e *IBusBambooEngine) updatePreedit(processedStr string) {
 		return
 	}
 	var ibusText = ibus.NewText(encodedStr)
-	if inStringList(enabledAuxiliaryTextList, e.getWmClass()) && e.config.IBflags&config.IBworkaroundForWPS != 0 {
+	if inStringList(enabledAuxiliaryTextList, e.getWmClass()) && e.Config.IBflags&config.IBworkaroundForWPS != 0 {
 		e.UpdateAuxiliaryText(ibusText, true)
 		return
 	}
 
-	if e.config.IBflags&config.IBnoUnderline == 0 {
+	if e.Config.IBflags&config.IBnoUnderline == 0 {
 		ibusText.AppendAttr(ibus.IBUS_ATTR_TYPE_UNDERLINE, ibus.IBUS_ATTR_UNDERLINE_SINGLE, 0, preeditLen)
 	}
 	e.UpdatePreeditTextWithMode(ibusText, preeditLen, true, ibus.IBUS_ENGINE_PREEDIT_COMMIT)
@@ -119,7 +120,7 @@ func (e *IBusBambooEngine) getBambooInputMode() bamboo.Mode {
 }
 
 func (e *IBusBambooEngine) shouldFallbackToEnglish(checkVnRune bool) bool {
-	if e.config.IBflags&config.IBautoNonVnRestore == 0 {
+	if e.Config.IBflags&config.IBautoNonVnRestore == 0 {
 		return false
 	}
 	var vnSeq = e.getProcessedString(bamboo.VietnameseMode | bamboo.LowerCase)
@@ -131,18 +132,18 @@ func (e *IBusBambooEngine) shouldFallbackToEnglish(checkVnRune bool) bool {
 		return false
 	}
 	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation
-	if e.config.IBflags&config.IBddFreeStyle != 0 && !bamboo.HasAnyVietnameseVower(vnSeq) &&
+	if e.Config.IBflags&config.IBddFreeStyle != 0 && !bamboo.HasAnyVietnameseVower(vnSeq) &&
 		(vnRunes[len(vnRunes)-1] == 'd' || strings.ContainsRune(vnSeq, 'đ')) {
 		return false
 	}
 	if checkVnRune && !bamboo.HasAnyVietnameseRune(vnSeq) {
 		return false
 	}
-	return !e.preeditor.IsValid(false)
+	return !e.Preeditor.IsValid(false)
 }
 
 func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
-	if e.config.IBflags&config.IBautoNonVnRestore == 0 {
+	if e.Config.IBflags&config.IBautoNonVnRestore == 0 {
 		return false
 	}
 	var vnSeq = e.getProcessedString(bamboo.VietnameseMode | bamboo.LowerCase)
@@ -151,13 +152,13 @@ func (e *IBusBambooEngine) mustFallbackToEnglish() bool {
 		return false
 	}
 	// we want to allow dd even in non-vn sequence, because dd is used a lot in abbreviation
-	if e.config.IBflags&config.IBddFreeStyle != 0 && strings.ContainsRune(vnSeq, 'đ') {
+	if e.Config.IBflags&config.IBddFreeStyle != 0 && strings.ContainsRune(vnSeq, 'đ') {
 		return false
 	}
-	if e.config.IBflags&config.IBspellCheckWithDicts != 0 {
+	if e.Config.IBflags&config.IBspellCheckWithDicts != 0 {
 		return !dictionary[vnSeq]
 	}
-	return !e.preeditor.IsValid(true)
+	return !e.Preeditor.IsValid(true)
 }
 
 func (e *IBusBambooEngine) getComposedString(oldText string) string {
@@ -168,15 +169,15 @@ func (e *IBusBambooEngine) getComposedString(oldText string) string {
 }
 
 func (e *IBusBambooEngine) encodeText(text string) string {
-	return bamboo.Encode(e.config.OutputCharset, text)
+	return bamboo.Encode(e.Config.OutputCharset, text)
 }
 
 func (e *IBusBambooEngine) getProcessedString(mode bamboo.Mode) string {
-	return e.preeditor.GetProcessedString(mode)
+	return e.Preeditor.GetProcessedString(mode)
 }
 
 func (e *IBusBambooEngine) getPreeditString() string {
-	if e.config.IBflags&config.IBmacroEnabled != 0 {
+	if e.Config.IBflags&config.IBmacroEnabled != 0 {
 		return e.getProcessedString(bamboo.PunctuationMode)
 	}
 	if e.shouldFallbackToEnglish(true) {
@@ -188,11 +189,11 @@ func (e *IBusBambooEngine) getPreeditString() string {
 func (e *IBusBambooEngine) resetPreedit() {
 	e.HidePreeditText()
 	e.HideAuxiliaryText()
-	e.preeditor.Reset()
+	e.Preeditor.Reset()
 }
 
 func (e *IBusBambooEngine) commitPreeditAndResetForWBS(s string, isWBS bool) {
-	if e.config.IBflags&config.IBworkaroundForFBMessenger != 0 || isWBS {
+	if e.Config.IBflags&config.IBworkaroundForFBMessenger != 0 || isWBS {
 		// Fix missing the first word while typing in FB Messager as FB prefers
 		// committing text before hiding preedit
 		e.commitText(s)
@@ -203,7 +204,7 @@ func (e *IBusBambooEngine) commitPreeditAndResetForWBS(s string, isWBS bool) {
 	}
 	e.HideAuxiliaryText()
 	e.HideLookupTable()
-	e.preeditor.Reset()
+	e.Preeditor.Reset()
 }
 
 func (e *IBusBambooEngine) commitPreeditAndReset(s string) {
@@ -211,7 +212,7 @@ func (e *IBusBambooEngine) commitPreeditAndReset(s string) {
 	e.HideAuxiliaryText()
 	e.HideLookupTable()
 	e.commitText(s)
-	e.preeditor.Reset()
+	e.Preeditor.Reset()
 }
 
 func (e *IBusBambooEngine) commitText(str string) {
@@ -220,14 +221,14 @@ func (e *IBusBambooEngine) commitText(str string) {
 	}
 	log.Printf("Commit Text [%s]\n", str)
 	var now = time.Now()
-	e.lastCommitText = now.UnixNano()
+	e.LastCommitText = now.UnixNano()
 	e.CommitText(ibus.NewText(e.encodeText(str)))
 }
 
 func (e *IBusBambooEngine) getVnSeq() string {
-	return e.preeditor.GetProcessedString(bamboo.VietnameseMode)
+	return e.Preeditor.GetProcessedString(bamboo.VietnameseMode)
 }
 
 func (e *IBusBambooEngine) hasMacroKey(key string) bool {
-	return e.macroTable.GetText(key) != ""
+	return mactab.GetText(e.MacroTable, key) != ""
 }

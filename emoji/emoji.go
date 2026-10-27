@@ -17,7 +17,7 @@
  *
  */
 
-package main
+package emoji
 
 import (
 	"encoding/json"
@@ -25,18 +25,15 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+
+	"ibus-bamboo/types"
 )
 
-type EmojiOne struct {
-	Name      string
-	Shortname string
-	Keywords  []string
-	ASCII     []string
-}
+var Trie = NewTrie()
 
-func loadEmojiOne(dataFile string) (*TrieNode, error) {
+func LoadEmojiOne(dataFile string) (*types.TrieNode, error) {
 	var trie = NewTrie()
-	var c = map[string]EmojiOne{}
+	var c = map[string]types.EmojiOne{}
 	var data, err = ioutil.ReadFile(dataFile)
 	if err != nil {
 		return nil, err
@@ -59,31 +56,27 @@ func loadEmojiOne(dataFile string) (*TrieNode, error) {
 	return trie, nil
 }
 
-type EmojiEngine struct {
-	keys []rune
-}
-
-func NewEmojiEngine() *EmojiEngine {
-	var be = &EmojiEngine{}
+func NewEmojiEngine() *types.EmojiEngine {
+	var be = &types.EmojiEngine{}
 	return be
 }
 
-func (be *EmojiEngine) MatchString(s string) bool {
-	var lookup = FindPrefix(emojiTrie, s)
+func MatchString(be *types.EmojiEngine, s string) bool {
+	var lookup = FindPrefix(Trie, s)
 	return lookup != nil
 }
 
-func (be *EmojiEngine) Filter(s string) []string {
+func Filter(be *types.EmojiEngine, s string) []string {
 	var codePoints []string
 	var keys []string
-	var lookup = FindPrefix(emojiTrie, s)
+	var lookup = FindPrefix(Trie, s)
 	for key := range lookup {
 		keys = append(keys, key)
 	}
-	var names = byString(keys)
+	var names = sort.StringSlice(keys)
 	sort.Sort(names)
 	for _, name := range names {
-		var cps = byString(strings.Split(lookup[name], ":"))
+		var cps = sort.StringSlice(strings.Split(lookup[name], ":"))
 		sort.Sort(cps)
 		for _, cp := range cps {
 			codePoints = append(codePoints, cp)
@@ -92,25 +85,25 @@ func (be *EmojiEngine) Filter(s string) []string {
 	return codePoints
 }
 
-func (be *EmojiEngine) ProcessKey(key rune) {
-	be.keys = append(be.keys, key)
+func ProcessKey(be *types.EmojiEngine, key rune) {
+	be.Keys = append(be.Keys, key)
 }
 
-func (be *EmojiEngine) GetRawString() string {
-	return string(be.keys)
+func GetRawString(be *types.EmojiEngine) string {
+	return string(be.Keys)
 }
 
-func (be *EmojiEngine) Reset() {
-	be.keys = nil
+func Reset(be *types.EmojiEngine) {
+	be.Keys = nil
 }
 
-func (be *EmojiEngine) Query() []string {
-	return be.Filter(string(be.keys))
+func Query(be *types.EmojiEngine) []string {
+	return Filter(be, string(be.Keys))
 }
 
-func (be *EmojiEngine) RemoveLastKey() {
-	if len(be.keys) <= 0 {
+func RemoveLastKey(be *types.EmojiEngine) {
+	if len(be.Keys) <= 0 {
 		return
 	}
-	be.keys = be.keys[:len(be.keys)-1]
+	be.Keys = be.Keys[:len(be.Keys)-1]
 }

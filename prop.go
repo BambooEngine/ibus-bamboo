@@ -21,6 +21,7 @@ package main
 
 import (
 	"ibus-bamboo/config"
+	"ibus-bamboo/types"
 
 	"github.com/BambooEngine/bamboo-core"
 	ibus "github.com/BambooEngine/goibus"
@@ -60,7 +61,7 @@ var IBusSeparator = &ibus.Property{
 	SubProps:  dbus.MakeVariant(*ibus.NewPropList()),
 }
 
-func GetPropListByConfig(c *config.Config) *ibus.PropList {
+func GetPropListByConfig(c *types.Config) *ibus.PropList {
 	var aboutText = "IBus " + EngineName + " " + Version
 	if !*embedded {
 		aboutText += " (Debug)"
@@ -182,7 +183,7 @@ func GetPropListByConfig(c *config.Config) *ibus.PropList {
 	)
 }
 
-func GetCharsetPropListByConfig(c *config.Config) *ibus.PropList {
+func GetCharsetPropListByConfig(c *types.Config) *ibus.PropList {
 	var charsetProperties []*ibus.Property
 	charsetProperties = append(charsetProperties,
 		&ibus.Property{
@@ -219,7 +220,7 @@ func GetCharsetPropListByConfig(c *config.Config) *ibus.PropList {
 	return ibus.NewPropList(charsetProperties...)
 }
 
-func GetIMPropListByConfig(c *config.Config) *ibus.PropList {
+func GetIMPropListByConfig(c *types.Config) *ibus.PropList {
 	var imProperties []*ibus.Property
 	imProperties = append(imProperties,
 		&ibus.Property{
@@ -257,7 +258,7 @@ func GetIMPropListByConfig(c *config.Config) *ibus.PropList {
 	return ibus.NewPropList(imProperties...)
 }
 
-func GetMacroPropListByConfig(c *config.Config) *ibus.PropList {
+func GetMacroPropListByConfig(c *types.Config) *ibus.PropList {
 	macroChecked := ibus.PROP_STATE_UNCHECKED
 	autoCapitalizeMacro := ibus.PROP_STATE_UNCHECKED
 
@@ -306,7 +307,7 @@ func GetMacroPropListByConfig(c *config.Config) *ibus.PropList {
 	)
 }
 
-func GetSpellCheckingPropListByConfig(c *config.Config) *ibus.PropList {
+func GetSpellCheckingPropListByConfig(c *types.Config) *ibus.PropList {
 	spellCheckByRules := ibus.PROP_STATE_UNCHECKED
 	spellCheckByDicts := ibus.PROP_STATE_UNCHECKED
 
@@ -362,7 +363,7 @@ func GetSpellCheckingPropListByConfig(c *config.Config) *ibus.PropList {
 	)
 }
 
-func GetOptionsPropListByConfig(c *config.Config) *ibus.PropList {
+func GetOptionsPropListByConfig(c *types.Config) *ibus.PropList {
 	// tone
 	toneStdChecked := ibus.PROP_STATE_UNCHECKED
 	toneFreeMarkingChecked := ibus.PROP_STATE_UNCHECKED

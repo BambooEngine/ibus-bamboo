@@ -17,43 +17,41 @@
  *
  */
 
-package main
+package emoji
 
-type TrieNode struct {
-	isWord   bool
-	value    string
-	Children map[rune]*TrieNode
-}
+import (
+	"ibus-bamboo/types"
+)
 
-func NewTrie() *TrieNode {
-	var trie = new(TrieNode)
-	trie.Children = make(map[rune]*TrieNode)
+func NewTrie() *types.TrieNode {
+	var trie = new(types.TrieNode)
+	trie.Children = make(map[rune]*types.TrieNode)
 	return trie
 }
 
-func InsertTrie(r *TrieNode, word, value string) {
+func InsertTrie(r *types.TrieNode, word, value string) {
 	var currentNode = r
 	for _, c := range word {
 		if cn := currentNode.Children[c]; cn != nil {
 			currentNode = cn
 		} else {
-			var n = new(TrieNode)
-			n.Children = make(map[rune]*TrieNode)
+			var n = new(types.TrieNode)
+			n.Children = make(map[rune]*types.TrieNode)
 			currentNode.Children[c] = n
 			currentNode = n
 		}
 	}
-	if currentNode.value == "" {
-		currentNode.value = value
+	if currentNode.Value == "" {
+		currentNode.Value = value
 	} else {
-		currentNode.value += ":" + value
+		currentNode.Value += ":" + value
 	}
-	currentNode.isWord = true
+	currentNode.IsWord = true
 }
 
-func dfs(trie *TrieNode, lookup map[string]string, s string) {
-	if trie.isWord {
-		lookup[s] = trie.value
+func dfs(trie *types.TrieNode, lookup map[string]string, s string) {
+	if trie.IsWord {
+		lookup[s] = trie.Value
 	}
 	for chr, t := range trie.Children {
 		var key = s + string(chr)
@@ -61,7 +59,7 @@ func dfs(trie *TrieNode, lookup map[string]string, s string) {
 	}
 }
 
-func FindPrefix(r *TrieNode, prefix string) map[string]string {
+func FindPrefix(r *types.TrieNode, prefix string) map[string]string {
 	var currentNode = r
 	for _, c := range prefix {
 		if cn := currentNode.Children[c]; cn != nil {

@@ -1,6 +1,7 @@
 # Ibus bamboo
 ibus_e_name="ibus-engine-bamboo"
-version="0.8.5"
+bamboo_cli_name="bamboo-cli"
+version="$(cat data/bamboo-version)"
 
 # Go flags
 LDFLAGS="-w -s -X main.Version=${version}"
@@ -12,12 +13,14 @@ CGO_LDFLAGS_FREEBSD="-L/usr/local/lib -lX11 -lXtst -pthread"
 case $(uname) in
 	"Linux") CGO_ENABLED=1 \
 		go build -o ${ibus_e_name} -ldflags "${LDFLAGS}" -mod=vendor
+		go build -o ${bamboo_cli_name} -ldflags "${LDFLAGS}" -mod=vendor ./bamboo-cli
 		;;
 
 	"FreeBSD") CGO_ENABLED=1 \
 		CGO_CFLAGS=${CGO_CFLAGS_FREEBSD} \
 		CGO_LDFLAGS=${CGO_LDFLAGS_FREEBSD} \
 		go build -o ${ibus_e_name} -ldflags "${LDFLAGS}" -mod=vendor
+		go build -o ${bamboo_cli_name} -ldflags "${LDFLAGS}" -mod=vendor ./bamboo-cli
 		;;
 	*) echo "Hiện tại chưa hỗ trợ hệ điều hành này!"
 		;;

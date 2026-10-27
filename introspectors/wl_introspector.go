@@ -1,4 +1,4 @@
-package main
+package introspectors
 
 import (
 	"fmt"
@@ -6,9 +6,9 @@ import (
 	wl "github.com/dkolbly/wl"
 )
 
-var wlAppId string
+var WlAppId string
 
-func wlGetFocusWindowClass() error {
+func WlGetFocusWindowClass() error {
 	display, err := wl.Connect("")
 	if err != nil {
 		return fmt.Errorf("Connect to Wayland server failed %s", err)
@@ -20,8 +20,8 @@ func wlGetFocusWindowClass() error {
 	}
 	for {
 		select {
-		case wlAppId = <-appIdChan:
-			fmt.Println("wlAppId = ", wlAppId)
+		case WlAppId = <-appIdChan:
+			fmt.Println("WlAppId = ", WlAppId)
 		case display.Context().Dispatch() <- struct{}{}:
 		}
 	}

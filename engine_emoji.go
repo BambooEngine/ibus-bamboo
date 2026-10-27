@@ -24,26 +24,28 @@ import (
 
 	"github.com/BambooEngine/bamboo-core"
 	ibus "github.com/BambooEngine/goibus"
+
+	"ibus-bamboo/emoji"
 )
 
 const EmojiMaxPageSize = 9
 
 func (e *IBusBambooEngine) openEmojiList() {
-	e.emoji.ProcessKey(':')
+	emoji.ProcessKey(e.Emoji, ':')
 	e.UpdatePreeditText(ibus.NewText(":"), 1, true)
 	e.UpdateAuxiliaryText(ibus.NewText(":"), true)
 	lt := ibus.NewLookupTable()
 	lt.Orientation = IBusOrientationHorizontal
-	for _, codePoint := range e.emoji.Query() {
+	for _, codePoint := range emoji.Query(e.Emoji) {
 		lt.AppendCandidate(codePoint)
 	}
 	lt.PageSize = uint32(EmojiMaxPageSize)
-	e.emojiLookupTable = lt
+	e.EmojiLookupTable = lt
 	e.updateEmojiLookupTable()
 }
 
 func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) bool {
-	var raw = e.emoji.GetRawString()
+	var raw = emoji.GetRawString(e.Emoji)
 	var rawTextLen = len([]rune(raw))
 	var keyRune = rune(keyVal)
 	var reset = e.closeEmojiCandidates
@@ -53,7 +55,7 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 	}
 	if keyVal == IBusReturn {
 		if rawTextLen > 0 {
-			if len(e.emojiLookupTable.Candidates) > 0 {
+			if len(e.EmojiLookupTable.Candidates) > 0 {
 				e.commitEmojiCandidate()
 			} else {
 				e.CommitText(ibus.NewText(raw))
@@ -86,17 +88,17 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 	}
 	if keyVal == IBusBackSpace {
 		if rawTextLen > 0 {
-			e.emoji.RemoveLastKey()
+			emoji.RemoveLastKey(e.Emoji)
 		} else {
 			reset()
 			return false
 		}
 	} else if (keyRune >= 'a' && keyRune <= 'z') || (keyRune >= 'A' && keyRune <= 'Z') {
-		var testStr = string(append(e.emoji.keys, keyRune))
-		if raw == ":" && !e.emoji.MatchString(testStr) {
-			e.emoji.Reset()
+		var testStr = string(append(e.Emoji.Keys, keyRune))
+		if raw == ":" && !emoji.MatchString(e.Emoji, testStr) {
+			emoji.Reset(e.Emoji)
 		}
-		e.emoji.ProcessKey(keyRune)
+		emoji.ProcessKey(e.Emoji, keyRune)
 	} else if keyRune >= '1' && keyRune <= '9' {
 		if pos, err := strconv.Atoi(string(keyRune)); err == nil {
 			if e.updateCursorPosInEmojiTable(uint32(pos - 1)) {
@@ -109,13 +111,13 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 		}
 		return false
 	} else if (keyRune >= ' ' && keyRune <= '~') || bamboo.IsWordBreakSymbol(keyRune) {
-		var testStr = string(append(e.emoji.keys, keyRune))
-		if raw == ":" && !e.emoji.MatchString(testStr) {
-			e.emoji.Reset()
+		var testStr = string(append(e.Emoji.Keys, keyRune))
+		if raw == ":" && !emoji.MatchString(e.Emoji, testStr) {
+			emoji.Reset(e.Emoji)
 		}
-		e.emoji.ProcessKey(keyRune)
-		if !e.emoji.MatchString(string(e.emoji.keys)) {
-			e.CommitText(ibus.NewText(e.emoji.GetRawString()))
+		emoji.ProcessKey(e.Emoji, keyRune)
+		if !emoji.MatchString(e.Emoji, string(e.Emoji.Keys)) {
+			e.CommitText(ibus.NewText(emoji.GetRawString(e.Emoji)))
 			reset()
 			return true
 		}
@@ -124,9 +126,9 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 		e.CommitText(ibus.NewText(raw))
 		return false
 	}
-	raw = e.emoji.GetRawString()
+	raw = emoji.GetRawString(e.Emoji)
 	rawTextLen = len([]rune(raw))
-	cps := e.emoji.Query()
+	cps := emoji.Query(e.Emoji)
 	if cps != nil {
 		codePoint0 := cps[0]
 		e.UpdatePreeditTextWithMode(ibus.NewText(codePoint0), uint32(len(codePoint0)), true, ibus.IBUS_ENGINE_PREEDIT_COMMIT)
@@ -140,47 +142,47 @@ func (e *IBusBambooEngine) emojiProcessKeyEvent(keyVal uint32, keyCode uint32, s
 		lt.AppendCandidate(codePoint)
 	}
 	lt.PageSize = uint32(EmojiMaxPageSize)
-	e.emojiLookupTable = lt
+	e.EmojiLookupTable = lt
 	e.updateEmojiLookupTable()
 	return true
 }
 
 func (e *IBusBambooEngine) updateCursorPosInEmojiTable(idx uint32) bool {
-	pageSize := e.emojiLookupTable.PageSize
+	pageSize := e.EmojiLookupTable.PageSize
 	if idx > pageSize {
 		return false
 	}
-	page := e.emojiLookupTable.CursorPos / pageSize
+	page := e.EmojiLookupTable.CursorPos / pageSize
 	newPos := page*pageSize + idx
-	if int(newPos) > len(e.emojiLookupTable.Candidates) {
+	if int(newPos) > len(e.EmojiLookupTable.Candidates) {
 		return false
 	}
-	e.emojiLookupTable.CursorPos = newPos
+	e.EmojiLookupTable.CursorPos = newPos
 	return true
 }
 
 func (e *IBusBambooEngine) updateEmojiLookupTable() {
-	if len(e.emoji.keys) == 0 {
+	if len(e.Emoji.Keys) == 0 {
 		return
 	}
-	var visible = len(e.emojiLookupTable.Candidates) > 0
-	e.UpdateLookupTable(e.emojiLookupTable, visible)
-	var cps = e.emoji.Query()
-	if pos := e.emojiLookupTable.CursorPos; pos < uint32(len(cps)) {
+	var visible = len(e.EmojiLookupTable.Candidates) > 0
+	e.UpdateLookupTable(e.EmojiLookupTable, visible)
+	var cps = emoji.Query(e.Emoji)
+	if pos := e.EmojiLookupTable.CursorPos; pos < uint32(len(cps)) {
 		var codePoint0 = cps[pos]
 		e.UpdatePreeditTextWithMode(ibus.NewText(codePoint0), uint32(len(codePoint0)), true, ibus.IBUS_ENGINE_PREEDIT_COMMIT)
 	}
 }
 
 func (e *IBusBambooEngine) commitEmojiCandidate() {
-	var cps = e.emoji.Query()
-	if pos := e.emojiLookupTable.CursorPos; pos < uint32(len(cps)) {
+	var cps = emoji.Query(e.Emoji)
+	if pos := e.EmojiLookupTable.CursorPos; pos < uint32(len(cps)) {
 		e.CommitText(ibus.NewText(cps[pos]))
 	}
 }
 
 func (e *IBusBambooEngine) refreshEmojiCandidate() {
-	var raw = e.emoji.GetRawString()
+	var raw = emoji.GetRawString(e.Emoji)
 	var rawTextLen = len([]rune(raw))
 	e.UpdatePreeditTextWithMode(ibus.NewText(raw), uint32(rawTextLen), true, ibus.IBUS_ENGINE_PREEDIT_COMMIT)
 	e.UpdateAuxiliaryText(ibus.NewText(raw), true)
@@ -188,11 +190,11 @@ func (e *IBusBambooEngine) refreshEmojiCandidate() {
 }
 
 func (e *IBusBambooEngine) closeEmojiCandidates() {
-	e.emojiLookupTable = nil
-	e.emoji.Reset()
+	e.EmojiLookupTable = nil
+	emoji.Reset(e.Emoji)
 	e.UpdateLookupTable(ibus.NewLookupTable(), true) // workaround for issue #18
 	e.HidePreeditText()
 	e.HideLookupTable()
 	e.HideAuxiliaryText()
-	e.isEmojiLTOpened = false
+	e.IsEmojiLTOpened = false
 }

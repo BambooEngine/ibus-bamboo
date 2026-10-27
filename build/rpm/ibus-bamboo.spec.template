@@ -6,7 +6,7 @@
 %define _unpackaged_files_terminate_build 0
 
 Name: ibus-bamboo
-Version: 0.8.5
+Version: @VERSION@
 Release: 1%{?dist}
 Summary: A Vietnamese input method for IBus
 
@@ -42,6 +42,7 @@ make PREFIX=%{_prefix} DESTDIR=%{buildroot} install
 %{engine_share_dir}/*
 %{engine_lib_dir}/*
 %{ibus_comp_dir}/%{engine_name}.xml
+%{_prefix}/bin/bamboo-cli
 
 %clean
 cd ..

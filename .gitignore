@@ -1,3 +1,4 @@
+
 # Binaries for programs and plugins
 *.exe
 *.exe~
@@ -22,5 +23,17 @@ debian/*
 *_linux
 *.tar.gz
 ibus-engine-*
+bamboo-cli/bamboo-cli
 keyboard-shortcut-editor
 macro-editor
+
+# Generated from *.template by scripts/configure.py
+data/bamboo.xml
+data/bamboo-freebsd.xml
+build/arch/PKGBUILD-git
+build/arch/PKGBUILD-obs
+build/arch/PKGBUILD-release
+build/deb/control
+build/deb/ibus-bamboo.dsc
+build/rpm/ibus-bamboo.spec
+

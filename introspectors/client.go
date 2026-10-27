@@ -4,7 +4,7 @@
 // https://github.com/dkolbly/wl-scanner
 // from: https://raw.githubusercontent.com/swaywm/wlr-protocols/master/unstable/wlr-foreign-toplevel-management-unstable-v1.xml
 // on 2021-03-11 15:02:55 +0700
-package main
+package introspectors
 
 import (
 	"sync"

@@ -23,7 +23,7 @@ engine_name=bamboo
 engine_gui_name=ibus-setup-Bamboo.desktop
 ibus_e_name=ibus-engine-$(engine_name)
 pkg_name=ibus-$(engine_name)
-version=0.8.5
+version=$(shell cat data/bamboo-version)
 
 engine_dir=$(PREFIX)/share/$(pkg_name)
 ibus_dir=$(PREFIX)/share/ibus
@@ -37,7 +37,10 @@ tar_options_src=--transform "s/^\./$(pkg_name)-$(version)/" --exclude=.git --exc
 
 all: build
 
-build:
+config:
+	python3 scripts/configure.py
+
+build: config
 	$(SHELL) scripts/build
 
 test:
@@ -62,7 +65,8 @@ uninstall:
 	rm -rf $(DESTDIR)$(PREFIX)/share/applications/$(engine_gui_name)
 
 
-src: clean
+src: clean config
+	rm -rf debian
 	tar -zcf $(DESTDIR)/$(tar_file) $(tar_options_src)
 	cp -f build/rpm/$(pkg_name).spec $(DESTDIR)/
 	cp -r build/deb debian
@@ -78,9 +82,10 @@ rpm: clean
 	tar -zcf $(rpm_src_tar) $(tar_options_src)
 	rpmbuild $(pkg_name).spec -ba
 
-deb: clean
+deb: clean config
+	rm -rf debian
 	cp -r build/deb debian
 	dpkg-buildpackage
 	rm -rf debian
 
-.PHONY: build clean build install uninstall src rpm deb
+.PHONY: config build clean build install uninstall src rpm deb

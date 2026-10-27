@@ -16,30 +16,29 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 #
 # Maintainer: Luong Thanh Lam <ltlam93@gmail.com>
-pkgname=ibus-bamboo-git
-pkgver=0.8.5
-pkgrel=2
+pkgname=ibus-bamboo
+pkgver=@VERSION@
+pkgrel=1
 pkgdesc='A Vietnamese IME for IBus'
 arch=(any)
 license=(GPL3)
 url="https://github.com/BambooEngine/ibus-bamboo"
-optdepends=('ibus')
+depends=('ibus')
 makedepends=('go' 'libibus' 'libx11' 'gtk3' 'libxtst')
-source=("$pkgname"::git+"$url")
+source=("$pkgname-$pkgver.tar.gz")
 md5sums=('SKIP')
 options=('!strip')
-conflicts=(ibus-bamboo)
-
+conflicts=(ibus-bamboo-git)
 
 build() {
-  cd "$pkgname"
+  cd "$pkgname-$pkgver"
 
   make build
 }
 
 
 package() {
-  cd "$pkgname"
+  cd "$pkgname-$pkgver"
 
-  make PREFIX="/usr" DESTDIR="$pkgdir/" install
+  make DESTDIR="$pkgdir/" install
 }

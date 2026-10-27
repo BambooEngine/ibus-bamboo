@@ -49,7 +49,7 @@ func (e *IBusBambooEngine) hexadecimalProcessKeyEvent(keyVal uint32, keyCode uin
 	}
 	if keyVal == IBusBackSpace {
 		if rawKeyLen > 2 {
-			e.preeditor.RemoveLastChar(true)
+			e.Preeditor.RemoveLastChar(true)
 			e.updateHexadecimal(e.getProcessedString(mode))
 		} else {
 			e.closeHexadecimalInput()
@@ -74,7 +74,7 @@ func (e *IBusBambooEngine) hexadecimalProcessKeyEvent(keyVal uint32, keyCode uin
 		if !isValidState(state) || !e.isValidKeyVal(keyVal) {
 			return true
 		}
-		e.preeditor.ProcessKey(keyRune, mode)
+		e.Preeditor.ProcessKey(keyRune, mode)
 		e.updateHexadecimal(e.getProcessedString(mode))
 	}
 	return true
@@ -88,15 +88,15 @@ func (e *IBusBambooEngine) setupHexadecimalProcessKeyEvent() {
 	defer e.updateLastKeyWithShift(keyVal, state)
 
 	if e.isValidKeyVal(keyVal) {
-		e.preeditor.ProcessKey(keyRune, mode)
+		e.Preeditor.ProcessKey(keyRune, mode)
 	}
 	e.updateHexadecimal(e.getProcessedString(mode))
 }
 
 func (e *IBusBambooEngine) closeHexadecimalInput() {
 	e.HidePreeditText()
-	e.preeditor.Reset()
-	e.isInHexadecimal = false
+	e.Preeditor.Reset()
+	e.IsInHexadecimal = false
 }
 
 func (e *IBusBambooEngine) updateHexadecimal(processedStr string) {

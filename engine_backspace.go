@@ -35,27 +35,27 @@ const BACKSPACE_INTERVAL = 0
 
 func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, state uint32) (bool, *dbus.Error) {
 	if isMovementKey(keyVal) {
-		e.preeditor.Reset()
+		e.Preeditor.Reset()
 		e.resetFakeBackspace()
-		e.isSurroundingTextReady = true
+		e.IsSurroundingTextReady = true
 		return false, nil
 	}
 	var keyRune = rune(keyVal)
-	if e.config.IBflags&config.IBmacroEnabled == 0 && len(keyPressChan) == 0 && e.getRawKeyLen() == 0 && !inKeyList(e.preeditor.GetInputMethod().AppendingKeys, keyRune) {
+	if e.Config.IBflags&config.IBmacroEnabled == 0 && len(keyPressChan) == 0 && e.getRawKeyLen() == 0 && !inKeyList(e.Preeditor.GetInputMethod().AppendingKeys, keyRune) {
 		e.updateLastKeyWithShift(keyVal, state)
-		if e.preeditor.CanProcessKey(keyRune) && isValidState(state) {
-			e.isFirstTimeSendingBS = true
+		if e.Preeditor.CanProcessKey(keyRune) && isValidState(state) {
+			e.IsFirstTimeSendingBS = true
 			if state&IBusLockMask != 0 {
 				keyRune = e.toUpper(keyRune)
 			}
-			e.preeditor.ProcessKey(keyRune, bamboo.VietnameseMode)
+			e.Preeditor.ProcessKey(keyRune, bamboo.VietnameseMode)
 			e.bsCommitText([]rune(e.getPreeditString()))
 			return true, nil
 		}
 		return false, nil
 	}
 
-	if e.shouldEnqueuKeyStrokes {
+	if e.ShouldEnqueuKeyStrokes {
 		// WARNING: don't use ForwardKeyEvent api in XTestFakeKeyEvent/SurroundingText mode
 		if e.checkInputMode(config.XTestFakeKeyEventIM) || e.checkInputMode(config.SurroundingTextIM) {
 			if keyVal == IBusBackSpace {
@@ -66,9 +66,9 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 					sleep()
 					if e.getRawKeyLen() > 0 {
 						if e.shouldFallbackToEnglish(true) {
-							e.preeditor.RestoreLastWord(false)
+							e.Preeditor.RestoreLastWord(false)
 						}
-						e.preeditor.RemoveLastChar(false)
+						e.Preeditor.RemoveLastChar(false)
 					}
 				}
 				return false, nil
@@ -76,7 +76,7 @@ func (e *IBusBambooEngine) bsProcessKeyEvent(keyVal uint32, keyCode uint32, stat
 			if keyVal == IBusTab {
 				sleep()
 				if ok, _ := e.getMacroText(); !ok {
-					e.preeditor.Reset()
+					e.Preeditor.Reset()
 					return false, nil
 				}
 			}
@@ -105,19 +105,19 @@ func (e *IBusBambooEngine) keyPressForwardHandler(keyVal, keyCode, state uint32)
 func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) bool {
 	// log.Printf(">>Backspace:ProcessKeyEvent >  %c | keyCode 0x%04x keyVal 0x%04x | %d\n", rune(keyVal), keyCode, keyVal, len(keyPressChan))
 	defer e.updateLastKeyWithShift(keyVal, state)
-	if e.keyPressDelay > 0 {
-		time.Sleep(time.Duration(e.keyPressDelay) * time.Millisecond)
-		e.keyPressDelay = 0
+	if e.KeyPressDelay > 0 {
+		time.Sleep(time.Duration(e.KeyPressDelay) * time.Millisecond)
+		e.KeyPressDelay = 0
 	}
 	oldText := e.getPreeditString()
 	_, oldMacText := e.getMacroText()
 	if keyVal == IBusBackSpace {
 		if e.getRawKeyLen() > 0 {
-			if e.config.IBflags&config.IBautoNonVnRestore == 0 {
-				e.preeditor.RemoveLastChar(false)
+			if e.Config.IBflags&config.IBautoNonVnRestore == 0 {
+				e.Preeditor.RemoveLastChar(false)
 				return false
 			}
-			e.preeditor.RemoveLastChar(true)
+			e.Preeditor.RemoveLastChar(true)
 			var newText = e.getPreeditString()
 			var offset = e.getPreeditOffset([]rune(newText), []rune(oldText))
 			if oldText != "" && offset != len([]rune(newText)) {
@@ -129,7 +129,7 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) bool {
 	}
 
 	if keyVal == IBusTab {
-		defer e.preeditor.Reset()
+		defer e.Preeditor.Reset()
 		if oldMacText != "" {
 			e.updatePreviousText(oldText, oldMacText)
 			return true
@@ -144,7 +144,7 @@ func (e *IBusBambooEngine) keyPressHandler(keyVal, keyCode, state uint32) bool {
 			fmt.Println("Append a deadkey")
 			e.bsCommitText([]rune(" "))
 			time.Sleep(10 * time.Millisecond)
-			e.isFirstTimeSendingBS = false
+			e.IsFirstTimeSendingBS = false
 			e.SendBackSpace(1)
 		}
 		e.updatePreviousTextInBatch(oldText, newText, isWordBreakRune)
@@ -172,7 +172,7 @@ func (e *IBusBambooEngine) shouldAppendDeadKey(newText, oldText string) bool {
 	var offset = e.getPreeditOffset(newRunes, oldRunes)
 
 	// workaround for chrome and firefox's address bar
-	if e.isFirstTimeSendingBS && offset < len(newRunes) && offset < len(oldRunes) && e.inBrowserList() &&
+	if e.IsFirstTimeSendingBS && offset < len(newRunes) && offset < len(oldRunes) && e.inBrowserList() &&
 		!e.checkInputMode(config.ShiftLeftForwardingIM) {
 		return true
 	}
@@ -195,7 +195,7 @@ func (e *IBusBambooEngine) updatePreviousTextInBatch(oldText, newText string, is
 	}
 	var buffer = []string{string(offsetRunes)}
 	if isWordBreakRune {
-		e.preeditor.Reset()
+		e.Preeditor.Reset()
 		buffer = append(buffer, "")
 	}
 	// isDirty means containing runes that are not committed
@@ -269,7 +269,7 @@ func (e *IBusBambooEngine) SendBackSpace(n int) {
 	// and normal string committing, so we'll not commit right now
 	// but delay until all the sent backspaces got processed.
 	var now = time.Now()
-	var delta = 50*1000*1000 - (now.UnixNano() - e.lastCommitText)
+	var delta = 50*1000*1000 - (now.UnixNano() - e.LastCommitText)
 	if delta > 0 {
 		time.Sleep(time.Duration(delta) * time.Nanosecond)
 	}

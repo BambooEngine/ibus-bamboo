@@ -20,6 +20,16 @@ var ImLookupTable = map[int]string{
 	UsIM:                  "Thêm vào danh sách loại trừ",
 }
 
+var ImShortNames = map[int]string{
+	PreeditIM:             "preedit",
+	SurroundingTextIM:     "surrounding-text",
+	BackspaceForwardingIM: "forward-key-1",
+	ShiftLeftForwardingIM: "forward-key-2",
+	ForwardAsCommitIM:     "forward-as-commit",
+	XTestFakeKeyEventIM:   "xtest",
+	UsIM:                  "exclude",
+}
+
 var ImBackspaceList = []int{
 	SurroundingTextIM,
 	BackspaceForwardingIM,

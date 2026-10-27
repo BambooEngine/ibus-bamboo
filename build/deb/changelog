@@ -1,3 +1,28 @@
+ibus-bamboo (0.9.0) stable; urgency=medium
+
+  * A new configuration cli tool is added, it can be used to debug or work in
+    composition with other tools. `bamboo-cli` is installed to /usr/local/bin/.
+  * Do note that this tool is (now) only for modifing the configuration. Since
+    it is a standalone tool, it cannot notify the currently running ibus-bamboo
+    engine instance to reload the config and change the configurion.
+  * To make the changes effective, switch to another engine and switch back or
+    restart ibus.
+
+
+ -- Hung Nguyen Duc <ndgnuh@protonmail.com>  Sun, 25 Oct 2026 16:54:46 +0700
+
+ibus-bamboo (0.8.6) stable; urgency=medium
+
+  * Add ability for custom introspector in the config. Users can now
+    specify the introspector by setting the "Introspector" field in the
+    config.
+  * For the command introspector, "IntrospectorCommand" must be
+    specified. It is a command for retrieving the currently focused
+    app_id/wm_class. Users can create their own command that works on
+    their GUI environment.
+
+ -- Hung Nguyen Duc <ndgnuh@protonmail.com>  Sat, 24 Oct 2026 22:03:34 +0700
+
 ibus-bamboo (0.8.5) stable; urgency=medium
 
   * New upstream release

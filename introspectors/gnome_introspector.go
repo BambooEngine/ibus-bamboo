@@ -1,4 +1,4 @@
-package main
+package introspectors
 
 import (
 	"errors"
@@ -6,7 +6,7 @@ import (
 	"github.com/godbus/dbus/v5"
 )
 
-func gnomeGetFocusWindowClass() (string, error) {
+func GnomeGetFocusWindowClass() (string, error) {
 	conn, err := dbus.SessionBus()
 	var s string
 	if err != nil {

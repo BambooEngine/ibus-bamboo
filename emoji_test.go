@@ -20,37 +20,39 @@ package main
 
 import (
 	"testing"
+
+	"ibus-bamboo/emoji"
 )
 
 func TestEmojiFindResult(t *testing.T) {
-	emojiTrie, _ = loadEmojiOne(DictEmojiOne)
-	var be = NewEmojiEngine()
-	if be.MatchString(":'") != true {
-		t.Errorf("Finding result for emoji :', expected true, got %v", be.MatchString(":'"))
+	emoji.Trie, _ = emoji.LoadEmojiOne(DictEmojiOne)
+	var be = emoji.NewEmojiEngine()
+	if emoji.MatchString(be, ":'") != true {
+		t.Errorf("Finding result for emoji :', expected true, got %v", emoji.MatchString(be, ":'"))
 	}
-	if be.MatchString(":')") != true {
-		t.Errorf("Finding result for emoji :'), expected true, got %v", be.MatchString(":')"))
+	if emoji.MatchString(be, ":')") != true {
+		t.Errorf("Finding result for emoji :'), expected true, got %v", emoji.MatchString(be, ":')"))
 	}
-	if be.MatchString("gri") != true {
-		t.Errorf("Finding result for emoji gri, expected true, got %v", be.MatchString("gri"))
+	if emoji.MatchString(be, "gri") != true {
+		t.Errorf("Finding result for emoji gri, expected true, got %v", emoji.MatchString(be, "gri"))
 	}
-	if be.MatchString("grin") != true {
-		t.Errorf("Finding result for emoji grin, expected true, got %v", be.MatchString("grinning"))
+	if emoji.MatchString(be, "grin") != true {
+		t.Errorf("Finding result for emoji grin, expected true, got %v", emoji.MatchString(be, "grinning"))
 	}
 }
 
 func TestFilterEmoji(t *testing.T) {
-	emojiTrie, _ = loadEmojiOne(DictEmojiOne)
-	var be = NewEmojiEngine()
-	var grinnings = be.Filter(":')")
+	emoji.Trie, _ = emoji.LoadEmojiOne(DictEmojiOne)
+	var be = emoji.NewEmojiEngine()
+	var grinnings = emoji.Filter(be, ":')")
 	if !inStringList(grinnings, "😂") {
 		t.Errorf("Filtering emojo :'), expected %v, got %v", true, inStringList(grinnings, "😂"))
 	}
-	var grinnings2 = be.Filter(":")
+	var grinnings2 = emoji.Filter(be, ":")
 	if !inStringList(grinnings2, "😂") {
 		t.Errorf("Filtering emojo :, expected %v, got %v", true, inStringList(grinnings2, "😂"))
 	}
-	var grinnings3 = be.Filter("grin")
+	var grinnings3 = emoji.Filter(be, "grin")
 	if !inStringList(grinnings3, "😀") {
 		t.Errorf("Filtering emojo `grin`, expected %v got %v", true, inStringList(grinnings3, "😀"))
 	}

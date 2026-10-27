@@ -2,6 +2,7 @@ package main
 
 import (
 	"ibus-bamboo/config"
+	"ibus-bamboo/types"
 	"testing"
 
 	"github.com/BambooEngine/bamboo-core"
@@ -150,7 +151,7 @@ func TestPreeditEngine(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.inputMode = config.PreeditIM
-			assertEngine(t, tc, func(t testing.TB, fe *fakeEngine, e IEngine) {
+			assertEngine(t, tc, func(t testing.TB, fe *fakeEngine, e types.IEngine) {
 				for _, ev := range tc.keyEvents {
 					keys := ev.keys
 					t.Logf("Processing key %c %v", rune(keys[0]), keys)
@@ -268,7 +269,7 @@ func TestBsEngine(t *testing.T) {
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			tc.inputMode = config.SurroundingTextIM
-			assertEngine(t, tc, func(t testing.TB, fe *fakeEngine, e IEngine) {
+			assertEngine(t, tc, func(t testing.TB, fe *fakeEngine, e types.IEngine) {
 				for _, ev := range tc.keyEvents {
 					keys := ev.keys
 					t.Logf("Processing key %c %v", rune(keys[0]), keys)
@@ -285,7 +286,7 @@ func TestBsEngine(t *testing.T) {
 	}
 }
 
-func assertEngine(t testing.TB, tc testCase, assertFn func(testing.TB, *fakeEngine, IEngine)) {
+func assertEngine(t testing.TB, tc testCase, assertFn func(testing.TB, *fakeEngine, types.IEngine)) {
 	fe := NewFakeEngine()
 	engineName := "test"
 	var cfg = config.DefaultCfg()
@@ -296,8 +297,8 @@ func assertEngine(t testing.TB, tc testCase, assertFn func(testing.TB, *fakeEngi
 	}
 	e := NewIbusBambooEngine(engineName, &cfg, fe, bamboo.NewEngine(inputMethod, cfg.Flags))
 	if tc.mTable != nil {
-		e.macroTable = &MacroTable{
-			mTable: tc.mTable,
+		e.MacroTable = &types.MacroTable{
+			MTable: tc.mTable,
 		}
 	}
 	assertFn(t, fe, e)
